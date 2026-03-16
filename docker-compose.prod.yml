@@ -1,0 +1,139 @@
+version: '3.8'
+
+services:
+  # AI Software Factory Backend
+  backend:
+    image: ghcr.io/${GITHUB_REPOSITORY:-yourusername/aisoftwarefactory}/backend:latest
+    container_name: ai-factory-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://aifactory:changeme@postgres:5432/aifactory}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - OLLAMA_URL=${OLLAMA_URL:-http://ollama:11434}
+      - SECRET_KEY=${SECRET_KEY:-changeme}
+    volumes:
+      - backend_data:/app/data
+    networks:
+      - ai-factory
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # AI Software Factory Frontend
+  frontend:
+    image: ghcr.io/${GITHUB_REPOSITORY:-yourusername/aisoftwarefactory}/frontend:latest
+    container_name: ai-factory-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://backend:8000}
+    networks:
+      - ai-factory
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - certbot_data:/etc/letsencrypt
+    networks:
+      - ai-factory
+    depends_on:
+      - frontend
+      - backend
+
+  # Ollama AI Service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - ai-factory
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: aifactory
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_in_production}
+      POSTGRES_DB: aifactory
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ai-factory
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aifactory"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - ai-factory
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Certbot for SSL
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - certbot_data:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+volumes:
+  backend_data:
+  ollama_data:
+  postgres_data:
+  redis_data:
+  certbot_data:
+
+networks:
+  ai-factory:
+    driver: bridge
