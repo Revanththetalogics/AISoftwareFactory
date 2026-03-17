@@ -145,7 +145,15 @@ async def startup_event() -> None:
         logger.error("Configuration validation failed", error=str(exc))
         raise
     
-    # Future: Initialize database connection (Phase 5)
+    # Initialize database connection
+    try:
+        from backend.db import init_db
+        await init_db()
+        logger.info("Database connection established")
+    except Exception as exc:
+        logger.error("Failed to initialize database", error=str(exc))
+        # Don't raise - allow app to start without DB for health checks
+    
     # Future: Initialize Redis connection (Phase 4)
     # Future: Load agent configurations (Phase 2)
     
