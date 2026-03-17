@@ -3,7 +3,7 @@
 import { Sidebar } from '@/components/layout/sidebar';
 import { TopNav } from '@/components/layout/top-nav';
 
-export default function AgentsLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -12,8 +12,10 @@ export default function AgentsLayout({
     <div className="min-h-screen bg-slate-950">
       <Sidebar />
       <TopNav />
-      <main className="ml-[280px] mt-16 min-h-[calc(100vh-64px)] p-6">
-        {children}
+      <main className="fixed left-[280px] right-0 top-16 bottom-0 overflow-auto bg-slate-950 p-6">
+        <div className="mx-auto max-w-7xl">
+          {children}
+        </div>
       </main>
     </div>
   );
