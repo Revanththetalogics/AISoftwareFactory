@@ -42,7 +42,7 @@ if ($syntaxErrors.Count -eq 0) {
 
 # 2. Check for f-string backslashes (common Python error)
 Write-Host "Checking for invalid f-string backslashes..." -NoNewline
-$fstringIssues = Select-String -Path "backend\*.py" -Pattern 'f".*\\.*"' -ErrorAction SilentlyContinue | Where-Object { $_.Line -match 'f["\'].*\\[^\\]' }
+$fstringIssues = Select-String -Path "backend\*.py" -Pattern 'f["\'].*\\.*["\']' -ErrorAction SilentlyContinue
 if ($null -eq $fstringIssues) {
     Write-Host " PASS" -ForegroundColor Green
 } else {
