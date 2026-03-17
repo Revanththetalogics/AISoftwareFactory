@@ -139,10 +139,10 @@ class DockerGenerator:
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \\
-    gcc \\
-    postgresql-client \\
-    {" \\".join(packages)} \\
+RUN apt-get update && apt-get install -y \
+    gcc \
+    postgresql-client \
+    {(' '.join(packages))} \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
@@ -215,10 +215,10 @@ COPY --from=builder /app/dist ./dist
 
 EXPOSE {port}
 
-HEALTHCHECK --interval=30s --timeout=3s \\
+HEALTHCHECK --interval=30s --timeout=3s
     CMD wget --no-verbose --tries=1 --spider http://localhost:{port}/health || exit 1
 
-CMD [{" ".join(f'"{cmd}"' for cmd in start_command.split())}]
+CMD [{(', '.join(f'"{cmd}"' for cmd in start_command.split()))}]
 '''
         
         self._logger.info(
