@@ -63,44 +63,44 @@ class ApiClient {
   }
 
   async activateProject(id: string) {
-    return this.request<any>(`/projects/${id}/activate`, {
+    return this.request<Project>(`/projects/${id}/activate`, {
       method: 'POST',
     });
   }
 
   // Workflows
   async executeWorkflow(data: { project_id: string; phase?: string }) {
-    return this.request<any>('/workflows/execute', {
+    return this.request<Workflow>('/workflows/execute', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
   async getWorkflows() {
-    return this.request<any[]>('/workflows');
+    return this.request<Workflow[]>('/workflows');
   }
 
   async getWorkflow(id: string) {
-    return this.request<any>(`/workflows/${id}`);
+    return this.request<Workflow>(`/workflows/${id}`);
   }
 
   async cancelWorkflow(id: string) {
-    return this.request<any>(`/workflows/${id}/cancel`, {
+    return this.request<Workflow>(`/workflows/${id}/cancel`, {
       method: 'POST',
     });
   }
 
   // Agents
   async getAgents() {
-    return this.request<any[]>('/agents');
+    return this.request<Agent[]>('/agents');
   }
 
   async getAgent(id: string) {
-    return this.request<any>(`/agents/${id}`);
+    return this.request<Agent>(`/agents/${id}`);
   }
 
   async assignTask(agentId: string, data: { task_type: string; description: string }) {
-    return this.request<any>(`/agents/${agentId}/tasks`, {
+    return this.request<Agent>(`/agents/${agentId}/tasks`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -108,23 +108,23 @@ class ApiClient {
 
   // Deployments
   async getDeployments() {
-    return this.request<any[]>('/deployments');
+    return this.request<Deployment[]>('/deployments');
   }
 
   async createDeployment(data: { project_id: string; environment: string; version: string }) {
-    return this.request<any>('/deployments', {
+    return this.request<Deployment>('/deployments', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
   async getDeployment(id: string) {
-    return this.request<any>(`/deployments/${id}`);
+    return this.request<Deployment>(`/deployments/${id}`);
   }
 
   // Health
   async getHealth() {
-    return this.request<any>('/health');
+    return this.request<{ status: string; version: string }>('/health');
   }
 
   // WebSocket
