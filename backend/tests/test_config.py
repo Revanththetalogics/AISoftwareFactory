@@ -31,13 +31,13 @@ class TestSettings:
         """Test that environment values are validated."""
         # Valid environments
         assert Settings(ENVIRONMENT="development").ENVIRONMENT == "development"
-        assert Settings(ENVIRONMENT="production").ENVIRONMENT == "production"
+        assert Settings(ENVIRONMENT="production", SECRET_KEY="custom-secret-key").ENVIRONMENT == "production"
         assert Settings(ENVIRONMENT="staging").ENVIRONMENT == "staging"
         assert Settings(ENVIRONMENT="testing").ENVIRONMENT == "testing"
         
         # Case insensitive
         assert Settings(ENVIRONMENT="DEVELOPMENT").ENVIRONMENT == "development"
-        assert Settings(ENVIRONMENT="Production").ENVIRONMENT == "production"
+        assert Settings(ENVIRONMENT="Production", SECRET_KEY="custom-secret-key").ENVIRONMENT == "production"
         
         # Invalid environment
         with pytest.raises(ValidationError) as exc_info:
@@ -113,7 +113,7 @@ class TestSettings:
         assert dev_settings.is_production is False
         assert dev_settings.is_testing is False
         
-        prod_settings = Settings(ENVIRONMENT="production")
+        prod_settings = Settings(ENVIRONMENT="production", SECRET_KEY="custom-secret-key")
         assert prod_settings.is_development is False
         assert prod_settings.is_production is True
         assert prod_settings.is_testing is False

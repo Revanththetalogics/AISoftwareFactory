@@ -149,6 +149,42 @@ class WorkflowService:
         
         return workflow
     
+    async def update_workflow_status(
+        self,
+        workflow_id: str,
+        status: str
+    ) -> Optional[Workflow]:
+        """
+        Update workflow status.
+        
+        Args:
+            workflow_id: Workflow ID
+            status: New status value
+            
+        Returns:
+            Updated workflow or None if not found
+        """
+        workflow = self._workflows.get(workflow_id)
+        if not workflow:
+            return None
+        
+        try:
+            workflow.status = WorkflowStatus(status)
+            self._logger.info(
+                "Workflow status updated",
+                workflow_id=workflow_id,
+                status=status
+            )
+        except ValueError:
+            self._logger.error(
+                "Invalid workflow status",
+                workflow_id=workflow_id,
+                status=status
+            )
+            return None
+        
+        return workflow
+    
     async def cancel_workflow(self, workflow_id: str) -> Optional[Workflow]:
         """
         Cancel a workflow.

@@ -26,6 +26,14 @@ class TaskStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
+class AgentStatus(str, Enum):
+    """Agent status."""
+    IDLE = "idle"
+    BUSY = "busy"
+    OFFLINE = "offline"
+    ERROR = "error"
+
+
 @dataclass
 class AgentIdentity:
     """
