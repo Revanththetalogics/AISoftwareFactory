@@ -4,12 +4,12 @@ export interface Project {
   description: string;
   requirements?: string;
   status: 'draft' | 'active' | 'paused' | 'completed' | 'failed';
-  tech_stack?: Record<string, any>;
+  tech_stack?: Record<string, unknown>;
   current_phase?: string;
   progress_percent: number;
   created_at: string;
   updated_at: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface Agent {
@@ -20,7 +20,7 @@ export interface Agent {
   status: 'idle' | 'running' | 'busy' | 'error';
   current_task?: string;
   last_active?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface Workflow {

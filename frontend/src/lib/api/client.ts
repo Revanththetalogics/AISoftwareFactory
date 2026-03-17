@@ -1,3 +1,5 @@
+import type { Project, Agent, Workflow, Deployment, Simulation, SystemStatus, AgentActivity, Notification } from '@/lib/types';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000/ws';
 
@@ -33,22 +35,22 @@ class ApiClient {
 
   // Projects
   async getProjects() {
-    return this.request<any[]>('/projects');
+    return this.request<Project[]>('/projects');
   }
 
   async getProject(id: string) {
-    return this.request<any>(`/projects/${id}`);
+    return this.request<Project>(`/projects/${id}`);
   }
 
   async createProject(data: { name: string; description: string; requirements?: string }) {
-    return this.request<any>('/projects', {
+    return this.request<Project>('/projects', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async updateProject(id: string, data: Partial<any>) {
-    return this.request<any>(`/projects/${id}`, {
+  async updateProject(id: string, data: Partial<Project>) {
+    return this.request<Project>(`/projects/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
