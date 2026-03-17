@@ -40,16 +40,17 @@ class OllamaProvider(BaseLLMProvider):
     
     # Recommended models for different tasks
     RECOMMENDED_MODELS = {
-        "general": "llama2",
-        "coding": "deepseek-coder",
-        "chat": "qwen",
-        "reasoning": "mixtral",
+        "general": "llama3.2",
+        "coding": "deepseek-coder-v2",
+        "chat": "qwen2.5",
+        "reasoning": "mixtral:8x7b",
+        "vision": "llama3.2-vision",
     }
     
     def __init__(
         self,
         base_url: str = "http://localhost:11434",
-        default_model: str = "llama2",
+        default_model: str = "llama3.2",
         timeout: float = 120.0,
     ):
         """

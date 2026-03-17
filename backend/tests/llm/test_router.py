@@ -36,7 +36,7 @@ class TestModelRouter:
     
     def test_router_initialization(self):
         """Test router initialization."""
-        assert self.router.default_model == "llama2"
+        assert self.router.default_model == "llama3.2"
         assert len(self.router.model_configs) > 0
     
     def test_register_provider(self):
@@ -67,21 +67,21 @@ class TestModelRouter:
         coding_model = self.router.select_model("coding")
         chat_model = self.router.select_model("chat")
         
-        assert coding_model == "deepseek-coder"
-        assert chat_model == "qwen"
+        assert coding_model == "deepseek-coder-v2"
+        assert chat_model == "qwen2.5"
     
     def test_select_model_default(self):
         """Test model selection fallback to default."""
         model = self.router.select_model("unknown_task")
         
-        assert model == "llama2"  # default
+        assert model == "llama3.2"  # default
     
     def test_get_model_info(self):
         """Test getting model information."""
-        info = self.router.get_model_info("llama2")
+        info = self.router.get_model_info("llama3.2")
         
         assert info is not None
-        assert info.name == "llama2"
+        assert info.name == "llama3.2"
         assert info.provider == "ollama"
     
     def test_get_model_info_not_found(self):
@@ -94,9 +94,9 @@ class TestModelRouter:
         """Test listing models."""
         models = self.router.list_models()
         
-        assert "llama2" in models
-        assert "deepseek-coder" in models
-        assert "qwen" in models
+        assert "llama3.2" in models
+        assert "deepseek-coder-v2" in models
+        assert "qwen2.5" in models
     
     def test_get_available_providers(self):
         """Test getting available providers."""

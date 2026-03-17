@@ -58,7 +58,7 @@ to the best available provider based on model requirements, availability,
         ... )
     """
     
-    def __init__(self, default_model: str = "llama2"):
+    def __init__(self, default_model: str = "llama3.2"):
         """
         Initialize the model router.
         
@@ -76,33 +76,88 @@ to the best available provider based on model requirements, availability,
     def _init_default_configs(self) -> None:
         """Initialize default model configurations."""
         default_configs = [
+            # Llama 3.2 - General purpose, fast, efficient
             ModelConfig(
-                name="llama2",
+                name="llama3.2",
                 provider="ollama",
-                priority=3,
-                capabilities=["text_generation", "chat", "code_generation"],
-                context_window=4096,
+                priority=5,
+                capabilities=["text_generation", "chat", "code_generation", "reasoning"],
+                context_window=128000,
             ),
+            # Llama 3.2 Vision - Multimodal capabilities
+            ModelConfig(
+                name="llama3.2-vision",
+                provider="ollama",
+                priority=4,
+                capabilities=["text_generation", "chat", "vision", "reasoning"],
+                context_window=128000,
+            ),
+            # DeepSeek Coder - Specialized for code generation
             ModelConfig(
                 name="deepseek-coder",
                 provider="ollama",
                 priority=5,
-                capabilities=["code_generation", "code_review", "text_generation"],
+                capabilities=["code_generation", "code_review", "text_generation", "reasoning"],
                 context_window=16384,
             ),
+            ModelConfig(
+                name="deepseek-coder-v2",
+                provider="ollama",
+                priority=6,
+                capabilities=["code_generation", "code_review", "text_generation", "reasoning"],
+                context_window=128000,
+            ),
+            # Qwen - Strong multilingual and reasoning capabilities
             ModelConfig(
                 name="qwen",
                 provider="ollama",
                 priority=4,
-                capabilities=["chat", "text_generation", "reasoning"],
+                capabilities=["chat", "text_generation", "reasoning", "code_generation"],
                 context_window=8192,
             ),
+            ModelConfig(
+                name="qwen2.5",
+                provider="ollama",
+                priority=5,
+                capabilities=["chat", "text_generation", "reasoning", "code_generation"],
+                context_window=128000,
+            ),
+            ModelConfig(
+                name="qwen2.5-coder",
+                provider="ollama",
+                priority=5,
+                capabilities=["code_generation", "code_review", "text_generation", "reasoning"],
+                context_window=128000,
+            ),
+            # Mixtral - MoE architecture for complex reasoning
             ModelConfig(
                 name="mixtral",
                 provider="ollama",
                 priority=4,
-                capabilities=["reasoning", "text_generation", "chat"],
+                capabilities=["reasoning", "text_generation", "chat", "code_generation"],
                 context_window=32768,
+            ),
+            ModelConfig(
+                name="mixtral:8x7b",
+                provider="ollama",
+                priority=5,
+                capabilities=["reasoning", "text_generation", "chat", "code_generation"],
+                context_window=32768,
+            ),
+            # Llama 3.1 - Larger variant for complex tasks
+            ModelConfig(
+                name="llama3.1",
+                provider="ollama",
+                priority=4,
+                capabilities=["text_generation", "chat", "code_generation", "reasoning"],
+                context_window=128000,
+            ),
+            ModelConfig(
+                name="llama3.1:70b",
+                provider="ollama",
+                priority=3,
+                capabilities=["text_generation", "chat", "code_generation", "reasoning"],
+                context_window=128000,
             ),
         ]
         
@@ -175,12 +230,12 @@ to the best available provider based on model requirements, availability,
         """
         # Map task types to preferred models
         task_model_map = {
-            "coding": "deepseek-coder",
-            "code_generation": "deepseek-coder",
-            "code_review": "deepseek-coder",
-            "chat": "qwen",
-            "reasoning": "mixtral",
-            "general": "llama2",
+            "coding": "deepseek-coder-v2",
+            "code_generation": "deepseek-coder-v2",
+            "code_review": "deepseek-coder-v2",
+            "chat": "qwen2.5",
+            "reasoning": "mixtral:8x7b",
+            "general": "llama3.2",
         }
         
         preferred_model = task_model_map.get(task_type, self.default_model)
