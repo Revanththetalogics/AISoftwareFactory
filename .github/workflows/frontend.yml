@@ -26,6 +26,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verify package-lock.json exists
+        run: |
+          if [ ! -f ./frontend/package-lock.json ]; then
+            echo "package-lock.json not found, running npm install to generate it"
+            cd frontend && npm install
+          fi
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -34,7 +41,9 @@ jobs:
       - name: Cache npm dependencies
         uses: actions/cache@v4
         with:
-          path: ~/.npm
+          path: |
+            ~/.npm
+            frontend/node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
