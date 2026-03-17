@@ -118,7 +118,7 @@ class TestModelRouterFallbacks:
     @pytest.mark.asyncio
     async def test_generate_with_mock_provider(self):
         """Test generation with mock provider."""
-        from tests.llm.test_base_provider import MockProvider
+        from backend.tests.llm.test_base_provider import MockProvider
         
         provider = MockProvider(name="mock", default_model="mock-model")
         self.router.register_provider(provider)
@@ -131,7 +131,7 @@ class TestModelRouterFallbacks:
     @pytest.mark.asyncio
     async def test_generate_fallback(self):
         """Test fallback when primary provider fails."""
-        from tests.llm.test_base_provider import MockProvider
+        from backend.tests.llm.test_base_provider import MockProvider
         
         # Create failing provider
         failing_provider = MockProvider(name="failing", default_model="failing-model")
@@ -152,7 +152,7 @@ class TestModelRouterFallbacks:
     @pytest.mark.asyncio
     async def test_health_check(self):
         """Test health check."""
-        from tests.llm.test_base_provider import MockProvider
+        from backend.tests.llm.test_base_provider import MockProvider
         
         provider = MockProvider()
         self.router.register_provider(provider)
