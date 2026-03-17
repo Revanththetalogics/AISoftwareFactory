@@ -11,7 +11,6 @@ import {
   GitBranch,
   Rocket,
   Settings,
-  ChevronRight,
   Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';

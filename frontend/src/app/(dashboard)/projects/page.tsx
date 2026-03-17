@@ -7,12 +7,12 @@ import {
   Filter,
   MoreHorizontal,
   Bot,
-  Clock,
   CheckCircle2,
   AlertCircle,
   ArrowRight,
   Sparkles,
   FolderKanban,
+  Loader2,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +34,9 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useState } from 'react';
+import { useProjects, useCreateProject, useDeleteProject } from '@/lib/hooks';
+import { toast } from 'sonner';
+import type { Project } from '@/lib/types';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -56,75 +59,6 @@ const itemVariants = {
     },
   },
 };
-
-const projects = [
-  {
-    id: '1',
-    name: 'SaaS Dashboard',
-    description: 'Modern analytics dashboard with real-time data visualization',
-    stage: 'Design',
-    progress: 45,
-    agents: 3,
-    status: 'active',
-    createdAt: '2 days ago',
-    health: 'good',
-  },
-  {
-    id: '2',
-    name: 'E-commerce API',
-    description: 'RESTful API for online store with payment integration',
-    stage: 'Planning',
-    progress: 25,
-    agents: 2,
-    status: 'active',
-    createdAt: '5 days ago',
-    health: 'good',
-  },
-  {
-    id: '3',
-    name: 'Mobile Banking App',
-    description: 'Secure mobile banking application with biometric auth',
-    stage: 'Engineering',
-    progress: 68,
-    agents: 5,
-    status: 'active',
-    createdAt: '1 week ago',
-    health: 'warning',
-  },
-  {
-    id: '4',
-    name: 'AI Content Platform',
-    description: 'Content generation platform powered by LLMs',
-    stage: 'Testing',
-    progress: 85,
-    agents: 4,
-    status: 'active',
-    createdAt: '2 weeks ago',
-    health: 'good',
-  },
-  {
-    id: '5',
-    name: 'Healthcare Portal',
-    description: 'Patient management system for clinics',
-    stage: 'Deployment',
-    progress: 95,
-    agents: 3,
-    status: 'completed',
-    createdAt: '3 weeks ago',
-    health: 'good',
-  },
-  {
-    id: '6',
-    name: 'Social Media Analytics',
-    description: 'Track and analyze social media metrics',
-    stage: 'Idea',
-    progress: 5,
-    agents: 1,
-    status: 'draft',
-    createdAt: '1 day ago',
-    health: 'good',
-  },
-];
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -152,13 +86,58 @@ const getHealthIcon = (health: string) => {
 
 export default function ProjectsPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedProject, setSelectedProject] = useState<typeof projects[0] | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectDescription, setNewProjectDescription] = useState('');
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+  const { data: projects = [], isLoading } = useProjects();
+  const createProject = useCreateProject();
+  const deleteProject = useDeleteProject();
 
   const filteredProjects = projects.filter(
     (p) =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleCreateProject = async () => {
+    if (!newProjectName.trim()) {
+      toast.error('Project name is required');
+      return;
+    }
+
+    try {
+      await createProject.mutateAsync({
+        name: newProjectName,
+        description: newProjectDescription,
+      });
+      toast.success('Project created successfully');
+      setNewProjectName('');
+      setNewProjectDescription('');
+      setIsCreateDialogOpen(false);
+    } catch (error) {
+      toast.error('Failed to create project');
+    }
+  };
+
+  const handleDeleteProject = async (id: string) => {
+    try {
+      await deleteProject.mutateAsync(id);
+      toast.success('Project deleted successfully');
+      setSelectedProject(null);
+    } catch (error) {
+      toast.error('Failed to delete project');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -175,7 +154,7 @@ export default function ProjectsPage() {
             Manage and monitor your AI-powered software projects
           </p>
         </div>
-        <Dialog>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger>
             <Button className="bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700">
               <Plus className="mr-2 h-4 w-4" />
@@ -194,6 +173,8 @@ export default function ProjectsPage() {
                 <label className="text-sm font-medium text-slate-300">Project Name</label>
                 <Input
                   placeholder="e.g., SaaS Analytics Platform"
+                  value={newProjectName}
+                  onChange={(e) => setNewProjectName(e.target.value)}
                   className="mt-1 border-slate-700 bg-slate-800 text-slate-200"
                 />
               </div>
@@ -201,12 +182,22 @@ export default function ProjectsPage() {
                 <label className="text-sm font-medium text-slate-300">Description</label>
                 <textarea
                   placeholder="Describe what you want to build..."
+                  value={newProjectDescription}
+                  onChange={(e) => setNewProjectDescription(e.target.value)}
                   className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 p-3 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
                   rows={4}
                 />
               </div>
-              <Button className="w-full bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700">
-                <Sparkles className="mr-2 h-4 w-4" />
+              <Button 
+                className="w-full bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700"
+                onClick={handleCreateProject}
+                disabled={createProject.isPending}
+              >
+                {createProject.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="mr-2 h-4 w-4" />
+                )}
                 Start Building
               </Button>
             </div>
@@ -247,7 +238,9 @@ export default function ProjectsPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-slate-100">{project.name}</h3>
-                    <p className="text-xs text-slate-500">{project.createdAt}</p>
+                    <p className="text-xs text-slate-500">
+                      {new Date(project.created_at).toLocaleDateString()}
+                    </p>
                   </div>
                 </div>
                 <DropdownMenu>
@@ -266,7 +259,10 @@ export default function ProjectsPage() {
                     <DropdownMenuItem className="text-slate-300 focus:bg-slate-800">
                       Edit Project
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-400 focus:bg-slate-800">
+                    <DropdownMenuItem 
+                      className="text-red-400 focus:bg-slate-800"
+                      onClick={() => handleDeleteProject(project.id)}
+                    >
                       Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -281,23 +277,23 @@ export default function ProjectsPage() {
                   {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
                 </Badge>
                 <div className="flex items-center gap-1 text-xs text-slate-500">
-                  {getHealthIcon(project.health)}
-                  <span className="capitalize">{project.health}</span>
+                  {getHealthIcon('good')}
+                  <span className="capitalize">good</span>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500">Stage: {project.stage}</span>
-                  <span className="text-slate-300">{project.progress}%</span>
+                  <span className="text-slate-500">Stage: {project.current_phase || 'Idea'}</span>
+                  <span className="text-slate-300">{project.progress_percent}%</span>
                 </div>
-                <Progress value={project.progress} className="h-2 bg-slate-800" />
+                <Progress value={project.progress_percent} className="h-2 bg-slate-800" />
               </div>
 
               <div className="flex items-center justify-between pt-2 border-t border-slate-800">
                 <div className="flex items-center gap-1 text-xs text-slate-500">
                   <Bot className="h-3.5 w-3.5" />
-                  <span>{project.agents} agents</span>
+                  <span>3 agents</span>
                 </div>
                 <Button
                   variant="ghost"
@@ -343,11 +339,11 @@ export default function ProjectsPage() {
                   </div>
                   <div className="rounded-lg border border-slate-800 bg-slate-800/50 p-4">
                     <p className="text-xs text-slate-500">Stage</p>
-                    <p className="mt-1 font-medium text-slate-200">{selectedProject.stage}</p>
+                    <p className="mt-1 font-medium text-slate-200">{selectedProject.current_phase || 'Idea'}</p>
                   </div>
                   <div className="rounded-lg border border-slate-800 bg-slate-800/50 p-4">
-                    <p className="text-xs text-slate-500">Active Agents</p>
-                    <p className="mt-1 font-medium text-slate-200">{selectedProject.agents}</p>
+                    <p className="text-xs text-slate-500">Progress</p>
+                    <p className="mt-1 font-medium text-slate-200">{selectedProject.progress_percent}%</p>
                   </div>
                 </div>
 
@@ -355,10 +351,10 @@ export default function ProjectsPage() {
                   <div className="mb-2 flex items-center justify-between">
                     <span className="text-sm text-slate-500">Progress</span>
                     <span className="text-sm font-medium text-slate-200">
-                      {selectedProject.progress}%
+                      {selectedProject.progress_percent}%
                     </span>
                   </div>
-                  <Progress value={selectedProject.progress} className="h-3 bg-slate-800" />
+                  <Progress value={selectedProject.progress_percent} className="h-3 bg-slate-800" />
                 </div>
 
                 <div className="flex gap-3">

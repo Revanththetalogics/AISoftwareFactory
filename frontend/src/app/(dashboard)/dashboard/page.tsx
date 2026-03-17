@@ -327,7 +327,7 @@ export default function DashboardPage() {
               <div className="relative">
                 <div className="absolute left-3 top-0 bottom-0 w-px bg-slate-800"></div>
                 <div className="space-y-4">
-                  {pipelineStages.map((stage, index) => (
+                  {pipelineStages.map((stage) => (
                     <div key={stage.name} className="relative flex gap-4">
                       <div
                         className={`relative z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 ${

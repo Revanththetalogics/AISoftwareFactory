@@ -3,21 +3,18 @@
 import { motion } from 'framer-motion';
 import {
   Bot,
-  Cpu,
   Code2,
   Palette,
   Shield,
   Server,
   Activity,
   Clock,
-  CheckCircle2,
   AlertCircle,
   Pause,
   Play,
   RefreshCw,
   Zap,
   Terminal,
-  FileCode,
   Layout,
   Database,
 } from 'lucide-react';

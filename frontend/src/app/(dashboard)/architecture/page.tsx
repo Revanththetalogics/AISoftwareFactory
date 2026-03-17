@@ -2,15 +2,12 @@
 
 import { motion } from 'framer-motion';
 import {
-  GitBranch,
   Layers,
   Database,
   Server,
   Globe,
   Cpu,
   Shield,
-  Box,
-  ArrowRight,
   ArrowDown,
   CheckCircle2,
   AlertCircle,

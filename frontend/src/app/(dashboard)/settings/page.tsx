@@ -2,19 +2,12 @@
 
 import { motion } from 'framer-motion';
 import {
-  Settings,
-  User,
-  Bell,
-  Shield,
-  Database,
-  Cpu,
   Globe,
   Moon,
   Sun,
   Save,
   Key,
   Webhook,
-  Mail,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

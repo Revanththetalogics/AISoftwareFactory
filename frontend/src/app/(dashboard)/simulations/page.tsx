@@ -14,7 +14,6 @@ import {
   Layout,
   Code2,
   Server,
-  ArrowRight,
   Zap,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
