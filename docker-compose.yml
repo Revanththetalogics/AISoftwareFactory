@@ -64,7 +64,7 @@ services:
       - ai-factory
     depends_on:
       - frontend
-      - backend"
+      - backend
 
   # Ollama AI Service
   ollama:
