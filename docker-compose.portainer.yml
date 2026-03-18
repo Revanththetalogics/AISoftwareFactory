@@ -53,10 +53,8 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
-      - "443:443"
     volumes:
-      - /home/ubuntu/ai-software-factory/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /home/ubuntu/ai-software-factory/nginx/nginx-simple.conf:/etc/nginx/nginx.conf:ro
     networks:
       - ai-factory
     depends_on:
