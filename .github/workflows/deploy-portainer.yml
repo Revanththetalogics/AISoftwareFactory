@@ -18,9 +18,9 @@ on:
       - '.github/workflows/deploy-portainer.yml'
 
 env:
-  GHCR_REGISTRY: ghcr.io
-  IMAGE_NAME_BACKEND: ${{ github.repository }}/backend
-  IMAGE_NAME_FRONTEND: ${{ github.repository }}/frontend
+  DOCKERHUB_REGISTRY: docker.io
+  IMAGE_NAME_BACKEND: revanth2245/aisoftwarefactory-backend
+  IMAGE_NAME_FRONTEND: revanth2245/aisoftwarefactory-frontend
 
 jobs:
   deploy:
