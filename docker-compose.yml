@@ -54,13 +54,30 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
-    volumes:
-      - ./nginx/nginx-simple.conf:/etc/nginx/nginx.conf:ro
     networks:
       - ai-factory
     depends_on:
       - frontend
-      - backend"
+      - backend
+    # Config embedded in container - no volume needed
+    configs:
+      - source: nginx_config
+        target: /etc/nginx/nginx.conf
+
+configs:
+  nginx_config:
+    content: |
+      events { worker_connections 1024; }
+      http {
+        upstream frontend { server frontend:3000; }
+        upstream backend { server backend:8000; }
+        server {
+          listen 80;
+          location / { proxy_pass http://frontend; proxy_http_version 1.1; proxy_set_header Host $host; }
+          location /api/ { proxy_pass http://backend; proxy_http_version 1.1; proxy_set_header Host $host; }
+          location /ws/ { proxy_pass http://backend; proxy_http_version 1.1; proxy_set_header Upgrade $http_upgrade; proxy_set_header Connection "upgrade"; }
+        }
+      }"
 
   # Ollama AI Service
   ollama:
