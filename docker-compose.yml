@@ -40,16 +40,11 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=https://ai-staging.thetalogics.com/api
+      - NEXT_PUBLIC_API_URL=http://ai-staging.thetalogics.com/api
     networks:
       - ai-factory
     depends_on:
       - backend
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1))"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   # Nginx Reverse Proxy
   nginx:
