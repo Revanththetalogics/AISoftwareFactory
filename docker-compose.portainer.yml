@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # AI Software Factory Backend
   backend:
-    image: ghcr.io/revanththetalogics/AISoftwareFactory/backend:staging
+    image: ghcr.io/revanththetalogics/aisoftwarefactory/backend:staging
     container_name: ai-factory-backend
     restart: unless-stopped
     ports:
@@ -30,7 +30,7 @@ services:
 
   # AI Software Factory Frontend
   frontend:
-    image: ghcr.io/revanththetalogics/AISoftwareFactory/frontend:staging
+    image: ghcr.io/revanththetalogics/aisoftwarefactory/frontend:staging
     container_name: ai-factory-frontend
     restart: unless-stopped
     ports:
