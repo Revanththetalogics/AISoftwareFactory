@@ -10,9 +10,11 @@ from fastapi import Depends, HTTPException, status, WebSocket
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from backend.core.logging import get_logger
+from backend.services.auth_service import get_auth_service, AuthService
+from backend.core.exceptions import AuthenticationError, AuthorizationError
 
 logger = get_logger(__name__)
-security = HTTPBearer(auto_error=False)
+security = HTTPBearer(auto_error=True)
 
 
 class User:
@@ -33,57 +35,84 @@ class User:
 
 
 async def get_current_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
-) -> Optional[User]:
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    auth_service: AuthService = Depends(get_auth_service),
+) -> User:
     """
-    Get current authenticated user.
-    
-    This is a stub implementation. In production, this would:
-    - Validate JWT tokens
-    - Check token expiration
-    - Fetch user from database
-    - Verify user is active
+    Get current authenticated user by validating JWT token.
     
     Args:
-        credentials: HTTP authorization credentials
+        credentials: HTTP authorization credentials containing JWT token
+        auth_service: Authentication service instance
         
     Returns:
-        User object or None for unauthenticated
+        User object for authenticated user
         
     Raises:
         HTTPException: If authentication fails
     """
-    # Stub: Allow unauthenticated access for development
-    if not credentials:
+    try:
+        # Decode and validate the JWT token
+        payload = auth_service.decode_token(credentials.credentials)
+        
+        # Extract user information from token
+        user_id: str = payload.get("sub")
+        username: str = payload.get("username")
+        
+        if user_id is None or username is None:
+            logger.warning("Token missing required fields")
+            raise AuthenticationError("Invalid token format")
+        
+        # In production, fetch user from database
+        # For now, create mock user based on token data
+        mock_users = {
+            "user-admin-001": {
+                "user_id": "user-admin-001",
+                "username": "admin",
+                "email": "admin@example.com",
+                "permissions": ["read", "write", "execute", "admin"],
+                "is_active": True
+            },
+            "user-dev-001": {
+                "user_id": "user-dev-001",
+                "username": "developer",
+                "email": "dev@example.com", 
+                "permissions": ["read", "write", "execute"],
+                "is_active": True
+            }
+        }
+        
+        user_data = mock_users.get(user_id)
+        if not user_data:
+            logger.warning("User not found", user_id=user_id)
+            raise AuthenticationError("User not found")
+            
+        if not user_data["is_active"]:
+            logger.warning("Inactive user", user_id=user_id)
+            raise AuthenticationError("Account is inactive")
+        
+        logger.info("User authenticated", user_id=user_id, username=username)
+        
         return User(
-            user_id="anonymous",
-            username="anonymous",
-            email="anonymous@example.com",
-            permissions=["read"],
+            user_id=user_data["user_id"],
+            username=user_data["username"],
+            email=user_data["email"],
+            permissions=user_data["permissions"],
+            is_active=user_data["is_active"]
         )
-    
-    # Stub: Validate token format
-    token = credentials.credentials
-    if token == "test-token":
-        return User(
-            user_id="user-123",
-            username="testuser",
-            email="test@example.com",
-            permissions=["read", "write", "execute"],
+        
+    except AuthenticationError as exc:
+        logger.warning("Authentication failed", error=str(exc))
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(exc),
+            headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    # For development, accept any token
-    return User(
-        user_id="dev-user",
-        username="developer",
-        email="dev@example.com",
-        permissions=["read", "write", "execute", "admin"],
-    )
 
 
 async def require_permissions(
     required_permissions: list[str],
-    user: Optional[User] = Depends(get_current_user),
+    user: User = Depends(get_current_user),
 ) -> User:
     """
     Require specific permissions for access.
@@ -98,16 +127,13 @@ async def require_permissions(
     Raises:
         HTTPException: If user lacks required permissions
     """
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    # Admin users bypass permission checks
+    if "admin" in user.permissions:
+        return user
     
     # Check if user has all required permissions
     missing = [p for p in required_permissions if p not in user.permissions]
-    if missing and "admin" not in user.permissions:
+    if missing:
         logger.warning(
             "Permission denied",
             user_id=user.user_id,
@@ -122,28 +148,52 @@ async def require_permissions(
     return user
 
 
-async def get_websocket_user(websocket: WebSocket) -> Optional[User]:
+async def get_websocket_user(
+    websocket: WebSocket,
+    auth_service: AuthService = Depends(get_auth_service),
+) -> Optional[User]:
     """
     Get user from WebSocket connection.
     
     Args:
         websocket: WebSocket connection
+        auth_service: Authentication service instance
         
     Returns:
-        User object or None
+        User object or None for anonymous connections
     """
-    # Stub: Extract token from query params or headers
-    token = websocket.query_params.get("token")
+    # Extract token from query parameters or headers
+    token = websocket.query_params.get("token") or websocket.headers.get("Authorization", "").replace("Bearer ", "")
     
-    if token == "test-token":
+    if not token:
+        # Allow anonymous connections for public endpoints
+        logger.debug("Anonymous WebSocket connection")
         return User(
-            user_id="user-123",
-            username="testuser",
-            email="test@example.com",
-            permissions=["read", "write", "execute"],
+            user_id="anonymous",
+            username="anonymous",
+            email="anonymous@example.com",
+            permissions=["read"],
         )
     
-    # Allow anonymous connections for development
+    try:
+        # Validate token
+        payload = auth_service.decode_token(token)
+        user_id = payload.get("sub")
+        username = payload.get("username")
+        
+        if user_id and username:
+            # Return authenticated user
+            return User(
+                user_id=user_id,
+                username=username,
+                email=f"{username}@example.com",
+                permissions=["read", "write", "execute"],
+            )
+    except AuthenticationError:
+        logger.warning("Invalid WebSocket token")
+        # Fall through to anonymous user
+    
+    # Return anonymous user for invalid tokens
     return User(
         user_id="anonymous",
         username="anonymous",

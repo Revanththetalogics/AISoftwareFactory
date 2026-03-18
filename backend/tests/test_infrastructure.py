@@ -65,7 +65,7 @@ class TestSecretsManager:
         manager = SecretsManager()
         
         with pytest.raises(ValueError):
-            manager.get_secret("NONEXISTENT", required=True)
+            manager.get_secret("THIS_SECRET_SHOULD_NOT_EXIST_AT_ALL_12345", required=True)
 
 
 class TestHealthChecker:

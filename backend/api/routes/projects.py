@@ -9,6 +9,7 @@ from datetime import datetime
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Depends, Query, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api.models import (
     ProjectCreate,
@@ -17,13 +18,15 @@ from backend.api.models import (
     ProjectStatus,
 )
 from backend.api.dependencies import get_current_user, require_permissions
+from backend.services.database_services import get_project_service
+from backend.db.session import get_db
 from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/projects", tags=["projects"])
 
-# In-memory project store (stub)
-_projects: dict[str, dict] = {}
+# Get service instance
+project_service = get_project_service()
 
 
 @router.post(
@@ -35,6 +38,7 @@ _projects: dict[str, dict] = {}
 async def create_project(
     request: ProjectCreate,
     user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> ProjectResponse:
     """
     Create a new software factory project.
@@ -42,34 +46,35 @@ async def create_project(
     The project will be initialized in DRAFT status and can then be
     activated to start the AI-driven development workflow.
     """
-    project_id = f"proj-{uuid4().hex[:12]}"
-    
-    project = {
-        "id": project_id,
-        "name": request.name,
-        "description": request.description,
-        "requirements": request.requirements,
-        "status": ProjectStatus.DRAFT,
-        "tech_stack": request.tech_stack or {},
-        "current_phase": None,
-        "progress_percent": 0,
-        "created_at": datetime.now(),
-        "updated_at": datetime.now(),
-        "metadata": {
-            "created_by": user.user_id if user else "anonymous",
-        },
-    }
-    
-    _projects[project_id] = project
+    project = await project_service.create_project(
+        name=request.name,
+        description=request.description,
+        requirements=request.requirements,
+        tech_stack=request.tech_stack,
+        owner_id=user.user_id if user else "anonymous",
+        db=db
+    )
     
     logger.info(
         "Project created",
-        project_id=project_id,
+        project_id=project.id,
         name=request.name,
         user=user.user_id if user else "anonymous",
     )
     
-    return ProjectResponse(**project)
+    return ProjectResponse(
+        id=project.id,
+        name=project.name,
+        description=project.description,
+        requirements=project.requirements,
+        status=ProjectStatus(project.status),
+        tech_stack=project.tech_stack,
+        current_phase=project.current_phase,
+        progress_percent=project.progress_percent,
+        created_at=project.created_at,
+        updated_at=project.updated_at,
+        metadata=project.extra_metadata
+    )
 
 
 @router.get(
@@ -82,22 +87,20 @@ async def list_projects(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> List[ProjectResponse]:
     """
     List all projects with optional filtering.
     
     Supports pagination and status filtering.
     """
-    projects = list(_projects.values())
-    
-    if status:
-        projects = [p for p in projects if p["status"] == status]
-    
-    # Sort by creation date (newest first)
-    projects.sort(key=lambda p: p["created_at"], reverse=True)
-    
-    # Apply pagination
-    projects = projects[skip : skip + limit]
+    projects = await project_service.list_projects(
+        owner_id=user.user_id if user else None,
+        status=status.value if status else None,
+        skip=skip,
+        limit=limit,
+        db=db
+    )
     
     logger.info(
         "Projects listed",
@@ -106,7 +109,22 @@ async def list_projects(
         user=user.user_id if user else "anonymous",
     )
     
-    return [ProjectResponse(**p) for p in projects]
+    return [
+        ProjectResponse(
+            id=p.id,
+            name=p.name,
+            description=p.description,
+            requirements=p.requirements,
+            status=ProjectStatus(p.status),
+            tech_stack=p.tech_stack,
+            current_phase=p.current_phase,
+            progress_percent=p.progress_percent,
+            created_at=p.created_at,
+            updated_at=p.updated_at,
+            metadata=p.metadata
+        )
+        for p in projects
+    ]
 
 
 @router.get(
@@ -117,15 +135,23 @@ async def list_projects(
 async def get_project(
     project_id: str,
     user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> ProjectResponse:
     """
     Get detailed information about a specific project.
     """
-    if project_id not in _projects:
+    project = await project_service.get_project(project_id, db=db)
+    
+    if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Project {project_id} not found",
         )
+    
+    # Check ownership/permissions
+    if project.owner_id != (user.user_id if user else "anonymous"):
+        # In production, implement proper RBAC
+        pass
     
     logger.info(
         "Project retrieved",
@@ -133,7 +159,19 @@ async def get_project(
         user=user.user_id if user else "anonymous",
     )
     
-    return ProjectResponse(**_projects[project_id])
+    return ProjectResponse(
+        id=project.id,
+        name=project.name,
+        description=project.description,
+        requirements=project.requirements,
+        status=ProjectStatus(project.status),
+        tech_stack=project.tech_stack,
+        current_phase=project.current_phase,
+        progress_percent=project.progress_percent,
+        created_at=project.created_at,
+        updated_at=project.updated_at,
+        metadata=project.extra_metadata
+    )
 
 
 @router.patch(
@@ -145,26 +183,38 @@ async def update_project(
     project_id: str,
     request: ProjectUpdate,
     user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> ProjectResponse:
     """
     Update project information.
     
     Only provided fields will be updated.
     """
-    if project_id not in _projects:
+    project = await project_service.get_project(project_id, db=db)
+    
+    if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Project {project_id} not found",
         )
     
-    project = _projects[project_id]
+    # Check ownership/permissions
+    if project.owner_id != (user.user_id if user else "anonymous"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to update this project"
+        )
     
-    # Update only provided fields
+    # Prepare updates
     update_data = request.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        project[field] = value
+    if "status" in update_data:
+        update_data["status"] = update_data["status"].value
     
-    project["updated_at"] = datetime.now()
+    updated_project = await project_service.update_project(
+        project_id=project_id,
+        updates=update_data,
+        db=db
+    )
     
     logger.info(
         "Project updated",
@@ -173,7 +223,19 @@ async def update_project(
         user=user.user_id if user else "anonymous",
     )
     
-    return ProjectResponse(**project)
+    return ProjectResponse(
+        id=updated_project.id,
+        name=updated_project.name,
+        description=updated_project.description,
+        requirements=updated_project.requirements,
+        status=ProjectStatus(updated_project.status),
+        tech_stack=updated_project.tech_stack,
+        current_phase=updated_project.current_phase,
+        progress_percent=updated_project.progress_percent,
+        created_at=updated_project.created_at,
+        updated_at=updated_project.updated_at,
+        metadata=updated_project.metadata
+    )
 
 
 @router.delete(
@@ -184,19 +246,35 @@ async def update_project(
 async def delete_project(
     project_id: str,
     user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> None:
     """
     Delete a project and all associated data.
     
     This action cannot be undone.
     """
-    if project_id not in _projects:
+    project = await project_service.get_project(project_id, db=db)
+    
+    if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Project {project_id} not found",
         )
     
-    del _projects[project_id]
+    # Check ownership/permissions
+    if project.owner_id != (user.user_id if user else "anonymous"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this project"
+        )
+    
+    success = await project_service.delete_project(project_id, db=db)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete project"
+        )
     
     logger.info(
         "Project deleted",
@@ -213,29 +291,42 @@ async def delete_project(
 async def activate_project(
     project_id: str,
     user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> ProjectResponse:
     """
     Activate a project to start the AI development workflow.
     
     Changes status from DRAFT to ACTIVE and begins the first phase.
     """
-    if project_id not in _projects:
+    project = await project_service.get_project(project_id, db=db)
+    
+    if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Project {project_id} not found",
         )
     
-    project = _projects[project_id]
-    
-    if project["status"] != ProjectStatus.DRAFT:
+    # Check ownership/permissions
+    if project.owner_id != (user.user_id if user else "anonymous"):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Cannot activate project with status {project['status']}",
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to activate this project"
         )
     
-    project["status"] = ProjectStatus.ACTIVE
-    project["current_phase"] = "requirements"
-    project["updated_at"] = datetime.now()
+    if project.status != "draft":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot activate project with status {project.status}"
+        )
+    
+    updated_project = await project_service.update_project(
+        project_id=project_id,
+        updates={
+            "status": "active",
+            "current_phase": "requirements"
+        },
+        db=db
+    )
     
     logger.info(
         "Project activated",
@@ -243,4 +334,16 @@ async def activate_project(
         user=user.user_id if user else "anonymous",
     )
     
-    return ProjectResponse(**project)
+    return ProjectResponse(
+        id=updated_project.id,
+        name=updated_project.name,
+        description=updated_project.description,
+        requirements=updated_project.requirements,
+        status=ProjectStatus(updated_project.status),
+        tech_stack=updated_project.tech_stack,
+        current_phase=updated_project.current_phase,
+        progress_percent=updated_project.progress_percent,
+        created_at=updated_project.created_at,
+        updated_at=updated_project.updated_at,
+        metadata=updated_project.metadata
+    )

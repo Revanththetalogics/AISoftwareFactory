@@ -13,9 +13,9 @@ client = TestClient(app)
 class TestCreateProject:
     """Test cases for POST /projects."""
     
-    def test_create_project_success(self):
+    def test_create_project_success(self, authenticated_client):
         """Test creating a project."""
-        response = client.post(
+        response = authenticated_client.post(
             "/api/v1/projects",
             json={
                 "name": "Test Project",
@@ -30,9 +30,9 @@ class TestCreateProject:
         assert data["status"] == "draft"
         assert "id" in data
     
-    def test_create_project_validation_error(self):
+    def test_create_project_validation_error(self, authenticated_client):
         """Test validation error."""
-        response = client.post(
+        response = authenticated_client.post(
             "/api/v1/projects",
             json={"name": "", "description": "Test"},
         )
@@ -43,17 +43,17 @@ class TestCreateProject:
 class TestListProjects:
     """Test cases for GET /projects."""
     
-    def test_list_projects(self):
+    def test_list_projects(self, authenticated_client):
         """Test listing projects."""
-        response = client.get("/api/v1/projects")
+        response = authenticated_client.get("/api/v1/projects")
         
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
     
-    def test_list_projects_with_filter(self):
+    def test_list_projects_with_filter(self, authenticated_client):
         """Test filtering by status."""
-        response = client.get("/api/v1/projects?status=draft")
+        response = authenticated_client.get("/api/v1/projects?status=draft")
         
         assert response.status_code == 200
         data = response.json()
@@ -63,9 +63,9 @@ class TestListProjects:
 class TestGetProject:
     """Test cases for GET /projects/{id}."""
     
-    def test_get_project_not_found(self):
+    def test_get_project_not_found(self, authenticated_client):
         """Test 404 for nonexistent project."""
-        response = client.get("/api/v1/projects/nonexistent")
+        response = authenticated_client.get("/api/v1/projects/nonexistent")
         
         assert response.status_code == 404
 
@@ -73,9 +73,9 @@ class TestGetProject:
 class TestUpdateProject:
     """Test cases for PATCH /projects/{id}."""
     
-    def test_update_project_not_found(self):
+    def test_update_project_not_found(self, authenticated_client):
         """Test 404 for nonexistent project."""
-        response = client.patch(
+        response = authenticated_client.patch(
             "/api/v1/projects/nonexistent",
             json={"name": "Updated"},
         )
@@ -86,9 +86,9 @@ class TestUpdateProject:
 class TestDeleteProject:
     """Test cases for DELETE /projects/{id}."""
     
-    def test_delete_project_not_found(self):
+    def test_delete_project_not_found(self, authenticated_client):
         """Test 404 for nonexistent project."""
-        response = client.delete("/api/v1/projects/nonexistent")
+        response = authenticated_client.delete("/api/v1/projects/nonexistent")
         
         assert response.status_code == 404
 
@@ -96,8 +96,8 @@ class TestDeleteProject:
 class TestActivateProject:
     """Test cases for POST /projects/{id}/activate."""
     
-    def test_activate_project_not_found(self):
+    def test_activate_project_not_found(self, authenticated_client):
         """Test 404 for nonexistent project."""
-        response = client.post("/api/v1/projects/nonexistent/activate")
+        response = authenticated_client.post("/api/v1/projects/nonexistent/activate")
         
         assert response.status_code == 404
