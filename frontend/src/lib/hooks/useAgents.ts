@@ -9,8 +9,8 @@ export function useAgents() {
   return useQuery({
     queryKey: [AGENTS_KEY],
     queryFn: () => api.getAgents(),
-    staleTime: 10000, // 10 seconds
-    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 30000, // 30 seconds
+    refetchInterval: 60000, // Refetch every 60 seconds (reduced from 30s)
   });
 }
 

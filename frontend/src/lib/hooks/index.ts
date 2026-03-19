@@ -13,4 +13,15 @@ export {
   useWorkflow,
   useExecuteWorkflow,
   useCancelWorkflow,
+  useAvailablePhases,
 } from './useWorkflows';
+export {
+  useLogin,
+  useRegister,
+  useCurrentUser,
+  useLogout,
+} from './useAuth';
+export {
+  useAvailableRoles,
+  useAvailableEnvironments,
+} from './useMetadata';

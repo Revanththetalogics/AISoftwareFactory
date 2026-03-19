@@ -97,3 +97,52 @@ export interface Notification {
 }
 
 export type Theme = 'dark' | 'light' | 'system';
+
+// Authentication Types
+export interface User {
+  user_id: string;
+  username: string;
+  email: string;
+  permissions: string[];
+  is_active: boolean;
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  user: User;
+}
+
+export interface RegisterRequest {
+  username: string;
+  email: string;
+  password: string;
+}
+
+// API Support Types
+export interface Phase {
+  id: string;
+  name: string;
+  description: string;
+  order: number;
+}
+
+export interface AgentRole {
+  id: string;
+  name: string;
+  description: string;
+  capabilities: string[];
+}
+
+export interface Environment {
+  id: string;
+  name: string;
+  value: string;
+  description: string;
+}

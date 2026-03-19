@@ -9,8 +9,8 @@ export function useWorkflows() {
   return useQuery({
     queryKey: [WORKFLOWS_KEY],
     queryFn: () => api.getWorkflows(),
-    staleTime: 5000, // 5 seconds
-    refetchInterval: 10000, // Refetch every 10 seconds for active workflows
+    staleTime: 10000, // 10 seconds
+    refetchInterval: 30000, // Refetch every 30 seconds (reduced from 10s)
   });
 }
 
@@ -46,3 +46,6 @@ export function useCancelWorkflow() {
     },
   });
 }
+
+// Re-export for convenience
+export { useAvailablePhases } from './useMetadata';
