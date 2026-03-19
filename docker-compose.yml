@@ -127,7 +127,7 @@ services:
 
   # Cockpit - System monitoring dashboard
   cockpit:
-    image: cockpit/ws:latest
+    image: quay.io/cockpit/ws:latest
     container_name: cockpit
     restart: unless-stopped
     labels:
