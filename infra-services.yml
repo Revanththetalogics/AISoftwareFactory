@@ -58,27 +58,32 @@ services:
           cpus: '0.25'
           memory: 128M
 
-  # Cockpit - System monitoring dashboard
-  cockpit:
-    image: cockpit/ws:latest
-    container_name: cockpit-monitoring
+  # Simple System Monitoring Dashboard (Alternative to Cockpit)
+  # Provides basic container and system monitoring
+  monitoring:
+    image: google/cadvisor:latest
+    container_name: system-monitoring
     restart: unless-stopped
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
     ports:
-      - "9090:9090"
+      - "9090:8080"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
     networks:
       - ai-factory-network
     deploy:
       resources:
         limits:
-          cpus: '1.0'
-          memory: 1G
-        reservations:
           cpus: '0.5'
           memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
   # Watchtower - Automatic Updates
   watchtower:
