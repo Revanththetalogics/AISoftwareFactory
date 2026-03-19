@@ -4,10 +4,52 @@ Tests for Workflows API Routes.
 
 import pytest
 from fastapi.testclient import TestClient
+from unittest.mock import AsyncMock, patch, Mock
+from datetime import datetime
 
 from backend.main import app
+from backend.db.session import get_db
+from backend.api.dependencies import get_current_user
+
+
+# Create mock db session
+async def mock_get_db():
+    """Mock database dependency."""
+    mock_session = AsyncMock()
+    yield mock_session
+
+
+# Create mock user
+async def mock_get_current_user():
+    """Mock current user dependency."""
+    from backend.api.dependencies import User
+    return User(
+        user_id="user-dev-001",
+        username="developer",
+        email="dev@example.com",
+        permissions=["read", "write", "execute"],
+    )
+
+
+# Override the dependencies
+app.dependency_overrides[get_db] = mock_get_db
+app.dependency_overrides[get_current_user] = mock_get_current_user
 
 client = TestClient(app)
+
+
+@pytest.fixture
+def mock_workflow():
+    """Create a mock workflow."""
+    workflow = Mock()
+    workflow.id = "wf-test-123"
+    workflow.name = "Test Workflow"
+    workflow.project_id = "proj-test-123"
+    workflow.status = "pending"
+    workflow.steps = []
+    workflow.created_at = datetime.utcnow()
+    workflow.updated_at = datetime.utcnow()
+    return workflow
 
 
 class TestExecuteWorkflow:
