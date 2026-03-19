@@ -125,22 +125,6 @@ services:
     networks:
       - ai-factory
 
-  # Cockpit - System monitoring dashboard
-  cockpit:
-    image: quay.io/cockpit/ws:latest
-    container_name: cockpit
-    restart: unless-stopped
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
-    ports:
-      - "9090:9090"
-    volumes:
-      - /:/host:ro
-      - /var/run/docker.sock:/var/run/docker.sock
-    privileged: true
-    networks:
-      - ai-factory
-
 volumes:
   backend_data:
   ollama_data:
