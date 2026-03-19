@@ -47,10 +47,16 @@ async def init_db() -> None:
     Initialize database tables.
     
     Creates all tables defined in models.
+    Also enables required PostgreSQL extensions.
     """
     from backend.db.base import Base
     
     async with engine.begin() as conn:
+        # Enable required extensions
+        await conn.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
+        logger.info("pg_trgm extension enabled")
+        
+        # Create all tables
         await conn.run_sync(Base.metadata.create_all)
     
     logger.info("Database tables initialized")
