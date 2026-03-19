@@ -1,16 +1,10 @@
 version: '3.8'
 
-# AI Software Factory - Complete Single Stack
-# All services in one Docker Compose file for easy deployment
-
 services:
-  # AI Software Factory Backend
   backend:
     image: revanth2245/aisoftwarefactory-backend:staging
     container_name: ai-factory-backend
     restart: unless-stopped
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
     ports:
       - "8000:8000"
     environment:
@@ -30,42 +24,36 @@ services:
       redis:
         condition: service_healthy
 
-  # AI Software Factory Frontend
   frontend:
     image: revanth2245/aisoftwarefactory-frontend:staging
     container_name: ai-factory-frontend
     restart: unless-stopped
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://ai-staging.thetalogics.com/api
+      # 🔥 FIX: use internal nginx routing
+      - NEXT_PUBLIC_API_URL=/api
     networks:
       - ai-factory
     depends_on:
       - backend
 
-  # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
     container_name: nginx
     restart: unless-stopped
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
     ports:
       - "80:80"
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/00-ai-factory.conf:ro
-      - /etc/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf.disabled
+      # 🔥 FIX: absolute path (Portainer requirement)
+      - /home/ubuntu/nginx.conf:/etc/nginx/conf.d/00-ai-factory.conf:ro
     networks:
       - ai-factory
     depends_on:
       - frontend
       - backend
-    command: [nginx-debug, '-g', 'daemon off;']
+    command: ["nginx", "-g", "daemon off;"]
 
-  # Ollama AI Service
   ollama:
     image: ollama/ollama:latest
     container_name: ollama
@@ -77,7 +65,6 @@ services:
     networks:
       - ai-factory
 
-  # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     container_name: postgres
@@ -96,7 +83,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis Cache
   redis:
     image: redis:7-alpine
     container_name: redis
@@ -110,25 +96,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  # Watchtower - Auto-updates containers when new images are pushed
-  watchtower:
-    image: containrrr/watchtower:latest
-    container_name: watchtower
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - DOCKER_API_VERSION=1.44
-      - WATCHTOWER_POLL_INTERVAL=300
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_INCLUDE_STOPPED=true
-      - WATCHTOWER_REVIVE_STOPPED=true
-      - WATCHTOWER_LABEL_ENABLE=true
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
-    networks:
-      - ai-factory
 
 volumes:
   backend_data:
