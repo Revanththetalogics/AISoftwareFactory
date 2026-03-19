@@ -109,7 +109,7 @@ services:
 
   # Watchtower - Auto-updates containers when new images are pushed
   watchtower:
-    image: containrrr/watchtower:1.5.3
+    image: containrrr/watchtower:1.7.1
     container_name: watchtower
     restart: unless-stopped
     volumes:
