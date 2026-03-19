@@ -22,6 +22,9 @@ RUN useradd -m -u 1000 appuser
 # Copy only necessary files from builder to appuser's home
 COPY --from=builder /root/.local /home/appuser/.local
 
+# Create backend directory for the application code
+RUN mkdir -p /app/backend && chown -R appuser:appuser /app
+
 # Set ownership and permissions
 RUN chown -R appuser:appuser /home/appuser/.local /app
 
@@ -32,8 +35,8 @@ ENV PYTHONPATH=/app:/home/appuser/.local/lib/python3.11/site-packages
 # Switch to non-root user
 USER appuser
 
-# Copy application code
-COPY --chown=appuser:appuser . .
+# Copy application code into backend directory
+COPY --chown=appuser:appuser . /app/backend/
 
 # Expose port
 EXPOSE 8000
@@ -43,4 +46,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
 
 # Run the application
-CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
