@@ -1,8 +1,6 @@
 # AI Software Factory - Portainer Enterprise Stack
 # Optimized for your VPS: 12 vCores, 48GB RAM, 300GB Storage
 
-version: '3.8'
-
 services:
   # Portainer Agent for remote management
   portainer-agent:
@@ -160,7 +158,7 @@ services:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
-      - ./models:/root/.ollama/models
+      - ollama_models:/root/.ollama/models
     networks:
       - ai-factory-network
     environment:
@@ -314,6 +312,7 @@ volumes:
   backend_data:
   frontend_cache:
   ollama_data:
+  ollama_models:
   postgres_data:
   redis_data:
   letsencrypt_data:

@@ -1,0 +1,137 @@
+# Infrastructure Services - Reverse Proxy, Monitoring, and Maintenance
+
+version: '3.8'
+
+services:
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - NGINX_HOST=${DOMAIN}
+      - BACKEND_HOST=backend
+      - FRONTEND_HOST=frontend
+    volumes:
+      - ./ssl/certs:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx
+      - letsencrypt_data:/etc/letsencrypt
+      - certbot_data:/var/www/certbot
+    networks:
+      - ai-factory-network
+    depends_on:
+      - frontend
+      - backend
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Certbot for Let's Encrypt SSL certificates
+  certbot:
+    image: certbot/certbot:latest
+    container_name: certbot-ssl
+    volumes:
+      - letsencrypt_data:/etc/letsencrypt
+      - certbot_data:/var/www/certbot
+    networks:
+      - ai-factory-network
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+
+  # Cockpit - System monitoring dashboard
+  cockpit:
+    image: cockpit/ws:latest
+    container_name: cockpit-monitoring
+    restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    ports:
+      - "9090:9090"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - ai-factory-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Watchtower - Automatic Updates
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower-auto-update
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_POLL_INTERVAL=${WATCHTOWER_POLL_INTERVAL}
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_INCLUDE_STOPPED=true
+      - WATCHTOWER_REVIVE_STOPPED=true
+      - WATCHTOWER_LABEL_ENABLE=true
+    networks:
+      - ai-factory-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  # Backup Service
+  backup:
+    image: offen/docker-volume-backup:latest
+    container_name: backup-service
+    restart: unless-stopped
+    environment:
+      - BACKUP_CRON_EXPRESSION=${BACKUP_SCHEDULE}
+      - BACKUP_FILENAME=aifactory-backup-%Y-%m-%dT%H-%M-%S.tar.gz
+      - BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS}
+      - EXEC_FORWARD_OUTPUT=true
+    volumes:
+      - postgres_data:/backup/postgres_data:ro
+      - redis_data:/backup/redis_data:ro
+      - backend_data:/backup/backend_data:ro
+      - ollama_data:/backup/ollama_data:ro
+      - ./backups:/archive
+    networks:
+      - ai-factory-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+
+networks:
+  ai-factory-network:
+    driver: bridge
+
+volumes:
+  letsencrypt_data:
+  certbot_data:
+  postgres_data:
+  redis_data:
+  backend_data:
+  ollama_data:
