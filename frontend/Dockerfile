@@ -24,8 +24,8 @@ ENV NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL:-ws://localhost:8000/ws}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build the application
-RUN npm run build
+# Clear any cached data and build the application
+RUN rm -rf .next/cache && npm run build
 
 # Production image, copy all the files and run next
 FROM base AS runner
