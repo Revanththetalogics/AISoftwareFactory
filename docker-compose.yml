@@ -55,6 +55,8 @@ services:
       - "com.centurylinklabs.watchtower.enable=true"
     ports:
       - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - ai-factory
     depends_on:

@@ -13,7 +13,7 @@ from backend.agents.agent_registry import AgentRegistry, get_agent_registry
 
 __all__ = [
     "BaseAgent",
-    "AgentIdentity",
+    "AgentIdentity", 
     "Task",
     "TaskResult",
     "AgentRegistry",

@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
   // Disable caching for server components to prevent stale deployments
   cacheHandler: undefined,
   generateEtags: false,
+  // Additional Server Actions stability configurations
+  reactStrictMode: true,
+  // Clear server action cache on build
+  cleanDistDir: true,
 };
 
 export default nextConfig;

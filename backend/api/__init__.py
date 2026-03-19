@@ -6,7 +6,7 @@ This module provides REST API endpoints and WebSocket support for the AI Softwar
 
 from fastapi import APIRouter
 
-from backend.api.routes import projects, workflows, agents, deployments, websocket, auth, testing
+# Import individual modules directly to avoid circular imports
 from backend.api import health
 from backend.api.dependencies import get_current_user, require_permissions
 from backend.api.models import (
@@ -18,6 +18,8 @@ from backend.api.models import (
     DeploymentRequest,
     DeploymentResponse,
 )
+# Import route modules directly
+from backend.api.routes import projects, workflows, agents, deployments, websocket, auth, testing
 
 # Main API router
 api_router = APIRouter(prefix="/api/v1")
