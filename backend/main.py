@@ -145,17 +145,66 @@ async def startup_event() -> None:
         logger.error("Configuration validation failed", error=str(exc))
         raise
     
+    # Log service connection details (mask password in database URL)
+    db_url_display = settings.DATABASE_URL
+    if '@' in db_url_display:
+        parts = db_url_display.split('@')
+        creds = parts[0].split('://')
+        if len(creds) > 1:
+            db_url_display = f"{creds[0]}://***@{parts[1]}"
+    
+    logger.info(
+        "Service connection configuration",
+        database_url=db_url_display,
+        redis_url=settings.REDIS_URL,
+        ollama_url=settings.OLLAMA_URL,
+    )
+    
     # Initialize database connection
+    db_status = "disconnected"
     try:
         from backend.db import init_db
         await init_db()
-        logger.info("Database connection established")
+        db_status = "connected"
+        logger.info("Database connection established", status=db_status)
     except Exception as exc:
-        logger.error("Failed to initialize database", error=str(exc))
+        logger.error("Failed to initialize database", error=str(exc), status=db_status)
         # Don't raise - allow app to start without DB for health checks
     
-    # Future: Initialize Redis connection (Phase 4)
-    # Future: Load agent configurations (Phase 2)
+    # Initialize Redis connection
+    redis_status = "disconnected"
+    try:
+        import redis.asyncio as redis
+        redis_client = redis.from_url(settings.REDIS_URL)
+        await redis_client.ping()
+        await redis_client.close()
+        redis_status = "connected"
+        logger.info("Redis connection established", status=redis_status)
+    except Exception as exc:
+        logger.error("Failed to initialize Redis", error=str(exc), status=redis_status)
+    
+    # Test Ollama connection
+    ollama_status = "disconnected"
+    try:
+        import urllib.request
+        req = urllib.request.Request(
+            f"{settings.OLLAMA_URL}/api/tags",
+            method='GET'
+        )
+        with urllib.request.urlopen(req, timeout=5) as response:
+            if response.status == 200:
+                ollama_status = "connected"
+                logger.info("Ollama connection established", status=ollama_status)
+    except Exception as exc:
+        logger.warning("Ollama not available", error=str(exc), status=ollama_status)
+    
+    # Service status summary
+    logger.info(
+        "Service connectivity summary",
+        database=db_status,
+        redis=redis_status,
+        ollama=ollama_status,
+    )
     
     logger.info("Application startup complete")
 

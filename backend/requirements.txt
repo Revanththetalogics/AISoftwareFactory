@@ -28,6 +28,9 @@ sqlalchemy[asyncio]==2.0.36
 asyncpg==0.29.0
 alembic==1.13.1
 
+# Cache & Message Broker
+redis==5.0.1
+
 # AI & Workflow (simplified for faster resolution)
 langgraph==0.0.40
 langchain==0.1.20
