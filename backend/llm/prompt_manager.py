@@ -286,6 +286,165 @@ Refactored Code:""",
                 description="Refactor code for improvement",
                 variables=["code", "language", "goals"],
             ),
+            
+            # AI Testing templates
+            PromptTemplate(
+                name="test_case_generation",
+                template="""You are an expert QA engineer. Generate comprehensive test cases for this code:
+
+Code:
+```$language
+$code
+```
+
+Component: $component_name
+Type: $component_type
+
+Generate tests including:
+1. Happy path tests with valid inputs
+2. Edge cases (empty, null, boundary values)
+3. Error handling tests (exceptions, invalid inputs)
+4. Integration points (mock external dependencies)
+5. Performance considerations (if applicable)
+
+Use pytest with:
+- Descriptive test names
+- Type hints
+- Proper fixtures
+- Async support where needed
+
+Return only the test code:""",
+                description="Generate comprehensive test cases",
+                variables=["code", "language", "component_name", "component_type"],
+            ),
+            
+            PromptTemplate(
+                name="bug_detection",
+                template="""You are a security and code quality expert. Analyze this code for bugs:
+
+Code:
+```$language
+$code
+```
+
+File: $file_path
+
+Identify:
+1. Security vulnerabilities (SQL injection, XSS, etc.)
+2. Logic errors and bugs
+3. Performance issues
+4. Code smells and anti-patterns
+5. Type safety issues
+
+For each issue provide:
+- Severity (critical/high/medium/low)
+- Category (security/logic/performance/maintainability)
+- Line number
+- Description
+- Root cause
+- Suggested fix
+
+Return findings as JSON array.""",
+                description="Detect bugs and security issues",
+                variables=["code", "language", "file_path"],
+            ),
+            
+            PromptTemplate(
+                name="auto_fix",
+                template="""You are an expert code repair system. Fix this bug:
+
+Bug Description: $bug_description
+Root Cause: $root_cause
+Suggested Fix: $suggested_fix
+
+Original Code:
+```$language
+$code
+```
+
+Line: $line_number
+
+Provide the complete fixed code that:
+1. Addresses the bug
+2. Maintains existing functionality
+3. Follows best practices
+4. Includes proper error handling
+
+Return only the fixed code section:""",
+                description="Generate code fixes",
+                variables=["bug_description", "root_cause", "suggested_fix", "code", "language", "line_number"],
+            ),
+            
+            PromptTemplate(
+                name="e2e_test_generation",
+                template="""You are an expert in Playwright E2E testing. Generate tests for this user flow:
+
+Page: $page_path
+Description: $page_description
+
+User Flow:
+$user_flow
+
+Generate Playwright tests that:
+1. Navigate to the page
+2. Perform each user action
+3. Use resilient selectors (data-testid preferred)
+4. Include proper waits
+5. Assert expected outcomes
+6. Handle async operations
+7. Include cleanup
+
+Return the complete test file code:""",
+                description="Generate E2E tests from user flows",
+                variables=["page_path", "page_description", "user_flow"],
+            ),
+            
+            PromptTemplate(
+                name="coverage_recommendation",
+                template="""You are a test coverage expert. Analyze uncovered code and recommend tests:
+
+File: $file_path
+Current Coverage: $coverage_percentage%
+
+Uncovered Code:
+$uncovered_code
+
+Recommend specific test cases to cover:
+1. What scenarios are missing
+2. Input values to use
+3. Expected outcomes
+4. Setup requirements (mocks, fixtures)
+
+Provide actionable recommendations:""",
+                description="Recommend tests for coverage gaps",
+                variables=["file_path", "coverage_percentage", "uncovered_code"],
+            ),
+            
+            PromptTemplate(
+                name="regression_test_from_failure",
+                template="""You are a QA engineer specializing in regression tests. Create a test from this failure:
+
+Error: $error_message
+
+Stack Trace:
+$stack_trace
+
+Code Context:
+```$language
+$code
+```
+
+Create a pytest test that:
+1. Reproduces this exact error
+2. Verifies the fix works
+3. Tests edge cases
+4. Uses proper mocking
+5. Has clear assertions
+
+Return the complete test code:""",
+                description="Generate regression tests from failures",
+                variables=["error_message", "stack_trace", "code", "language"],
+            ),
         ]
         
         for template in default_templates:
