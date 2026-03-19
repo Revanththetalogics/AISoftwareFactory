@@ -7,6 +7,7 @@ using SQLAlchemy with connection pooling.
 
 from typing import AsyncGenerator
 
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -53,7 +54,7 @@ async def init_db() -> None:
     
     async with engine.begin() as conn:
         # Enable required extensions
-        await conn.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
         logger.info("pg_trgm extension enabled")
         
         # Create all tables
