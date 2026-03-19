@@ -1,5 +1,9 @@
 version: '3.8'
 
+# AI Software Factory - Application Stack
+# This stack contains the backend, frontend, nginx, watchtower, and cockpit
+# It connects to the shared ai-factory-shared network for infrastructure services
+
 services:
   # AI Software Factory Backend
   backend:
@@ -20,12 +24,7 @@ services:
     volumes:
       - backend_data:/app/data
     networks:
-      - ai-factory
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_started
+      - ai-factory-shared
 
   # AI Software Factory Frontend
   frontend:
@@ -39,7 +38,7 @@ services:
     environment:
       - NEXT_PUBLIC_API_URL=http://ai-staging.thetalogics.com/api
     networks:
-      - ai-factory
+      - ai-factory-shared
     depends_on:
       - backend
 
@@ -53,56 +52,10 @@ services:
     ports:
       - "80:80"
     networks:
-      - ai-factory
+      - ai-factory-shared
     depends_on:
       - frontend
       - backend
-
-  # Ollama AI Service
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ollama
-    restart: unless-stopped
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    networks:
-      - ai-factory
-
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: aifactory
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: aifactory
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - ai-factory
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U aifactory"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Redis Cache
-  redis:
-    image: redis:7-alpine
-    container_name: redis
-    restart: unless-stopped
-    volumes:
-      - redis_data:/data
-    networks:
-      - ai-factory
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   # Watchtower - Auto-updates containers when new images are pushed
   watchtower:
@@ -120,7 +73,7 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
     networks:
-      - ai-factory
+      - ai-factory-shared
 
   # Cockpit - System monitoring dashboard
   cockpit:
@@ -136,14 +89,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     privileged: true
     networks:
-      - ai-factory
+      - ai-factory-shared
 
 volumes:
   backend_data:
-  ollama_data:
-  postgres_data:
-  redis_data:
 
 networks:
-  ai-factory:
-    driver: bridge
+  ai-factory-shared:
+    external: true
