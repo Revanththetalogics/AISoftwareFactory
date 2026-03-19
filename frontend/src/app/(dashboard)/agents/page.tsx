@@ -1,5 +1,8 @@
 'use client';
 
+// Prevent static generation - this page requires authentication
+export const dynamic = 'force-dynamic';
+
 import { motion } from 'framer-motion';
 import {
   Bot,
