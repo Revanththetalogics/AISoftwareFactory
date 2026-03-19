@@ -90,6 +90,12 @@ class Settings(BaseSettings):
         description="Redis connection URL"
     )
     
+    # Ollama AI Service
+    OLLAMA_URL: str = Field(
+        default="http://localhost:11434",
+        description="Ollama API base URL"
+    )
+    
     # Monitoring
     ENABLE_METRICS: bool = Field(default=True, description="Enable Prometheus metrics")
     METRICS_PORT: int = Field(default=9090, description="Metrics endpoint port")
