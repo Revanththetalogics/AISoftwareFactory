@@ -16,18 +16,24 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy only necessary files from builder
-COPY --from=builder /root/.local /root/.local
+# Create non-root user first
+RUN useradd -m -u 1000 appuser
+
+# Copy only necessary files from builder to appuser's home
+COPY --from=builder /root/.local /home/appuser/.local
+
+# Set ownership and permissions
+RUN chown -R appuser:appuser /home/appuser/.local /app
 
 # Ensure scripts in .local are usable
-ENV PATH=/root/.local/bin:$PATH
+ENV PATH=/home/appuser/.local/bin:$PATH
+ENV PYTHONPATH=/home/appuser/.local/lib/python3.11/site-packages:$PYTHONPATH
+
+# Switch to non-root user
+USER appuser
 
 # Copy application code
-COPY . .
-
-# Create non-root user
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
-USER appuser
+COPY --chown=appuser:appuser . .
 
 # Expose port
 EXPOSE 8000
