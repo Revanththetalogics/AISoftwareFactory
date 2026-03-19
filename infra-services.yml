@@ -24,9 +24,10 @@ services:
       - certbot_data:/var/www/certbot
     networks:
       - ai-factory-network
-    depends_on:
-      - frontend
-      - backend
+    # Remove cross-stack dependencies - services will connect via network
+    # depends_on:
+    #   - frontend
+    #   - backend
     healthcheck:
       test: ["CMD", "nginx", "-t"]
       interval: 30s
