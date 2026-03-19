@@ -67,7 +67,7 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
     ports:
-      - "9090:8080"
+      - "9091:8080"
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro

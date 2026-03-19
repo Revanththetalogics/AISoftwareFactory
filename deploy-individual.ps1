@@ -69,7 +69,7 @@ Write-Host "  🚀 App Services: Backend API, Frontend" -ForegroundColor White
 Write-Host "  🔧 Infra Services: Nginx, Cockpit, Watchtower, Backup" -ForegroundColor White
 Write-Host ""
 Write-Host "Access your application at: http://$($env:DOMAIN)" -ForegroundColor Yellow
-Write-Host "Monitor system at: http://$($env:DOMAIN):9090 (Cockpit)" -ForegroundColor Yellow
+Write-Host "Monitor system at: http://$($env:DOMAIN):9091 (cAdvisor)" -ForegroundColor Yellow
 Write-Host "API documentation: http://$($env:DOMAIN)/api/docs" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "📊 Checking overall service status..." -ForegroundColor Cyan
