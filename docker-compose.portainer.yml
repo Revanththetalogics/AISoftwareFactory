@@ -292,9 +292,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - /:/host:ro
       - /var/run/docker.sock:/var/run/docker.sock
-    privileged: true
     networks:
       - ai-factory-network
     deploy:
@@ -320,3 +318,4 @@ volumes:
   redis_data:
   letsencrypt_data:
   certbot_data:
+  backup_data:
