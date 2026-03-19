@@ -22,8 +22,10 @@ services:
     networks:
       - ai-factory
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   # AI Software Factory Frontend
   frontend:
