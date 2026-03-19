@@ -45,22 +45,23 @@ AsyncSessionLocal = sessionmaker(
 
 async def init_db() -> None:
     """
-    Initialize database tables.
+    Initialize database tables and extensions.
     
-    Creates all tables defined in models.
-    Also enables required PostgreSQL extensions.
+    For production environments, use Alembic migrations instead.
+    This function is for development/local setup only.
     """
     from backend.db.base import Base
     
     async with engine.begin() as conn:
-        # Enable required extensions
+        # Enable required PostgreSQL extensions
         await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
         logger.info("pg_trgm extension enabled")
         
-        # Create all tables
+        # Create all tables (development only - use alembic for production)
         await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database tables created")
     
-    logger.info("Database tables initialized")
+    logger.info("Database initialization complete")
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:

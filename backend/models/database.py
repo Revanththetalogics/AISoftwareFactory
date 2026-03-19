@@ -79,7 +79,7 @@ class DBProject(Base):
         Index('idx_projects_owner', 'owner_id'),
         Index('idx_projects_status', 'status'),
         Index('idx_projects_created', 'created_at'),
-        Index('idx_projects_name_trgm', 'name', postgresql_using='gin'),  # For text search
+        Index('idx_projects_name_trgm', 'name', postgresql_using='gin', postgresql_ops={'name': 'gin_trgm_ops'}),  # For text search
     )
 
 
