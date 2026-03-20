@@ -332,6 +332,7 @@
   .state-warning { color: var(--state-warning); }
   .state-error { color: var(--state-error); }
   .state-queued { color: var(--state-queued); }
+  .state-info { color: var(--state-running); }
 
   /* State backgrounds */
   .bg-state-idle { background-color: var(--state-idle); }
@@ -348,6 +349,23 @@
   .bg-state-warning-dim { background-color: var(--state-warning-dim); }
   .bg-state-error-dim { background-color: var(--state-error-dim); }
   .bg-state-queued-dim { background-color: var(--state-queued-dim); }
+
+  /* State text colors */
+  .text-state-idle { color: var(--state-idle); }
+  .text-state-running { color: var(--state-running); }
+  .text-state-success { color: var(--state-success); }
+  .text-state-warning { color: var(--state-warning); }
+  .text-state-error { color: var(--state-error); }
+  .text-state-queued { color: var(--state-queued); }
+  .text-state-info { color: var(--state-running); }
+
+  /* State borders */
+  .border-state-idle { border-color: var(--state-idle); }
+  .border-state-running { border-color: var(--state-running); }
+  .border-state-success { border-color: var(--state-success); }
+  .border-state-warning { border-color: var(--state-warning); }
+  .border-state-error { border-color: var(--state-error); }
+  .border-state-queued { border-color: var(--state-queued); }
 
   /* Typography */
   .font-system { font-family: var(--font-system); }
@@ -388,23 +406,27 @@
 
   /* Status dot with pulse */
   .status-dot {
-    @apply w-2 h-2 rounded-full inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    display: inline-block;
   }
   
   .status-dot.running {
-    @apply bg-state-running animate-pulse-dot;
+    background-color: var(--state-running);
+    animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
   
   .status-dot.success {
-    @apply bg-state-success;
+    background-color: var(--state-success);
   }
   
   .status-dot.error {
-    @apply bg-state-error;
+    background-color: var(--state-error);
   }
   
   .status-dot.idle {
-    @apply bg-state-idle;
+    background-color: var(--state-idle);
   }
 
   /* Glass morphism (enhanced) */

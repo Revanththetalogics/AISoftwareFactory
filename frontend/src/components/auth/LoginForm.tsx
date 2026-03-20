@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLogin } from '@/lib/hooks';
 
-export function LoginForm() {
+function LoginFormContent() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -75,5 +75,13 @@ export function LoginForm() {
         </button>
       </form>
     </div>
+  );
+}
+
+export function LoginForm() {
+  return (
+    <Suspense fallback={<div className="p-6 bg-bg-panel rounded-lg border border-border-default">Loading...</div>}>
+      <LoginFormContent />
+    </Suspense>
   );
 }
