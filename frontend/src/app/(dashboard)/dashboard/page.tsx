@@ -2,50 +2,17 @@
 
 export const dynamic = 'force-dynamic';
 
-import { motion } from 'framer-motion';
-import {
-  Bot,
-  FolderKanban,
-  HeartPulse,
-  Brain,
-  Activity,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
-  ArrowRight,
-  Sparkles,
-  Zap,
-  Shield,
-  Server,
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Bot, FolderKanban, HeartPulse, Brain, Activity, CheckCircle2 } from 'lucide-react';
+import { StatCard } from '@/components/cards/stat-card';
+import { ActivityItem } from '@/components/cards/activity-item';
+import { DashboardSkeleton } from '@/components/cards/skeletons';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
-// Animation variants
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.4,
-      ease: [0.25, 0.25, 0, 1] as const,
-    },
-  },
-};
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Sparkles, Zap, ArrowRight, AlertCircle, Clock, Shield, Server } from 'lucide-react';
+import { containerVariants, slideUpVariants } from '@/lib/variants';
+import { motion } from 'framer-motion';
 
 // Mock data
 const systemStatus = {
@@ -166,7 +133,7 @@ export default function DashboardPage() {
       className="space-y-6"
     >
       {/* Header */}
-      <motion.div variants={itemVariants} className="flex items-center justify-between">
+      <motion.div variants={slideUpVariants} className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-100">Dashboard</h1>
           <p className="mt-1 text-slate-400">
@@ -180,82 +147,42 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* System Status Cards */}
-      <motion.div variants={itemVariants} className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-slate-800 bg-slate-900/50 backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-400">
-              Active Agents
-            </CardTitle>
-            <div className="rounded-lg bg-violet-500/10 p-2">
-              <Bot className="h-4 w-4 text-violet-400" />
+      <motion.div variants={slideUpVariants} className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Active Agents"
+          value={systemStatus.activeAgents}
+          description="AI agents working now"
+          icon={<Bot className="h-4 w-4 text-violet-400" />}
+        />
+        <StatCard
+          title="Running Projects"
+          value={systemStatus.runningProjects}
+          description="Projects in progress"
+          icon={<FolderKanban className="h-4 w-4 text-blue-400" />}
+        />
+        <StatCard
+          title="System Health"
+          value="Healthy"
+          description="All systems operational"
+          icon={
+            <div className="relative flex h-4 w-4">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex h-4 w-4 rounded-full bg-emerald-400"></span>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-100">
-              {systemStatus.activeAgents}
-            </div>
-            <p className="text-xs text-slate-500">AI agents working now</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-slate-800 bg-slate-900/50 backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-400">
-              Running Projects
-            </CardTitle>
-            <div className="rounded-lg bg-blue-500/10 p-2">
-              <FolderKanban className="h-4 w-4 text-blue-400" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-100">
-              {systemStatus.runningProjects}
-            </div>
-            <p className="text-xs text-slate-500">Projects in progress</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-slate-800 bg-slate-900/50 backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-400">
-              System Health
-            </CardTitle>
-            <div className="rounded-lg bg-emerald-500/10 p-2">
-              <HeartPulse className="h-4 w-4 text-emerald-400" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <div className="text-2xl font-bold text-emerald-400">Healthy</div>
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
-              </span>
-            </div>
-            <p className="text-xs text-slate-500">All systems operational</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-slate-800 bg-slate-900/50 backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-400">
-              LLM Status
-            </CardTitle>
-            <div className="rounded-lg bg-indigo-500/10 p-2">
-              <Brain className="h-4 w-4 text-indigo-400" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-indigo-400">Connected</div>
-            <p className="text-xs text-slate-500">Ollama provider active</p>
-          </CardContent>
-        </Card>
+          }
+        />
+        <StatCard
+          title="LLM Status"
+          value="Connected"
+          description="Ollama provider active"
+          icon={<Brain className="h-4 w-4 text-indigo-400" />}
+        />
       </motion.div>
 
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Agent Activity Feed */}
-        <motion.div variants={itemVariants} className="lg:col-span-2">
+        <motion.div variants={slideUpVariants} className="lg:col-span-2">
           <Card className="border-slate-800 bg-slate-900/50 backdrop-blur-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -272,43 +199,15 @@ export default function DashboardPage() {
             <CardContent>
               <ScrollArea className="h-[320px] pr-4">
                 <div className="space-y-4">
-                  {agentActivities.map((activity, index) => (
-                    <motion.div
+                  {agentActivities.map((activity) => (
+                    <ActivityItem
                       key={activity.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="flex items-start gap-3 rounded-lg border border-slate-800/50 bg-slate-800/30 p-3 transition-colors hover:bg-slate-800/50"
-                    >
-                      <div
-                        className={`rounded-lg p-2 ${
-                          activity.status === 'running'
-                            ? 'bg-violet-500/10'
-                            : 'bg-emerald-500/10'
-                        }`}
-                      >
-                        <activity.icon
-                          className={`h-4 w-4 ${
-                            activity.status === 'running'
-                              ? 'text-violet-400'
-                              : 'text-emerald-400'
-                          }`}
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium text-slate-200">{activity.agent}</p>
-                          <span className="text-xs text-slate-500">{activity.timestamp}</span>
-                        </div>
-                        <p className="text-sm text-slate-400">{activity.action}</p>
-                      </div>
-                      {activity.status === 'running' && (
-                        <div className="flex items-center gap-1.5">
-                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-violet-400"></span>
-                          <span className="text-xs text-violet-400">Working</span>
-                        </div>
-                      )}
-                    </motion.div>
+                      icon={<activity.icon className="h-4 w-4" />}
+                      title={activity.agent}
+                      description={activity.action}
+                      timestamp={activity.timestamp}
+                      status={activity.status === 'running' ? 'running' : 'completed'}
+                    />
                   ))}
                 </div>
               </ScrollArea>
@@ -317,7 +216,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Project Pipeline */}
-        <motion.div variants={itemVariants}>
+        <motion.div variants={slideUpVariants}>
           <Card className="border-slate-800 bg-slate-900/50 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-lg text-slate-100">Project Pipeline</CardTitle>
@@ -336,8 +235,8 @@ export default function DashboardPage() {
                           stage.status === 'completed'
                             ? 'border-emerald-500 bg-emerald-500'
                             : stage.status === 'in_progress'
-                            ? 'border-violet-500 bg-violet-500'
-                            : 'border-slate-700 bg-slate-800'
+                              ? 'border-violet-500 bg-violet-500'
+                              : 'border-slate-700 bg-slate-800'
                         }`}
                       >
                         {stage.status === 'completed' && (
@@ -353,8 +252,8 @@ export default function DashboardPage() {
                             stage.status === 'completed'
                               ? 'text-emerald-400'
                               : stage.status === 'in_progress'
-                              ? 'text-violet-400'
-                              : 'text-slate-500'
+                                ? 'text-violet-400'
+                                : 'text-slate-500'
                           }`}
                         >
                           {stage.name}
@@ -373,7 +272,7 @@ export default function DashboardPage() {
       {/* Bottom Section: Simulations & Projects */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Simulation Results */}
-        <motion.div variants={itemVariants}>
+        <motion.div variants={slideUpVariants}>
           <Card className="border-slate-800 bg-slate-900/50 backdrop-blur-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -410,8 +309,8 @@ export default function DashboardPage() {
                           sim.status === 'approved'
                             ? 'bg-emerald-500/10 text-emerald-400'
                             : sim.status === 'needs_improvement'
-                            ? 'bg-amber-500/10 text-amber-400'
-                            : 'bg-slate-500/10 text-slate-400'
+                              ? 'bg-amber-500/10 text-amber-400'
+                              : 'bg-slate-500/10 text-slate-400'
                         }
                       >
                         {sim.status === 'needs_improvement'
@@ -432,7 +331,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Recent Projects */}
-        <motion.div variants={itemVariants}>
+        <motion.div variants={slideUpVariants}>
           <Card className="border-slate-800 bg-slate-900/50 backdrop-blur-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -485,10 +384,12 @@ export default function DashboardPage() {
                         <span className="text-slate-500">Progress</span>
                         <span className="text-slate-300">{project.progress}%</span>
                       </div>
-                      <Progress
-                        value={project.progress}
-                        className="h-2 bg-slate-800"
-                      />
+                      <div className="h-2 w-full rounded-full bg-slate-800">
+                        <div
+                          className="h-2 rounded-full bg-violet-400 transition-all duration-300"
+                          style={{ width: `${project.progress}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
                 ))}

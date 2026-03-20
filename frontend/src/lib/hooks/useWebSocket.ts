@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface WebSocketMessage {
   type: string;
@@ -17,6 +18,7 @@ interface UseWebSocketOptions {
   onError?: (error: Event) => void;
   reconnectAttempts?: number;
   reconnectInterval?: number;
+  enableCacheUpdates?: boolean; // Enable automatic TanStack Query cache updates
 }
 
 export function useWebSocket({
@@ -28,7 +30,9 @@ export function useWebSocket({
   onError,
   reconnectAttempts = 5,
   reconnectInterval = 3000,
+  enableCacheUpdates = true,
 }: UseWebSocketOptions) {
+  const queryClient = useQueryClient();
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
   const ws = useRef<WebSocket | null>(null);
@@ -54,6 +58,47 @@ export function useWebSocket({
         try {
           const message = JSON.parse(event.data) as WebSocketMessage;
           setLastMessage(message);
+          
+          // Automatic cache updates for known message types
+          if (enableCacheUpdates) {
+            const msgData = message.data as Record<string, unknown>;
+            
+            switch (message.type) {
+              case 'agent_update':
+                queryClient.setQueryData(['agents'], (old: any) => {
+                  if (!old || !Array.isArray(old)) return old;
+                  return old.map((agent: Record<string, unknown>) =>
+                    agent.agent_id === msgData.agent_id
+                      ? { ...agent, ...msgData }
+                      : agent,
+                  );
+                });
+                break;
+              
+              case 'project_update':
+                queryClient.setQueryData(['projects'], (old: any) => {
+                  if (!old || !Array.isArray(old)) return old;
+                  return old.map((project: Record<string, unknown>) =>
+                    project.id === msgData.id
+                      ? { ...project, ...msgData }
+                      : project,
+                  );
+                });
+                break;
+              
+              case 'workflow_update':
+                queryClient.setQueryData(['workflows'], (old: any) => {
+                  if (!old || !Array.isArray(old)) return old;
+                  return old.map((wf: Record<string, unknown>) =>
+                    wf.workflow_id === msgData.workflow_id
+                      ? { ...wf, ...msgData }
+                      : wf,
+                  );
+                });
+                break;
+            }
+          }
+          
           onMessage?.(message);
         } catch (error) {
           console.error('Failed to parse WebSocket message:', error);
@@ -81,7 +126,7 @@ export function useWebSocket({
     } catch (error) {
       console.error('Failed to create WebSocket connection:', error);
     }
-  }, [channel, id, onMessage, onConnect, onDisconnect, onError, reconnectAttempts, reconnectInterval]);
+  }, [channel, id, onMessage, onConnect, onDisconnect, onError, reconnectAttempts, reconnectInterval, enableCacheUpdates, queryClient]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimer.current) {

@@ -9,8 +9,10 @@ export function useAgents() {
   return useQuery({
     queryKey: [AGENTS_KEY],
     queryFn: () => api.getAgents(),
-    staleTime: 30000, // 30 seconds
-    refetchInterval: 60000, // Refetch every 60 seconds (reduced from 30s)
+    staleTime: 5000, // 5 seconds - optimized for real-time dashboard
+    gcTime: 30000, // 30 seconds
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000, // Poll every 10s for agent status updates
   });
 }
 
@@ -19,6 +21,8 @@ export function useAgent(id: string) {
     queryKey: [AGENTS_KEY, id],
     queryFn: () => api.getAgent(id),
     enabled: !!id,
+    staleTime: 5000,
+    gcTime: 30000,
   });
 }
 
@@ -34,6 +38,7 @@ export function useAssignTask() {
       data: { task_type: string; description: string };
     }) => api.assignTask(agentId, data),
     onSuccess: (_, variables) => {
+      // Invalidate specific queries
       queryClient.invalidateQueries({ queryKey: [AGENTS_KEY] });
       queryClient.invalidateQueries({ queryKey: [AGENTS_KEY, variables.agentId] });
     },

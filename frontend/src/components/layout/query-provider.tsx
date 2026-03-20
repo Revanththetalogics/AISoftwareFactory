@@ -31,12 +31,21 @@ export function QueryProvider({ children }: QueryProviderProps) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 30000,
-            refetchOnWindowFocus: false,
-            retry: 1,
+            // Optimized for real-time dashboard
+            staleTime: 5 * 1000, // 5 seconds - data is fresh for 5s
+            gcTime: 30 * 1000, // 30 seconds - cache persists for 30s after unmount
+            refetchOnWindowFocus: true, // Refetch when user returns to tab
+            retry: 3, // Retry failed requests up to 3 times
+            retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
+            refetchOnReconnect: true, // Refetch on network reconnect
+            throwOnError: false, // Don't throw errors by default
+          },
+          mutations: {
+            retry: 1, // Retry mutations once
+            throwOnError: false,
           },
         },
-      })
+      }),
   );
 
   return (
