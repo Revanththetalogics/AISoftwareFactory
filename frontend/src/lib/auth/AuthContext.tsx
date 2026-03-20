@@ -31,13 +31,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const userData = localStorage.getItem(USER_KEY);
         const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
 
+        console.log('Auth Initialization:', {
+          hasToken: !!token,
+          hasUser: !!userData,
+          hasExpiry: !!expiry,
+          expiry: expiry ? new Date(expiry).toISOString() : null,
+          now: new Date().toISOString()
+        });
+
         if (token && userData && expiry) {
           const expiryDate = new Date(expiry);
           if (expiryDate > new Date()) {
-            setUser(JSON.parse(userData));
+            const parsedUser = JSON.parse(userData);
+            console.log('Auth: User authenticated from storage', parsedUser);
+            setUser(parsedUser);
             // Sync token with API client
             api.setToken(token);
           } else {
+            console.log('Auth: Token expired, clearing storage');
             // Token expired, clear storage
             api.setToken(null);
             localStorage.removeItem(TOKEN_KEY);
@@ -45,6 +56,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             localStorage.removeItem(TOKEN_EXPIRY_KEY);
             setUser(null);
           }
+        } else {
+          console.log('Auth: No valid credentials found');
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
