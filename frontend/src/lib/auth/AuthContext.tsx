@@ -47,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     initAuth();
+    initAuth();
   }, []);
 
   const login = useCallback((response: LoginResponse) => {

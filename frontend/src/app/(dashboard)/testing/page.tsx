@@ -20,7 +20,6 @@ import {
   Eye,
   Zap,
   TrendingUp,
-  Clock
 } from "lucide-react";
 
 interface TestHealthData {

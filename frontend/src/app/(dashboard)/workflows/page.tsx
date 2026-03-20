@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Workflow, GitBranch, Play, Pause, Settings } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,40 +15,11 @@ interface Notification {
   timestamp: string;
 }
 
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    type: 'success',
-    title: 'Deployment Complete',
-    message: 'Project "SaaS App" deployed to staging',
-    timestamp: '2 min ago',
-  },
-  {
-    id: '2',
-    type: 'info',
-    title: 'Agent Activity',
-    message: 'Backend Engineer completed API design',
-    timestamp: '15 min ago',
-  },
-  {
-    id: '3',
-    type: 'warning',
-    title: 'Simulation Alert',
-    message: 'Architecture simulation needs review',
-    timestamp: '1 hour ago',
-  },
-];
-
 export function TopNav() {
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
-    <motion.header
-      initial={{ y: -64 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="fixed left-[280px] right-0 top-0 z-30 h-16 border-b border-slate-800 bg-slate-950/80 backdrop-blur-xl"
-    >
+    <header className="fixed left-[280px] right-0 top-0 z-30 h-16 border-b border-slate-800 bg-slate-950/80 backdrop-blur-xl">
       <div className="flex h-full items-center justify-between px-6">
         {/* Search */}
         <div className="flex max-w-md flex-1 items-center gap-4">
@@ -72,6 +42,6 @@ export function TopNav() {
           <UserProfile />
         </div>
       </div>
-    </motion.header>
+    </header>
   );
 }

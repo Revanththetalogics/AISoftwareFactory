@@ -19,7 +19,6 @@ import {
   LineChart,
   Database,
   Cloud,
-  Lock,
   Zap,
   FileCode,
   Eye,

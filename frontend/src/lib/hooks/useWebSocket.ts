@@ -65,7 +65,7 @@ export function useWebSocket({
             
             switch (message.type) {
               case 'agent_update':
-                queryClient.setQueryData(['agents'], (old: any) => {
+                queryClient.setQueryData(['agents'], (old: unknown) => {
                   if (!old || !Array.isArray(old)) return old;
                   return old.map((agent: Record<string, unknown>) =>
                     agent.agent_id === msgData.agent_id
@@ -76,7 +76,7 @@ export function useWebSocket({
                 break;
               
               case 'project_update':
-                queryClient.setQueryData(['projects'], (old: any) => {
+                queryClient.setQueryData(['projects'], (old: unknown) => {
                   if (!old || !Array.isArray(old)) return old;
                   return old.map((project: Record<string, unknown>) =>
                     project.id === msgData.id
@@ -87,7 +87,7 @@ export function useWebSocket({
                 break;
               
               case 'workflow_update':
-                queryClient.setQueryData(['workflows'], (old: any) => {
+                queryClient.setQueryData(['workflows'], (old: unknown) => {
                   if (!old || !Array.isArray(old)) return old;
                   return old.map((wf: Record<string, unknown>) =>
                     wf.workflow_id === msgData.workflow_id

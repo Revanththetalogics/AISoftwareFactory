@@ -118,7 +118,7 @@ export default function ProjectsPage() {
       setNewProjectName('');
       setNewProjectDescription('');
       setIsCreateDialogOpen(false);
-    } catch (error) {
+    } catch {
       toast.error('Failed to create project');
     }
   };
@@ -128,7 +128,7 @@ export default function ProjectsPage() {
       await deleteProject.mutateAsync(id);
       toast.success('Project deleted successfully');
       setSelectedProject(null);
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete project');
     }
   };

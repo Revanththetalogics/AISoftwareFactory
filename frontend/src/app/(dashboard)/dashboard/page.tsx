@@ -2,10 +2,9 @@
 
 export const dynamic = 'force-dynamic';
 
-import { Bot, FolderKanban, HeartPulse, Brain, Activity, CheckCircle2 } from 'lucide-react';
+import { Bot, FolderKanban, Brain, Activity, CheckCircle2 } from 'lucide-react';
 import { StatCard } from '@/components/cards/stat-card';
 import { ActivityItem } from '@/components/cards/activity-item';
-import { DashboardSkeleton } from '@/components/cards/skeletons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
