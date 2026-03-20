@@ -141,8 +141,8 @@ export default function ProjectsPage() {
       setExecutingProjectId(projectId);
       await executeWorkflow.mutateAsync({ project_id: projectId });
       toast.success('Workflow started successfully! AI agents are now working on your project.');
-    } catch (error: any) {
-      toast.error(error?.message || 'Failed to start workflow');
+    } catch {
+      toast.error('Failed to start workflow');
     } finally {
       setExecutingProjectId(null);
     }

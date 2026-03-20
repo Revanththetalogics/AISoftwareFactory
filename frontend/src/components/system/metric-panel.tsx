@@ -61,6 +61,8 @@ export function MetricPanel({
   className,
   onMetricClick,
 }: MetricPanelProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
   return (
     <div className={cn(
       'grid gap-4',
@@ -307,6 +309,8 @@ export function SystemMetrics({
   disk?: number;
   className?: string;
 }) {
+  const generateSparkline = () => Array.from({ length: 24 }, () => Math.random() * 100);
+  
   const metrics: MetricData[] = [
     {
       id: 'cpu',
@@ -315,7 +319,7 @@ export function SystemMetrics({
       unit: '%',
       icon: Cpu,
       status: cpu! > 90 ? 'critical' : cpu! > 70 ? 'warning' : 'normal',
-      sparkline: Array.from({ length: 24 }, () => Math.random() * 100),
+      sparkline: generateSparkline(),
     },
     {
       id: 'memory',
@@ -324,7 +328,7 @@ export function SystemMetrics({
       unit: '%',
       icon: HardDrive,
       status: memory! > 90 ? 'critical' : memory! > 70 ? 'warning' : 'normal',
-      sparkline: Array.from({ length: 24 }, () => Math.random() * 100),
+      sparkline: generateSparkline(),
     },
     {
       id: 'network',
@@ -332,7 +336,7 @@ export function SystemMetrics({
       value: network || 0,
       unit: 'MB/s',
       icon: Network,
-      sparkline: Array.from({ length: 24 }, () => Math.random() * 100),
+      sparkline: generateSparkline(),
     },
     {
       id: 'disk',
@@ -341,7 +345,7 @@ export function SystemMetrics({
       unit: '%',
       icon: HardDrive,
       status: disk! > 90 ? 'critical' : disk! > 70 ? 'warning' : 'normal',
-      sparkline: Array.from({ length: 24 }, () => Math.random() * 100),
+      sparkline: generateSparkline(),
     },
   ];
 

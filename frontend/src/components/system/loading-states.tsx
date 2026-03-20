@@ -2,7 +2,8 @@
 
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, Bot } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 /**
  * SkeletonBlock - Placeholder for loading content
@@ -274,6 +275,15 @@ export function AILoading({
   tips = [],
   className,
 }: AILoadingProps) {
+  const [tipIndex, setTipIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTipIndex(prev => (prev + 1) % tips.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [tips.length]);
+
   return (
     <div className={cn('flex flex-col items-center justify-center p-8 gap-6', className)}>
       {/* Animated AI icon */}

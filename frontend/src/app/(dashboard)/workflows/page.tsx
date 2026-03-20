@@ -116,7 +116,7 @@ export default function WorkflowsPage() {
                     </p>
                     {workflow.logs && workflow.logs.length > 0 && (
                       <p className="text-xs text-text-tertiary mt-1">
-                        {workflow.logs[workflow.logs.length - 1]}
+                        Last: {workflow.logs[workflow.logs.length - 1]}
                       </p>
                     )}
                   </div>

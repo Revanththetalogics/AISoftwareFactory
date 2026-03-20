@@ -8,7 +8,6 @@ import {
   Play, 
   XCircle,
   ChevronRight,
-  ChevronDown,
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -97,7 +96,11 @@ export function ExecutionTimeline({
       <div className={cn('flex items-center gap-1', className)}>
         {phases.map((phase, index) => (
           <div key={phase.id} className="flex items-center">
-            <PhaseIndicator phase={phase} compact />
+            <div className={`w-2 h-2 rounded-full ${
+              phase.status === 'completed' ? 'bg-state-success' :
+              phase.status === 'running' ? 'bg-state-running animate-pulse' :
+              'bg-border-default'
+            }`} />
             {index < phases.length - 1 && (
               <div className="w-4 h-px bg-border-default" />
             )}
