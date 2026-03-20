@@ -13,8 +13,8 @@ import { MetricPanel, SystemMetrics } from '@/components/system/metric-panel';
 import { ExecutionTimeline } from '@/components/system/execution-timeline';
 import { LogStream, MiniLogViewer } from '@/components/system/log-stream';
 import { containerVariants, slideVariants } from '@/lib/motion-variants';
-import type { TimelinePhase, LogEntry } from '@/components/system/execution-timeline';
-import type { LogLevel } from '@/components/system/log-stream';
+import type { TimelinePhase } from '@/components/system/execution-timeline';
+import type { LogLevel, LogEntry } from '@/components/system/log-stream';
 
 // Mock agent data
 const agents = [

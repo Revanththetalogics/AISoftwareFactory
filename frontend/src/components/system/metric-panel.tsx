@@ -61,8 +61,6 @@ export function MetricPanel({
   className,
   onMetricClick,
 }: MetricPanelProps) {
-  const [isHovered, setIsHovered] = useState(false);
-
   return (
     <div className={cn(
       'grid gap-4',
@@ -76,6 +74,7 @@ export function MetricPanel({
           key={metric.id}
           metric={metric}
           variant={variant}
+          timeRange={timeRange}
           onClick={() => onMetricClick?.(metric.id)}
         />
       ))}
@@ -86,10 +85,11 @@ export function MetricPanel({
 interface MetricCardProps {
   metric: MetricData;
   variant: string;
+  timeRange?: string;
   onClick?: () => void;
 }
 
-function MetricCard({ metric, variant, onClick }: MetricCardProps) {
+function MetricCard({ metric, variant, timeRange = '24h', onClick }: MetricCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const Icon = metric.icon || Activity;
 

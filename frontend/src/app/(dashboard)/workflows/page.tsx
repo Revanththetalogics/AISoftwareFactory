@@ -100,7 +100,7 @@ export default function WorkflowsPage() {
           animate="visible"
           className="grid gap-4"
         >
-          {workflows.map((workflow: any) => (
+          {workflows.map((workflow) => (
             <Card key={workflow.workflow_id} className="border-border-default bg-bg-panel/50 backdrop-blur-sm transition-all hover:border-border-emphasis hover:bg-bg-elevated/50">
               <CardContent className="flex items-center justify-between p-6">
                 <div className="flex items-center gap-4">

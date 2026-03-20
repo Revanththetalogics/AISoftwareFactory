@@ -102,7 +102,7 @@ export function DeploymentStatusCard({
   };
 
   return (
-    <TooltipProvider delayDuration={200}>
+    <TooltipProvider>
       <motion.div
         layout
         initial={{ opacity: 0, scale: 0.95 }}
@@ -199,7 +199,7 @@ export function DeploymentStatusCard({
               <div className="grid grid-cols-3 gap-2">
                 {healthChecks.map((check, index) => (
                   <Tooltip key={index}>
-                    <TooltipTrigger asChild>
+                    <TooltipTrigger>
                       <div
                         className={cn(
                           'flex items-center gap-1.5 px-2 py-1.5 rounded border text-xs',

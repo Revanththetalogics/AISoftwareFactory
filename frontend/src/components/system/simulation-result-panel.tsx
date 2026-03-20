@@ -230,7 +230,7 @@ export function SimulationResultPanel({
                     {passRate.toFixed(1)}%
                   </span>
                 </div>
-                <Progress value={passRate} className="h-2" showAnimation={status === 'running'} />
+                <Progress value={passRate} className="h-2" />
               </div>
 
               {/* Quick Actions */}

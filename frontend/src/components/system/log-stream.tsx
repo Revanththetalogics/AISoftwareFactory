@@ -29,7 +29,7 @@ export interface LogEntry {
   source: string;
   message: string;
   timestamp: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface LogFilter {

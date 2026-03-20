@@ -93,7 +93,7 @@ export function AgentCard({
   };
 
   return (
-    <TooltipProvider delayDuration={200}>
+    <TooltipProvider>
       <motion.div
         layout
         initial={{ opacity: 0, scale: 0.95 }}
@@ -180,7 +180,7 @@ export function AgentCard({
               <span className="text-text-secondary">Progress</span>
               <span className="text-text-code font-mono">{progress}%</span>
             </div>
-            <Progress value={progress} className="h-1.5" showAnimation />
+            <Progress value={progress} className="h-1.5" />
           </div>
         )}
 
@@ -303,7 +303,7 @@ function MetricItem({
 }) {
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
+      <TooltipTrigger>
         <div className="text-center">
           <div className="flex items-center justify-center gap-1.5 mb-0.5">
             <Icon className="w-3.5 h-3.5 text-text-tertiary" />

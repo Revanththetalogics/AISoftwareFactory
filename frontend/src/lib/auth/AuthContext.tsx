@@ -39,7 +39,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             api.setToken(token);
           } else {
             // Token expired, clear storage
-            logout();
+            api.setToken(null);
+            localStorage.removeItem(TOKEN_KEY);
+            localStorage.removeItem(USER_KEY);
+            localStorage.removeItem(TOKEN_EXPIRY_KEY);
+            setUser(null);
           }
         }
       } catch (error) {

@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { Loader2, Sparkles, Bot } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 /**
@@ -278,6 +278,8 @@ export function AILoading({
   const [tipIndex, setTipIndex] = useState(0);
 
   useEffect(() => {
+    if (tips.length === 0) return;
+    
     const interval = setInterval(() => {
       setTipIndex(prev => (prev + 1) % tips.length);
     }, 5000);
@@ -325,7 +327,7 @@ export function AILoading({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            💡 Tip: {tips[Math.floor(Date.now() / 5000) % tips.length]}
+            💡 Tip: {tips[tipIndex]}
           </motion.p>
         )}
       </div>

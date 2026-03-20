@@ -89,7 +89,6 @@ export function CodeBlock({
       {/* Code content */}
       <ScrollArea 
         className={cn('max-h-[600px]', compact ? 'max-h-[200px]' : '')}
-        orientation={maxLines ? 'both' : 'vertical'}
       >
         <pre 
           className={cn(

@@ -17,9 +17,9 @@ import type { AgentRole, AgentStatus } from '@/components/system/agent-card';
 interface AgentData {
   id: string;
   name: string;
-  role: AgentRole;
+  role: string;
   description: string;
-  status: AgentStatus;
+  status: 'idle' | 'running' | 'paused';
   currentTask: string;
   progress: number;
   executionTime: string;
@@ -30,7 +30,7 @@ const agents: AgentData[] = [
   {
     id: '1',
     name: 'CEO Agent',
-    role: 'executive',
+    role: 'Executive',
     description: 'Strategic oversight and decision making',
     status: 'running',
     currentTask: 'Reviewing project roadmap',
@@ -41,7 +41,7 @@ const agents: AgentData[] = [
   {
     id: '2',
     name: 'Product Manager',
-    role: 'product',
+    role: 'Product Manager',
     description: 'Requirements gathering and feature planning',
     status: 'running',
     currentTask: 'Writing user stories',
@@ -52,7 +52,7 @@ const agents: AgentData[] = [
   {
     id: '3',
     name: 'Backend Engineer',
-    role: 'backend',
+    role: 'Backend Developer',
     description: 'API development and database design',
     status: 'running',
     currentTask: 'Building authentication API',
@@ -63,7 +63,7 @@ const agents: AgentData[] = [
   {
     id: '4',
     name: 'Frontend Engineer',
-    role: 'frontend',
+    role: 'Frontend Developer',
     description: 'UI/UX implementation and component development',
     status: 'idle',
     currentTask: 'Waiting for API specs',
@@ -74,7 +74,7 @@ const agents: AgentData[] = [
   {
     id: '5',
     name: 'UX Designer',
-    role: 'design',
+    role: 'Designer',
     description: 'User experience and interface design',
     status: 'running',
     currentTask: 'Creating wireframes',
@@ -85,7 +85,7 @@ const agents: AgentData[] = [
   {
     id: '6',
     name: 'DevOps Engineer',
-    role: 'devops',
+    role: 'DevOps Engineer',
     description: 'Infrastructure and deployment automation',
     status: 'idle',
     currentTask: 'Monitoring CI/CD pipeline',
@@ -96,7 +96,7 @@ const agents: AgentData[] = [
   {
     id: '7',
     name: 'QA Engineer',
-    role: 'qa',
+    role: 'QA Engineer',
     description: 'Testing and quality verification',
     status: 'paused',
     currentTask: 'Waiting for code completion',
@@ -107,7 +107,7 @@ const agents: AgentData[] = [
   {
     id: '8',
     name: 'Database Architect',
-    role: 'database',
+    role: 'Database Administrator',
     description: 'Database design and optimization',
     status: 'running',
     currentTask: 'Optimizing query performance',
@@ -119,13 +119,13 @@ const agents: AgentData[] = [
 
 export default function AgentsPage() {
   const [selectedAgent, setSelectedAgent] = useState<AgentData | null>(null);
-  const [agentList, setAgentList] = useState(agentList);
+  const [agentList, setAgentList] = useState<AgentData[]>(agents);
 
   // Simulate real-time updates
   useEffect(() => {
     const interval = setInterval(() => {
-      setAgentList((prev) =>
-        prev.map((agent) => {
+      setAgentList((prev: AgentData[]) =>
+        prev.map((agent: AgentData) => {
           if (agent.status === 'running' && agent.progress < 100) {
             return {
               ...agent,
@@ -140,9 +140,9 @@ export default function AgentsPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const runningCount = agentList.filter((a) => a.status === 'running').length;
-  const idleCount = agentList.filter((a) => a.status === 'idle').length;
-  const pausedCount = agentList.filter((a) => a.status === 'paused').length;
+  const runningCount = agentList.filter((a: AgentData) => a.status === 'running').length;
+  const idleCount = agentList.filter((a: AgentData) => a.status === 'idle').length;
+  const pausedCount = agentList.filter((a: AgentData) => a.status === 'paused').length;
 
   return (
     <motion.div
@@ -222,18 +222,19 @@ export default function AgentsPage() {
       {/* Agents Grid - Using new AgentCard component */}
       <motion.div variants={slideVariants} initial="hidden" animate="visible">
         <AgentGrid columns={4}>
-          {agentList.map((agent) => (
+          {agentList.map((agent: AgentData) => (
             <AgentCard
               key={agent.id}
               agentId={agent.id}
               name={agent.name}
-              role={agent.role}
-              status={agent.status}
+              role={agent.role as unknown as AgentRole}
+              status={agent.status as unknown as AgentStatus}
               currentTask={agent.currentTask}
               progress={agent.progress}
               metrics={{
-                executionTime: agent.executionTime,
+                avgExecutionTime: agent.executionTime,
                 tasksCompleted: agent.logs.length,
+                successRate: 95,
               }}
               onClick={() => setSelectedAgent(agent)}
               compact
