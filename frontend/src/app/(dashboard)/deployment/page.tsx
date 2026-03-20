@@ -212,8 +212,8 @@ export default function DeploymentPage() {
       {/* Header */}
       <motion.div variants={itemVariants} className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-100">Deployment</h1>
-          <p className="mt-1 text-slate-400">
+          <h1 className="text-3xl font-bold text-text-primary">Deployment</h1>
+          <p className="mt-1 text-text-secondary">
             Manage your application environments and deployments
           </p>
         </div>
@@ -224,10 +224,10 @@ export default function DeploymentPage() {
               Deploy to Production
             </Button>
           </DialogTrigger>
-          <DialogContent className="border-slate-800 bg-slate-900">
+          <DialogContent className="border-border-default bg-bg-base">
             <DialogHeader>
-              <DialogTitle className="text-xl text-slate-100">Deploy to Production</DialogTitle>
-              <DialogDescription className="text-slate-400">
+              <DialogTitle className="text-xl text-text-primary">Deploy to Production</DialogTitle>
+              <DialogDescription className="text-text-secondary">
                 This will deploy the current staging version to production. Please confirm.
               </DialogDescription>
             </DialogHeader>
@@ -246,7 +246,7 @@ export default function DeploymentPage() {
               <div className="flex gap-3">
                 <Button
                   variant="outline"
-                  className="flex-1 border-slate-700 text-slate-300 hover:bg-slate-800"
+                  className="flex-1 border-border-default text-text-secondary hover:bg-bg-hover"
                   onClick={() => setShowDeployDialog(false)}
                 >
                   Cancel
@@ -269,7 +269,7 @@ export default function DeploymentPage() {
         {environments.map((env) => (
           <Card
             key={env.id}
-            className="border-slate-800 bg-slate-900/50 backdrop-blur-sm"
+            className="border-border-default bg-bg-panel/50 backdrop-blur-sm"
           >
             <CardHeader>
               <div className="flex items-start justify-between">
@@ -286,8 +286,8 @@ export default function DeploymentPage() {
                     <Server className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg text-slate-100">{env.name}</CardTitle>
-                    <p className="text-xs text-slate-500">{env.version}</p>
+                    <CardTitle className="text-lg text-text-primary">{env.name}</CardTitle>
+                    <p className="text-xs text-text-tertiary">{env.version}</p>
                   </div>
                 </div>
                 <Badge variant="outline" className={getStatusColor(env.status)}>
@@ -296,19 +296,19 @@ export default function DeploymentPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-800/30 p-3">
+              <div className="flex items-center justify-between rounded-lg border border-border-default bg-bg-elevated/30 p-3">
                 <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-slate-500" />
-                  <span className="text-sm text-slate-400">{env.url}</span>
+                  <Globe className="h-4 w-4 text-text-tertiary" />
+                  <span className="text-sm text-text-secondary">{env.url}</span>
                 </div>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-slate-400 hover:text-slate-200"
+                  className="h-8 w-8 text-text-secondary hover:text-text-primary"
                   onClick={() => handleCopyUrl(env.url)}
                 >
                   {copiedUrl === env.url ? (
-                    <Check className="h-4 w-4 text-emerald-400" />
+                    <Check className="h-4 w-4 text-state-success" />
                   ) : (
                     <Copy className="h-4 w-4" />
                   )}
@@ -316,30 +316,30 @@ export default function DeploymentPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg border border-slate-800 bg-slate-800/30 p-3">
-                  <p className="text-xs text-slate-500">CPU Usage</p>
+                <div className="rounded-lg border border-border-default bg-bg-elevated/30 p-3">
+                  <p className="text-xs text-text-tertiary">CPU Usage</p>
                   <div className="mt-1 flex items-center gap-2">
-                    <Progress value={env.metrics.cpu} className="h-1.5 flex-1 bg-slate-800" />
-                    <span className="text-sm font-medium text-slate-200">{env.metrics.cpu}%</span>
+                    <Progress value={env.metrics.cpu} className="h-1.5 flex-1 bg-bg-base" />
+                    <span className="text-sm font-medium text-text-primary">{env.metrics.cpu}%</span>
                   </div>
                 </div>
-                <div className="rounded-lg border border-slate-800 bg-slate-800/30 p-3">
-                  <p className="text-xs text-slate-500">Memory</p>
+                <div className="rounded-lg border border-border-default bg-bg-elevated/30 p-3">
+                  <p className="text-xs text-text-tertiary">Memory</p>
                   <div className="mt-1 flex items-center gap-2">
-                    <Progress value={env.metrics.memory} className="h-1.5 flex-1 bg-slate-800" />
-                    <span className="text-sm font-medium text-slate-200">{env.metrics.memory}%</span>
+                    <Progress value={env.metrics.memory} className="h-1.5 flex-1 bg-bg-base" />
+                    <span className="text-sm font-medium text-text-primary">{env.metrics.memory}%</span>
                   </div>
                 </div>
               </div>
 
               <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2 text-slate-400">
+                <div className="flex items-center gap-2 text-text-secondary">
                   <Clock className="h-4 w-4" />
                   <span>Deployed {env.lastDeployed}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   {getHealthIcon(env.health)}
-                  <span className="capitalize text-slate-300">{env.health}</span>
+                  <span className="capitalize text-text-primary">{env.health}</span>
                 </div>
               </div>
 
@@ -347,7 +347,7 @@ export default function DeploymentPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 border-slate-700 text-slate-300 hover:bg-slate-800"
+                  className="flex-1 border-border-default text-text-secondary hover:bg-bg-hover"
                 >
                   <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
                   Open
@@ -355,7 +355,7 @@ export default function DeploymentPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 border-slate-700 text-slate-300 hover:bg-slate-800"
+                  className="flex-1 border-border-default text-text-secondary hover:bg-bg-hover"
                 >
                   <Terminal className="mr-1.5 h-3.5 w-3.5" />
                   Logs
@@ -368,36 +368,36 @@ export default function DeploymentPage() {
 
       {/* Deployment History */}
       <motion.div variants={itemVariants}>
-        <Card className="border-slate-800 bg-slate-900/50">
+        <Card className="border-border-default bg-bg-panel/50">
           <CardHeader>
-            <CardTitle className="text-lg text-slate-100">Deployment History</CardTitle>
+            <CardTitle className="text-lg text-text-primary">Deployment History</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {deploymentHistory.map((deployment) => (
                 <div
                   key={deployment.id}
-                  className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-800/30 p-4"
+                  className="flex items-center justify-between rounded-lg border border-border-default bg-bg-elevated/30 p-4"
                 >
                   <div className="flex items-center gap-4">
                     <div
                       className={`rounded-lg p-2 ${
                         deployment.status === 'success'
-                          ? 'bg-emerald-500/10'
-                          : 'bg-red-500/10'
+                          ? 'bg-state-success-dim'
+                          : 'bg-state-error-dim'
                       }`}
                     >
                       {deployment.status === 'success' ? (
-                        <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                        <CheckCircle2 className="h-5 w-5 text-state-success" />
                       ) : (
-                        <AlertCircle className="h-5 w-5 text-red-400" />
+                        <AlertCircle className="h-5 w-5 text-state-error" />
                       )}
                     </div>
                     <div>
-                      <p className="font-medium text-slate-200">
+                      <p className="font-medium text-text-primary">
                         {deployment.version} → {deployment.environment}
                       </p>
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-text-tertiary">
                         {deployment.timestamp} • {deployment.duration} • {deployment.triggeredBy}
                       </p>
                     </div>

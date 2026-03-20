@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { User, LoginResponse } from '@/lib/types';
+import { api } from '@/lib/api/client';
 
 interface AuthContextType {
   user: User | null;
@@ -34,6 +35,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const expiryDate = new Date(expiry);
           if (expiryDate > new Date()) {
             setUser(JSON.parse(userData));
+            // Sync token with API client
+            api.setToken(token);
           } else {
             // Token expired, clear storage
             logout();
@@ -47,7 +50,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     initAuth();
-    initAuth();
   }, []);
 
   const login = useCallback((response: LoginResponse) => {
@@ -58,6 +60,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(USER_KEY, JSON.stringify(response.user));
     localStorage.setItem(TOKEN_EXPIRY_KEY, expiryDate.toISOString());
 
+    // Sync token with API client
+    api.setToken(response.access_token);
+
     setUser(response.user);
   }, []);
 
@@ -65,6 +70,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(TOKEN_EXPIRY_KEY);
+    
+    // Clear token from API client
+    api.setToken(null);
+    
     setUser(null);
   }, []);
 

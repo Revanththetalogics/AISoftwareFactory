@@ -24,22 +24,22 @@ export default function CodeGenPage() {
     >
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-100">Code Generator</h1>
-          <p className="text-slate-400">AI-powered code generation with validation</p>
+          <h1 className="text-3xl font-bold text-text-primary">Code Generator</h1>
+          <p className="text-text-secondary">AI-powered code generation with validation</p>
         </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-slate-800 bg-slate-900/50">
+        <Card className="border-border-default bg-bg-base/50">
           <CardHeader>
-            <CardTitle className="text-slate-100">Input</CardTitle>
+            <CardTitle className="text-text-primary">Input</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <textarea
               placeholder="Describe what you want to build..."
               value={prompt}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPrompt(e.target.value)}
-              className="min-h-[200px] w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="min-h-[200px] w-full rounded-md border border-border-default bg-slate-950 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
             <Button 
               onClick={handleGenerate}
@@ -61,9 +61,9 @@ export default function CodeGenPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800 bg-slate-900/50">
+        <Card className="border-border-default bg-bg-base/50">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-slate-100">Output</CardTitle>
+            <CardTitle className="text-text-primary">Output</CardTitle>
             <div className="flex gap-2">
               <Button variant="ghost" size="icon">
                 <Copy className="h-4 w-4" />
@@ -74,7 +74,7 @@ export default function CodeGenPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="min-h-[200px] rounded-lg bg-slate-950 p-4 font-mono text-sm text-slate-400">
+            <div className="min-h-[200px] rounded-lg bg-slate-950 p-4 font-mono text-sm text-text-secondary">
               {generating ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />

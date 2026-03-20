@@ -28,18 +28,18 @@ export function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-6 text-center">Sign In</h2>
+    <div className="w-full p-6 bg-bg-panel rounded-lg shadow-lg border border-border-default">
+      <h2 className="text-2xl font-bold mb-6 text-center text-text-primary">Sign In</h2>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+        <div className="mb-4 p-3 bg-state-error-dim text-state-error border border-state-error rounded-md">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="username" className="block text-sm font-medium text-text-primary">
             Username
           </label>
           <input
@@ -48,12 +48,12 @@ export function LoginForm() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+            className="mt-1 block w-full px-3 py-2 border border-border-default rounded-md shadow-sm bg-bg-base text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-state-running focus:border-state-running transition-colors"
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="password" className="block text-sm font-medium text-text-primary">
             Password
           </label>
           <input
@@ -62,14 +62,14 @@ export function LoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+            className="mt-1 block w-full px-3 py-2 border border-border-default rounded-md shadow-sm bg-bg-base text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-state-running focus:border-state-running transition-colors"
           />
         </div>
 
         <button
           type="submit"
           disabled={login.isPending}
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+          className="w-full flex justify-center py-2 px-4 rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-state-running to-state-running-emphasis hover:from-state-running-emphasis hover:to-state-running focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-state-running disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
           {login.isPending ? 'Signing in...' : 'Sign In'}
         </button>

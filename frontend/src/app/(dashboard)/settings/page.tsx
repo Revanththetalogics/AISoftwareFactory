@@ -65,8 +65,8 @@ export default function SettingsPage() {
       {/* Header */}
       <motion.div variants={itemVariants} className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-100">Settings</h1>
-          <p className="mt-1 text-slate-400">
+          <h1 className="text-3xl font-bold text-text-primary">Settings</h1>
+          <p className="mt-1 text-text-secondary">
             Manage your preferences and system configuration
           </p>
         </div>
@@ -77,30 +77,30 @@ export default function SettingsPage() {
       </motion.div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="border-slate-800 bg-slate-900/50">
-          <TabsTrigger value="general" className="data-[state=active]:bg-slate-800">
+        <TabsList className="border-border-default bg-bg-panel/50">
+          <TabsTrigger value="general" className="data-[state=active]:bg-bg-hover data-[state=inactive]:text-text-secondary">
             General
           </TabsTrigger>
-          <TabsTrigger value="profile" className="data-[state=active]:bg-slate-800">
+          <TabsTrigger value="profile" className="data-[state=active]:bg-bg-hover data-[state=inactive]:text-text-secondary">
             Profile
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="data-[state=active]:bg-slate-800">
+          <TabsTrigger value="notifications" className="data-[state=active]:bg-bg-hover data-[state=inactive]:text-text-secondary">
             Notifications
           </TabsTrigger>
-          <TabsTrigger value="ai" className="data-[state=active]:bg-slate-800">
+          <TabsTrigger value="ai" className="data-[state=active]:bg-bg-hover data-[state=inactive]:text-text-secondary">
             AI Configuration
           </TabsTrigger>
-          <TabsTrigger value="api" className="data-[state=active]:bg-slate-800">
+          <TabsTrigger value="api" className="data-[state=active]:bg-bg-hover data-[state=inactive]:text-text-secondary">
             API & Integrations
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-6">
           <motion.div variants={itemVariants}>
-            <Card className="border-slate-800 bg-slate-900/50">
+            <Card className="border-border-default bg-bg-panel/50">
               <CardHeader>
-                <CardTitle className="text-lg text-slate-100">Appearance</CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardTitle className="text-lg text-text-primary">Appearance</CardTitle>
+                <CardDescription className="text-text-tertiary">
                   Customize how the dashboard looks
                 </CardDescription>
               </CardHeader>
@@ -108,13 +108,13 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {theme === 'dark' ? (
-                      <Moon className="h-5 w-5 text-slate-400" />
+                      <Moon className="h-5 w-5 text-text-secondary" />
                     ) : (
-                      <Sun className="h-5 w-5 text-slate-400" />
+                      <Sun className="h-5 w-5 text-text-secondary" />
                     )}
                     <div>
-                      <p className="font-medium text-slate-200">Theme</p>
-                      <p className="text-sm text-slate-500">Choose your preferred color scheme</p>
+                      <p className="font-medium text-text-primary">Theme</p>
+                      <p className="text-sm text-text-tertiary">Choose your preferred color scheme</p>
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -122,7 +122,7 @@ export default function SettingsPage() {
                       variant={theme === 'light' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setTheme('light')}
-                      className={theme === 'light' ? 'bg-violet-600' : 'border-slate-700 text-slate-300'}
+                      className={theme === 'light' ? 'bg-violet-600' : 'border-border-default text-text-secondary'}
                     >
                       <Sun className="mr-1.5 h-4 w-4" />
                       Light
@@ -131,7 +131,7 @@ export default function SettingsPage() {
                       variant={theme === 'dark' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setTheme('dark')}
-                      className={theme === 'dark' ? 'bg-violet-600' : 'border-slate-700 text-slate-300'}
+                      className={theme === 'dark' ? 'bg-violet-600' : 'border-border-default text-text-secondary'}
                     >
                       <Moon className="mr-1.5 h-4 w-4" />
                       Dark
@@ -140,7 +140,7 @@ export default function SettingsPage() {
                       variant={theme === 'system' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setTheme('system')}
-                      className={theme === 'system' ? 'bg-violet-600' : 'border-slate-700 text-slate-300'}
+                      className={theme === 'system' ? 'bg-violet-600' : 'border-border-default text-text-secondary'}
                     >
                       <Globe className="mr-1.5 h-4 w-4" />
                       System
@@ -152,18 +152,18 @@ export default function SettingsPage() {
           </motion.div>
 
           <motion.div variants={itemVariants}>
-            <Card className="border-slate-800 bg-slate-900/50">
+            <Card className="border-border-default bg-bg-base/50">
               <CardHeader>
-                <CardTitle className="text-lg text-slate-100">Language & Region</CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardTitle className="text-lg text-text-primary">Language & Region</CardTitle>
+                <CardDescription className="text-text-secondary">
                   Set your language and regional preferences
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label className="text-slate-300">Language</Label>
-                    <select className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-200">
+                    <Label className="text-text-secondary">Language</Label>
+                    <select className="w-full rounded-md border border-border-default bg-bg-hover px-3 py-2 text-sm text-text-primary">
                       <option>English (US)</option>
                       <option>English (UK)</option>
                       <option>Spanish</option>
@@ -172,8 +172,8 @@ export default function SettingsPage() {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-300">Timezone</Label>
-                    <select className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-200">
+                    <Label className="text-text-secondary">Timezone</Label>
+                    <select className="w-full rounded-md border border-border-default bg-bg-hover px-3 py-2 text-sm text-text-primary">
                       <option>UTC (Coordinated Universal Time)</option>
                       <option>EST (Eastern Standard Time)</option>
                       <option>PST (Pacific Standard Time)</option>
@@ -188,43 +188,43 @@ export default function SettingsPage() {
 
         <TabsContent value="profile" className="space-y-6">
           <motion.div variants={itemVariants}>
-            <Card className="border-slate-800 bg-slate-900/50">
+            <Card className="border-border-default bg-bg-base/50">
               <CardHeader>
-                <CardTitle className="text-lg text-slate-100">Profile Information</CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardTitle className="text-lg text-text-primary">Profile Information</CardTitle>
+                <CardDescription className="text-text-secondary">
                   Update your personal information
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label className="text-slate-300">First Name</Label>
+                    <Label className="text-text-secondary">First Name</Label>
                     <Input
                       defaultValue="John"
-                      className="border-slate-700 bg-slate-800 text-slate-200"
+                      className="border-border-default bg-bg-hover text-text-primary"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-300">Last Name</Label>
+                    <Label className="text-text-secondary">Last Name</Label>
                     <Input
                       defaultValue="Doe"
-                      className="border-slate-700 bg-slate-800 text-slate-200"
+                      className="border-border-default bg-bg-hover text-text-primary"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-300">Email</Label>
+                  <Label className="text-text-secondary">Email</Label>
                   <Input
                     type="email"
                     defaultValue="john@example.com"
-                    className="border-slate-700 bg-slate-800 text-slate-200"
+                    className="border-border-default bg-bg-hover text-text-primary"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-300">Company</Label>
+                  <Label className="text-text-secondary">Company</Label>
                   <Input
                     defaultValue="Acme Inc"
-                    className="border-slate-700 bg-slate-800 text-slate-200"
+                    className="border-border-default bg-bg-hover text-text-primary"
                   />
                 </div>
               </CardContent>
@@ -234,10 +234,10 @@ export default function SettingsPage() {
 
         <TabsContent value="notifications" className="space-y-6">
           <motion.div variants={itemVariants}>
-            <Card className="border-slate-800 bg-slate-900/50">
+            <Card className="border-border-default bg-bg-base/50">
               <CardHeader>
-                <CardTitle className="text-lg text-slate-100">Notification Preferences</CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardTitle className="text-lg text-text-primary">Notification Preferences</CardTitle>
+                <CardDescription className="text-text-secondary">
                   Choose what notifications you want to receive
                 </CardDescription>
               </CardHeader>
@@ -251,8 +251,8 @@ export default function SettingsPage() {
                 ].map((item) => (
                   <div key={item.id} className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-slate-200">{item.label}</p>
-                      <p className="text-sm text-slate-500">{item.description}</p>
+                      <p className="font-medium text-text-primary">{item.label}</p>
+                      <p className="text-sm text-text-tertiary">{item.description}</p>
                     </div>
                     <Switch defaultChecked={item.id !== 'email'} />
                   </div>
@@ -264,17 +264,17 @@ export default function SettingsPage() {
 
         <TabsContent value="ai" className="space-y-6">
           <motion.div variants={itemVariants}>
-            <Card className="border-slate-800 bg-slate-900/50">
+            <Card className="border-border-default bg-bg-base/50">
               <CardHeader>
-                <CardTitle className="text-lg text-slate-100">AI Model Configuration</CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardTitle className="text-lg text-text-primary">AI Model Configuration</CardTitle>
+                <CardDescription className="text-text-secondary">
                   Configure AI model settings and providers
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label className="text-slate-300">Default LLM Provider</Label>
-                  <select className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-200">
+                  <Label className="text-text-secondary">Default LLM Provider</Label>
+                  <select className="w-full rounded-md border border-border-default bg-bg-hover px-3 py-2 text-sm text-text-primary">
                     <option>Ollama (Local)</option>
                     <option>OpenAI</option>
                     <option>Anthropic</option>
@@ -282,8 +282,8 @@ export default function SettingsPage() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-300">Default Model</Label>
-                  <select className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-200">
+                  <Label className="text-text-secondary">Default Model</Label>
+                  <select className="w-full rounded-md border border-border-default bg-bg-hover px-3 py-2 text-sm text-text-primary">
                     <option>llama3.2:latest</option>
                     <option>codellama:latest</option>
                     <option>mistral:latest</option>
@@ -291,41 +291,41 @@ export default function SettingsPage() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-300">Temperature</Label>
+                  <Label className="text-text-secondary">Temperature</Label>
                   <Input
                     type="number"
                     defaultValue="0.7"
                     min="0"
                     max="2"
                     step="0.1"
-                    className="border-slate-700 bg-slate-800 text-slate-200"
+                    className="border-border-default bg-bg-hover text-text-primary"
                   />
-                  <p className="text-xs text-slate-500">Controls creativity vs consistency</p>
+                  <p className="text-xs text-text-tertiary">Controls creativity vs consistency</p>
                 </div>
               </CardContent>
             </Card>
           </motion.div>
 
           <motion.div variants={itemVariants}>
-            <Card className="border-slate-800 bg-slate-900/50">
+            <Card className="border-border-default bg-bg-base/50">
               <CardHeader>
-                <CardTitle className="text-lg text-slate-100">Agent Behavior</CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardTitle className="text-lg text-text-primary">Agent Behavior</CardTitle>
+                <CardDescription className="text-text-secondary">
                   Configure how AI agents work
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-slate-200">Auto-approve Tasks</p>
-                    <p className="text-sm text-slate-500">Allow agents to proceed without approval</p>
+                    <p className="font-medium text-text-primary">Auto-approve Tasks</p>
+                    <p className="text-sm text-text-tertiary">Allow agents to proceed without approval</p>
                   </div>
                   <Switch />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-slate-200">Parallel Execution</p>
-                    <p className="text-sm text-slate-500">Run multiple agents simultaneously</p>
+                    <p className="font-medium text-text-primary">Parallel Execution</p>
+                    <p className="text-sm text-text-tertiary">Run multiple agents simultaneously</p>
                   </div>
                   <Switch defaultChecked />
                 </div>
@@ -336,32 +336,32 @@ export default function SettingsPage() {
 
         <TabsContent value="api" className="space-y-6">
           <motion.div variants={itemVariants}>
-            <Card className="border-slate-800 bg-slate-900/50">
+            <Card className="border-border-default bg-bg-base/50">
               <CardHeader>
-                <CardTitle className="text-lg text-slate-100">API Keys</CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardTitle className="text-lg text-text-primary">API Keys</CardTitle>
+                <CardDescription className="text-text-secondary">
                   Manage your API keys for external integrations
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="rounded-lg border border-slate-800 bg-slate-800/30 p-4">
+                <div className="rounded-lg border border-border-default bg-bg-hover/30 p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Key className="h-5 w-5 text-slate-400" />
+                      <Key className="h-5 w-5 text-text-secondary" />
                       <div>
-                        <p className="font-medium text-slate-200">Production API Key</p>
-                        <p className="text-xs text-slate-500">Use this for production deployments</p>
+                        <p className="font-medium text-text-primary">Production API Key</p>
+                        <p className="text-xs text-text-tertiary">Use this for production deployments</p>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" className="border-slate-700 text-slate-300">
+                    <Button variant="outline" size="sm" className="border-border-default text-text-secondary">
                       Regenerate
                     </Button>
                   </div>
                   <div className="mt-3 flex items-center gap-2">
-                    <code className="flex-1 rounded bg-slate-900 px-3 py-2 text-sm text-slate-400">
+                    <code className="flex-1 rounded bg-bg-base px-3 py-2 text-sm text-text-secondary">
                       af_prod_••••••••••••••••••••••••
                     </code>
-                    <Button variant="ghost" size="sm" className="text-slate-400">
+                    <Button variant="ghost" size="sm" className="text-text-secondary">
                       Show
                     </Button>
                   </div>
@@ -371,29 +371,29 @@ export default function SettingsPage() {
           </motion.div>
 
           <motion.div variants={itemVariants}>
-            <Card className="border-slate-800 bg-slate-900/50">
+            <Card className="border-border-default bg-bg-base/50">
               <CardHeader>
-                <CardTitle className="text-lg text-slate-100">Webhooks</CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardTitle className="text-lg text-text-primary">Webhooks</CardTitle>
+                <CardDescription className="text-text-secondary">
                   Configure webhooks for external notifications
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Webhook className="h-5 w-5 text-slate-400" />
+                    <Webhook className="h-5 w-5 text-text-secondary" />
                     <div>
-                      <p className="font-medium text-slate-200">Deployment Webhook</p>
-                      <p className="text-sm text-slate-500">Notify external systems on deployment</p>
+                      <p className="font-medium text-text-primary">Deployment Webhook</p>
+                      <p className="text-sm text-text-tertiary">Notify external systems on deployment</p>
                     </div>
                   </div>
                   <Switch />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-slate-300">Webhook URL</Label>
+                  <Label className="text-text-secondary">Webhook URL</Label>
                   <Input
                     placeholder="https://api.example.com/webhook"
-                    className="border-slate-700 bg-slate-800 text-slate-200"
+                    className="border-border-default bg-bg-hover text-text-primary"
                   />
                 </div>
               </CardContent>

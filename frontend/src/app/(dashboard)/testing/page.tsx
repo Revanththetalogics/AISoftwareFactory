@@ -105,12 +105,12 @@ export default function TestingDashboard() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto px-6 py-4 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">AI Testing Dashboard</h1>
-          <p className="text-muted-foreground">
+          <p className="text-text-secondary">
             Autonomous test generation, bug detection, and self-healing
           </p>
         </div>
@@ -131,7 +131,7 @@ export default function TestingDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Test Coverage</CardTitle>
-            <Shield className="w-4 h-4 text-muted-foreground" />
+            <Shield className="w-4 h-4 text-text-secondary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -147,11 +147,11 @@ export default function TestingDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Tests</CardTitle>
-            <CheckCircle className="w-4 h-4 text-muted-foreground" />
+            <CheckCircle className="w-4 h-4 text-text-secondary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summary.total_tests || 0}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-text-secondary">
               {summary.total_test_suites || 0} test suites
             </p>
           </CardContent>
@@ -160,11 +160,11 @@ export default function TestingDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Bugs Detected</CardTitle>
-            <Bug className="w-4 h-4 text-muted-foreground" />
+            <Bug className="w-4 h-4 text-text-secondary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summary.total_bugs_detected || 0}</div>
-            <p className="text-xs text-red-500">
+            <p className="text-xs text-state-error">
               {summary.critical_bugs || 0} critical
             </p>
           </CardContent>
@@ -173,11 +173,11 @@ export default function TestingDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Auto-Fixes</CardTitle>
-            <Zap className="w-4 h-4 text-muted-foreground" />
+            <Zap className="w-4 h-4 text-text-secondary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summary.fixes_applied || 0}</div>
-            <p className="text-xs text-green-500">Successfully applied</p>
+            <p className="text-xs text-state-success">Successfully applied</p>
           </CardContent>
         </Card>
       </div>
@@ -209,12 +209,12 @@ export default function TestingDashboard() {
                     >
                       <div className="flex items-center gap-2">
                         <Bug className={`w-4 h-4 ${
-                          bug.severity === 'critical' ? 'text-red-500' : 
-                          bug.severity === 'high' ? 'text-orange-500' : 'text-yellow-500'
+                          bug.severity === 'critical' ? 'text-state-error' : 
+                          bug.severity === 'high' ? 'text-orange-500' : 'text-state-warning'
                         }`} />
                         <div>
                           <p className="text-sm font-medium">{bug.title}</p>
-                          <p className="text-xs text-muted-foreground">{bug.file_path}</p>
+                          <p className="text-xs text-text-secondary">{bug.file_path}</p>
                         </div>
                       </div>
                       <Badge variant={
@@ -224,7 +224,7 @@ export default function TestingDashboard() {
                         {bug.severity}
                       </Badge>
                     </div>
-                  )) || <p className="text-muted-foreground">No recent bugs</p>}
+                  )) || <p className="text-text-secondary">No recent bugs</p>}
                 </div>
               </CardContent>
             </Card>
@@ -243,20 +243,20 @@ export default function TestingDashboard() {
                     >
                       <div className="flex items-center gap-2">
                         {fix.success ? (
-                          <CheckCircle className="w-4 h-4 text-green-500" />
+                          <CheckCircle className="w-4 h-4 text-state-success" />
                         ) : (
-                          <XCircle className="w-4 h-4 text-red-500" />
+                          <XCircle className="w-4 h-4 text-state-error" />
                         )}
                         <div>
                           <p className="text-sm font-medium">Bug {fix.bug_id}</p>
-                          <p className="text-xs text-muted-foreground">{fix.file_path}</p>
+                          <p className="text-xs text-text-secondary">{fix.file_path}</p>
                         </div>
                       </div>
                       <Badge variant={fix.success ? 'default' : 'destructive'}>
                         {fix.success ? 'Fixed' : 'Failed'}
                       </Badge>
                     </div>
-                  )) || <p className="text-muted-foreground">No recent fixes</p>}
+                  )) || <p className="text-text-secondary">No recent fixes</p>}
                 </div>
               </CardContent>
             </Card>
@@ -277,7 +277,7 @@ export default function TestingDashboard() {
                     style={{ height: `${point.overall_coverage}%` }}
                     title={`${new Date(point.timestamp).toLocaleDateString()}: ${point.overall_coverage.toFixed(1)}%`}
                   />
-                )) || <p className="text-muted-foreground">No coverage data</p>}
+                )) || <p className="text-text-secondary">No coverage data</p>}
               </div>
             </CardContent>
           </Card>
@@ -303,20 +303,20 @@ export default function TestingDashboard() {
                     key={bug.id} 
                     className={`p-4 rounded-lg border ${
                       bug.severity === 'critical' 
-                        ? 'border-red-500/50 bg-red-500/10' 
-                        : 'border-slate-700 bg-slate-800/50'
+                        ? 'border-red-500/50 bg-state-error-dim' 
+                        : 'border-border-default bg-bg-hover/50'
                     }`}
                   >
                     <div className="flex items-start gap-3">
                       <AlertTriangle className={`w-5 h-5 mt-0.5 ${
-                        bug.severity === 'critical' ? 'text-red-400' : 'text-amber-400'
+                        bug.severity === 'critical' ? 'text-state-error' : 'text-state-warning'
                       }`} />
                       <div className="flex-1">
                         <div className="flex justify-between items-start">
                           <div>
-                            <p className="font-medium text-slate-200">{bug.title}</p>
-                            <p className="text-sm text-slate-400">{bug.file_path}</p>
-                            <p className="text-xs text-slate-500">Category: {bug.category}</p>
+                            <p className="font-medium text-text-primary">{bug.title}</p>
+                            <p className="text-sm text-text-secondary">{bug.file_path}</p>
+                            <p className="text-xs text-text-tertiary">Category: {bug.category}</p>
                           </div>
                           <div className="flex gap-2">
                             <Button size="sm" variant="outline">
@@ -332,7 +332,7 @@ export default function TestingDashboard() {
                       </div>
                     </div>
                   </div>
-                )) || <p className="text-muted-foreground">No bugs detected</p>}
+                )) || <p className="text-text-secondary">No bugs detected</p>}
               </div>
             </CardContent>
           </Card>
@@ -353,17 +353,17 @@ export default function TestingDashboard() {
                     className="flex items-center justify-between p-3 border rounded"
                   >
                     <div className="flex items-center gap-3">
-                      <Activity className="w-4 h-4 text-yellow-500" />
+                      <Activity className="w-4 h-4 text-state-warning" />
                       <div>
                         <p className="font-medium">{test.name}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-text-secondary">
                           Failure rate: {(test.failure_rate * 100).toFixed(1)}%
                         </p>
                       </div>
                     </div>
                     <div className="flex gap-2">
                       {test.quarantined ? (
-                        <Badge variant="secondary">Quarantined</Badge>
+                        <Badge variant="outline">Quarantined</Badge>
                       ) : (
                         <Button size="sm" variant="outline">
                           Quarantine
@@ -374,7 +374,7 @@ export default function TestingDashboard() {
                       </Button>
                     </div>
                   </div>
-                )) || <p className="text-muted-foreground">No flaky tests detected</p>}
+                )) || <p className="text-text-secondary">No flaky tests detected</p>}
               </div>
             </CardContent>
           </Card>
@@ -397,18 +397,18 @@ export default function TestingDashboard() {
               <div className="space-y-4">
                 <div className="grid grid-cols-3 gap-4">
                   <div className="p-4 border rounded text-center">
-                    <p className="text-2xl font-bold text-green-500">
+                    <p className="text-2xl font-bold text-state-success">
                       {summary.average_coverage >= 80 ? 'Good' : summary.average_coverage >= 50 ? 'Fair' : 'Poor'}
                     </p>
-                    <p className="text-sm text-muted-foreground">Coverage Level</p>
+                    <p className="text-sm text-text-secondary">Coverage Level</p>
                   </div>
                   <div className="p-4 border rounded text-center">
                     <p className="text-2xl font-bold">{healthData?.flaky_tests?.length || 0}</p>
-                    <p className="text-sm text-muted-foreground">Flaky Tests</p>
+                    <p className="text-sm text-text-secondary">Flaky Tests</p>
                   </div>
                   <div className="p-4 border rounded text-center">
                     <p className="text-2xl font-bold">{summary.fixes_applied || 0}</p>
-                    <p className="text-sm text-muted-foreground">Auto-Fixes</p>
+                    <p className="text-sm text-text-secondary">Auto-Fixes</p>
                   </div>
                 </div>
               </div>

@@ -2,105 +2,151 @@
 
 export const dynamic = 'force-dynamic';
 
-import { Bot, FolderKanban, Brain, Activity, CheckCircle2 } from 'lucide-react';
-import { StatCard } from '@/components/cards/stat-card';
-import { ActivityItem } from '@/components/cards/activity-item';
+import { Bot, FolderKanban, Brain, Activity, CheckCircle2, Sparkles, Zap, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, Zap, ArrowRight, AlertCircle, Clock, Shield, Server } from 'lucide-react';
-import { containerVariants, slideUpVariants } from '@/lib/variants';
 import { motion } from 'framer-motion';
+import { AgentCard, AgentGrid } from '@/components/system/agent-card';
+import { MetricPanel, SystemMetrics } from '@/components/system/metric-panel';
+import { ExecutionTimeline } from '@/components/system/execution-timeline';
+import { LogStream, MiniLogViewer } from '@/components/system/log-stream';
+import { containerVariants, slideVariants } from '@/lib/motion-variants';
+import type { TimelinePhase, LogEntry } from '@/components/system/execution-timeline';
+import type { LogLevel } from '@/components/system/log-stream';
 
-// Mock data
-const systemStatus = {
-  activeAgents: 4,
-  runningProjects: 2,
-  systemHealth: 'healthy',
-  llmStatus: 'connected',
-};
-
-const agentActivities = [
+// Mock agent data
+const agents = [
   {
-    id: '1',
-    agent: 'Backend Engineer',
-    action: 'building authentication API',
-    status: 'running',
-    timestamp: '2 min ago',
-    icon: Bot,
+    agentId: 'agent-001',
+    name: 'Backend Engineer',
+    role: 'executor' as const,
+    status: 'running' as const,
+    currentTask: 'Building authentication API endpoints',
+    progress: 67,
+    metrics: {
+      tasksCompleted: 24,
+      avgExecutionTime: '2m 34s',
+      successRate: 96.5,
+    },
   },
   {
-    id: '2',
-    agent: 'UX Designer',
-    action: 'designing user flow',
-    status: 'running',
-    timestamp: '5 min ago',
-    icon: Bot,
+    agentId: 'agent-002',
+    name: 'UX Designer',
+    role: 'executor' as const,
+    status: 'running' as const,
+    currentTask: 'Designing user onboarding flow',
+    progress: 45,
+    metrics: {
+      tasksCompleted: 18,
+      avgExecutionTime: '3m 12s',
+      successRate: 94.2,
+    },
   },
   {
-    id: '3',
-    agent: 'QA Agent',
-    action: 'running integration tests',
-    status: 'running',
-    timestamp: '12 min ago',
-    icon: Bot,
+    agentId: 'agent-003',
+    name: 'QA Engineer',
+    role: 'validator' as const,
+    status: 'success' as const,
+    currentTask: 'Integration tests completed',
+    progress: 100,
+    metrics: {
+      tasksCompleted: 32,
+      avgExecutionTime: '1m 48s',
+      successRate: 98.1,
+    },
   },
   {
-    id: '4',
-    agent: 'Product Manager',
-    action: 'completed PRD review',
-    status: 'completed',
-    timestamp: '30 min ago',
-    icon: CheckCircle2,
-  },
-  {
-    id: '5',
-    agent: 'DevOps Engineer',
-    action: 'configured CI/CD pipeline',
-    status: 'completed',
-    timestamp: '1 hour ago',
-    icon: CheckCircle2,
+    agentId: 'agent-004',
+    name: 'DevOps Engineer',
+    role: 'deployer' as const,
+    status: 'idle' as const,
+    currentTask: undefined,
+    progress: 0,
+    metrics: {
+      tasksCompleted: 15,
+      avgExecutionTime: '4m 05s',
+      successRate: 100,
+    },
   },
 ];
 
-const pipelineStages = [
-  { name: 'Idea', status: 'completed', description: 'Product concept defined' },
-  { name: 'Planning', status: 'completed', description: 'Requirements gathered' },
-  { name: 'Design', status: 'in_progress', description: 'Architecture & UX in progress' },
-  { name: 'Engineering', status: 'pending', description: 'Code generation pending' },
-  { name: 'Testing', status: 'pending', description: 'QA & simulation pending' },
-  { name: 'Deployment', status: 'pending', description: 'Production deployment pending' },
-];
-
-const simulations = [
+// Mock timeline phases
+const timelinePhases: TimelinePhase[] = [
   {
     id: '1',
-    name: 'UX Simulation',
-    status: 'approved',
-    issues: 0,
-    description: 'User flow and interface validation',
+    name: 'Idea',
+    status: 'completed',
+    startTime: new Date('2024-01-15T09:00:00'),
+    endTime: new Date('2024-01-15T10:30:00'),
+    duration: '1h 30m',
+    steps: [
+      { name: 'Product concept defined', status: 'completed', timestamp: new Date('2024-01-15T09:00:00') },
+      { name: 'Market research completed', status: 'completed', timestamp: new Date('2024-01-15T10:30:00') },
+    ],
   },
   {
     id: '2',
-    name: 'Architecture Simulation',
-    status: 'needs_improvement',
-    issues: 2,
-    description: 'System design and scalability check',
+    name: 'Planning',
+    status: 'completed',
+    startTime: new Date('2024-01-15T11:00:00'),
+    endTime: new Date('2024-01-15T14:00:00'),
+    duration: '3h 0m',
+    steps: [
+      { name: 'Requirements gathered', status: 'completed', timestamp: new Date('2024-01-15T11:00:00') },
+      { name: 'Technical specs defined', status: 'completed', timestamp: new Date('2024-01-15T14:00:00') },
+    ],
   },
   {
     id: '3',
-    name: 'API Simulation',
-    status: 'pending',
-    issues: 0,
-    description: 'Endpoint testing and validation',
+    name: 'Design',
+    status: 'running',
+    startTime: new Date('2024-01-15T14:30:00'),
+    duration: 'In progress',
+    steps: [
+      { name: 'Architecture design', status: 'completed', timestamp: new Date('2024-01-15T14:30:00') },
+      { name: 'UX wireframes', status: 'running', timestamp: new Date('2024-01-15T16:00:00') },
+      { name: 'UI mockups', status: 'pending', timestamp: new Date('2024-01-15T17:00:00') },
+    ],
   },
   {
     id: '4',
-    name: 'Infrastructure Simulation',
+    name: 'Engineering',
     status: 'pending',
-    issues: 0,
-    description: 'Deployment and scaling validation',
+    duration: 'Pending',
+  },
+];
+
+// Mock recent logs
+const recentLogs: LogEntry[] = [
+  {
+    id: '1',
+    level: 'info' as LogLevel,
+    source: 'Backend Agent',
+    message: 'Generated 12 API endpoints successfully',
+    timestamp: new Date(Date.now() - 1000 * 60 * 2),
+  },
+  {
+    id: '2',
+    level: 'success' as LogLevel,
+    source: 'QA Agent',
+    message: 'All integration tests passed (48/48)',
+    timestamp: new Date(Date.now() - 1000 * 60 * 5),
+  },
+  {
+    id: '3',
+    level: 'warn' as LogLevel,
+    source: 'UX Agent',
+    message: 'Component complexity slightly above threshold',
+    timestamp: new Date(Date.now() - 1000 * 60 * 12),
+  },
+  {
+    id: '4',
+    level: 'info' as LogLevel,
+    source: 'DevOps Agent',
+    message: 'Docker containers health check passed',
+    timestamp: new Date(Date.now() - 1000 * 60 * 30),
   },
 ];
 
@@ -132,214 +178,129 @@ export default function DashboardPage() {
       className="space-y-6"
     >
       {/* Header */}
-      <motion.div variants={slideUpVariants} className="flex items-center justify-between">
+      <motion.div 
+        variants={slideVariants} 
+        initial="hidden" 
+        animate="visible"
+        className="flex items-center justify-between"
+      >
         <div>
-          <h1 className="text-3xl font-bold text-slate-100">Dashboard</h1>
-          <p className="mt-1 text-slate-400">
-            Welcome back! Here&apos;s what&apos;s happening with your AI Software Factory.
+          <h1 className="text-3xl font-bold text-text-primary">Dashboard</h1>
+          <p className="mt-1 text-text-secondary">
+            Monitor your AI Software Factory operations in real-time
           </p>
         </div>
-        <Button className="bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700">
+        <Button variant="ai-action">
           <Sparkles className="mr-2 h-4 w-4" />
           New Project
         </Button>
       </motion.div>
 
-      {/* System Status Cards */}
-      <motion.div variants={slideUpVariants} className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Active Agents"
-          value={systemStatus.activeAgents}
-          description="AI agents working now"
-          icon={<Bot className="h-4 w-4 text-violet-400" />}
-        />
-        <StatCard
-          title="Running Projects"
-          value={systemStatus.runningProjects}
-          description="Projects in progress"
-          icon={<FolderKanban className="h-4 w-4 text-blue-400" />}
-        />
-        <StatCard
-          title="System Health"
-          value="Healthy"
-          description="All systems operational"
-          icon={
-            <div className="relative flex h-4 w-4">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex h-4 w-4 rounded-full bg-emerald-400"></span>
-            </div>
-          }
-        />
-        <StatCard
-          title="LLM Status"
-          value="Connected"
-          description="Ollama provider active"
-          icon={<Brain className="h-4 w-4 text-indigo-400" />}
+      {/* System Metrics */}
+      <motion.div variants={slideVariants} initial="hidden" animate="visible">
+        <SystemMetrics 
+          cpu={45}
+          memory={62}
+          network={128}
+          disk={38}
         />
       </motion.div>
 
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Agent Activity Feed */}
-        <motion.div variants={slideUpVariants} className="lg:col-span-2">
-          <Card className="border-slate-800 bg-slate-900/50 backdrop-blur-sm">
+        {/* Agent Activity */}
+        <motion.div 
+          variants={slideVariants} 
+          initial="hidden" 
+          animate="visible"
+          className="lg:col-span-2"
+        >
+          <Card className="border-border-default bg-bg-panel">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-lg text-slate-100">Agent Activity</CardTitle>
-                <p className="text-sm text-slate-400">
-                  Real-time updates from your AI engineering team
+                <CardTitle className="text-lg text-text-primary">Active Agents</CardTitle>
+                <p className="text-sm text-text-secondary">
+                  Real-time status of AI engineering team
                 </p>
               </div>
-              <Badge variant="secondary" className="bg-violet-500/10 text-violet-400">
+              <Badge variant="secondary" className="bg-state-running-dim text-state-running">
                 <Activity className="mr-1 h-3 w-3" />
                 Live
               </Badge>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[320px] pr-4">
-                <div className="space-y-4">
-                  {agentActivities.map((activity) => (
-                    <ActivityItem
-                      key={activity.id}
-                      icon={<activity.icon className="h-4 w-4" />}
-                      title={activity.agent}
-                      description={activity.action}
-                      timestamp={activity.timestamp}
-                      status={activity.status === 'running' ? 'running' : 'completed'}
-                    />
-                  ))}
-                </div>
-              </ScrollArea>
+              <AgentGrid columns={2}>
+                {agents.map((agent) => (
+                  <AgentCard
+                    key={agent.agentId}
+                    agentId={agent.agentId}
+                    name={agent.name}
+                    role={agent.role}
+                    status={agent.status}
+                    currentTask={agent.currentTask}
+                    progress={agent.progress}
+                    metrics={agent.metrics}
+                    compact
+                  />
+                ))}
+              </AgentGrid>
             </CardContent>
           </Card>
         </motion.div>
 
         {/* Project Pipeline */}
-        <motion.div variants={slideUpVariants}>
-          <Card className="border-slate-800 bg-slate-900/50 backdrop-blur-sm">
+        <motion.div variants={slideVariants} initial="hidden" animate="visible">
+          <Card className="border-border-default bg-bg-panel">
             <CardHeader>
-              <CardTitle className="text-lg text-slate-100">Project Pipeline</CardTitle>
-              <p className="text-sm text-slate-400">
-                Current stage in the development lifecycle
+              <CardTitle className="text-lg text-text-primary">Project Pipeline</CardTitle>
+              <p className="text-sm text-text-secondary">
+                Development lifecycle stages
               </p>
             </CardHeader>
             <CardContent>
-              <div className="relative">
-                <div className="absolute left-3 top-0 bottom-0 w-px bg-slate-800"></div>
-                <div className="space-y-4">
-                  {pipelineStages.map((stage) => (
-                    <div key={stage.name} className="relative flex gap-4">
-                      <div
-                        className={`relative z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 ${
-                          stage.status === 'completed'
-                            ? 'border-emerald-500 bg-emerald-500'
-                            : stage.status === 'in_progress'
-                              ? 'border-violet-500 bg-violet-500'
-                              : 'border-slate-700 bg-slate-800'
-                        }`}
-                      >
-                        {stage.status === 'completed' && (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-white" />
-                        )}
-                        {stage.status === 'in_progress' && (
-                          <div className="h-2 w-2 rounded-full bg-white animate-pulse"></div>
-                        )}
-                      </div>
-                      <div className="flex-1 pb-4">
-                        <p
-                          className={`font-medium ${
-                            stage.status === 'completed'
-                              ? 'text-emerald-400'
-                              : stage.status === 'in_progress'
-                                ? 'text-violet-400'
-                                : 'text-slate-500'
-                          }`}
-                        >
-                          {stage.name}
-                        </p>
-                        <p className="text-xs text-slate-500">{stage.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <ExecutionTimeline 
+                phases={timelinePhases}
+                compact
+              />
             </CardContent>
           </Card>
         </motion.div>
       </div>
 
-      {/* Bottom Section: Simulations & Projects */}
+      {/* Bottom Section: Logs & Projects */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Simulation Results */}
-        <motion.div variants={slideUpVariants}>
-          <Card className="border-slate-800 bg-slate-900/50 backdrop-blur-sm">
+        {/* Recent Activity Logs */}
+        <motion.div variants={slideVariants} initial="hidden" animate="visible">
+          <Card className="border-border-default bg-bg-panel">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-lg text-slate-100">Simulation Results</CardTitle>
-                <p className="text-sm text-slate-400">
-                  Automated testing and validation
+                <CardTitle className="text-lg text-text-primary">Activity Logs</CardTitle>
+                <p className="text-sm text-text-secondary">
+                  Latest system events and actions
                 </p>
               </div>
-              <Button variant="ghost" size="sm" className="text-violet-400 hover:text-violet-300">
+              <Button variant="ghost" size="sm" className="text-state-running hover:text-state-running">
                 View All
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {simulations.map((sim) => (
-                  <div
-                    key={sim.id}
-                    className="rounded-xl border border-slate-800 bg-slate-800/30 p-4 transition-all hover:border-slate-700 hover:bg-slate-800/50"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="rounded-lg bg-slate-700/50 p-2">
-                        {sim.status === 'approved' ? (
-                          <Shield className="h-4 w-4 text-emerald-400" />
-                        ) : sim.status === 'needs_improvement' ? (
-                          <AlertCircle className="h-4 w-4 text-amber-400" />
-                        ) : (
-                          <Clock className="h-4 w-4 text-slate-400" />
-                        )}
-                      </div>
-                      <Badge
-                        variant="secondary"
-                        className={
-                          sim.status === 'approved'
-                            ? 'bg-emerald-500/10 text-emerald-400'
-                            : sim.status === 'needs_improvement'
-                              ? 'bg-amber-500/10 text-amber-400'
-                              : 'bg-slate-500/10 text-slate-400'
-                        }
-                      >
-                        {sim.status === 'needs_improvement'
-                          ? 'Needs Work'
-                          : sim.status.charAt(0).toUpperCase() + sim.status.slice(1)}
-                      </Badge>
-                    </div>
-                    <h4 className="mt-3 font-medium text-slate-200">{sim.name}</h4>
-                    <p className="text-xs text-slate-500">{sim.description}</p>
-                    {sim.issues > 0 && (
-                      <p className="mt-2 text-xs text-amber-400">{sim.issues} issues found</p>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <MiniLogViewer logs={recentLogs} limit={6} />
             </CardContent>
           </Card>
         </motion.div>
 
         {/* Recent Projects */}
-        <motion.div variants={slideUpVariants}>
-          <Card className="border-slate-800 bg-slate-900/50 backdrop-blur-sm">
+        <motion.div variants={slideVariants} initial="hidden" animate="visible">
+          <Card className="border-border-default bg-bg-panel">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-lg text-slate-100">Recent Projects</CardTitle>
-                <p className="text-sm text-slate-400">
+                <CardTitle className="text-lg text-text-primary">Recent Projects</CardTitle>
+                <p className="text-sm text-text-secondary">
                   Your active software projects
                 </p>
               </div>
-              <Button variant="ghost" size="sm" className="text-violet-400 hover:text-violet-300">
+              <Button variant="ghost" size="sm" className="text-state-running hover:text-state-running">
                 View All
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
@@ -349,7 +310,7 @@ export default function DashboardPage() {
                 {recentProjects.map((project) => (
                   <div
                     key={project.id}
-                    className="rounded-xl border border-slate-800 bg-slate-800/30 p-4 transition-all hover:border-slate-700 hover:bg-slate-800/50"
+                    className="rounded-xl border border-border-subtle bg-bg-elevated p-4 transition-all hover:border-emphasis hover:bg-bg-hover"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
@@ -357,15 +318,15 @@ export default function DashboardPage() {
                           <Zap className="h-5 w-5 text-violet-400" />
                         </div>
                         <div>
-                          <h4 className="font-medium text-slate-200">{project.name}</h4>
-                          <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <h4 className="font-medium text-text-primary">{project.name}</h4>
+                          <div className="flex items-center gap-2 text-xs text-text-secondary">
                             <span className="flex items-center gap-1">
-                              <Server className="h-3 w-3" />
+                              <Bot className="h-3 w-3" />
                               {project.stage}
                             </span>
                             <span>•</span>
                             <span className="flex items-center gap-1">
-                              <Bot className="h-3 w-3" />
+                              <Brain className="h-3 w-3" />
                               {project.agents} agents
                             </span>
                           </div>
@@ -373,19 +334,19 @@ export default function DashboardPage() {
                       </div>
                       <Badge
                         variant="secondary"
-                        className="bg-emerald-500/10 text-emerald-400"
+                        className="bg-state-success-dim text-state-success"
                       >
                         Active
                       </Badge>
                     </div>
                     <div className="mt-4">
                       <div className="mb-2 flex items-center justify-between text-xs">
-                        <span className="text-slate-500">Progress</span>
-                        <span className="text-slate-300">{project.progress}%</span>
+                        <span className="text-text-secondary">Progress</span>
+                        <span className="font-mono text-text-code">{project.progress}%</span>
                       </div>
-                      <div className="h-2 w-full rounded-full bg-slate-800">
+                      <div className="h-2 w-full rounded-full bg-bg-base">
                         <div
-                          className="h-2 rounded-full bg-violet-400 transition-all duration-300"
+                          className="h-2 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 transition-all duration-300"
                           style={{ width: `${project.progress}%` }}
                         />
                       </div>

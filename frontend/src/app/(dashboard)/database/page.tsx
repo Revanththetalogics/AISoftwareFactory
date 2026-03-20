@@ -29,8 +29,8 @@ export default function DatabasePage() {
     >
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-100">Database</h1>
-          <p className="text-slate-400">Manage database schema and monitor performance</p>
+          <h1 className="text-3xl font-bold text-text-primary">Database</h1>
+          <p className="text-text-secondary">Manage database schema and monitor performance</p>
         </div>
         <Button className="bg-cyan-500 hover:bg-cyan-600">
           <Activity className="mr-2 h-4 w-4" />
@@ -39,63 +39,63 @@ export default function DatabasePage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-slate-800 bg-slate-900/50">
+        <Card className="border-border-default bg-bg-base/50">
           <CardContent className="p-6">
             <div className="rounded-lg bg-cyan-500/10 p-3 w-fit">
               <Table className="h-6 w-6 text-cyan-400" />
             </div>
-            <h3 className="mt-4 font-semibold text-slate-100">Tables</h3>
-            <p className="text-2xl font-bold text-slate-200">{dbStats.tables}</p>
+            <h3 className="mt-4 font-semibold text-text-primary">Tables</h3>
+            <p className="text-2xl font-bold text-text-primary">{dbStats.tables}</p>
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800 bg-slate-900/50">
+        <Card className="border-border-default bg-bg-base/50">
           <CardContent className="p-6">
             <div className="rounded-lg bg-cyan-500/10 p-3 w-fit">
               <Rows3 className="h-6 w-6 text-cyan-400" />
             </div>
-            <h3 className="mt-4 font-semibold text-slate-100">Records</h3>
-            <p className="text-2xl font-bold text-slate-200">{dbStats.records.toLocaleString()}</p>
+            <h3 className="mt-4 font-semibold text-text-primary">Records</h3>
+            <p className="text-2xl font-bold text-text-primary">{dbStats.records.toLocaleString()}</p>
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800 bg-slate-900/50">
+        <Card className="border-border-default bg-bg-base/50">
           <CardContent className="p-6">
             <div className="rounded-lg bg-cyan-500/10 p-3 w-fit">
               <HardDrive className="h-6 w-6 text-cyan-400" />
             </div>
-            <h3 className="mt-4 font-semibold text-slate-100">Size</h3>
-            <p className="text-2xl font-bold text-slate-200">{dbStats.size}</p>
+            <h3 className="mt-4 font-semibold text-text-primary">Size</h3>
+            <p className="text-2xl font-bold text-text-primary">{dbStats.size}</p>
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800 bg-slate-900/50">
+        <Card className="border-border-default bg-bg-base/50">
           <CardContent className="p-6">
             <div className="rounded-lg bg-cyan-500/10 p-3 w-fit">
               <Activity className="h-6 w-6 text-cyan-400" />
             </div>
-            <h3 className="mt-4 font-semibold text-slate-100">Uptime</h3>
-            <p className="text-2xl font-bold text-emerald-400">{dbStats.uptime}</p>
+            <h3 className="mt-4 font-semibold text-text-primary">Uptime</h3>
+            <p className="text-2xl font-bold text-state-success">{dbStats.uptime}</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="border-slate-800 bg-slate-900/50">
+      <Card className="border-border-default bg-bg-base/50">
         <CardHeader>
-          <CardTitle className="text-slate-100">Database Tables</CardTitle>
+          <CardTitle className="text-text-primary">Database Tables</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {tables.map((table) => (
               <div
                 key={table.name}
-                className="flex items-center justify-between p-4 rounded-lg bg-slate-800/30"
+                className="flex items-center justify-between p-4 rounded-lg bg-bg-hover/30"
               >
                 <div className="flex items-center gap-3">
                   <Database className="h-5 w-5 text-cyan-400" />
-                  <span className="font-medium text-slate-200">{table.name}</span>
+                  <span className="font-medium text-text-primary">{table.name}</span>
                 </div>
-                <div className="flex items-center gap-6 text-sm text-slate-400">
+                <div className="flex items-center gap-6 text-sm text-text-secondary">
                   <span>{table.records} records</span>
                   <span>{table.size}</span>
                 </div>

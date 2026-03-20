@@ -21,8 +21,8 @@ export default function VisualTestingPage() {
     >
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-100">Visual Regression</h1>
-          <p className="text-slate-400">AI-powered visual testing and comparison</p>
+          <h1 className="text-3xl font-bold text-text-primary">Visual Regression</h1>
+          <p className="text-text-secondary">AI-powered visual testing and comparison</p>
         </div>
         <Button className="bg-amber-500 hover:bg-amber-600">
           <Camera className="mr-2 h-4 w-4" />
@@ -32,15 +32,15 @@ export default function VisualTestingPage() {
 
       <div className="grid gap-4">
         {visualTests.map((test) => (
-          <Card key={test.id} className="border-slate-800 bg-slate-900/50">
+          <Card key={test.id} className="border-border-default bg-bg-base/50">
             <CardContent className="flex items-center justify-between p-6">
               <div className="flex items-center gap-4">
-                <div className="rounded-lg bg-amber-500/10 p-3">
-                  <Eye className="h-6 w-6 text-amber-400" />
+                <div className="rounded-lg bg-state-warning-dim p-3">
+                  <Eye className="h-6 w-6 text-state-warning" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-100">{test.name}</h3>
-                  <p className="text-sm text-slate-400">{test.viewport}</p>
+                  <h3 className="font-semibold text-text-primary">{test.name}</h3>
+                  <p className="text-sm text-text-secondary">{test.viewport}</p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
@@ -48,8 +48,8 @@ export default function VisualTestingPage() {
                   variant={test.status === 'passed' ? 'default' : 'destructive'}
                   className={
                     test.status === 'passed'
-                      ? 'bg-emerald-500/10 text-emerald-400'
-                      : 'bg-red-500/10 text-red-400'
+                      ? 'bg-state-success-dim text-state-success'
+                      : 'bg-state-error-dim text-state-error'
                   }
                 >
                   {test.status === 'passed' ? (
@@ -60,7 +60,7 @@ export default function VisualTestingPage() {
                   {test.status}
                 </Badge>
                 {test.diff !== '0%' && (
-                  <span className="text-sm text-red-400">{test.diff} diff</span>
+                  <span className="text-sm text-state-error">{test.diff} diff</span>
                 )}
                 <Button variant="ghost" size="sm">
                   <GitCompare className="mr-1 h-4 w-4" />

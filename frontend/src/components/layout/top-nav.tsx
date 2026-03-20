@@ -19,18 +19,25 @@ export function TopNav() {
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
-    <header className="fixed left-[280px] right-0 top-0 z-30 h-16 border-b border-slate-800 bg-slate-950/80 backdrop-blur-xl">
+    <header 
+      className="fixed left-[--sidebar-width] right-0 top-0 z-30 h-[--topbar-height] border-b border-border-default bg-bg-panel/80 backdrop-blur-xl"
+      style={{
+        '--sidebar-width': '280px',
+        '--topbar-height': '56px',
+      } as React.CSSProperties}
+    >
       <div className="flex h-full items-center justify-between px-6">
         {/* Search */}
         <div className="flex max-w-md flex-1 items-center gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
             <Input
               type="search"
               placeholder="Search projects, agents, or tasks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="border-slate-700 bg-slate-900/50 pl-10 text-slate-200 placeholder:text-slate-500 focus-visible:ring-violet-500"
+              className="border-border-default bg-bg-input pl-10 text-text-primary placeholder:text-text-tertiary focus-visible:border-state-running focus-visible:ring-3 focus-visible:ring-state-running/20"
+              compact
             />
           </div>
         </div>

@@ -16,41 +16,75 @@ from backend.api.models import (
 )
 from backend.api.dependencies import get_current_user, require_permissions
 from backend.workflows.state_machine import ProjectPhase
+from backend.workflows.workflow_engine import WorkflowEngine
 from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/workflows", tags=["workflows"])
 
-# In-memory workflow store (stub)
+# In-memory workflow store
 _workflows: dict[str, dict] = {}
 
 
-def _execute_workflow_stub(workflow_id: str, project_id: str, phase: Optional[str]):
-    """Stub workflow execution in background."""
-    import time
-    
-    workflow = _workflows.get(workflow_id)
-    if not workflow:
-        return
-    
-    workflow["status"] = "running"
-    workflow["started_at"] = datetime.now()
-    
-    # Simulate workflow steps
-    phases = ["requirements", "architecture", "implementation", "testing", "deployment"]
-    if phase:
-        phases = [phase]
-    
-    for i, p in enumerate(phases):
-        workflow["current_phase"] = p
-        workflow["progress_percent"] = int((i / len(phases)) * 100)
-        workflow["logs"].append(f"Starting phase: {p}")
-        time.sleep(0.1)  # Simulate work
-    
-    workflow["status"] = "completed"
-    workflow["progress_percent"] = 100
-    workflow["completed_at"] = datetime.now()
-    workflow["logs"].append("Workflow completed successfully")
+async def _execute_workflow_real(workflow_id: str, project_id: str, phase: Optional[str]):
+    """Execute workflow using the real LangGraph engine."""
+    try:
+        workflow = _workflows.get(workflow_id)
+        if not workflow:
+            return
+        
+        workflow["status"] = "running"
+        workflow["started_at"] = datetime.now()
+        workflow["logs"].append("Initializing LangGraph workflow engine...")
+        
+        # Initialize and run the real workflow engine
+        engine = WorkflowEngine()
+        
+        # Create initial state
+        from backend.workflows.state_machine import WorkflowState
+        initial_state = WorkflowState(
+            project_id=project_id,
+            current_phase=ProjectPhase(phase) if phase else ProjectPhase.IDEA,
+        )
+        
+        workflow["logs"].append(f"Starting workflow from phase: {initial_state.current_phase.value}")
+        
+        # Run the workflow (this will execute all phases via LangGraph)
+        final_state = await engine.run(initial_state)
+        
+        # Update workflow with results
+        workflow["current_phase"] = final_state.current_phase.value
+        workflow["progress_percent"] = 100 if final_state.current_phase == ProjectPhase.COMPLETE else 75
+        workflow["completed_at"] = datetime.now()
+        
+        if final_state.current_phase == ProjectPhase.FAILED:
+            workflow["status"] = "failed"
+            workflow["error_message"] = "Workflow execution failed"
+            workflow["logs"].append("Workflow failed during execution")
+        else:
+            workflow["status"] = "completed"
+            workflow["logs"].append("Workflow completed successfully via LangGraph engine")
+            
+        logger.info(
+            "Real workflow execution completed",
+            workflow_id=workflow_id,
+            project_id=project_id,
+            final_phase=final_state.current_phase.value,
+        )
+        
+    except Exception as exc:
+        logger.error(
+            "Real workflow execution failed",
+            workflow_id=workflow_id,
+            project_id=project_id,
+            error=str(exc),
+        )
+        workflow = _workflows.get(workflow_id)
+        if workflow:
+            workflow["status"] = "failed"
+            workflow["error_message"] = str(exc)
+            workflow["completed_at"] = datetime.now()
+            workflow["logs"].append(f"Error: {str(exc)}")
 
 
 @router.post(
@@ -91,13 +125,14 @@ async def execute_workflow(
     # Start execution in background
     if request.async_execution:
         background_tasks.add_task(
-            _execute_workflow_stub,
+            _execute_workflow_real,
             workflow_id,
             request.project_id,
             request.phase,
         )
     else:
-        _execute_workflow_stub(workflow_id, request.project_id, request.phase)
+        import asyncio
+        asyncio.run(_execute_workflow_real(workflow_id, request.project_id, request.phase))
     
     logger.info(
         "Workflow execution started",

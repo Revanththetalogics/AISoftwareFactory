@@ -27,8 +27,8 @@ export default function MonitoringPage() {
     >
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-100">Monitoring</h1>
-          <p className="text-slate-400">Real-time system metrics and alerts</p>
+          <h1 className="text-3xl font-bold text-text-primary">Monitoring</h1>
+          <p className="text-text-secondary">Real-time system metrics and alerts</p>
         </div>
         <Button className="bg-rose-500 hover:bg-rose-600">
           <LineChart className="mr-2 h-4 w-4" />
@@ -38,18 +38,18 @@ export default function MonitoringPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {metrics.map((metric) => (
-          <Card key={metric.name} className="border-slate-800 bg-slate-900/50">
+          <Card key={metric.name} className="border-border-default bg-bg-base/50">
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div className="rounded-lg bg-rose-500/10 p-3">
                   <metric.icon className="h-6 w-6 text-rose-400" />
                 </div>
-                <span className="text-2xl font-bold text-slate-200">
+                <span className="text-2xl font-bold text-text-primary">
                   {metric.value}{metric.unit}
                 </span>
               </div>
-              <h3 className="mt-4 font-semibold text-slate-100">{metric.name}</h3>
-              <div className="mt-2 h-2 rounded-full bg-slate-800">
+              <h3 className="mt-4 font-semibold text-text-primary">{metric.name}</h3>
+              <div className="mt-2 h-2 rounded-full bg-bg-hover">
                 <div
                   className="h-full rounded-full bg-rose-500"
                   style={{ width: `${(metric.value / metric.max) * 100}%` }}
@@ -60,30 +60,30 @@ export default function MonitoringPage() {
         ))}
       </div>
 
-      <Card className="border-slate-800 bg-slate-900/50">
+      <Card className="border-border-default bg-bg-base/50">
         <CardHeader>
-          <CardTitle className="text-slate-100">Recent Alerts</CardTitle>
+          <CardTitle className="text-text-primary">Recent Alerts</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {alerts.map((alert) => (
               <div
                 key={alert.id}
-                className="flex items-center gap-3 p-4 rounded-lg bg-slate-800/30"
+                className="flex items-center gap-3 p-4 rounded-lg bg-bg-hover/30"
               >
                 <AlertTriangle className={`h-5 w-5 ${
-                  alert.severity === 'warning' ? 'text-amber-400' : 'text-blue-400'
+                  alert.severity === 'warning' ? 'text-state-warning' : 'text-state-info'
                 }`} />
                 <div className="flex-1">
-                  <p className="text-slate-200">{alert.message}</p>
-                  <p className="text-sm text-slate-500">{alert.time}</p>
+                  <p className="text-text-primary">{alert.message}</p>
+                  <p className="text-sm text-text-tertiary">{alert.time}</p>
                 </div>
                 <Badge
-                  variant="secondary"
+                  variant="outline"
                   className={
                     alert.severity === 'warning'
-                      ? 'bg-amber-500/10 text-amber-400'
-                      : 'bg-blue-500/10 text-blue-400'
+                      ? 'bg-state-warning-dim text-state-warning'
+                      : 'bg-state-info-dim text-state-info'
                   }
                 >
                   {alert.severity}

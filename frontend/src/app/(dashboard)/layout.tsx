@@ -2,6 +2,7 @@
 
 import { Sidebar } from '@/components/layout/sidebar';
 import { TopNav } from '@/components/layout/top-nav';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 export default function DashboardLayout({
   children,
@@ -9,14 +10,22 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-slate-950">
-      <Sidebar />
-      <TopNav />
-      <main className="fixed left-[280px] right-0 top-16 bottom-0 overflow-auto bg-slate-950 p-6">
-        <div className="mx-auto max-w-7xl">
-          {children}
-        </div>
-      </main>
-    </div>
+    <ProtectedRoute>
+      <div className="min-h-screen bg-bg-base">
+        <Sidebar />
+        <TopNav />
+        <main 
+          className="fixed left-[--sidebar-width] right-0 top-[--topbar-height] bottom-0 overflow-auto bg-bg-base p-6"
+          style={{
+            '--sidebar-width': '280px',
+            '--topbar-height': '56px',
+          } as React.CSSProperties}
+        >
+          <div className="mx-auto max-w-[1600px]">
+            {children}
+          </div>
+        </main>
+      </div>
+    </ProtectedRoute>
   );
 }

@@ -5,15 +5,18 @@ import { type ReactNode } from 'react';
 
 interface ThemeProviderProps {
   children: ReactNode;
+  forcedTheme?: string;
 }
 
-export function ThemeProvider({ children }: ThemeProviderProps) {
+export function ThemeProvider({ children, forcedTheme }: ThemeProviderProps) {
   return (
     <NextThemesProvider
-      attribute="class"
+      attribute="data-theme"
       defaultTheme="dark"
-      enableSystem
-      disableTransitionOnChange={false}
+      enableSystem={false}
+      disableTransitionOnChange
+      forcedTheme={forcedTheme}
+      themes={['dark', 'light']}
     >
       {children}
     </NextThemesProvider>

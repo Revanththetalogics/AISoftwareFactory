@@ -30,10 +30,21 @@ class ApiClient {
   constructor() {
     this.baseUrl = API_BASE_URL;
     this.wsUrl = WS_BASE_URL;
+    // Initialize token from localStorage on construction
+    if (typeof window !== 'undefined') {
+      this.token = localStorage.getItem('aifactory_token');
+    }
   }
 
   setToken(token: string | null) {
     this.token = token;
+    if (typeof window !== 'undefined') {
+      if (token) {
+        localStorage.setItem('aifactory_token', token);
+      } else {
+        localStorage.removeItem('aifactory_token');
+      }
+    }
   }
 
   private async requestWithTimeout(

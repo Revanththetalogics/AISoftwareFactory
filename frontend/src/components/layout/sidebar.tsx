@@ -87,16 +87,19 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-[280px] border-r border-slate-800 bg-slate-950/95 backdrop-blur-xl">
+    <aside 
+      className="fixed left-0 top-0 z-40 h-screen w-[--sidebar-width] border-r border-border-default bg-bg-panel/95 backdrop-blur-xl"
+      style={{ '--sidebar-width': '280px' } as React.CSSProperties}
+    >
       <div className="flex h-full flex-col">
         {/* Logo */}
-        <div className="flex h-16 items-center gap-3 border-b border-slate-800 px-6">
+        <div className="flex h-[--topbar-height] items-center gap-3 border-b border-border-default px-6">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg shadow-violet-500/20">
             <Sparkles className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-slate-100">AI Factory</h1>
-            <p className="text-xs text-slate-400">Software Engineering</p>
+            <h1 className="text-base font-semibold text-text-primary">AI Factory</h1>
+            <p className="text-xs text-text-secondary">Software Engineering</p>
           </div>
         </div>
 
@@ -112,16 +115,16 @@ export function Sidebar() {
                   <Button
                     variant="ghost"
                     className={cn(
-                      'w-full justify-start gap-3 px-3 py-5 text-sm font-medium transition-all duration-200',
+                      'w-full justify-start gap-3 px-3 py-5 text-sm font-medium transition-all duration-fast ease-smooth',
                       isActive
-                        ? 'bg-gradient-to-r from-violet-500/10 to-transparent text-violet-400 hover:bg-violet-500/20 hover:text-violet-300'
-                        : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200',
+                        ? 'bg-state-running-dim text-state-running hover:bg-state-running-dim/30 hover:text-state-running'
+                        : 'text-text-secondary hover:bg-bg-hover hover:text-text-primary',
                     )}
                   >
-                    <Icon className={cn('h-5 w-5', isActive && 'text-violet-400')} />
+                    <Icon className={cn('h-5 w-5', isActive && 'text-state-running')} />
                     <span className="flex-1">{item.label}</span>
                     {item.badge && (
-                      <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-xs text-violet-300">
+                      <span className="rounded-full bg-state-running-dim px-2 py-0.5 text-xs text-state-running">
                         {item.badge}
                       </span>
                     )}
@@ -131,7 +134,7 @@ export function Sidebar() {
             })}
           </nav>
 
-          <Separator className="my-4 bg-slate-800" />
+          <Separator className="my-4 bg-border-subtle" />
 
           {/* AI Agent Orchestration */}
           <SidebarSection
@@ -139,8 +142,8 @@ export function Sidebar() {
             items={agentNavItems}
             pathname={pathname}
             colorScheme={{
-              active: 'from-blue-500/10 to-transparent text-blue-400 hover:bg-blue-500/20 hover:text-blue-300',
-              inactive: 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200',
+              active: 'bg-state-running-dim text-state-running hover:bg-state-running-dim/30',
+              inactive: 'text-text-secondary hover:bg-bg-hover hover:text-text-primary',
             }}
           />
 
@@ -150,8 +153,8 @@ export function Sidebar() {
             items={codeNavItems}
             pathname={pathname}
             colorScheme={{
-              active: 'from-emerald-500/10 to-transparent text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300',
-              inactive: 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200',
+              active: 'bg-state-success-dim text-state-success hover:bg-state-success-dim/30',
+              inactive: 'text-text-secondary hover:bg-bg-hover hover:text-text-primary',
             }}
           />
 
@@ -161,8 +164,8 @@ export function Sidebar() {
             items={testingNavItems}
             pathname={pathname}
             colorScheme={{
-              active: 'from-amber-500/10 to-transparent text-amber-400 hover:bg-amber-500/20 hover:text-amber-300',
-              inactive: 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200',
+              active: 'bg-state-warning-dim text-state-warning hover:bg-state-warning-dim/30',
+              inactive: 'text-text-secondary hover:bg-bg-hover hover:text-text-primary',
             }}
           />
 
@@ -172,8 +175,8 @@ export function Sidebar() {
             items={infraNavItems}
             pathname={pathname}
             colorScheme={{
-              active: 'from-cyan-500/10 to-transparent text-cyan-400 hover:bg-cyan-500/20 hover:text-cyan-300',
-              inactive: 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200',
+              active: 'bg-state-running-dim text-state-running hover:bg-state-running-dim/30',
+              inactive: 'text-text-secondary hover:bg-bg-hover hover:text-text-primary',
             }}
           />
 
@@ -183,8 +186,8 @@ export function Sidebar() {
             items={observabilityNavItems}
             pathname={pathname}
             colorScheme={{
-              active: 'from-rose-500/10 to-transparent text-rose-400 hover:bg-rose-500/20 hover:text-rose-300',
-              inactive: 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200',
+              active: 'bg-state-error-dim text-state-error hover:bg-state-error-dim/30',
+              inactive: 'text-text-secondary hover:bg-bg-hover hover:text-text-primary',
             }}
           />
 
@@ -193,7 +196,7 @@ export function Sidebar() {
         </ScrollArea>
 
         {/* Bottom Navigation */}
-        <div className="border-t border-slate-800 p-3">
+        <div className="border-t border-border-default p-3">
           {bottomNavItems.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;
@@ -203,10 +206,10 @@ export function Sidebar() {
                 <Button
                   variant="ghost"
                   className={cn(
-                    'w-full justify-start gap-3 px-3 py-5 text-sm font-medium transition-all duration-200',
+                    'w-full justify-start gap-3 px-3 py-5 text-sm font-medium transition-all duration-fast ease-smooth',
                     isActive
-                      ? 'bg-slate-800 text-slate-200'
-                      : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                      ? 'bg-bg-selected text-text-primary'
+                      : 'text-text-secondary hover:bg-bg-hover hover:text-text-primary'
                   )}
                 >
                   <Icon className="h-5 w-5" />

@@ -22,8 +22,8 @@ export default function InfrastructurePage() {
     >
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-100">Infrastructure</h1>
-          <p className="text-slate-400">Manage cloud infrastructure and resources</p>
+          <h1 className="text-3xl font-bold text-text-primary">Infrastructure</h1>
+          <p className="text-text-secondary">Manage cloud infrastructure and resources</p>
         </div>
         <Button className="bg-cyan-500 hover:bg-cyan-600">
           <Cloud className="mr-2 h-4 w-4" />
@@ -33,7 +33,7 @@ export default function InfrastructurePage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {infraComponents.map((component) => (
-          <Card key={component.id} className="border-slate-800 bg-slate-900/50">
+          <Card key={component.id} className="border-border-default bg-bg-base/50">
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div className="rounded-lg bg-cyan-500/10 p-3">
@@ -41,24 +41,24 @@ export default function InfrastructurePage() {
                 </div>
                 <Badge
                   variant="secondary"
-                  className="bg-emerald-500/10 text-emerald-400"
+                  className="bg-state-success-dim text-state-success"
                 >
                   {component.status}
                 </Badge>
               </div>
-              <h3 className="mt-4 font-semibold text-slate-100">{component.name}</h3>
-              <p className="text-2xl font-bold text-slate-200">{component.count}</p>
+              <h3 className="mt-4 font-semibold text-text-primary">{component.name}</h3>
+              <p className="text-2xl font-bold text-text-primary">{component.count}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <Card className="border-slate-800 bg-slate-900/50">
+      <Card className="border-border-default bg-bg-base/50">
         <CardHeader>
-          <CardTitle className="text-slate-100">Terraform Configuration</CardTitle>
+          <CardTitle className="text-text-primary">Terraform Configuration</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-lg bg-slate-950 p-4 font-mono text-sm text-slate-400">
+          <div className="rounded-lg bg-slate-950 p-4 font-mono text-sm text-text-secondary">
             <pre>{`# Infrastructure as Code
 resource "docker_container" "app" {
   image = "ai-factory:latest"

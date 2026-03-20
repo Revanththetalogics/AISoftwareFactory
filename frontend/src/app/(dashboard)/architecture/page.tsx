@@ -129,13 +129,13 @@ const techStack = [
 const getStatusIcon = (status: string) => {
   switch (status) {
     case 'healthy':
-      return <CheckCircle2 className="h-4 w-4 text-emerald-400" />;
+      return <CheckCircle2 className="h-4 w-4 text-state-success" />;
     case 'warning':
-      return <AlertCircle className="h-4 w-4 text-amber-400" />;
+      return <AlertCircle className="h-4 w-4 text-state-warning" />;
     case 'error':
-      return <AlertCircle className="h-4 w-4 text-red-400" />;
+      return <AlertCircle className="h-4 w-4 text-state-error" />;
     default:
-      return <CheckCircle2 className="h-4 w-4 text-emerald-400" />;
+      return <CheckCircle2 className="h-4 w-4 text-state-success" />;
   }
 };
 
@@ -150,13 +150,13 @@ export default function ArchitecturePage() {
       {/* Header */}
       <motion.div variants={itemVariants} className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-100">Architecture</h1>
-          <p className="mt-1 text-slate-400">
+          <h1 className="text-3xl font-bold text-text-primary">Architecture</h1>
+          <p className="mt-1 text-text-secondary">
             System design and component overview
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800">
+          <Button variant="outline" className="border-border-default text-text-secondary hover:bg-bg-hover">
             <FileCode className="mr-2 h-4 w-4" />
             View Specs
           </Button>
@@ -168,14 +168,14 @@ export default function ArchitecturePage() {
       </motion.div>
 
       <Tabs defaultValue="diagram" className="space-y-6">
-        <TabsList className="border-slate-800 bg-slate-900/50">
-          <TabsTrigger value="diagram" className="data-[state=active]:bg-slate-800">
+        <TabsList className="border-border-default bg-bg-base/50">
+          <TabsTrigger value="diagram" className="data-[state=active]:bg-bg-hover">
             System Diagram
           </TabsTrigger>
-          <TabsTrigger value="stack" className="data-[state=active]:bg-slate-800">
+          <TabsTrigger value="stack" className="data-[state=active]:bg-bg-hover">
             Tech Stack
           </TabsTrigger>
-          <TabsTrigger value="config" className="data-[state=active]:bg-slate-800">
+          <TabsTrigger value="config" className="data-[state=active]:bg-bg-hover">
             Configuration
           </TabsTrigger>
         </TabsList>
@@ -183,40 +183,40 @@ export default function ArchitecturePage() {
         <TabsContent value="diagram" className="space-y-6">
           {/* Architecture Diagram */}
           <motion.div variants={itemVariants}>
-            <Card className="border-slate-800 bg-slate-900/50">
+            <Card className="border-border-default bg-bg-base/50">
               <CardHeader>
-                <CardTitle className="text-lg text-slate-100">System Architecture</CardTitle>
+                <CardTitle className="text-lg text-text-primary">System Architecture</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="relative rounded-xl border border-slate-800 bg-slate-950/50 p-8">
+                <div className="relative rounded-xl border border-border-default bg-slate-950/50 p-8">
                   {/* Client Layer */}
                   <div className="mb-8 text-center">
-                    <div className="inline-flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-800/50 px-6 py-4">
-                      <Globe className="h-6 w-6 text-violet-400" />
+                    <div className="inline-flex items-center gap-3 rounded-xl border border-border-default bg-bg-hover/50 px-6 py-4">
+                      <Globe className="h-6 w-6 text-state-running" />
                       <div className="text-left">
-                        <p className="font-medium text-slate-200">Web Client</p>
-                        <p className="text-xs text-slate-500">Browser / Mobile</p>
+                        <p className="font-medium text-text-primary">Web Client</p>
+                        <p className="text-xs text-text-tertiary">Browser / Mobile</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex justify-center mb-8">
-                    <ArrowDown className="h-6 w-6 text-slate-600" />
+                    <ArrowDown className="h-6 w-6 text-text-tertiary" />
                   </div>
 
                   {/* Load Balancer */}
                   <div className="mb-8 text-center">
-                    <div className="inline-flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-800/50 px-6 py-4">
-                      <Server className="h-6 w-6 text-blue-400" />
+                    <div className="inline-flex items-center gap-3 rounded-xl border border-border-default bg-bg-hover/50 px-6 py-4">
+                      <Server className="h-6 w-6 text-state-info" />
                       <div className="text-left">
-                        <p className="font-medium text-slate-200">Load Balancer</p>
-                        <p className="text-xs text-slate-500">Nginx / Traefik</p>
+                        <p className="font-medium text-text-primary">Load Balancer</p>
+                        <p className="text-xs text-text-tertiary">Nginx / Traefik</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex justify-center mb-8">
-                    <ArrowDown className="h-6 w-6 text-slate-600" />
+                    <ArrowDown className="h-6 w-6 text-text-tertiary" />
                   </div>
 
                   {/* Application Layer */}
@@ -224,7 +224,7 @@ export default function ArchitecturePage() {
                     {architectureNodes.slice(0, 3).map((node) => (
                       <div
                         key={node.id}
-                        className="rounded-xl border border-slate-800 bg-slate-800/30 p-4 transition-all hover:border-slate-700 hover:bg-slate-800/50"
+                        className="rounded-xl border border-border-default bg-bg-hover/30 p-4 transition-all hover:border-border-default hover:bg-bg-hover/50"
                       >
                         <div className="flex items-start gap-3">
                           <div className={`rounded-lg bg-gradient-to-br ${node.color} p-2`}>
@@ -232,19 +232,19 @@ export default function ArchitecturePage() {
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <p className="font-medium text-slate-200">{node.name}</p>
+                              <p className="font-medium text-text-primary">{node.name}</p>
                               {getStatusIcon(node.status)}
                             </div>
-                            <p className="text-xs text-slate-500">{node.type}</p>
+                            <p className="text-xs text-text-tertiary">{node.type}</p>
                           </div>
                         </div>
-                        <p className="mt-3 text-sm text-slate-400">{node.description}</p>
+                        <p className="mt-3 text-sm text-text-secondary">{node.description}</p>
                       </div>
                     ))}
                   </div>
 
                   <div className="flex justify-center mb-8">
-                    <ArrowDown className="h-6 w-6 text-slate-600" />
+                    <ArrowDown className="h-6 w-6 text-text-tertiary" />
                   </div>
 
                   {/* Data & AI Layer */}
@@ -252,7 +252,7 @@ export default function ArchitecturePage() {
                     {architectureNodes.slice(3).map((node) => (
                       <div
                         key={node.id}
-                        className="rounded-xl border border-slate-800 bg-slate-800/30 p-4 transition-all hover:border-slate-700 hover:bg-slate-800/50"
+                        className="rounded-xl border border-border-default bg-bg-hover/30 p-4 transition-all hover:border-border-default hover:bg-bg-hover/50"
                       >
                         <div className="flex items-start gap-3">
                           <div className={`rounded-lg bg-gradient-to-br ${node.color} p-2`}>
@@ -260,13 +260,13 @@ export default function ArchitecturePage() {
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <p className="font-medium text-slate-200">{node.name}</p>
+                              <p className="font-medium text-text-primary">{node.name}</p>
                               {getStatusIcon(node.status)}
                             </div>
-                            <p className="text-xs text-slate-500">{node.type}</p>
+                            <p className="text-xs text-text-tertiary">{node.type}</p>
                           </div>
                         </div>
-                        <p className="mt-3 text-sm text-slate-400">{node.description}</p>
+                        <p className="mt-3 text-sm text-text-secondary">{node.description}</p>
                       </div>
                     ))}
                   </div>
@@ -280,7 +280,7 @@ export default function ArchitecturePage() {
             {architectureNodes.map((node) => (
               <Card
                 key={node.id}
-                className="border-slate-800 bg-slate-900/50 backdrop-blur-sm"
+                className="border-border-default bg-bg-base/50 backdrop-blur-sm"
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
@@ -289,21 +289,21 @@ export default function ArchitecturePage() {
                         <node.icon className="h-5 w-5 text-white" />
                       </div>
                       <div>
-                        <CardTitle className="text-base text-slate-100">{node.name}</CardTitle>
-                        <p className="text-xs text-slate-500">{node.type}</p>
+                        <CardTitle className="text-base text-text-primary">{node.name}</CardTitle>
+                        <p className="text-xs text-text-tertiary">{node.type}</p>
                       </div>
                     </div>
                     {getStatusIcon(node.status)}
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-slate-400 mb-4">{node.description}</p>
+                  <p className="text-sm text-text-secondary mb-4">{node.description}</p>
                   <div className="flex flex-wrap gap-2">
                     {node.details.map((detail, idx) => (
                       <Badge
                         key={idx}
-                        variant="secondary"
-                        className="bg-slate-800 text-slate-300"
+                        variant="outline"
+                        className="bg-bg-hover text-text-secondary"
                       >
                         {detail}
                       </Badge>
@@ -318,17 +318,17 @@ export default function ArchitecturePage() {
         <TabsContent value="stack" className="space-y-6">
           <motion.div variants={itemVariants} className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {techStack.map((stack) => (
-              <Card key={stack.category} className="border-slate-800 bg-slate-900/50">
+              <Card key={stack.category} className="border-border-default bg-bg-base/50">
                 <CardHeader>
-                  <CardTitle className="text-lg text-slate-100">{stack.category}</CardTitle>
+                  <CardTitle className="text-lg text-text-primary">{stack.category}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
                     {stack.items.map((item, idx) => (
                       <Badge
                         key={idx}
-                        variant="secondary"
-                        className="bg-slate-800 px-3 py-1 text-slate-300"
+                        variant="outline"
+                        className="bg-bg-hover px-3 py-1 text-text-secondary"
                       >
                         {item}
                       </Badge>
@@ -342,11 +342,11 @@ export default function ArchitecturePage() {
 
         <TabsContent value="config" className="space-y-6">
           <motion.div variants={itemVariants}>
-            <Card className="border-slate-800 bg-slate-900/50">
+            <Card className="border-border-default bg-bg-base/50">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg text-slate-100">System Configuration</CardTitle>
-                  <Button variant="outline" size="sm" className="border-slate-700 text-slate-300">
+                  <CardTitle className="text-lg text-text-primary">System Configuration</CardTitle>
+                  <Button variant="outline" size="sm" className="border-border-default text-text-secondary">
                     <Settings className="mr-2 h-4 w-4" />
                     Edit Config
                   </Button>
@@ -354,40 +354,40 @@ export default function ArchitecturePage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="rounded-lg border border-slate-800 bg-slate-800/30 p-4">
+                  <div className="rounded-lg border border-border-default bg-bg-hover/30 p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-slate-200">Auto-scaling</p>
-                        <p className="text-sm text-slate-500">Enable automatic scaling based on load</p>
+                        <p className="font-medium text-text-primary">Auto-scaling</p>
+                        <p className="text-sm text-text-tertiary">Enable automatic scaling based on load</p>
                       </div>
-                      <Badge className="bg-emerald-500/10 text-emerald-400">Enabled</Badge>
+                      <Badge className="bg-state-success-dim text-state-success">Enabled</Badge>
                     </div>
                   </div>
-                  <div className="rounded-lg border border-slate-800 bg-slate-800/30 p-4">
+                  <div className="rounded-lg border border-border-default bg-bg-hover/30 p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-slate-200">High Availability</p>
-                        <p className="text-sm text-slate-500">Multi-zone deployment for redundancy</p>
+                        <p className="font-medium text-text-primary">High Availability</p>
+                        <p className="text-sm text-text-tertiary">Multi-zone deployment for redundancy</p>
                       </div>
-                      <Badge className="bg-emerald-500/10 text-emerald-400">Enabled</Badge>
+                      <Badge className="bg-state-success-dim text-state-success">Enabled</Badge>
                     </div>
                   </div>
-                  <div className="rounded-lg border border-slate-800 bg-slate-800/30 p-4">
+                  <div className="rounded-lg border border-border-default bg-bg-hover/30 p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-slate-200">SSL/TLS</p>
-                        <p className="text-sm text-slate-500">Automatic HTTPS certificates</p>
+                        <p className="font-medium text-text-primary">SSL/TLS</p>
+                        <p className="text-sm text-text-tertiary">Automatic HTTPS certificates</p>
                       </div>
-                      <Badge className="bg-emerald-500/10 text-emerald-400">Enabled</Badge>
+                      <Badge className="bg-state-success-dim text-state-success">Enabled</Badge>
                     </div>
                   </div>
-                  <div className="rounded-lg border border-slate-800 bg-slate-800/30 p-4">
+                  <div className="rounded-lg border border-border-default bg-bg-hover/30 p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-slate-200">Database Backups</p>
-                        <p className="text-sm text-slate-500">Daily automated backups</p>
+                        <p className="font-medium text-text-primary">Database Backups</p>
+                        <p className="text-sm text-text-tertiary">Daily automated backups</p>
                       </div>
-                      <Badge className="bg-emerald-500/10 text-emerald-400">Enabled</Badge>
+                      <Badge className="bg-state-success-dim text-state-success">Enabled</Badge>
                     </div>
                   </div>
                 </div>

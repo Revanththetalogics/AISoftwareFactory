@@ -221,15 +221,15 @@ const simulations: Simulation[] = [
 const getStatusColor = (status: string) => {
   switch (status) {
     case 'passed':
-      return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+      return 'bg-state-success-dim text-state-success border-state-success';
     case 'failed':
-      return 'bg-red-500/10 text-red-400 border-red-500/20';
+      return 'bg-state-error-dim text-state-error border-state-error';
     case 'running':
-      return 'bg-violet-500/10 text-violet-400 border-violet-500/20';
+      return 'bg-state-running-dim text-state-running border-state-running';
     case 'pending':
-      return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+      return 'bg-bg-base0/10 text-text-secondary border-slate-500/20';
     default:
-      return 'bg-slate-500/10 text-slate-400';
+      return 'bg-bg-base0/10 text-text-secondary';
   }
 };
 
@@ -251,11 +251,11 @@ const getStatusIcon = (status: string) => {
 const getItemStatusIcon = (status: string) => {
   switch (status) {
     case 'pass':
-      return <CheckCircle2 className="h-4 w-4 text-emerald-400" />;
+      return <CheckCircle2 className="h-4 w-4 text-state-success" />;
     case 'fail':
-      return <XCircle className="h-4 w-4 text-red-400" />;
+      return <XCircle className="h-4 w-4 text-state-error" />;
     case 'warn':
-      return <AlertCircle className="h-4 w-4 text-amber-400" />;
+      return <AlertCircle className="h-4 w-4 text-state-warning" />;
     default:
       return null;
   }
@@ -278,8 +278,8 @@ export default function SimulationsPage() {
       {/* Header */}
       <motion.div variants={itemVariants} className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-100">Simulations</h1>
-          <p className="mt-1 text-slate-400">
+          <h1 className="text-3xl font-bold text-text-primary">Simulations</h1>
+          <p className="mt-1 text-text-secondary">
             Automated testing and validation results
           </p>
         </div>
@@ -291,47 +291,47 @@ export default function SimulationsPage() {
 
       {/* Stats */}
       <motion.div variants={itemVariants} className="grid gap-4 md:grid-cols-4">
-        <Card className="border-slate-800 bg-slate-900/50">
+        <Card className="border-border-default bg-bg-base/50">
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-violet-500/10 p-3">
-              <FlaskConical className="h-5 w-5 text-violet-400" />
+            <div className="rounded-lg bg-state-running-dim p-3">
+              <FlaskConical className="h-5 w-5 text-state-running" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-100">{simulations.length}</p>
-              <p className="text-xs text-slate-500">Total Simulations</p>
+              <p className="text-2xl font-bold text-text-primary">{simulations.length}</p>
+              <p className="text-xs text-text-tertiary">Total Simulations</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-slate-800 bg-slate-900/50">
+        <Card className="border-border-default bg-bg-base/50">
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-emerald-500/10 p-3">
-              <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+            <div className="rounded-lg bg-state-success-dim p-3">
+              <CheckCircle2 className="h-5 w-5 text-state-success" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-emerald-400">{passedCount}</p>
-              <p className="text-xs text-slate-500">Passed</p>
+              <p className="text-2xl font-bold text-state-success">{passedCount}</p>
+              <p className="text-xs text-text-tertiary">Passed</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-slate-800 bg-slate-900/50">
+        <Card className="border-border-default bg-bg-base/50">
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-red-500/10 p-3">
-              <XCircle className="h-5 w-5 text-red-400" />
+            <div className="rounded-lg bg-state-error-dim p-3">
+              <XCircle className="h-5 w-5 text-state-error" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-red-400">{failedCount}</p>
-              <p className="text-xs text-slate-500">Failed</p>
+              <p className="text-2xl font-bold text-state-error">{failedCount}</p>
+              <p className="text-xs text-text-tertiary">Failed</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-slate-800 bg-slate-900/50">
+        <Card className="border-border-default bg-bg-base/50">
           <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-violet-500/10 p-3">
-              <RefreshCw className="h-5 w-5 text-violet-400 animate-spin" />
+            <div className="rounded-lg bg-state-running-dim p-3">
+              <RefreshCw className="h-5 w-5 text-state-running animate-spin" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-violet-400">{runningCount}</p>
-              <p className="text-xs text-slate-500">Running</p>
+              <p className="text-2xl font-bold text-state-running">{runningCount}</p>
+              <p className="text-xs text-text-tertiary">Running</p>
             </div>
           </CardContent>
         </Card>
@@ -344,7 +344,7 @@ export default function SimulationsPage() {
             {simulations.map((sim) => (
               <Card
                 key={sim.id}
-                className={`cursor-pointer border-slate-800 bg-slate-900/50 backdrop-blur-sm transition-all hover:border-slate-700 hover:bg-slate-800/50 ${
+                className={`cursor-pointer border-border-default bg-bg-base/50 backdrop-blur-sm transition-all hover:border-border-default hover:bg-bg-hover/50 ${
                   selectedSimulation?.id === sim.id ? 'ring-2 ring-violet-500/50' : ''
                 }`}
                 onClick={() => setSelectedSimulation(sim)}
@@ -357,43 +357,43 @@ export default function SimulationsPage() {
                     <div className="flex-1">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h3 className="font-semibold text-slate-100">{sim.name}</h3>
-                          <p className="text-sm text-slate-500">{sim.type}</p>
+                          <h3 className="font-semibold text-text-primary">{sim.name}</h3>
+                          <p className="text-sm text-text-tertiary">{sim.type}</p>
                         </div>
                         <Badge variant="outline" className={getStatusColor(sim.status)}>
                           <span className="mr-1.5">{getStatusIcon(sim.status)}</span>
                           {sim.status.charAt(0).toUpperCase() + sim.status.slice(1)}
                         </Badge>
                       </div>
-                      <p className="mt-2 text-sm text-slate-400">{sim.description}</p>
+                      <p className="mt-2 text-sm text-text-secondary">{sim.description}</p>
 
                       {sim.status === 'running' && (
                         <div className="mt-4 space-y-2">
                           <div className="flex items-center justify-between text-sm">
-                            <span className="text-slate-500">Progress</span>
-                            <span className="text-slate-300">{sim.progress}%</span>
+                            <span className="text-text-tertiary">Progress</span>
+                            <span className="text-text-secondary">{sim.progress}%</span>
                           </div>
-                          <Progress value={sim.progress} className="h-2 bg-slate-800" />
+                          <Progress value={sim.progress} className="h-2 bg-bg-hover" />
                         </div>
                       )}
 
                       <div className="mt-4 flex items-center gap-6 text-sm">
                         <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-slate-500" />
-                          <span className="text-slate-400">{sim.duration}</span>
+                          <Clock className="h-4 w-4 text-text-tertiary" />
+                          <span className="text-text-secondary">{sim.duration}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-slate-500" />
-                          <span className="text-slate-400">{sim.lastRun}</span>
+                          <FileText className="h-4 w-4 text-text-tertiary" />
+                          <span className="text-text-secondary">{sim.lastRun}</span>
                         </div>
                         {sim.issues > 0 && (
-                          <div className="flex items-center gap-2 text-red-400">
+                          <div className="flex items-center gap-2 text-state-error">
                             <AlertCircle className="h-4 w-4" />
                             <span>{sim.issues} issues</span>
                           </div>
                         )}
                         {sim.warnings > 0 && (
-                          <div className="flex items-center gap-2 text-amber-400">
+                          <div className="flex items-center gap-2 text-state-warning">
                             <AlertCircle className="h-4 w-4" />
                             <span>{sim.warnings} warnings</span>
                           </div>
@@ -410,15 +410,15 @@ export default function SimulationsPage() {
         {/* Simulation Details */}
         <motion.div variants={itemVariants}>
           {selectedSimulation ? (
-            <Card className="border-slate-800 bg-slate-900/50">
+            <Card className="border-border-default bg-bg-base/50">
               <CardHeader>
                 <div className="flex items-center gap-3">
                   <div className={`rounded-xl bg-gradient-to-br ${selectedSimulation.color} p-2`}>
                     <selectedSimulation.icon className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg text-slate-100">{selectedSimulation.name}</CardTitle>
-                    <p className="text-xs text-slate-500">{selectedSimulation.type}</p>
+                    <CardTitle className="text-lg text-text-primary">{selectedSimulation.name}</CardTitle>
+                    <p className="text-xs text-text-tertiary">{selectedSimulation.type}</p>
                   </div>
                 </div>
               </CardHeader>
@@ -428,19 +428,19 @@ export default function SimulationsPage() {
                     {selectedSimulation.details.length > 0 ? (
                       selectedSimulation.details.map((category, idx) => (
                         <div key={idx}>
-                          <h4 className="mb-3 text-sm font-medium text-slate-300">
+                          <h4 className="mb-3 text-sm font-medium text-text-secondary">
                             {category.category}
                           </h4>
                           <div className="space-y-2">
                             {category.items.map((item, itemIdx) => (
                               <div
                                 key={itemIdx}
-                                className="flex items-start gap-3 rounded-lg border border-slate-800 bg-slate-800/30 p-3"
+                                className="flex items-start gap-3 rounded-lg border border-border-default bg-bg-hover/30 p-3"
                               >
                                 {getItemStatusIcon(item.status)}
                                 <div className="flex-1">
-                                  <p className="text-sm font-medium text-slate-200">{item.name}</p>
-                                  <p className="text-xs text-slate-500">{item.message}</p>
+                                  <p className="text-sm font-medium text-text-primary">{item.name}</p>
+                                  <p className="text-xs text-text-tertiary">{item.message}</p>
                                 </div>
                               </div>
                             ))}
@@ -449,8 +449,8 @@ export default function SimulationsPage() {
                       ))
                     ) : (
                       <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <Clock className="h-12 w-12 text-slate-600" />
-                        <p className="mt-4 text-slate-400">Simulation not run yet</p>
+                        <Clock className="h-12 w-12 text-text-tertiary" />
+                        <p className="mt-4 text-text-secondary">Simulation not run yet</p>
                         <Button className="mt-4 bg-gradient-to-r from-violet-500 to-indigo-600">
                           <Play className="mr-2 h-4 w-4" />
                           Run Now
@@ -466,7 +466,7 @@ export default function SimulationsPage() {
                       <RefreshCw className="mr-2 h-4 w-4" />
                       Re-run
                     </Button>
-                    <Button variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800">
+                    <Button variant="outline" className="border-border-default text-text-secondary hover:bg-bg-hover">
                       <FileText className="mr-2 h-4 w-4" />
                       Export Report
                     </Button>
@@ -475,11 +475,11 @@ export default function SimulationsPage() {
               </CardContent>
             </Card>
           ) : (
-            <Card className="border-slate-800 bg-slate-900/50">
+            <Card className="border-border-default bg-bg-base/50">
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                <FlaskConical className="h-16 w-16 text-slate-600" />
-                <h3 className="mt-4 text-lg font-medium text-slate-300">Select a Simulation</h3>
-                <p className="mt-2 text-sm text-slate-500">
+                <FlaskConical className="h-16 w-16 text-text-tertiary" />
+                <h3 className="mt-4 text-lg font-medium text-text-secondary">Select a Simulation</h3>
+                <p className="mt-2 text-sm text-text-tertiary">
                   Click on a simulation to view detailed results
                 </p>
               </CardContent>

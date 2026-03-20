@@ -30,8 +30,8 @@ export default function PerformancePage() {
     >
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-100">Performance</h1>
-          <p className="text-slate-400">Performance monitoring and optimization</p>
+          <h1 className="text-3xl font-bold text-text-primary">Performance</h1>
+          <p className="text-text-secondary">Performance monitoring and optimization</p>
         </div>
         <Button className="bg-rose-500 hover:bg-rose-600">
           <Zap className="mr-2 h-4 w-4" />
@@ -40,65 +40,65 @@ export default function PerformancePage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-slate-800 bg-slate-900/50">
+        <Card className="border-border-default bg-bg-base/50">
           <CardContent className="p-6">
             <div className="rounded-lg bg-rose-500/10 p-3 w-fit">
               <Timer className="h-6 w-6 text-rose-400" />
             </div>
-            <h3 className="mt-4 font-semibold text-slate-100">Avg Response</h3>
-            <p className="text-2xl font-bold text-slate-200">{perfMetrics.avgResponseTime}</p>
+            <h3 className="mt-4 font-semibold text-text-primary">Avg Response</h3>
+            <p className="text-2xl font-bold text-text-primary">{perfMetrics.avgResponseTime}</p>
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800 bg-slate-900/50">
+        <Card className="border-border-default bg-bg-base/50">
           <CardContent className="p-6">
-            <div className="rounded-lg bg-emerald-500/10 p-3 w-fit">
-              <Gauge className="h-6 w-6 text-emerald-400" />
+            <div className="rounded-lg bg-state-success-dim p-3 w-fit">
+              <Gauge className="h-6 w-6 text-state-success" />
             </div>
-            <h3 className="mt-4 font-semibold text-slate-100">Throughput</h3>
-            <p className="text-2xl font-bold text-slate-200">{perfMetrics.throughput}</p>
+            <h3 className="mt-4 font-semibold text-text-primary">Throughput</h3>
+            <p className="text-2xl font-bold text-text-primary">{perfMetrics.throughput}</p>
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800 bg-slate-900/50">
+        <Card className="border-border-default bg-bg-base/50">
           <CardContent className="p-6">
-            <div className="rounded-lg bg-amber-500/10 p-3 w-fit">
-              <AlertCircle className="h-6 w-6 text-amber-400" />
+            <div className="rounded-lg bg-state-warning-dim p-3 w-fit">
+              <AlertCircle className="h-6 w-6 text-state-warning" />
             </div>
-            <h3 className="mt-4 font-semibold text-slate-100">Error Rate</h3>
-            <p className="text-2xl font-bold text-emerald-400">{perfMetrics.errorRate}</p>
+            <h3 className="mt-4 font-semibold text-text-primary">Error Rate</h3>
+            <p className="text-2xl font-bold text-state-success">{perfMetrics.errorRate}</p>
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800 bg-slate-900/50">
+        <Card className="border-border-default bg-bg-base/50">
           <CardContent className="p-6">
-            <div className="rounded-lg bg-blue-500/10 p-3 w-fit">
-              <TrendingUp className="h-6 w-6 text-blue-400" />
+            <div className="rounded-lg bg-state-info-dim p-3 w-fit">
+              <TrendingUp className="h-6 w-6 text-state-info" />
             </div>
-            <h3 className="mt-4 font-semibold text-slate-100">CPU Efficiency</h3>
-            <p className="text-2xl font-bold text-slate-200">{perfMetrics.cpuEfficiency}</p>
+            <h3 className="mt-4 font-semibold text-text-primary">CPU Efficiency</h3>
+            <p className="text-2xl font-bold text-text-primary">{perfMetrics.cpuEfficiency}</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="border-slate-800 bg-slate-900/50">
+      <Card className="border-border-default bg-bg-base/50">
         <CardHeader>
-          <CardTitle className="text-slate-100">Performance Benchmarks</CardTitle>
+          <CardTitle className="text-text-primary">Performance Benchmarks</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
             {benchmarks.map((bench) => (
               <div key={bench.name}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-slate-200">{bench.name}</span>
+                  <span className="text-text-primary">{bench.name}</span>
                   <div className="flex items-center gap-4">
-                    <span className="text-slate-400">Target: {bench.target}{bench.unit}</span>
+                    <span className="text-text-secondary">Target: {bench.target}{bench.unit}</span>
                     <Badge
                       variant={bench.current <= bench.target ? 'default' : 'secondary'}
                       className={
                         bench.current <= bench.target
-                          ? 'bg-emerald-500/10 text-emerald-400'
-                          : 'bg-amber-500/10 text-amber-400'
+                          ? 'bg-state-success-dim text-state-success'
+                          : 'bg-state-warning-dim text-state-warning'
                       }
                     >
                       {bench.current}{bench.unit}
@@ -107,7 +107,7 @@ export default function PerformancePage() {
                 </div>
                 <Progress
                   value={(bench.current / bench.target) * 100}
-                  className="h-2 bg-slate-800"
+                  className="h-2 bg-bg-hover"
                 />
               </div>
             ))}

@@ -15,6 +15,7 @@ import {
   Sparkles,
   FolderKanban,
   Loader2,
+  Play,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -36,7 +37,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useState } from 'react';
-import { useProjects, useCreateProject, useDeleteProject } from '@/lib/hooks';
+import { useProjects, useCreateProject, useDeleteProject, useExecuteWorkflow } from '@/lib/hooks';
 import { toast } from 'sonner';
 import type { Project } from '@/lib/types';
 
@@ -92,10 +93,12 @@ export default function ProjectsPage() {
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [executingProjectId, setExecutingProjectId] = useState<string | null>(null);
 
   const { data: projects = [], isLoading } = useProjects();
   const createProject = useCreateProject();
   const deleteProject = useDeleteProject();
+  const executeWorkflow = useExecuteWorkflow();
 
   const filteredProjects = projects.filter(
     (p) =>
@@ -133,6 +136,18 @@ export default function ProjectsPage() {
     }
   };
 
+  const handleExecuteWorkflow = async (projectId: string) => {
+    try {
+      setExecutingProjectId(projectId);
+      await executeWorkflow.mutateAsync({ project_id: projectId });
+      toast.success('Workflow started successfully! AI agents are now working on your project.');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to start workflow');
+    } finally {
+      setExecutingProjectId(null);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -151,8 +166,8 @@ export default function ProjectsPage() {
       {/* Header */}
       <motion.div variants={itemVariants} className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-100">Projects</h1>
-          <p className="mt-1 text-slate-400">
+          <h1 className="text-3xl font-bold text-text-primary">Projects</h1>
+          <p className="mt-1 text-text-secondary">
             Manage and monitor your AI-powered software projects
           </p>
         </div>
@@ -163,30 +178,30 @@ export default function ProjectsPage() {
               New Project
             </Button>
           </DialogTrigger>
-          <DialogContent className="border-slate-800 bg-slate-900">
+          <DialogContent className="border-border-default bg-bg-base">
             <DialogHeader>
-              <DialogTitle className="text-slate-100">Create New Project</DialogTitle>
-              <DialogDescription className="text-slate-400">
+              <DialogTitle className="text-text-primary">Create New Project</DialogTitle>
+              <DialogDescription className="text-text-secondary">
                 Describe your product idea and let AI agents build it for you.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 pt-4">
               <div>
-                <label className="text-sm font-medium text-slate-300">Project Name</label>
+                <label className="text-sm font-medium text-text-secondary">Project Name</label>
                 <Input
                   placeholder="e.g., SaaS Analytics Platform"
                   value={newProjectName}
                   onChange={(e) => setNewProjectName(e.target.value)}
-                  className="mt-1 border-slate-700 bg-slate-800 text-slate-200"
+                  className="border-border-default bg-bg-elevated text-text-primary"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-300">Description</label>
+                <label className="text-sm font-medium text-text-secondary">Description</label>
                 <textarea
                   placeholder="Describe what you want to build..."
                   value={newProjectDescription}
                   onChange={(e) => setNewProjectDescription(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 p-3 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="mt-1 w-full rounded-md border border-border-default bg-bg-elevated p-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-state-running"
                   rows={4}
                 />
               </div>
@@ -210,15 +225,15 @@ export default function ProjectsPage() {
       {/* Filters */}
       <motion.div variants={itemVariants} className="flex items-center gap-4">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
           <Input
             placeholder="Search projects..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="border-slate-700 bg-slate-900/50 pl-10 text-slate-200 placeholder:text-slate-500"
+            className="border-border-default bg-bg-input pl-10 text-text-primary placeholder:text-text-tertiary"
           />
         </div>
-        <Button variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800">
+        <Button variant="outline" className="border-border-default text-text-secondary hover:bg-bg-hover">
           <Filter className="mr-2 h-4 w-4" />
           Filter
         </Button>
@@ -229,40 +244,40 @@ export default function ProjectsPage() {
         {filteredProjects.map((project) => (
           <Card
             key={project.id}
-            className="group cursor-pointer border-slate-800 bg-slate-900/50 backdrop-blur-sm transition-all hover:border-slate-700 hover:bg-slate-800/50"
+            className="group cursor-pointer border-border-default bg-bg-panel/50 backdrop-blur-sm transition-all hover:border-border-emphasis hover:bg-bg-elevated/50"
             onClick={() => setSelectedProject(project)}
           >
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500/20 to-indigo-500/20">
-                    <FolderKanban className="h-5 w-5 text-violet-400" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-state-running-dim/20">
+                    <FolderKanban className="h-5 w-5 text-state-running" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-slate-100">{project.name}</h3>
-                    <p className="text-xs text-slate-500">
+                    <h3 className="font-semibold text-text-primary">{project.name}</h3>
+                    <p className="text-xs text-text-tertiary">
                       {new Date(project.created_at).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger onClick={(e) => e.stopPropagation()}>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-text-secondary">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
-                    className="border-slate-700 bg-slate-900"
+                    className="border-border-default bg-bg-elevated"
                   >
-                    <DropdownMenuItem className="text-slate-300 focus:bg-slate-800">
+                    <DropdownMenuItem className="text-text-secondary focus:bg-bg-hover">
                       View Details
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-slate-300 focus:bg-slate-800">
+                    <DropdownMenuItem className="text-text-secondary focus:bg-bg-hover">
                       Edit Project
                     </DropdownMenuItem>
                     <DropdownMenuItem 
-                      className="text-red-400 focus:bg-slate-800"
+                      className="text-state-error focus:bg-bg-hover"
                       onClick={() => handleDeleteProject(project.id)}
                     >
                       Delete
@@ -272,13 +287,13 @@ export default function ProjectsPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm text-slate-400 line-clamp-2">{project.description}</p>
+              <p className="text-sm text-text-secondary line-clamp-2">{project.description}</p>
 
               <div className="flex items-center gap-4">
                 <Badge variant="outline" className={getStatusColor(project.status)}>
                   {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
                 </Badge>
-                <div className="flex items-center gap-1 text-xs text-slate-500">
+                <div className="flex items-center gap-1 text-xs text-text-tertiary">
                   {getHealthIcon('good')}
                   <span className="capitalize">good</span>
                 </div>
@@ -286,25 +301,45 @@ export default function ProjectsPage() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500">Stage: {project.current_phase || 'Idea'}</span>
-                  <span className="text-slate-300">{project.progress_percent}%</span>
+                  <span className="text-text-tertiary">Stage: {project.current_phase || 'Idea'}</span>
+                  <span className="text-text-primary">{project.progress_percent}%</span>
                 </div>
-                <Progress value={project.progress_percent} className="h-2 bg-slate-800" />
+                <Progress value={project.progress_percent} className="h-2 bg-bg-base" />
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-slate-800">
-                <div className="flex items-center gap-1 text-xs text-slate-500">
+              <div className="flex items-center justify-between pt-2 border-t border-border-default">
+                <div className="flex items-center gap-1 text-xs text-text-tertiary">
                   <Bot className="h-3.5 w-3.5" />
                   <span>3 agents</span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-auto p-0 text-violet-400 hover:text-violet-300"
-                >
-                  View
-                  <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleExecuteWorkflow(project.id);
+                    }}
+                    disabled={executingProjectId === project.id}
+                    className="h-auto px-3 text-state-running hover:bg-state-running-dim disabled:opacity-50"
+                  >
+                    {executingProjectId === project.id ? (
+                      <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Play className="mr-2 h-3.5 w-3.5" />
+                    )}
+                    {executingProjectId === project.id ? 'Starting...' : 'Start Workflow'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-0 text-state-running hover:text-state-running/80"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    View
+                    <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -313,19 +348,19 @@ export default function ProjectsPage() {
 
       {/* Project Detail Dialog */}
       <Dialog open={!!selectedProject} onOpenChange={() => setSelectedProject(null)}>
-        <DialogContent className="max-w-2xl border-slate-800 bg-slate-900">
+        <DialogContent className="max-w-2xl border-border-default bg-bg-base">
           {selectedProject && (
             <>
               <DialogHeader>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20">
-                    <FolderKanban className="h-6 w-6 text-violet-400" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-state-running-dim/20">
+                    <FolderKanban className="h-6 w-6 text-state-running" />
                   </div>
                   <div>
-                    <DialogTitle className="text-xl text-slate-100">
+                    <DialogTitle className="text-xl text-text-primary">
                       {selectedProject.name}
                     </DialogTitle>
-                    <DialogDescription className="text-slate-400">
+                    <DialogDescription className="text-text-secondary">
                       {selectedProject.description}
                     </DialogDescription>
                   </div>
@@ -333,30 +368,30 @@ export default function ProjectsPage() {
               </DialogHeader>
               <div className="space-y-6 pt-4">
                 <div className="grid grid-cols-3 gap-4">
-                  <div className="rounded-lg border border-slate-800 bg-slate-800/50 p-4">
-                    <p className="text-xs text-slate-500">Status</p>
+                  <div className="rounded-lg border border-border-default bg-bg-elevated p-4">
+                    <p className="text-xs text-text-tertiary">Status</p>
                     <Badge variant="outline" className={`mt-1 ${getStatusColor(selectedProject.status)}`}>
                       {selectedProject.status.charAt(0).toUpperCase() + selectedProject.status.slice(1)}
                     </Badge>
                   </div>
-                  <div className="rounded-lg border border-slate-800 bg-slate-800/50 p-4">
-                    <p className="text-xs text-slate-500">Stage</p>
-                    <p className="mt-1 font-medium text-slate-200">{selectedProject.current_phase || 'Idea'}</p>
+                  <div className="rounded-lg border border-border-default bg-bg-elevated p-4">
+                    <p className="text-xs text-text-tertiary">Stage</p>
+                    <p className="mt-1 font-medium text-text-primary">{selectedProject.current_phase || 'Idea'}</p>
                   </div>
-                  <div className="rounded-lg border border-slate-800 bg-slate-800/50 p-4">
-                    <p className="text-xs text-slate-500">Progress</p>
-                    <p className="mt-1 font-medium text-slate-200">{selectedProject.progress_percent}%</p>
+                  <div className="rounded-lg border border-border-default bg-bg-elevated p-4">
+                    <p className="text-xs text-text-tertiary">Progress</p>
+                    <p className="mt-1 font-medium text-text-primary">{selectedProject.progress_percent}%</p>
                   </div>
                 </div>
 
                 <div>
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm text-slate-500">Progress</span>
-                    <span className="text-sm font-medium text-slate-200">
+                    <span className="text-sm text-text-tertiary">Progress</span>
+                    <span className="text-sm font-medium text-text-primary">
                       {selectedProject.progress_percent}%
                     </span>
                   </div>
-                  <Progress value={selectedProject.progress_percent} className="h-3 bg-slate-800" />
+                  <Progress value={selectedProject.progress_percent} className="h-3 bg-bg-base" />
                 </div>
 
                 <div className="flex gap-3">
@@ -364,7 +399,7 @@ export default function ProjectsPage() {
                     <Sparkles className="mr-2 h-4 w-4" />
                     Continue Building
                   </Button>
-                  <Button variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800">
+                  <Button variant="outline" className="border-border-default text-text-secondary hover:bg-bg-hover">
                     View Architecture
                   </Button>
                 </div>
