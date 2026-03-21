@@ -157,8 +157,7 @@ class WorkflowEngine:
         try:
             # Execute the graph using LangGraph's standard invoke pattern
             # Compiled StateGraph supports both sync and async invocation
-            import inspect
-            
+
             # Check if graph has ainvoke (async) or just invoke (sync)
             if hasattr(self._graph, 'ainvoke'):
                 # Async version available (newer LangGraph)
