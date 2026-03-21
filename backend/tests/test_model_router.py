@@ -61,10 +61,11 @@ class TestOllamaLLM:
         """Test default OllamaLLM initialization."""
         llm = OllamaLLM()
 
-        # Access field values - use str()/float() to handle FieldInfo objects
-        assert str(llm.model) == "qwen2.5-coder"
-        assert str(llm.base_url) == "http://localhost:11434"
-        assert float(llm.temperature) == 0.7
+        # Access field values using model_dump() to get actual values
+        model_dict = llm.model_dump()
+        assert model_dict["model"] == "qwen2.5-coder"
+        assert model_dict["base_url"] == "http://localhost:11434"
+        assert model_dict["temperature"] == 0.7
 
     def test_custom_initialization(self):
         """Test OllamaLLM with custom values."""
