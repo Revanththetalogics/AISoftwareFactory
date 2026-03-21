@@ -12,7 +12,6 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field, field_validator, model_validator
-from pydantic.networks import EmailStr
 
 from backend.core.exceptions import ValidationError
 
