@@ -77,11 +77,14 @@ def sanitize_file_path(path: str, base_dir: str) -> str:
     if not base_dir:
         raise ValidationError("Base directory cannot be empty")
 
+    # Normalize backslashes to forward slashes for consistent handling
+    normalized_path = path.replace('\\', '/')
+
     # Normalize and resolve the base directory
     abs_base = os.path.abspath(os.path.normpath(base_dir))
 
     # Join the path with base and normalize
-    joined_path = os.path.join(base_dir, path)
+    joined_path = os.path.join(base_dir, normalized_path)
     abs_path = os.path.abspath(os.path.normpath(joined_path))
 
     # Ensure path stays within base directory

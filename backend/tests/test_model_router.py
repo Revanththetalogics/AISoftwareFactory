@@ -61,9 +61,11 @@ class TestOllamaLLM:
         """Test default OllamaLLM initialization."""
         llm = OllamaLLM()
 
-        assert llm.model == "qwen2.5-coder"
-        assert llm.base_url == "http://localhost:11434"
-        assert llm.temperature == 0.7
+        # Use model_dump() to get actual values from Pydantic v2
+        config = llm.model_dump()
+        assert config["model"] == "qwen2.5-coder"
+        assert config["base_url"] == "http://localhost:11434"
+        assert config["temperature"] == 0.7
 
     def test_custom_initialization(self):
         """Test OllamaLLM with custom values."""

@@ -150,6 +150,15 @@ class TestCheckDatabase:
         mock_result.fetchone.return_value = (1,)
         mock_session.execute.return_value = mock_result
 
+        # Mock SQLAlchemy inspector
+        mock_inspector = Mock()
+        mock_inspector.get_table_names.return_value = ['users', 'projects', 'workflows', 'tasks', 'other_table']
+        
+        async def mock_run_sync(fn):
+            return fn(mock_session)
+        
+        mock_session.run_sync = mock_run_sync
+
         mock_pool = Mock()
         mock_pool.size.return_value = 10
         mock_pool.checkedin.return_value = 8
@@ -180,18 +189,14 @@ class TestCheckDatabase:
         mock_result = Mock()
         mock_result.fetchone.return_value = (1,)
 
-        call_count = [0]
-
-        async def mock_execute(query):
-            call_count[0] += 1
-            if call_count[0] == 1:  # SELECT 1
-                return mock_result
-            # Table check queries - fail on some
-            if "users" in str(query) or "projects" in str(query):
-                raise Exception("Table not found")
-            return mock_result
-
-        mock_session.execute = mock_execute
+        # Mock SQLAlchemy inspector - simulate missing tables
+        mock_inspector = Mock()
+        mock_inspector.get_table_names.return_value = ['workflows', 'tasks']  # Missing 'users' and 'projects'
+        
+        async def mock_run_sync(fn):
+            return fn(mock_session)
+        
+        mock_session.run_sync = mock_run_sync
 
         mock_pool = Mock()
         mock_pool.size.return_value = 10
@@ -211,7 +216,10 @@ class TestCheckDatabase:
             status, message, details = await checker.check_database()
 
             # Should be degraded due to missing tables
-            assert status in [HealthStatus.HEALTHY, HealthStatus.DEGRADED]
+            assert status == HealthStatus.DEGRADED
+            assert "missing tables" in message.lower()
+            assert "users" in message
+            assert "projects" in message
 
     @pytest.mark.asyncio
     async def test_check_database_slow_query(self):
@@ -222,6 +230,15 @@ class TestCheckDatabase:
         mock_result = Mock()
         mock_result.fetchone.return_value = (1,)
         mock_session.execute.return_value = mock_result
+
+        # Mock SQLAlchemy inspector
+        mock_inspector = Mock()
+        mock_inspector.get_table_names.return_value = ['users', 'projects', 'workflows', 'tasks']
+        
+        async def mock_run_sync(fn):
+            return fn(mock_session)
+        
+        mock_session.run_sync = mock_run_sync
 
         mock_pool = Mock()
         mock_pool.size.return_value = 10

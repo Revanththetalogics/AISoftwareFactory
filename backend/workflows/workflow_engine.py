@@ -156,10 +156,23 @@ class WorkflowEngine:
 
         try:
             # Execute the graph
-            result = await self._graph.ainvoke(
-                state,
-                config={"recursion_limit": max_iterations},
-            )
+            # LangGraph compiled graphs can be called directly or via invoke()
+            if hasattr(self._graph, 'ainvoke'):
+                result = await self._graph.ainvoke(
+                    state,
+                    {"recursion_limit": max_iterations}
+                )
+            else:
+                # Fallback for older LangGraph versions
+                import asyncio
+                loop = asyncio.get_event_loop()
+                result = await loop.run_in_executor(
+                    None,
+                    lambda: self._graph.invoke(
+                        state,
+                        {"recursion_limit": max_iterations}
+                    )
+                )
 
             self._logger.info(
                 "Workflow execution completed",

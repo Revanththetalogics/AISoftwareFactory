@@ -65,9 +65,12 @@ class TestOllamaLLM:
     def test_init_defaults(self):
         """Test default initialization."""
         llm = OllamaLLM()
-        assert llm.model == "qwen2.5-coder"
-        assert llm.base_url == "http://localhost:11434"
-        assert llm.temperature == 0.7
+        
+        # Use model_dump() to get actual values from Pydantic v2
+        config = llm.model_dump()
+        assert config["model"] == "qwen2.5-coder"
+        assert config["base_url"] == "http://localhost:11434"
+        assert config["temperature"] == 0.7
 
     def test_init_custom_values(self):
         """Test initialization with custom values."""
@@ -76,9 +79,12 @@ class TestOllamaLLM:
             base_url="http://custom:1234",
             temperature=0.5
         )
-        assert llm.model == "deepseek-coder"
-        assert llm.base_url == "http://custom:1234"
-        assert llm.temperature == 0.5
+        
+        # Use model_dump() to get actual values from Pydantic v2
+        config = llm.model_dump()
+        assert config["model"] == "deepseek-coder"
+        assert config["base_url"] == "http://custom:1234"
+        assert config["temperature"] == 0.5
 
     def test_llm_type_property(self):
         """Test _llm_type property."""
