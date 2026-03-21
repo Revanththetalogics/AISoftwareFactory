@@ -186,3 +186,82 @@ class TestTaskManager:
         assert stats["total"] == 2
         assert stats["completed"] == 1
         assert stats["pending"] == 1
+
+    def test_assign_task_not_pending(self):
+        """Test assigning a task that's not in pending state (covers lines 188-193)."""
+        task = self.manager.create_task(name="Test Task", task_type="test")
+        # First assignment succeeds
+        self.manager.assign_task(task.task_id, "agent-1")
+        assert task.status == TaskStatus.ASSIGNED
+
+        # Second assignment should fail - task is no longer pending
+        result = self.manager.assign_task(task.task_id, "agent-2")
+
+        assert result is False
+        assert task.assigned_to == "agent-1"  # Still assigned to first agent
+
+    def test_complete_nonexistent_task(self):
+        """Test completing a task that doesn't exist (covers line 228)."""
+        result = self.manager.complete_task("nonexistent-id", {"output": "data"})
+
+        assert result is False
+
+    def test_fail_nonexistent_task(self):
+        """Test failing a task that doesn't exist (covers line 258)."""
+        result = self.manager.fail_task("nonexistent-id", "Some error")
+
+        assert result is False
+
+    def test_get_assigned_tasks_with_filter(self):
+        """Test getting assigned tasks with agent filter (covers lines 298-304)."""
+        task1 = self.manager.create_task(name="Task 1", task_type="test")
+        task2 = self.manager.create_task(name="Task 2", task_type="test")
+        task3 = self.manager.create_task(name="Task 3", task_type="test")
+
+        self.manager.assign_task(task1.task_id, "agent-1")
+        self.manager.assign_task(task2.task_id, "agent-1")
+        self.manager.assign_task(task3.task_id, "agent-2")
+
+        # Get all assigned tasks
+        all_assigned = self.manager.get_assigned_tasks()
+        assert len(all_assigned) == 3
+
+        # Get tasks for specific agent
+        agent1_tasks = self.manager.get_assigned_tasks(agent_id="agent-1")
+        assert len(agent1_tasks) == 2
+        assert all(t.assigned_to == "agent-1" for t in agent1_tasks)
+
+        agent2_tasks = self.manager.get_assigned_tasks(agent_id="agent-2")
+        assert len(agent2_tasks) == 1
+        assert agent2_tasks[0].assigned_to == "agent-2"
+
+    def test_get_next_pending_task_with_stale_entries(self):
+        """Test get_next_pending_task cleans up stale queue entries (covers lines 329-336)."""
+        task1 = self.manager.create_task(name="Task 1", task_type="test", priority=TaskPriority.LOW)
+        task2 = self.manager.create_task(name="Task 2", task_type="test", priority=TaskPriority.HIGH)
+
+        # Assign task2 - this removes it from pending queue
+        self.manager.assign_task(task2.task_id, "agent-1")
+
+        # Manually add stale entry to pending queue to simulate corruption
+        self.manager._pending_queue.insert(0, "invalid-task-id")
+
+        # get_next_pending_task should skip invalid entry and return task1
+        next_task = self.manager.get_next_pending_task()
+
+        assert next_task == task1
+        assert "invalid-task-id" not in self.manager._pending_queue
+
+    def test_get_next_pending_task_empty_after_cleanup(self):
+        """Test get_next_pending_task returns None when all entries are invalid."""
+        # Create and assign a task
+        task = self.manager.create_task(name="Task", task_type="test")
+        self.manager.assign_task(task.task_id, "agent-1")
+
+        # Manually add only invalid entries
+        self.manager._pending_queue = ["invalid-1", "invalid-2"]
+
+        next_task = self.manager.get_next_pending_task()
+
+        assert next_task is None
+        assert len(self.manager._pending_queue) == 0

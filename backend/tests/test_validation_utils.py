@@ -604,3 +604,74 @@ class TestRateLimitConfig:
 
         with pytest.raises(PydanticValidationError):
             RateLimitConfig(requests_per_minute=0)
+
+
+class TestValidateEmailFormatException:
+    """Tests for validate_email_format exception handling (covers line 84-86)."""
+
+    def test_validate_email_valid_returns_true(self):
+        """Test that valid email returns True (covers line 84)."""
+        from backend.utils.validation import validate_email_format
+
+        result = validate_email_format("test@example.com")
+        assert result is True
+
+        result = validate_email_format("user.name@domain.co.uk")
+        assert result is True
+
+    def test_validate_email_invalid_returns_false(self):
+        """Test that invalid email returns False via exception (covers lines 85-86)."""
+        from backend.utils.validation import validate_email_format
+
+        # These should trigger the exception path and return False
+        result = validate_email_format("not-an-email")
+        assert result is False
+
+        result = validate_email_format("@missing-local.com")
+        assert result is False
+
+        result = validate_email_format("missing-at.com")
+        assert result is False
+
+
+class TestValidateUrlFormatException:
+    """Tests for validate_url_format exception handling (covers lines 115-116)."""
+
+    def test_validate_url_format_exception_returns_false(self):
+        """Test that exception in URL format validation returns False (covers lines 115-116)."""
+        from backend.utils.validation import validate_url_format
+
+        # Mock urlparse to raise an exception
+        with patch('backend.utils.validation.urlparse') as mock_urlparse:
+            mock_urlparse.side_effect = Exception("Parse error")
+            result = validate_url_format("http://example.com")
+
+        assert result is False
+
+
+class TestValidateUrlSafeException:
+    """Tests for validate_url_safe outer exception handling (covers lines 187-188)."""
+
+    def test_validate_url_safe_outer_exception_returns_false(self):
+        """Test that outer exception in URL safe validation returns False (covers lines 187-188)."""
+        from backend.utils.validation import validate_url_safe
+
+        # Mock urlparse to raise an unexpected exception
+        with patch('backend.utils.validation.urlparse') as mock_urlparse:
+            mock_urlparse.side_effect = Exception("Unexpected error")
+            result = validate_url_safe("http://example.com")
+
+        assert result is False
+
+    @patch('backend.utils.validation.socket.getaddrinfo')
+    def test_validate_url_safe_invalid_ip_format_continues(self, mock_getaddrinfo):
+        """Test URL safe validation continues when IP format is invalid (covers line 173-175)."""
+        # Return an address info with invalid IP format
+        mock_getaddrinfo.return_value = [
+            (2, 1, 6, '', ('not-a-valid-ip', 80))
+        ]
+
+        result = validate_url_safe("http://external.example.com")
+
+        # Should return True since invalid IP is skipped and no blocked IP found
+        assert result is True

@@ -67,21 +67,19 @@ class TestSanitizeInput:
 class TestValidateEmailFormat:
     """Tests for validate_email_format function - covers lines 81-86.
 
-    Note: The current implementation uses EmailStr.validate() which is deprecated
-    in Pydantic v2 and doesn't work correctly. These tests document the actual
-    behavior (always returns False) rather than expected behavior.
+    Note: The implementation was fixed to use email-validator directly
+    for proper email validation in Pydantic v2.
     """
 
     def test_valid_email(self):
-        """Test email validation - currently returns False due to Pydantic v2 API change."""
-        # Note: This returns False due to EmailStr.validate() not existing in Pydantic v2
+        """Test email validation with valid email."""
         result = validate_email_format("test@example.com")
-        assert result is False  # Actual behavior due to API incompatibility
+        assert result is True
 
     def test_valid_email_with_subdomain(self):
-        """Test email with subdomain - currently returns False."""
+        """Test email with subdomain."""
         result = validate_email_format("user@mail.example.com")
-        assert result is False  # Actual behavior
+        assert result is True
 
     def test_invalid_email_no_at(self):
         """Test invalid email without @ symbol."""

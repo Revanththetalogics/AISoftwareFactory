@@ -361,3 +361,63 @@ class TestPasswordHashing:
         hashed = hash_password(password)
 
         assert verify_password(password, hashed) is True
+
+
+class TestSanitizeFilePathDifferentDrives:
+    """Tests for sanitize_file_path with different drives (covers line 98)."""
+
+    def test_different_drives_raises_error(self):
+        """Test paths on different drives raise ValidationError (covers lines 96-101)."""
+        import platform
+
+        if platform.system() != "Windows":
+            pytest.skip("This test is Windows-specific")
+
+        # On Windows, paths on different drives should raise ValueError -> ValidationError
+        with pytest.raises(ValidationError) as exc_info:
+            sanitize_file_path("D:\\some\\file.txt", "C:\\base\\dir")
+
+        assert "invalid" in str(exc_info.value).lower() or "path" in str(exc_info.value).lower()
+
+    def test_commonpath_value_error(self):
+        """Test that ValueError from commonpath is caught (covers lines 96-101)."""
+        from unittest.mock import patch
+
+        with patch('os.path.commonpath') as mock_commonpath:
+            mock_commonpath.side_effect = ValueError("Paths on different drives")
+
+            with pytest.raises(ValidationError) as exc_info:
+                sanitize_file_path("file.txt", "/base/dir")
+
+            assert "invalid" in str(exc_info.value).lower() or "path" in str(exc_info.value).lower()
+
+
+class TestSanitizeFilenameExtensionTruncation:
+    """Tests for sanitize_filename extension handling (covers line 155)."""
+
+    def test_truncation_without_extension_preservation(self):
+        """Test filename truncation when extension is too long (covers line 155)."""
+        # Create a filename with a very long 'extension' (more than 10 chars)
+        long_extension = "a" * 200 + ".verylongextensionover10chars"
+        result = sanitize_filename(long_extension, max_length=50)
+
+        # Should truncate without preserving the extension since it's > 10 chars
+        assert len(result) <= 50
+
+    def test_truncation_no_extension(self):
+        """Test filename truncation when there's no extension."""
+        # Filename without any extension
+        long_name = "a" * 300
+        result = sanitize_filename(long_name, max_length=100)
+
+        assert len(result) <= 100
+        assert "." not in result
+
+    def test_truncation_preserves_short_extension(self):
+        """Test that short extensions are preserved during truncation."""
+        # Long name with short extension
+        long_name = "a" * 300 + ".py"
+        result = sanitize_filename(long_name, max_length=50)
+
+        assert len(result) <= 50
+        assert result.endswith(".py")

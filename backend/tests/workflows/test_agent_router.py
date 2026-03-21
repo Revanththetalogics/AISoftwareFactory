@@ -90,3 +90,51 @@ class TestAgentRouter:
 
         assert "success" in result
         # May succeed or fail depending on stub implementation
+
+    @pytest.mark.asyncio
+    async def test_route_and_execute_no_agent_found(self):
+        """Test route_and_execute when no suitable agent is found (covers line 198)."""
+        task = WorkflowTask(
+            name="Unknown Task",
+            task_type="completely_unknown_capability_xyz",
+            description="Task with no matching agent",
+        )
+
+        # Clear registry to ensure no agent matches
+        from unittest.mock import patch
+
+        with patch.object(self.router, 'select_agent_for_task', return_value=None):
+            result = await self.router.route_and_execute(task)
+
+        assert result["success"] is False
+        assert "No suitable agent found" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_route_and_execute_exception(self):
+        """Test route_and_execute when execution raises exception (covers lines 223-231)."""
+        task = WorkflowTask(
+            name="Error Task",
+            task_type="strategic_planning",
+            description="Task that will fail",
+        )
+
+        from unittest.mock import AsyncMock, patch
+
+        # Mock agent to raise exception during execute_task
+        mock_agent = AsyncMock()
+        mock_agent.agent_id = "test-agent"
+        mock_agent.execute_task = AsyncMock(side_effect=RuntimeError("Execution error"))
+
+        with patch.object(self.router, 'select_agent_for_task', return_value=mock_agent):
+            result = await self.router.route_and_execute(task)
+
+        assert result["success"] is False
+        assert "Execution error" in result["error"]
+
+    def test_get_agent_workload(self):
+        """Test get_agent_workload returns workload count (covers line 248)."""
+        workload = self.router.get_agent_workload("any-agent-id")
+
+        # Current stub implementation returns 0
+        assert workload == 0
+        assert isinstance(workload, int)

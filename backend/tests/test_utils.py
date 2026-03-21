@@ -44,6 +44,17 @@ class TestIdGenerator:
         # Format: task-YYYYMMDDHHMMSS-xxxxxxxx (variable length)
         assert len(id1) >= 28
 
+    def test_generate_timestamp_id_without_prefix(self):
+        """Test timestamp ID generation without prefix (covers line 52)."""
+        id1 = generate_timestamp_id()
+
+        # Format: YYYYMMDDHHMMSS-xxxxxxxx (without prefix)
+        assert "-" in id1
+        assert not id1.startswith("-")  # Should not start with hyphen
+        parts = id1.split("-")
+        assert len(parts) == 2  # timestamp-uuid
+        assert len(parts[0]) == 14  # YYYYMMDDHHMMSS
+
 
 class TestValidators:
     """Tests for validation utilities."""
@@ -70,6 +81,16 @@ class TestValidators:
         assert validate_url("not-a-url") is False
         assert validate_url("ftp://example.com") is False
 
+    def test_validate_url_non_string(self):
+        """Test URL validation with non-string input (covers line 51)."""
+        assert validate_url(None) is False
+        assert validate_url(123) is False
+        assert validate_url([]) is False
+
+    def test_validate_url_empty(self):
+        """Test URL validation with empty string (covers line 51)."""
+        assert validate_url("") is False
+
     def test_validate_project_name_valid(self):
         """Test valid project name."""
         is_valid, error = validate_project_name("My Project")
@@ -87,6 +108,14 @@ class TestValidators:
         is_valid, error = validate_project_name("")
         assert is_valid is False
         assert "required" in error
+
+    def test_validate_project_name_too_long(self):
+        """Test project name that exceeds max length (covers line 70)."""
+        long_name = "a" * 101  # Over 100 characters
+        is_valid, error = validate_project_name(long_name)
+
+        assert is_valid is False
+        assert "less than 100" in error
 
 
 class TestFormatters:

@@ -79,8 +79,9 @@ def validate_email_format(email: str) -> bool:
         bool: True if valid
     """
     try:
-        # This will raise if invalid
-        EmailStr.validate(email)
+        # Use email-validator directly (used by Pydantic EmailStr)
+        from email_validator import validate_email
+        validate_email(email, check_deliverability=False)
         return True
     except Exception:
         return False
