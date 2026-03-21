@@ -1,0 +1,83 @@
+groups:
+  - name: theta-ai-alerts
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status_code=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "More than 5% of requests are returning 5xx errors for 5 minutes"
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High request latency"
+          description: "95th percentile latency is above 2 seconds"
+
+      - alert: ServiceDown
+        expr: up{job="theta-ai-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ThetaAI backend is down"
+          description: "Backend service has been down for 1 minute"
+
+      - alert: CircuitBreakerOpen
+        expr: circuit_breaker_state > 0
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Circuit breaker is open"
+          description: "Circuit breaker {{ $labels.name }} is in non-closed state"
+
+      - alert: DatabaseConnectionPoolHigh
+        expr: db_pool_active / db_pool_size > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "More than 90% of DB connections are in use"
+
+      - alert: LLMHighLatency
+        expr: histogram_quantile(0.95, rate(llm_call_duration_seconds_bucket[5m])) > 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "LLM calls are slow"
+          description: "95th percentile LLM call duration exceeds 30 seconds"
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage has been above 85% for 5 minutes"
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage has been above 80% for 5 minutes"
+
+      - alert: TimeoutOccurrences
+        expr: increase(timeout_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Multiple timeouts detected"
+          description: "More than 10 timeout occurrences in the last 5 minutes for operation {{ $labels.operation }}"

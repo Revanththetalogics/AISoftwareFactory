@@ -27,19 +27,19 @@ COPY . .
 # Clear any cached data and build the application
 RUN rm -rf .next/cache && npm run build
 
-# Production image, copy all the files and run next
+# Production image - standalone mode
 FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-# Disable server action caching to prevent mismatches
-ENV NEXT_SERVER_ACTIONS_CACHE=false
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy built application
+# Copy public folder
 COPY --from=builder /app/public ./public
+
+# Copy standalone server and static files
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
@@ -49,10 +49,9 @@ EXPOSE 3000
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-# Enable verbose logging for debugging
-ENV NEXT_DEBUG_SERVER_ACTIONS=true
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000', {timeout: 5000}, (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1)).on('error', () => process.exit(1))"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
+# Run standalone server directly
 CMD ["node", "server.js"]

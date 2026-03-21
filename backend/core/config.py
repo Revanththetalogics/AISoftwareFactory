@@ -75,7 +75,8 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, description="JWT token expiration time")
     
     # CORS
-    ALLOWED_HOSTS: str = Field(default="*", description="Comma-separated list of allowed hosts")
+    ALLOWED_HOSTS: str = Field(default="", description="Comma-separated list of allowed hosts (must be explicitly set in production)")
+    CORS_ORIGINS: str = Field(default="", description="Comma-separated list of allowed CORS origins")
     
     # Database Configuration (Phase 5)
     DATABASE_URL: str = Field(
@@ -99,6 +100,71 @@ class Settings(BaseSettings):
     # Monitoring
     ENABLE_METRICS: bool = Field(default=True, description="Enable Prometheus metrics")
     METRICS_PORT: int = Field(default=9090, description="Metrics endpoint port")
+    
+    # OpenTelemetry settings
+    OTEL_ENABLED: bool = Field(default=True, description="Enable OpenTelemetry tracing")
+    OTEL_EXPORTER_ENDPOINT: str = Field(default="", description="OTLP exporter endpoint (e.g., localhost:4317)")
+    OTEL_SERVICE_NAME: str = Field(default="theta-ai-backend", description="Service name for tracing")
+    
+    # Timeout Configuration (seconds)
+    LLM_TIMEOUT_SECONDS: int = Field(
+        default=30,
+        description="LLM API call timeout in seconds"
+    )
+    LLM_STREAM_TIMEOUT_SECONDS: int = Field(
+        default=60,
+        description="LLM streaming API call timeout in seconds"
+    )
+    DB_QUERY_TIMEOUT_SECONDS: int = Field(
+        default=10,
+        description="Database query timeout in seconds"
+    )
+    EXTERNAL_HTTP_TIMEOUT_SECONDS: int = Field(
+        default=15,
+        description="External HTTP call timeout in seconds"
+    )
+    
+    # Circuit Breaker Configuration
+    CB_FAILURE_THRESHOLD: int = Field(
+        default=5,
+        description="Number of failures before circuit breaker opens"
+    )
+    CB_RECOVERY_TIMEOUT_SECONDS: int = Field(
+        default=30,
+        description="Seconds before circuit breaker attempts recovery"
+    )
+    
+    # Rate Limiting Configuration
+    RATE_LIMIT_DEFAULT: int = Field(
+        default=100,
+        description="Default requests per minute for regular users"
+    )
+    RATE_LIMIT_ADMIN: int = Field(
+        default=500,
+        description="Requests per minute for admin users"
+    )
+    RATE_LIMIT_WINDOW_SECONDS: int = Field(
+        default=60,
+        description="Rate limit window in seconds"
+    )
+    
+    # Backup Configuration
+    BACKUP_ENABLED: bool = Field(
+        default=True,
+        description="Enable database backups"
+    )
+    BACKUP_RETENTION_DAYS: int = Field(
+        default=30,
+        description="Days to retain backups"
+    )
+    BACKUP_SCHEDULE: str = Field(
+        default="0 2 * * *",
+        description="Backup cron schedule (default: daily at 2 AM)"
+    )
+    BACKUP_DIR: str = Field(
+        default="./backups",
+        description="Directory for storing backups"
+    )
     
     @field_validator("ENVIRONMENT")
     @classmethod
@@ -129,16 +195,41 @@ class Settings(BaseSettings):
     @field_validator("SECRET_KEY")
     @classmethod
     def validate_secret_key(cls, v: str, info) -> str:
-        """Validate secret key in production."""
+        """Validate secret key in non-development environments."""
         values = info.data
-        if values.get("ENVIRONMENT") == "production" and v == "your-secret-key-change-in-production":
-            raise ValueError("SECRET_KEY must be changed from default in production")
+        environment = values.get("ENVIRONMENT", "development")
+        # In production or staging, SECRET_KEY must be changed from default
+        if environment in ("production", "staging") and v == "your-secret-key-change-in-production":
+            raise ValueError(f"SECRET_KEY must be changed from default in {environment}")
         return v
     
     @property
     def allowed_hosts_list(self) -> List[str]:
         """Get allowed hosts as a list."""
-        return [host.strip() for host in self.ALLOWED_HOSTS.split(",")]
+        if not self.ALLOWED_HOSTS:
+            return []
+        return [host.strip() for host in self.ALLOWED_HOSTS.split(",") if host.strip()]
+    
+    @property
+    def cors_origins_list(self) -> List[str]:
+        """
+        Get CORS origins as a list.
+        
+        Returns:
+            List of allowed CORS origins. If not configured,
+            returns localhost defaults for development only.
+        """
+        if not self.CORS_ORIGINS:
+            # In development, allow localhost origins by default
+            if self.is_development:
+                return [
+                    "http://localhost:3000",
+                    "http://localhost:8000",
+                    "http://127.0.0.1:3000",
+                    "http://127.0.0.1:8000",
+                ]
+            return []
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
     
     @property
     def is_development(self) -> bool:

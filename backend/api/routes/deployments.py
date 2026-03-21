@@ -2,6 +2,9 @@
 Deployment API Routes.
 
 This module provides REST endpoints for deployment management.
+
+TODO: Wire to DatabaseDeploymentService once implemented in database_services.py.
+Currently using DeploymentOrchestrator which uses in-memory storage.
 """
 
 from typing import List

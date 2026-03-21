@@ -56,35 +56,40 @@ export function NotificationCenter() {
           variant="ghost"
           size="icon"
           className="relative text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+          aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+          aria-haspopup="menu"
         >
-          <Bell className="h-5 w-5" />
+          <Bell className="h-5 w-5" aria-hidden="true" />
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
               className="absolute -right-1 -top-1 h-5 w-5 items-center justify-center rounded-full p-0 text-xs"
+              aria-hidden="true"
             >
               {unreadCount}
             </Badge>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[380px] border-slate-700 bg-slate-900">
+      <DropdownMenuContent align="end" className="w-[380px] border-slate-700 bg-slate-900" role="menu" aria-label="Notifications">
         <DropdownMenuLabel className="flex items-center justify-between">
           <span className="text-slate-200">Notifications</span>
           <Button
             variant="ghost"
             size="sm"
             className="h-auto text-xs text-violet-400 hover:text-violet-300"
+            aria-label="Mark all notifications as read"
           >
             Mark all read
           </Button>
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-slate-700" />
-        <ScrollArea className="h-[300px]">
+        <ScrollArea className="h-[300px]" role="list" aria-label="Notification list">
           {mockNotifications.map((notification) => (
             <DropdownMenuItem
               key={notification.id}
               className="flex cursor-pointer items-start gap-3 p-3 focus:bg-slate-800"
+              role="listitem"
             >
               <div
                 className={`mt-0.5 h-2 w-2 rounded-full ${
@@ -96,6 +101,7 @@ export function NotificationCenter() {
                         ? 'bg-red-400'
                         : 'bg-blue-400'
                 }`}
+                aria-hidden="true"
               />
               <div className="flex-1">
                 <p className="text-sm font-medium text-slate-200">{notification.title}</p>

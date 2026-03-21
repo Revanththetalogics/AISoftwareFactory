@@ -1,8 +1,9 @@
 'use client';
 
 import { useTheme } from 'next-themes';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Moon, Sun, User, Settings } from 'lucide-react';
+import { Moon, Sun, User, Settings, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -13,6 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/lib/auth';
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -23,6 +25,7 @@ export function ThemeToggle() {
       size="icon"
       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       className="text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+      aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
     >
       <AnimatePresence mode="wait">
         {theme === 'dark' ? (
@@ -33,7 +36,7 @@ export function ThemeToggle() {
             exit={{ scale: 0, rotate: 90 }}
             transition={{ duration: 0.2 }}
           >
-            <Moon className="h-5 w-5" />
+            <Moon className="h-5 w-5" aria-hidden="true" />
           </motion.div>
         ) : (
           <motion.div
@@ -43,7 +46,7 @@ export function ThemeToggle() {
             exit={{ scale: 0, rotate: -90 }}
             transition={{ duration: 0.2 }}
           >
-            <Sun className="h-5 w-5" />
+            <Sun className="h-5 w-5" aria-hidden="true" />
           </motion.div>
         )}
       </AnimatePresence>
@@ -52,38 +55,69 @@ export function ThemeToggle() {
 }
 
 export function UserProfile() {
+  const router = useRouter();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
+
+  // Get user initials for avatar
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const displayName = user?.username || 'User';
+  const displayEmail = user?.email || '';
+  const initials = getInitials(displayName);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
         <Button
           variant="ghost"
           className="relative h-9 w-9 rounded-full border border-slate-700 bg-slate-800 hover:bg-slate-700"
+          aria-label="User menu"
+          aria-haspopup="menu"
         >
           <Avatar className="h-8 w-8">
             <AvatarFallback className="bg-gradient-to-br from-violet-500 to-indigo-600 text-white text-sm">
-              JD
+              {initials}
             </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 border-slate-700 bg-slate-900">
+      <DropdownMenuContent align="end" className="w-56 border-slate-700 bg-slate-900" role="menu" aria-label="User settings">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium text-slate-200">John Doe</p>
-            <p className="text-xs text-slate-400">john@example.com</p>
+            <p className="text-sm font-medium text-slate-200">{displayName}</p>
+            {displayEmail && (
+              <p className="text-xs text-slate-400">{displayEmail}</p>
+            )}
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-slate-700" />
-        <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 focus:text-slate-200">
-          <User className="mr-2 h-4 w-4" />
+        <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 focus:text-slate-200" role="menuitem">
+          <User className="mr-2 h-4 w-4" aria-hidden="true" />
           Profile
         </DropdownMenuItem>
-        <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 focus:text-slate-200">
-          <Settings className="mr-2 h-4 w-4" />
+        <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 focus:text-slate-200" role="menuitem">
+          <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
           Settings
         </DropdownMenuItem>
         <DropdownMenuSeparator className="bg-slate-700" />
-        <DropdownMenuItem className="text-red-400 focus:bg-slate-800 focus:text-red-300">
+        <DropdownMenuItem 
+          onClick={handleLogout}
+          className="text-red-400 focus:bg-slate-800 focus:text-red-300 cursor-pointer"
+          role="menuitem"
+        >
+          <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
           Log out
         </DropdownMenuItem>
       </DropdownMenuContent>

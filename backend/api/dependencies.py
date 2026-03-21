@@ -2,19 +2,26 @@
 API Dependencies for AI Software Factory.
 
 This module provides dependency injection for authentication, authorization,
-and common services.
+and common services with database-backed user management.
 """
 
 from typing import Optional
-from fastapi import Depends, HTTPException, status, WebSocket
+from fastapi import Depends, HTTPException, status, WebSocket, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.logging import get_logger
 from backend.services.auth_service import get_auth_service, AuthService
+from backend.services.database_services import (
+    DatabaseProjectService,
+    DatabaseWorkflowService,
+    DatabaseAgentService,
+)
+from backend.db.session import get_db
 from backend.core.exceptions import AuthenticationError, AuthorizationError
 
 logger = get_logger(__name__)
-security = HTTPBearer(auto_error=True)
+security = HTTPBearer(auto_error=False)  # Don't auto error - we'll handle cookie auth too
 
 
 class User:
@@ -26,23 +33,30 @@ class User:
         email: str,
         permissions: list[str],
         is_active: bool = True,
+        is_superuser: bool = False,
     ):
         self.user_id = user_id
         self.username = username
         self.email = email
         self.permissions = permissions
         self.is_active = is_active
+        self.is_superuser = is_superuser
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     auth_service: AuthService = Depends(get_auth_service),
 ) -> User:
     """
     Get current authenticated user by validating JWT token.
     
+    Supports both Bearer token in Authorization header and
+    httpOnly cookie-based authentication.
+    
     Args:
-        credentials: HTTP authorization credentials containing JWT token
+        request: FastAPI Request object for cookie access
+        credentials: Optional HTTP authorization credentials
         auth_service: Authentication service instance
         
     Returns:
@@ -51,9 +65,27 @@ async def get_current_user(
     Raises:
         HTTPException: If authentication fails
     """
+    token = None
+    
+    # Try to get token from Authorization header first
+    if credentials and credentials.credentials:
+        token = credentials.credentials
+    
+    # Fall back to httpOnly cookie
+    if not token:
+        token = request.cookies.get("auth_token")
+    
+    if not token:
+        logger.warning("No authentication token provided")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
     try:
         # Decode and validate the JWT token
-        payload = auth_service.decode_token(credentials.credentials)
+        payload = auth_service.decode_token(token)
         
         # Extract user information from token
         user_id: str = payload.get("sub")
@@ -63,42 +95,26 @@ async def get_current_user(
             logger.warning("Token missing required fields")
             raise AuthenticationError("Invalid token format")
         
-        # In production, fetch user from database
-        # For now, create mock user based on token data
-        mock_users = {
-            "user-admin-001": {
-                "user_id": "user-admin-001",
-                "username": "admin",
-                "email": "admin@example.com",
-                "permissions": ["read", "write", "execute", "admin"],
-                "is_active": True
-            },
-            "user-dev-001": {
-                "user_id": "user-dev-001",
-                "username": "developer",
-                "email": "dev@example.com", 
-                "permissions": ["read", "write", "execute"],
-                "is_active": True
-            }
-        }
+        # Fetch user from database
+        user_record = await auth_service.get_user_by_id(user_id)
         
-        user_data = mock_users.get(user_id)
-        if not user_data:
-            logger.warning("User not found", user_id=user_id)
+        if not user_record:
+            logger.warning("User not found in database", user_id=user_id)
             raise AuthenticationError("User not found")
             
-        if not user_data["is_active"]:
+        if not user_record.is_active:
             logger.warning("Inactive user", user_id=user_id)
             raise AuthenticationError("Account is inactive")
         
-        logger.info("User authenticated", user_id=user_id, username=username)
+        logger.debug("User authenticated", user_id=user_id, username=username)
         
         return User(
-            user_id=user_data["user_id"],
-            username=user_data["username"],
-            email=user_data["email"],
-            permissions=user_data["permissions"],
-            is_active=user_data["is_active"]
+            user_id=user_record.id,
+            username=user_record.username,
+            email=user_record.email,
+            permissions=user_record.permissions or [],
+            is_active=user_record.is_active,
+            is_superuser=user_record.is_superuser,
         )
         
     except AuthenticationError as exc:
@@ -155,25 +171,27 @@ async def get_websocket_user(
     """
     Get user from WebSocket connection.
     
+    SECURITY: This function now requires authentication for WebSocket connections.
+    Anonymous connections are no longer allowed.
+    
     Args:
         websocket: WebSocket connection
         auth_service: Authentication service instance
         
     Returns:
-        User object or None for anonymous connections
+        User object if authenticated, None if authentication fails.
+        Caller MUST check for None and close connection with code 4001.
     """
     # Extract token from query parameters or headers
     token = websocket.query_params.get("token") or websocket.headers.get("Authorization", "").replace("Bearer ", "")
     
     if not token:
-        # Allow anonymous connections for public endpoints
-        logger.debug("Anonymous WebSocket connection")
-        return User(
-            user_id="anonymous",
-            username="anonymous",
-            email="anonymous@example.com",
-            permissions=["read"],
+        # No token provided - authentication required
+        logger.warning(
+            "WebSocket connection rejected: no token provided",
+            client=websocket.client.host if websocket.client else "unknown",
         )
+        return None
     
     try:
         # Validate token
@@ -181,25 +199,34 @@ async def get_websocket_user(
         user_id = payload.get("sub")
         username = payload.get("username")
         
-        if user_id and username:
-            # Return authenticated user
-            return User(
-                user_id=user_id,
-                username=username,
-                email=f"{username}@example.com",
-                permissions=["read", "write", "execute"],
+        if not user_id or not username:
+            logger.warning(
+                "WebSocket connection rejected: invalid token payload",
+                client=websocket.client.host if websocket.client else "unknown",
             )
-    except AuthenticationError:
-        logger.warning("Invalid WebSocket token")
-        # Fall through to anonymous user
-    
-    # Return anonymous user for invalid tokens
-    return User(
-        user_id="anonymous",
-        username="anonymous",
-        email="anonymous@example.com",
-        permissions=["read"],
-    )
+            return None
+        
+        logger.debug(
+            "WebSocket user authenticated",
+            user_id=user_id,
+            username=username,
+        )
+        
+        # Return authenticated user
+        return User(
+            user_id=user_id,
+            username=username,
+            email=f"{username}@example.com",
+            permissions=["read", "write", "execute"],
+        )
+        
+    except AuthenticationError as exc:
+        logger.warning(
+            "WebSocket connection rejected: invalid token",
+            error=str(exc),
+            client=websocket.client.host if websocket.client else "unknown",
+        )
+        return None
 
 
 # Common dependency aliases
@@ -207,3 +234,25 @@ require_auth = Depends(get_current_user)
 require_write = Depends(lambda: require_permissions(["write"]))
 require_execute = Depends(lambda: require_permissions(["execute"]))
 require_admin = Depends(lambda: require_permissions(["admin"]))
+
+
+# ============================================================================
+# Database Service Dependencies
+# ============================================================================
+# These provide database-backed service instances with proper session scoping.
+# Routes inject these to get services wired to the request's database session.
+
+def get_project_service() -> DatabaseProjectService:
+    """Get project service instance for database operations."""
+    return DatabaseProjectService()
+
+
+def get_workflow_service() -> DatabaseWorkflowService:
+    """Get workflow service instance for database operations."""
+    return DatabaseWorkflowService()
+
+
+def get_agent_service() -> DatabaseAgentService:
+    """Get agent service instance for database operations."""
+    return DatabaseAgentService()
+

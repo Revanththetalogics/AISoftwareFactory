@@ -19,7 +19,7 @@ from backend.core.logging import get_logger
 from backend.models.database import DBProject, DBWorkflow, DBTask, DBAgent, DBDeployment, DBUser
 from backend.models.task import TaskStatus, TaskPriority
 from backend.models.workflow import WorkflowStatus, WorkflowTrigger
-from backend.db.session import get_db
+from backend.db.session import get_db_context
 from backend.utils.validation import sanitize_input
 from backend.utils.enhanced_logging import PerformanceTimer, business_events
 
@@ -41,7 +41,7 @@ class DatabaseProjectService:
         """Create a new project in the database."""
         with PerformanceTimer("create_project", project_name=name, owner_id=owner_id) as timer:
             if db is None:
-                async with get_db() as db:
+                async with get_db_context() as db:
                     project = await self._create_project(db, name, description, requirements, tech_stack, owner_id)
             else:
                 project = await self._create_project(db, name, description, requirements, tech_stack, owner_id)
@@ -89,7 +89,7 @@ class DatabaseProjectService:
         """Get project by ID."""
         with PerformanceTimer("get_project", project_id=project_id):
             if db is None:
-                async with get_db() as db:
+                async with get_db_context() as db:
                     return await self._get_project(db, project_id)
             
             return await self._get_project(db, project_id)
@@ -118,7 +118,7 @@ class DatabaseProjectService:
         """List projects with optional filtering."""
         with PerformanceTimer("list_projects", owner_id=owner_id, status=status, limit=limit) as timer:
             if db is None:
-                async with get_db() as db:
+                async with get_db_context() as db:
                     projects = await self._list_projects(db, owner_id, status, skip, limit)
             else:
                 projects = await self._list_projects(db, owner_id, status, skip, limit)
@@ -159,7 +159,7 @@ class DatabaseProjectService:
         """Update project fields."""
         with PerformanceTimer("update_project", project_id=project_id) as timer:
             if db is None:
-                async with get_db() as db:
+                async with get_db_context() as db:
                     project = await self._update_project(db, project_id, updates)
             else:
                 project = await self._update_project(db, project_id, updates)
@@ -199,7 +199,7 @@ class DatabaseProjectService:
         """Delete project."""
         with PerformanceTimer("delete_project", project_id=project_id):
             if db is None:
-                async with get_db() as db:
+                async with get_db_context() as db:
                     return await self._delete_project(db, project_id)
             
             return await self._delete_project(db, project_id)
@@ -232,7 +232,7 @@ class DatabaseWorkflowService:
     ) -> DBWorkflow:
         """Create a new workflow in the database."""
         if db is None:
-            async with get_db() as db:
+            async with get_db_context() as db:
                 return await self._create_workflow(db, name, project_id, steps, created_by)
         
         return await self._create_workflow(db, name, project_id, steps, created_by)
@@ -269,7 +269,7 @@ class DatabaseWorkflowService:
     async def get_workflow(self, workflow_id: str, db: AsyncSession = None) -> Optional[DBWorkflow]:
         """Get workflow by ID."""
         if db is None:
-            async with get_db() as db:
+            async with get_db_context() as db:
                 return await self._get_workflow(db, workflow_id)
         
         return await self._get_workflow(db, workflow_id)
@@ -289,7 +289,7 @@ class DatabaseWorkflowService:
     ) -> Optional[DBWorkflow]:
         """Update workflow status."""
         if db is None:
-            async with get_db() as db:
+            async with get_db_context() as db:
                 return await self._update_workflow_status(db, workflow_id, status, current_step_id)
         
         return await self._update_workflow_status(db, workflow_id, status, current_step_id)
@@ -334,7 +334,7 @@ class DatabaseAgentService:
     ) -> DBAgent:
         """Register a new agent in the database."""
         if db is None:
-            async with get_db() as db:
+            async with get_db_context() as db:
                 return await self._register_agent(db, name, role, capabilities)
         
         return await self._register_agent(db, name, role, capabilities)
@@ -366,7 +366,7 @@ class DatabaseAgentService:
     async def get_agent(self, agent_id: str, db: AsyncSession = None) -> Optional[DBAgent]:
         """Get agent by ID."""
         if db is None:
-            async with get_db() as db:
+            async with get_db_context() as db:
                 return await self._get_agent(db, agent_id)
         
         return await self._get_agent(db, agent_id)
@@ -385,7 +385,7 @@ class DatabaseAgentService:
     ) -> List[DBAgent]:
         """List agents with optional filtering."""
         if db is None:
-            async with get_db() as db:
+            async with get_db_context() as db:
                 return await self._list_agents(db, role, status)
         
         return await self._list_agents(db, role, status)

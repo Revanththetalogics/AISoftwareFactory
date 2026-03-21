@@ -2,6 +2,7 @@
 Agent Management API Routes.
 
 This module provides REST endpoints for agent management and task assignment.
+Uses DatabaseAgentService for database-backed agent persistence.
 """
 
 from typing import List
@@ -9,14 +10,30 @@ from datetime import datetime
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Depends, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api.models import AgentResponse, AgentTaskRequest
-from backend.api.dependencies import get_current_user, require_permissions
-from backend.agents.agent_registry import get_agent_registry
+from backend.api.models import AgentResponse, AgentTaskRequest, TaskAssignmentResponse
+from backend.api.dependencies import get_current_user, require_permissions, get_agent_service
+from backend.services.database_services import DatabaseAgentService
+from backend.db.session import get_db
 from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/agents", tags=["agents"])
+
+
+def _db_agent_to_response(agent) -> AgentResponse:
+    """Convert a DBAgent to AgentResponse."""
+    return AgentResponse(
+        agent_id=agent.id,
+        name=agent.name,
+        role=agent.role,
+        capabilities=agent.capabilities or [],
+        status=agent.status,
+        current_task=agent.current_task_id,
+        last_active=agent.last_active,
+        metadata=agent.config or {},
+    )
 
 
 @router.get(
@@ -25,27 +42,20 @@ router = APIRouter(prefix="/agents", tags=["agents"])
     summary="List all agents",
 )
 async def list_agents(
+    role: str = None,
+    agent_status: str = None,
     user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    agent_service: DatabaseAgentService = Depends(get_agent_service),
 ) -> List[AgentResponse]:
     """
     List all registered agents and their status.
     """
-    registry = get_agent_registry()
-    
-    agents = []
-    for agent_id in registry.list_agents():
-        # Stub: Create agent response from registry
-        agent_data = {
-            "agent_id": agent_id,
-            "name": f"Agent {agent_id[:8]}",
-            "role": "unknown",
-            "capabilities": [],
-            "status": "idle",
-            "current_task": None,
-            "last_active": None,
-            "metadata": {},
-        }
-        agents.append(AgentResponse(**agent_data))
+    agents = await agent_service.list_agents(
+        role=role,
+        status=agent_status,
+        db=db
+    )
     
     logger.info(
         "Agents listed",
@@ -53,7 +63,7 @@ async def list_agents(
         user=user.user_id if user else "anonymous",
     )
     
-    return agents
+    return [_db_agent_to_response(agent) for agent in agents]
 
 
 @router.get(
@@ -64,36 +74,61 @@ async def list_agents(
 async def get_agent(
     agent_id: str,
     user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    agent_service: DatabaseAgentService = Depends(get_agent_service),
 ) -> AgentResponse:
     """
     Get detailed information about a specific agent.
     """
-    registry = get_agent_registry()
+    agent = await agent_service.get_agent(agent_id, db=db)
     
-    if not registry.get_agent(agent_id):
+    if not agent:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Agent {agent_id} not found",
         )
     
-    # Stub: Return agent data
-    agent_data = {
-        "agent_id": agent_id,
-        "name": f"Agent {agent_id[:8]}",
-        "role": "software_engineer",
-        "capabilities": ["code_generation", "code_review"],
-        "status": "idle",
-        "current_task": None,
-        "last_active": datetime.now(),
-        "metadata": {},
-    }
+    return _db_agent_to_response(agent)
+
+
+@router.post(
+    "",
+    response_model=AgentResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Register a new agent",
+)
+async def register_agent(
+    name: str,
+    role: str,
+    capabilities: List[str] = None,
+    user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    agent_service: DatabaseAgentService = Depends(get_agent_service),
+) -> AgentResponse:
+    """
+    Register a new agent in the system.
+    """
+    agent = await agent_service.register_agent(
+        name=name,
+        role=role,
+        capabilities=capabilities or [],
+        db=db
+    )
     
-    return AgentResponse(**agent_data)
+    logger.info(
+        "Agent registered",
+        agent_id=agent.id,
+        name=name,
+        role=role,
+        user=user.user_id if user else "anonymous",
+    )
+    
+    return _db_agent_to_response(agent)
 
 
 @router.post(
     "/{agent_id}/tasks",
-    response_model=dict,
+    response_model=TaskAssignmentResponse,
     status_code=status.HTTP_202_ACCEPTED,
     summary="Assign task to agent",
 )
@@ -101,21 +136,33 @@ async def assign_task(
     agent_id: str,
     request: AgentTaskRequest,
     user=Depends(get_current_user),
-) -> dict:
+    db: AsyncSession = Depends(get_db),
+    agent_service: DatabaseAgentService = Depends(get_agent_service),
+) -> TaskAssignmentResponse:
     """
     Assign a task to a specific agent.
     
     The agent will process the task asynchronously.
     """
-    registry = get_agent_registry()
+    agent = await agent_service.get_agent(agent_id, db=db)
     
-    if not registry.get_agent(agent_id):
+    if not agent:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Agent {agent_id} not found",
         )
     
+    # Check if agent is busy
+    if agent.status == "busy":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Agent {agent_id} is currently busy",
+        )
+    
     task_id = f"task-{uuid4().hex[:12]}"
+    
+    # TODO: Update agent status to busy and assign task
+    # This would require adding an update method to DatabaseAgentService
     
     logger.info(
         "Task assigned to agent",
@@ -125,12 +172,12 @@ async def assign_task(
         user=user.user_id if user else "anonymous",
     )
     
-    return {
-        "task_id": task_id,
-        "agent_id": agent_id,
-        "status": "accepted",
-        "message": f"Task {request.task_type} assigned to agent {agent_id}",
-    }
+    return TaskAssignmentResponse(
+        task_id=task_id,
+        agent_id=agent_id,
+        status="accepted",
+        message=f"Task {request.task_type} assigned to agent {agent_id}",
+    )
 
 
 @router.get(

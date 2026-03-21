@@ -32,7 +32,7 @@ class TestSettings:
         # Valid environments
         assert Settings(ENVIRONMENT="development").ENVIRONMENT == "development"
         assert Settings(ENVIRONMENT="production", SECRET_KEY="custom-secret-key").ENVIRONMENT == "production"
-        assert Settings(ENVIRONMENT="staging").ENVIRONMENT == "staging"
+        assert Settings(ENVIRONMENT="staging", SECRET_KEY="custom-secret-key").ENVIRONMENT == "staging"
         assert Settings(ENVIRONMENT="testing").ENVIRONMENT == "testing"
         
         # Case insensitive
@@ -94,6 +94,20 @@ class TestSettings:
         settings = Settings(ENVIRONMENT="production", SECRET_KEY="custom-secret-key")
         assert settings.SECRET_KEY == "custom-secret-key"
     
+    def test_secret_key_validation_in_staging(self):
+        """Test that default secret key is rejected in staging (security hardening)."""
+        # Should fail in staging with default key
+        with pytest.raises(ValidationError) as exc_info:
+            Settings(
+                ENVIRONMENT="staging",
+                SECRET_KEY="your-secret-key-change-in-production"
+            )
+        assert "SECRET_KEY must be changed from default in staging" in str(exc_info.value)
+        
+        # Should work in staging with custom key
+        settings = Settings(ENVIRONMENT="staging", SECRET_KEY="custom-secret-key")
+        assert settings.SECRET_KEY == "custom-secret-key"
+    
     def test_allowed_hosts_list_property(self):
         """Test that allowed_hosts_list property works correctly."""
         settings = Settings(ALLOWED_HOSTS="localhost,example.com,api.example.com")
@@ -105,6 +119,12 @@ class TestSettings:
         settings = Settings(ALLOWED_HOSTS="*")
         
         assert settings.allowed_hosts_list == ["*"]
+    
+    def test_allowed_hosts_empty_default(self):
+        """Test allowed_hosts_list with empty default (security hardening)."""
+        settings = Settings()  # Default is now empty
+        
+        assert settings.allowed_hosts_list == []
     
     def test_environment_properties(self):
         """Test environment check properties."""

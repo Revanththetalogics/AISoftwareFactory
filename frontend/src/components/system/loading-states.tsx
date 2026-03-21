@@ -108,7 +108,7 @@ export function ProgressDots({
   };
 
   return (
-    <div className={cn('flex items-center gap-1.5', className)}>
+    <div className={cn('flex items-center gap-1.5', className)} role="status" aria-label="Loading">
       {Array.from({ length: count }).map((_, i) => (
         <motion.div
           key={i}
@@ -122,8 +122,10 @@ export function ProgressDots({
             repeat: Infinity,
             delay: i * 0.2,
           }}
+          aria-hidden="true"
         />
       ))}
+      <span className="sr-only">Loading...</span>
     </div>
   );
 }
@@ -192,17 +194,19 @@ export function LoadingSpinner({
   };
 
   return (
-    <div className={cn('flex flex-col items-center justify-center gap-3', className)}>
+    <div className={cn('flex flex-col items-center justify-center gap-3', className)} role="status" aria-live="polite">
       <div className="relative">
         <Loader2 className={cn('animate-spin', sizes[size], 
           variant === 'ai' ? 'text-state-running' : 'text-text-secondary'
-        )} />
+        )} aria-hidden="true" />
         {variant === 'ai' && (
-          <div className="absolute inset-0 blur-md bg-state-running/20 rounded-full" />
+          <div className="absolute inset-0 blur-md bg-state-running/20 rounded-full" aria-hidden="true" />
         )}
       </div>
-      {text && (
+      {text ? (
         <p className="text-sm text-text-secondary">{text}</p>
+      ) : (
+        <span className="sr-only">Loading...</span>
       )}
     </div>
   );
@@ -287,7 +291,7 @@ export function AILoading({
   }, [tips.length]);
 
   return (
-    <div className={cn('flex flex-col items-center justify-center p-8 gap-6', className)}>
+    <div className={cn('flex flex-col items-center justify-center p-8 gap-6', className)} role="status" aria-live="polite" aria-busy="true">
       {/* Animated AI icon */}
       <motion.div
         className="relative"
@@ -298,6 +302,7 @@ export function AILoading({
           duration: 2,
           repeat: Infinity,
         }}
+        aria-hidden="true"
       >
         <div className="relative">
           <Sparkles className="w-12 h-12 text-state-running" />
@@ -326,6 +331,7 @@ export function AILoading({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            aria-live="off"
           >
             💡 Tip: {tips[tipIndex]}
           </motion.p>

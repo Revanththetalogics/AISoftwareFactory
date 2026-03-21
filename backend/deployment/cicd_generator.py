@@ -176,12 +176,11 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
     
-    - name: Login to Container Registry
+    - name: Login to Docker Hub
       uses: docker/login-action@v3
       with:
-        registry: ghcr.io
-        username: ${{"{{"}} github.actor {{"}}"}}
-        password: ${{"{{"}} secrets.GITHUB_TOKEN {{"}}"}}
+        username: ${{"{{"}} secrets.DOCKERHUB_USERNAME {{"}}"}}
+        password: ${{"{{"}} secrets.DOCKERHUB_TOKEN {{"}}"}}
     
     - name: Build and push
       uses: docker/build-push-action@v5
@@ -189,8 +188,8 @@ jobs:
         context: .
         push: true
         tags: |
-          ghcr.io/${{"{{"}} github.repository {{"}}"}}:latest
-          ghcr.io/${{"{{"}} github.repository {{"}}"}}:${{"{{"}} github.sha {{"}}"}}
+          ${{"{{"}} secrets.DOCKERHUB_USERNAME {{"}}"}}/{{"{{"}} github.event.repository.name {{"}}"}}:latest
+          ${{"{{"}} secrets.DOCKERHUB_USERNAME {{"}}"}}/{{"{{"}} github.event.repository.name {{"}}"}}:${{"{{"}} github.sha {{"}}"}}
         cache-from: type=gha
         cache-to: type=gha,mode=max
 '''

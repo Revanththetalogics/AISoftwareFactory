@@ -2,18 +2,28 @@
 Ollama LLM provider for AI Software Factory.
 
 This module implements the LLM provider interface for Ollama,
-enabling local LLM execution.
+enabling local LLM execution with circuit breaker protection
+and configurable timeouts.
 """
 
 import os
+import time
 from typing import Any, AsyncIterator, Dict, List, Optional
 
 import aiohttp
 
+from backend.core.config import get_settings
 from backend.core.logging import get_logger
 from backend.llm.base_provider import BaseLLMProvider
+from backend.utils.resilience import (
+    llm_circuit_breaker,
+    CircuitBreakerOpenError,
+    with_timeout,
+)
+from backend.infrastructure.metrics import get_metrics_collector
 
 logger = get_logger(__name__)
+metrics = get_metrics_collector()
 
 
 class OllamaProvider(BaseLLMProvider):
@@ -47,7 +57,7 @@ class OllamaProvider(BaseLLMProvider):
         **kwargs
     ) -> str:
         """
-        Generate text using Ollama.
+        Generate text using Ollama with circuit breaker and timeout.
         
         Args:
             prompt: Input prompt
@@ -58,21 +68,24 @@ class OllamaProvider(BaseLLMProvider):
         Returns:
             Generated text
         """
-        session = await self._get_session()
+        settings = get_settings()
+        start_time = time.time()
         
-        payload = {
-            "model": self.model,
-            "prompt": prompt,
-            "stream": False,
-            "options": {
-                "temperature": temperature,
+        async def _do_generate():
+            session = await self._get_session()
+            
+            payload = {
+                "model": self.model,
+                "prompt": prompt,
+                "stream": False,
+                "options": {
+                    "temperature": temperature,
+                }
             }
-        }
-        
-        if max_tokens:
-            payload["options"]["num_predict"] = max_tokens
-        
-        try:
+            
+            if max_tokens:
+                payload["options"]["num_predict"] = max_tokens
+            
             async with session.post(
                 f"{self.base_url}/api/generate",
                 json=payload
@@ -80,7 +93,53 @@ class OllamaProvider(BaseLLMProvider):
                 response.raise_for_status()
                 data = await response.json()
                 return data.get("response", "")
+        
+        try:
+            result = await llm_circuit_breaker.call(
+                lambda: with_timeout(
+                    _do_generate(),
+                    settings.LLM_TIMEOUT_SECONDS,
+                    f"Ollama generate ({self.model})"
+                )
+            )
+            
+            duration = time.time() - start_time
+            metrics.record_llm_call(
+                provider="ollama",
+                operation="generate",
+                duration=duration,
+                status="success"
+            )
+            metrics.record_circuit_breaker_success(llm_circuit_breaker.name)
+            metrics.record_circuit_breaker_state(
+                llm_circuit_breaker.name,
+                llm_circuit_breaker.get_state_value()
+            )
+            
+            return result
+            
+        except CircuitBreakerOpenError:
+            metrics.record_circuit_breaker_rejection(llm_circuit_breaker.name)
+            logger.error("Ollama circuit breaker is open")
+            raise
+        except TimeoutError:
+            metrics.record_timeout(f"ollama_generate_{self.model}")
+            metrics.record_llm_call(
+                provider="ollama",
+                operation="generate",
+                duration=time.time() - start_time,
+                status="timeout"
+            )
+            raise
         except Exception as e:
+            duration = time.time() - start_time
+            metrics.record_llm_call(
+                provider="ollama",
+                operation="generate",
+                duration=duration,
+                status="error"
+            )
+            metrics.record_circuit_breaker_failure(llm_circuit_breaker.name)
             logger.error(f"Ollama generation error: {e}")
             raise
     
@@ -144,7 +203,7 @@ class OllamaProvider(BaseLLMProvider):
         **kwargs
     ) -> str:
         """
-        Generate chat response.
+        Generate chat response with circuit breaker and timeout.
         
         Args:
             messages: List of messages with 'role' and 'content'
@@ -155,21 +214,24 @@ class OllamaProvider(BaseLLMProvider):
         Returns:
             Generated response
         """
-        session = await self._get_session()
+        settings = get_settings()
+        start_time = time.time()
         
-        payload = {
-            "model": self.model,
-            "messages": messages,
-            "stream": False,
-            "options": {
-                "temperature": temperature,
+        async def _do_chat():
+            session = await self._get_session()
+            
+            payload = {
+                "model": self.model,
+                "messages": messages,
+                "stream": False,
+                "options": {
+                    "temperature": temperature,
+                }
             }
-        }
-        
-        if max_tokens:
-            payload["options"]["num_predict"] = max_tokens
-        
-        try:
+            
+            if max_tokens:
+                payload["options"]["num_predict"] = max_tokens
+            
             async with session.post(
                 f"{self.base_url}/api/chat",
                 json=payload
@@ -177,7 +239,48 @@ class OllamaProvider(BaseLLMProvider):
                 response.raise_for_status()
                 data = await response.json()
                 return data.get("message", {}).get("content", "")
+        
+        try:
+            result = await llm_circuit_breaker.call(
+                lambda: with_timeout(
+                    _do_chat(),
+                    settings.LLM_TIMEOUT_SECONDS,
+                    f"Ollama chat ({self.model})"
+                )
+            )
+            
+            duration = time.time() - start_time
+            metrics.record_llm_call(
+                provider="ollama",
+                operation="chat",
+                duration=duration,
+                status="success"
+            )
+            metrics.record_circuit_breaker_success(llm_circuit_breaker.name)
+            
+            return result
+            
+        except CircuitBreakerOpenError:
+            metrics.record_circuit_breaker_rejection(llm_circuit_breaker.name)
+            logger.error("Ollama circuit breaker is open")
+            raise
+        except TimeoutError:
+            metrics.record_timeout(f"ollama_chat_{self.model}")
+            metrics.record_llm_call(
+                provider="ollama",
+                operation="chat",
+                duration=time.time() - start_time,
+                status="timeout"
+            )
+            raise
         except Exception as e:
+            metrics.record_llm_call(
+                provider="ollama",
+                operation="chat",
+                duration=time.time() - start_time,
+                status="error"
+            )
+            metrics.record_circuit_breaker_failure(llm_circuit_breaker.name)
             logger.error(f"Ollama chat error: {e}")
             raise
     

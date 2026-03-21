@@ -2,6 +2,7 @@
 Workflow Execution API Routes.
 
 This module provides REST endpoints for workflow management and execution.
+Uses DatabaseWorkflowService for database-backed workflow persistence.
 """
 
 from typing import List, Optional
@@ -9,33 +10,71 @@ from datetime import datetime
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api.models import (
     WorkflowExecuteRequest,
     WorkflowStatusResponse,
 )
-from backend.api.dependencies import get_current_user, require_permissions
+from backend.api.dependencies import get_current_user, require_permissions, get_workflow_service
+from backend.services.database_services import DatabaseWorkflowService
+from backend.db.session import get_db
 from backend.workflows.state_machine import ProjectPhase
 from backend.workflows.workflow_engine import WorkflowEngine
+from backend.models.workflow import WorkflowStatus
 from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/workflows", tags=["workflows"])
 
-# In-memory workflow store
-_workflows: dict[str, dict] = {}
+
+def _db_workflow_to_response(workflow) -> WorkflowStatusResponse:
+    """Convert a DBWorkflow to WorkflowStatusResponse."""
+    # Calculate steps completed and total from workflow data
+    steps = workflow.steps or []
+    completed_steps = workflow.completed_steps or []
+    
+    return WorkflowStatusResponse(
+        workflow_id=workflow.id,
+        project_id=workflow.project_id,
+        status=workflow.status.value if hasattr(workflow.status, 'value') else str(workflow.status),
+        current_phase=workflow.current_step_id,
+        progress_percent=int((len(completed_steps) / max(len(steps), 1)) * 100) if steps else 0,
+        steps_completed=len(completed_steps),
+        steps_total=len(steps),
+        started_at=workflow.started_at,
+        completed_at=workflow.completed_at,
+        error_message=workflow.context.get("error_message") if workflow.context else None,
+        logs=workflow.context.get("logs", []) if workflow.context else [],
+    )
 
 
 async def _execute_workflow_real(workflow_id: str, project_id: str, phase: Optional[str]):
-    """Execute workflow using the real LangGraph engine."""
+    """
+    Execute workflow using the real LangGraph engine.
+    
+    This function runs as a background task and manages its own database session.
+    """
+    workflow_service = DatabaseWorkflowService()
+    
     try:
-        workflow = _workflows.get(workflow_id)
+        # Update workflow to running status
+        workflow = await workflow_service.update_workflow_status(
+            workflow_id=workflow_id,
+            status=WorkflowStatus.RUNNING,
+            current_step_id=phase or "requirements"
+        )
+        
         if not workflow:
+            logger.error("Workflow not found for execution", workflow_id=workflow_id)
             return
         
-        workflow["status"] = "running"
-        workflow["started_at"] = datetime.now()
-        workflow["logs"].append("Initializing LangGraph workflow engine...")
+        logger.info(
+            "Starting workflow execution",
+            workflow_id=workflow_id,
+            project_id=project_id,
+            phase=phase,
+        )
         
         # Initialize and run the real workflow engine
         engine = WorkflowEngine()
@@ -47,26 +86,25 @@ async def _execute_workflow_real(workflow_id: str, project_id: str, phase: Optio
             current_phase=ProjectPhase(phase) if phase else ProjectPhase.IDEA,
         )
         
-        workflow["logs"].append(f"Starting workflow from phase: {initial_state.current_phase.value}")
-        
         # Run the workflow (this will execute all phases via LangGraph)
         final_state = await engine.run(initial_state)
         
-        # Update workflow with results
-        workflow["current_phase"] = final_state.current_phase.value
-        workflow["progress_percent"] = 100 if final_state.current_phase == ProjectPhase.COMPLETE else 75
-        workflow["completed_at"] = datetime.now()
-        
+        # Update workflow with final status
         if final_state.current_phase == ProjectPhase.FAILED:
-            workflow["status"] = "failed"
-            workflow["error_message"] = "Workflow execution failed"
-            workflow["logs"].append("Workflow failed during execution")
+            await workflow_service.update_workflow_status(
+                workflow_id=workflow_id,
+                status=WorkflowStatus.FAILED,
+                current_step_id=final_state.current_phase.value
+            )
         else:
-            workflow["status"] = "completed"
-            workflow["logs"].append("Workflow completed successfully via LangGraph engine")
-            
+            await workflow_service.update_workflow_status(
+                workflow_id=workflow_id,
+                status=WorkflowStatus.COMPLETED,
+                current_step_id=final_state.current_phase.value
+            )
+        
         logger.info(
-            "Real workflow execution completed",
+            "Workflow execution completed",
             workflow_id=workflow_id,
             project_id=project_id,
             final_phase=final_state.current_phase.value,
@@ -74,17 +112,16 @@ async def _execute_workflow_real(workflow_id: str, project_id: str, phase: Optio
         
     except Exception as exc:
         logger.error(
-            "Real workflow execution failed",
+            "Workflow execution failed",
             workflow_id=workflow_id,
             project_id=project_id,
             error=str(exc),
         )
-        workflow = _workflows.get(workflow_id)
-        if workflow:
-            workflow["status"] = "failed"
-            workflow["error_message"] = str(exc)
-            workflow["completed_at"] = datetime.now()
-            workflow["logs"].append(f"Error: {str(exc)}")
+        # Update workflow to failed status
+        await workflow_service.update_workflow_status(
+            workflow_id=workflow_id,
+            status=WorkflowStatus.FAILED
+        )
 
 
 @router.post(
@@ -97,6 +134,8 @@ async def execute_workflow(
     request: WorkflowExecuteRequest,
     background_tasks: BackgroundTasks,
     user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    workflow_service: DatabaseWorkflowService = Depends(get_workflow_service),
 ) -> WorkflowStatusResponse:
     """
     Execute a workflow for a project.
@@ -104,45 +143,44 @@ async def execute_workflow(
     The workflow will run asynchronously. Use the returned workflow_id
     to check status via GET /workflows/{workflow_id}.
     """
-    workflow_id = f"wf-{uuid4().hex[:12]}"
+    # Define workflow steps based on request
+    steps = [
+        {"id": "requirements", "name": "Requirements Analysis"},
+        {"id": "design", "name": "System Design"},
+        {"id": "implementation", "name": "Implementation"},
+        {"id": "testing", "name": "Testing"},
+        {"id": "deployment", "name": "Deployment"},
+    ]
     
-    workflow = {
-        "workflow_id": workflow_id,
-        "project_id": request.project_id,
-        "status": "pending",
-        "current_phase": request.phase or "requirements",
-        "progress_percent": 0,
-        "steps_completed": 0,
-        "steps_total": 5,
-        "started_at": None,
-        "completed_at": None,
-        "error_message": None,
-        "logs": ["Workflow queued for execution"],
-    }
-    
-    _workflows[workflow_id] = workflow
-    
-    # Start execution in background
-    if request.async_execution:
-        background_tasks.add_task(
-            _execute_workflow_real,
-            workflow_id,
-            request.project_id,
-            request.phase,
-        )
-    else:
-        import asyncio
-        asyncio.run(_execute_workflow_real(workflow_id, request.project_id, request.phase))
+    # Create workflow in database
+    workflow = await workflow_service.create_workflow(
+        name=f"Workflow for {request.project_id}",
+        project_id=request.project_id,
+        steps=steps,
+        created_by=user.user_id if user else None,
+        db=db
+    )
     
     logger.info(
-        "Workflow execution started",
-        workflow_id=workflow_id,
+        "Workflow created",
+        workflow_id=workflow.id,
         project_id=request.project_id,
         phase=request.phase,
         user=user.user_id if user else "anonymous",
     )
     
-    return WorkflowStatusResponse(**workflow)
+    # Start execution in background
+    if request.async_execution:
+        background_tasks.add_task(
+            _execute_workflow_real,
+            workflow.id,
+            request.project_id,
+            request.phase,
+        )
+    else:
+        await _execute_workflow_real(workflow.id, request.project_id, request.phase)
+    
+    return _db_workflow_to_response(workflow)
 
 
 @router.get(
@@ -153,17 +191,21 @@ async def execute_workflow(
 async def get_workflow_status(
     workflow_id: str,
     user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    workflow_service: DatabaseWorkflowService = Depends(get_workflow_service),
 ) -> WorkflowStatusResponse:
     """
     Get the current status of a workflow execution.
     """
-    if workflow_id not in _workflows:
+    workflow = await workflow_service.get_workflow(workflow_id, db=db)
+    
+    if not workflow:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Workflow {workflow_id} not found",
         )
     
-    return WorkflowStatusResponse(**_workflows[workflow_id])
+    return _db_workflow_to_response(workflow)
 
 
 @router.get(
@@ -173,27 +215,35 @@ async def get_workflow_status(
 )
 async def list_workflows(
     project_id: Optional[str] = None,
-    status: Optional[str] = None,
+    workflow_status: Optional[str] = None,
     user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> List[WorkflowStatusResponse]:
     """
     List workflow executions with optional filtering.
     """
-    workflows = list(_workflows.values())
+    # Use direct database query for listing with filters
+    from sqlalchemy import select
+    from backend.models.database import DBWorkflow
+    
+    stmt = select(DBWorkflow)
     
     if project_id:
-        workflows = [w for w in workflows if w["project_id"] == project_id]
+        stmt = stmt.where(DBWorkflow.project_id == project_id)
     
-    if status:
-        workflows = [w for w in workflows if w["status"] == status]
+    if workflow_status:
+        try:
+            status_enum = WorkflowStatus(workflow_status)
+            stmt = stmt.where(DBWorkflow.status == status_enum)
+        except ValueError:
+            pass  # Invalid status, ignore filter
     
-    # Sort by start time (newest first)
-    workflows.sort(
-        key=lambda w: w["started_at"] or datetime.min,
-        reverse=True,
-    )
+    stmt = stmt.order_by(DBWorkflow.created_at.desc())
     
-    return [WorkflowStatusResponse(**w) for w in workflows]
+    result = await db.execute(stmt)
+    workflows = list(result.scalars().all())
+    
+    return [_db_workflow_to_response(w) for w in workflows]
 
 
 @router.post(
@@ -204,27 +254,33 @@ async def list_workflows(
 async def cancel_workflow(
     workflow_id: str,
     user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    workflow_service: DatabaseWorkflowService = Depends(get_workflow_service),
 ) -> WorkflowStatusResponse:
     """
     Cancel a running workflow.
     """
-    if workflow_id not in _workflows:
+    workflow = await workflow_service.get_workflow(workflow_id, db=db)
+    
+    if not workflow:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Workflow {workflow_id} not found",
         )
     
-    workflow = _workflows[workflow_id]
-    
-    if workflow["status"] not in ["pending", "running"]:
+    # Check if workflow can be cancelled
+    if workflow.status not in [WorkflowStatus.PENDING, WorkflowStatus.RUNNING]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Cannot cancel workflow with status {workflow['status']}",
+            detail=f"Cannot cancel workflow with status {workflow.status.value}",
         )
     
-    workflow["status"] = "cancelled"
-    workflow["completed_at"] = datetime.now()
-    workflow["logs"].append("Workflow cancelled by user")
+    # Update to cancelled status
+    updated_workflow = await workflow_service.update_workflow_status(
+        workflow_id=workflow_id,
+        status=WorkflowStatus.CANCELLED,
+        db=db
+    )
     
     logger.info(
         "Workflow cancelled",
@@ -232,7 +288,7 @@ async def cancel_workflow(
         user=user.user_id if user else "anonymous",
     )
     
-    return WorkflowStatusResponse(**workflow)
+    return _db_workflow_to_response(updated_workflow)
 
 
 @router.get(

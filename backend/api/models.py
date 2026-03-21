@@ -117,6 +117,16 @@ class AgentTaskRequest(BaseModel):
     priority: str = "medium"
 
 
+class TaskAssignmentResponse(BaseModel):
+    """Response model for task assignment to an agent."""
+    model_config = ConfigDict(from_attributes=True)
+    
+    task_id: str
+    agent_id: str
+    status: str
+    message: str
+
+
 class DeploymentRequest(BaseModel):
     """Request model for creating a deployment."""
     model_config = ConfigDict(json_schema_extra={

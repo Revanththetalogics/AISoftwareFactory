@@ -149,9 +149,22 @@ async def get_project(
         )
     
     # Check ownership/permissions
-    if project.owner_id != (user.user_id if user else "anonymous"):
-        # In production, implement proper RBAC
-        pass
+    # Allow access if user owns the project or has admin permissions
+    user_id = user.user_id if user else "anonymous"
+    is_owner = project.owner_id == user_id
+    is_admin = hasattr(user, 'permissions') and "admin" in user.permissions
+    
+    if not is_owner and not is_admin:
+        logger.warning(
+            "Access denied: user does not own project",
+            project_id=project_id,
+            user_id=user_id,
+            owner_id=project.owner_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this project"
+        )
     
     logger.info(
         "Project retrieved",

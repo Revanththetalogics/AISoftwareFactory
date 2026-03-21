@@ -15,7 +15,7 @@ from collections import defaultdict, deque
 import time
 import asyncio
 
-from prometheus_client import Counter, Histogram, Gauge, Summary
+from prometheus_client import Counter, Histogram, Gauge, Summary, generate_latest, CONTENT_TYPE_LATEST
 
 from backend.core.logging import get_logger
 
@@ -114,6 +114,58 @@ class MetricsCollector:
         self.average_workflow_duration = Summary(
             'average_workflow_duration_seconds',
             'Average workflow execution time'
+        )
+        
+        # LLM Metrics
+        self.llm_call_total = Counter(
+            'llm_call_total',
+            'Total LLM API calls',
+            ['provider', 'operation', 'status']
+        )
+        
+        self.llm_call_duration = Histogram(
+            'llm_call_duration_seconds',
+            'LLM API call duration in seconds',
+            ['provider', 'operation'],
+            buckets=(0.5, 1.0, 2.5, 5.0, 10.0, 30.0, 60.0, 120.0)
+        )
+        
+        self.llm_tokens_total = Counter(
+            'llm_tokens_total',
+            'Total tokens processed by LLM',
+            ['provider', 'token_type']  # token_type: prompt, completion
+        )
+        
+        # Circuit Breaker Metrics
+        self.circuit_breaker_state = Gauge(
+            'circuit_breaker_state',
+            'Circuit breaker state (0=closed, 1=half-open, 2=open)',
+            ['name']
+        )
+        
+        self.circuit_breaker_failures = Counter(
+            'circuit_breaker_failures_total',
+            'Total circuit breaker failures',
+            ['name']
+        )
+        
+        self.circuit_breaker_successes = Counter(
+            'circuit_breaker_successes_total',
+            'Total circuit breaker successes',
+            ['name']
+        )
+        
+        self.circuit_breaker_rejections = Counter(
+            'circuit_breaker_rejections_total',
+            'Total requests rejected by open circuit breaker',
+            ['name']
+        )
+        
+        # Timeout Metrics
+        self.timeout_total = Counter(
+            'timeout_total',
+            'Total timeout occurrences',
+            ['operation']
         )
         
         # Internal tracking
@@ -232,6 +284,64 @@ class MetricsCollector:
         
         if 'average_workflow_duration' in metrics:
             self.average_workflow_duration.observe(metrics['average_workflow_duration'])
+    
+    def record_llm_call(
+        self,
+        provider: str,
+        operation: str,
+        duration: float,
+        status: str = "success",
+        prompt_tokens: int = 0,
+        completion_tokens: int = 0
+    ):
+        """
+        Record an LLM API call.
+        
+        Args:
+            provider: LLM provider name (e.g., "openai", "ollama")
+            operation: Operation type (e.g., "generate", "chat", "embed")
+            duration: Call duration in seconds
+            status: "success" or "error"
+            prompt_tokens: Number of prompt tokens (if available)
+            completion_tokens: Number of completion tokens (if available)
+        """
+        self.llm_call_total.labels(
+            provider=provider,
+            operation=operation,
+            status=status
+        ).inc()
+        self.llm_call_duration.labels(provider=provider, operation=operation).observe(duration)
+        
+        if prompt_tokens > 0:
+            self.llm_tokens_total.labels(provider=provider, token_type="prompt").inc(prompt_tokens)
+        if completion_tokens > 0:
+            self.llm_tokens_total.labels(provider=provider, token_type="completion").inc(completion_tokens)
+    
+    def record_circuit_breaker_state(self, name: str, state: int):
+        """
+        Record circuit breaker state.
+        
+        Args:
+            name: Circuit breaker name
+            state: State value (0=closed, 1=half-open, 2=open)
+        """
+        self.circuit_breaker_state.labels(name=name).set(state)
+    
+    def record_circuit_breaker_failure(self, name: str):
+        """Record a circuit breaker failure."""
+        self.circuit_breaker_failures.labels(name=name).inc()
+    
+    def record_circuit_breaker_success(self, name: str):
+        """Record a circuit breaker success."""
+        self.circuit_breaker_successes.labels(name=name).inc()
+    
+    def record_circuit_breaker_rejection(self, name: str):
+        """Record a circuit breaker rejection (call blocked by open circuit)."""
+        self.circuit_breaker_rejections.labels(name=name).inc()
+    
+    def record_timeout(self, operation: str):
+        """Record a timeout occurrence."""
+        self.timeout_total.labels(operation=operation).inc()
 
 
 # Global metrics collector instance

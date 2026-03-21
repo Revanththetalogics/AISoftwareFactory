@@ -33,7 +33,7 @@ class DBUser(Base):
     hashed_password = Column(String(255), nullable=False)
     first_name = Column(String(50))
     last_name = Column(String(50))
-    is_active = Column(Boolean, default=True, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False, index=True)
     is_superuser = Column(Boolean, default=False, nullable=False)
     permissions = Column(JSON, default=list)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

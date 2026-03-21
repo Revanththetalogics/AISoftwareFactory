@@ -5,6 +5,7 @@ This module provides database engine and session management
 using SQLAlchemy with connection pooling.
 """
 
+from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 from sqlalchemy import text
@@ -66,13 +67,38 @@ async def init_db() -> None:
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
-    Get database session.
+    Get database session as an async generator (for FastAPI Depends).
     
     Yields:
         AsyncSession: Database session
         
     Example:
-        >>> async with get_db() as db:
+        >>> async for db in get_db():
+        ...     result = await db.execute(query)
+    """
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
+
+
+@asynccontextmanager
+async def get_db_context() -> AsyncGenerator[AsyncSession, None]:
+    """
+    Get database session as an async context manager.
+    
+    Use this for standalone operations outside of FastAPI Depends.
+    
+    Yields:
+        AsyncSession: Database session
+        
+    Example:
+        >>> async with get_db_context() as db:
         ...     result = await db.execute(query)
     """
     async with AsyncSessionLocal() as session:

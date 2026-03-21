@@ -103,7 +103,7 @@ class DockerComposeGenerator:
             "version": "3.8",
             "services": {
                 "backend": {
-                    "image": f"ghcr.io/{self._project_name}/backend:latest",
+                    "image": "docker.io/revanth2245/aisoftwarefactory-backend:latest",
                     "ports": ["8000:8000"],
                     "environment": [
                         "ENVIRONMENT=production"
@@ -120,7 +120,7 @@ class DockerComposeGenerator:
                     }
                 },
                 "frontend": {
-                    "image": f"ghcr.io/{self._project_name}/frontend:latest",
+                    "image": "docker.io/revanth2245/aisoftwarefactory-frontend:latest",
                     "ports": ["3000:3000"],
                     "environment": [
                         "NODE_ENV=production"

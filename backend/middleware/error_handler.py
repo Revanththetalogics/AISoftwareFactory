@@ -83,8 +83,10 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
             request: FastAPI request
             
         Returns:
-            JSON error response
+            JSON error response with standardized format
         """
+        request_id = get_correlation_id()
+        
         # Log the error with context
         logger.error(
             "Application error",
@@ -93,12 +95,18 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
             details=exc.details,
             path=request.url.path,
             method=request.method,
-            correlation_id=get_correlation_id(),
+            request_id=request_id,
         )
         
-        # Build error response
-        error_response = exc.to_dict()
-        error_response["correlation_id"] = get_correlation_id()
+        # Build standardized error response
+        error_response = {
+            "error": {
+                "code": exc.error_code,
+                "message": exc.message,
+                "details": exc.details or {},
+            },
+            "request_id": request_id,
+        }
         
         return JSONResponse(
             status_code=exc.status_code,
@@ -121,8 +129,10 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
             request: FastAPI request
             
         Returns:
-            JSON error response
+            JSON error response with standardized format
         """
+        request_id = get_correlation_id()
+        
         # Log the full error with stack trace
         logger.exception(
             "Unexpected error",
@@ -130,24 +140,31 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
             error_message=str(exc),
             path=request.url.path,
             method=request.method,
-            correlation_id=get_correlation_id(),
+            request_id=request_id,
         )
         
         if self.settings.is_development or self.settings.is_testing:
             # Return detailed error in development
             error_response = {
-                "error_code": "INTERNAL_ERROR",
-                "message": str(exc),
-                "type": type(exc).__name__,
-                "correlation_id": get_correlation_id(),
-                "stack_trace": traceback.format_exc().split("\n"),
+                "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": str(exc),
+                    "details": {
+                        "type": type(exc).__name__,
+                        "stack_trace": traceback.format_exc().split("\n"),
+                    },
+                },
+                "request_id": request_id,
             }
         else:
             # Return generic error in production
             error_response = {
-                "error_code": "INTERNAL_ERROR",
-                "message": "An unexpected error occurred. Please try again later.",
-                "correlation_id": get_correlation_id(),
+                "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "An unexpected error occurred. Please try again later.",
+                    "details": {},
+                },
+                "request_id": request_id,
             }
         
         return JSONResponse(
@@ -178,17 +195,25 @@ def setup_exception_handlers(app) -> None:
         exc: AISoftwareFactoryException,
     ) -> JSONResponse:
         """Handle custom application exceptions."""
+        request_id = get_correlation_id()
+        
         logger.error(
             "Application error (handler)",
             error_code=exc.error_code,
             message=exc.message,
             details=exc.details,
             path=request.url.path,
-            correlation_id=get_correlation_id(),
+            request_id=request_id,
         )
         
-        error_response = exc.to_dict()
-        error_response["correlation_id"] = get_correlation_id()
+        error_response = {
+            "error": {
+                "code": exc.error_code,
+                "message": exc.message,
+                "details": exc.details or {},
+            },
+            "request_id": request_id,
+        }
         
         return JSONResponse(
             status_code=exc.status_code,
@@ -202,28 +227,36 @@ def setup_exception_handlers(app) -> None:
     ) -> JSONResponse:
         """Handle unexpected exceptions."""
         settings = get_settings()
+        request_id = get_correlation_id()
         
         logger.exception(
             "Unexpected error (handler)",
             error_type=type(exc).__name__,
             error_message=str(exc),
             path=request.url.path,
-            correlation_id=get_correlation_id(),
+            request_id=request_id,
         )
         
         if settings.is_development or settings.is_testing:
             error_response = {
-                "error_code": "INTERNAL_ERROR",
-                "message": str(exc),
-                "type": type(exc).__name__,
-                "correlation_id": get_correlation_id(),
-                "stack_trace": traceback.format_exc().split("\n"),
+                "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": str(exc),
+                    "details": {
+                        "type": type(exc).__name__,
+                        "stack_trace": traceback.format_exc().split("\n"),
+                    },
+                },
+                "request_id": request_id,
             }
         else:
             error_response = {
-                "error_code": "INTERNAL_ERROR",
-                "message": "An unexpected error occurred. Please try again later.",
-                "correlation_id": get_correlation_id(),
+                "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "An unexpected error occurred. Please try again later.",
+                    "details": {},
+                },
+                "request_id": request_id,
             }
         
         return JSONResponse(

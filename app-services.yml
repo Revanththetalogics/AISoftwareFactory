@@ -21,6 +21,9 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - ENABLE_METRICS=${ENABLE_METRICS}
       - METRICS_PORT=${METRICS_PORT}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
     volumes:
       - backend_data:/app/data
       - ./logs/backend:/app/logs

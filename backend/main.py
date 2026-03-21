@@ -14,8 +14,9 @@ Example:
     >>> uvicorn backend.main:app --reload --port 8000
 """
 
+import asyncio
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Callable, Awaitable
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,15 +27,71 @@ from backend.api.routes import websocket as websocket_routes
 from backend.core.config import get_settings
 from backend.core.logging import configure_logging, get_logger
 from backend.middleware import (
+    AuthenticationMiddleware,
     CorrelationIdMiddleware,
     ErrorHandlerMiddleware,
     RequestLoggingMiddleware,
+    CSRFMiddleware,
 )
 from backend.middleware.error_handler import setup_exception_handlers
+from backend.middleware.metrics_middleware import PrometheusMetricsMiddleware
+from backend.middleware.rate_limit_middleware import RateLimitMiddleware
+from backend.infrastructure.tracing import setup_tracing
 
 # Initialize logging on module load
 configure_logging()
 logger = get_logger(__name__)
+
+
+async def _connect_with_retry(
+    name: str,
+    connect_fn: Callable[[], Awaitable[None]],
+    max_retries: int = 3,
+    delay: float = 2.0,
+    critical: bool = False
+) -> bool:
+    """
+    Attempt to connect to a service with retries.
+    
+    Args:
+        name: Human-readable service name for logging
+        connect_fn: Async function that attempts the connection
+        max_retries: Maximum number of retry attempts
+        delay: Delay in seconds between retries
+        critical: If True, raises exception on failure; if False, returns False
+        
+    Returns:
+        bool: True if connection successful, False if non-critical service failed
+        
+    Raises:
+        RuntimeError: If critical service fails to connect after all retries
+    """
+    for attempt in range(1, max_retries + 1):
+        try:
+            await connect_fn()
+            logger.info(f"{name}: Connected successfully")
+            return True
+        except Exception as e:
+            if attempt < max_retries:
+                logger.warning(
+                    f"{name}: Connection attempt {attempt}/{max_retries} failed: {e}. "
+                    f"Retrying in {delay}s..."
+                )
+                await asyncio.sleep(delay)
+            else:
+                if critical:
+                    logger.error(
+                        f"{name}: CRITICAL - Failed to connect after {max_retries} attempts: {e}"
+                    )
+                    raise RuntimeError(
+                        f"Failed to connect to critical service {name} after {max_retries} attempts"
+                    ) from e
+                else:
+                    logger.warning(
+                        f"{name}: Failed to connect after {max_retries} attempts: {e}. "
+                        "Service will be unavailable."
+                    )
+                    return False
 
 
 def create_application() -> FastAPI:
@@ -67,27 +124,67 @@ def create_application() -> FastAPI:
     # Setup exception handlers
     setup_exception_handlers(app)
     
-    # Add middleware (order matters - executed in reverse for requests)
-    # 1. Error handling (outermost)
-    app.add_middleware(ErrorHandlerMiddleware)
+    # Add middleware (order matters - last added runs first for requests)
+    # Desired request flow: CORS → CSRF → Auth → Error Handler → Request Logging → Metrics → Correlation ID
     
-    # 2. Request logging
+    # 7. Correlation ID (innermost - runs last on requests)
+    app.add_middleware(CorrelationIdMiddleware)
+    
+    # 6. Prometheus Metrics (captures request count, duration, active requests)
+    app.add_middleware(
+        PrometheusMetricsMiddleware,
+        exclude_paths=["/health", "/api/v1/health", "/metrics", "/ready", "/live"],
+    )
+    
+    # 5. Request logging
     app.add_middleware(
         RequestLoggingMiddleware,
         exclude_paths=["/health", "/api/v1/health", "/metrics", "/ready", "/live"],
     )
     
-    # 3. Correlation ID (innermost)
-    app.add_middleware(CorrelationIdMiddleware)
+    # 4. Error handling
+    app.add_middleware(ErrorHandlerMiddleware)
     
-    # 4. CORS
+    # 3.5 Rate limiting (runs after auth, applies per-user limits)
     app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.allowed_hosts_list,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        RateLimitMiddleware,
+        default_rate=settings.RATE_LIMIT_DEFAULT,
+        admin_rate=settings.RATE_LIMIT_ADMIN,
+        window_seconds=settings.RATE_LIMIT_WINDOW_SECONDS,
     )
+    
+    # 3. Authentication (runs after CORS/CSRF, before error handling on requests)
+    app.add_middleware(AuthenticationMiddleware)
+    
+    # 2. CSRF Protection (Double Submit Cookie pattern)
+    app.add_middleware(CSRFMiddleware)
+    
+    # 1. CORS (outermost - runs first on requests)
+    # SECURITY: Use explicit origins list, never use wildcards with credentials
+    cors_origins = settings.cors_origins_list
+    if not cors_origins and settings.is_development:
+        # Allow localhost in development mode
+        cors_origins = [
+            "http://localhost:3000",
+            "http://localhost:8000",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:8000",
+        ]
+    
+    if cors_origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=cors_origins,
+            allow_credentials=True,
+            allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+            allow_headers=["*"],
+        )
+    else:
+        # No CORS in production without explicit origins
+        logger.warning(
+            "CORS not configured - no CORS_ORIGINS set. "
+            "Cross-origin requests will be blocked."
+        )
     
     # Include API routes
     app.include_router(api_router)
@@ -105,6 +202,58 @@ def create_application() -> FastAPI:
 
 # Create application instance
 app = create_application()
+
+
+async def validate_database_schema() -> None:
+    """
+    Validate database schema integrity on startup.
+    
+    Verifies that critical tables exist and have expected structure.
+    Does not fail the application startup - just logs warnings.
+    """
+    from sqlalchemy import text
+    from backend.db.session import AsyncSessionLocal
+    
+    critical_tables = ['users', 'projects', 'workflows', 'tasks', 'agents', 'deployments', 'audit_logs']
+    missing_tables = []
+    
+    async with AsyncSessionLocal() as session:
+        for table in critical_tables:
+            try:
+                # Try to query the table to verify it exists
+                await session.execute(text(f"SELECT 1 FROM {table} LIMIT 0"))
+            except Exception:
+                missing_tables.append(table)
+        
+        if missing_tables:
+            logger.warning(
+                "Missing database tables detected",
+                missing_tables=missing_tables,
+                hint="Run 'alembic upgrade head' to create tables"
+            )
+        else:
+            logger.info(
+                "Database schema validation: OK",
+                tables_verified=len(critical_tables)
+            )
+        
+        # Check for critical indexes on users table
+        try:
+            result = await session.execute(text("""
+                SELECT indexname FROM pg_indexes 
+                WHERE tablename = 'users'
+            """))
+            indexes = [row[0] for row in result.fetchall()]
+            expected_indexes = ['ix_users_username', 'ix_users_email', 'idx_users_active']
+            missing_indexes = [idx for idx in expected_indexes if idx not in indexes]
+            
+            if missing_indexes:
+                logger.warning(
+                    "Missing recommended indexes on users table",
+                    missing_indexes=missing_indexes
+                )
+        except Exception as e:
+            logger.debug("Could not verify indexes", error=str(e))
 
 
 @app.on_event("startup")
@@ -130,13 +279,24 @@ async def startup_event() -> None:
         debug=settings.DEBUG,
     )
     
-    # Validate critical configuration
+    # Validate critical configuration - FATAL in non-development environments
     try:
-        if settings.is_production:
-            if settings.SECRET_KEY == "your-secret-key-change-in-production":
+        default_keys = ("your-secret-key-change-in-production", "change-me-in-production")
+        if settings.SECRET_KEY in default_keys:
+            if settings.ENVIRONMENT not in ("development", "testing"):
+                logger.critical(
+                    "FATAL: Default SECRET_KEY detected in %s environment!",
+                    settings.ENVIRONMENT
+                )
+                raise SystemExit(
+                    f"Cannot start with default SECRET_KEY in {settings.ENVIRONMENT} environment. "
+                    "Please set a secure SECRET_KEY environment variable."
+                )
+            else:
                 logger.warning(
-                    "Using default SECRET_KEY in production. "
-                    "This should be changed for security."
+                    "Using default SECRET_KEY in %s environment. "
+                    "This is acceptable for development but must be changed for production.",
+                    settings.ENVIRONMENT
                 )
         
         logger.info("Configuration validated successfully")
@@ -160,43 +320,111 @@ async def startup_event() -> None:
         ollama_url=settings.OLLAMA_URL,
     )
     
-    # Initialize database connection
+    # Initialize database connection with retry (CRITICAL - must succeed)
     db_status = "disconnected"
-    try:
+    
+    async def _init_database():
         from backend.db import init_db
         await init_db()
-        db_status = "connected"
-        logger.info("Database connection established", status=db_status)
-    except Exception as exc:
-        logger.error("Failed to initialize database", error=str(exc), status=db_status)
-        # Don't raise - allow app to start without DB for health checks
     
-    # Initialize Redis connection
-    redis_status = "disconnected"
     try:
-        import redis.asyncio as redis
-        redis_client = redis.from_url(settings.REDIS_URL)
+        db_connected = await _connect_with_retry(
+            name="Database",
+            connect_fn=_init_database,
+            max_retries=3,
+            delay=2.0,
+            critical=True  # Database is critical - fail startup if can't connect
+        )
+        if db_connected:
+            db_status = "connected"
+            
+            # Validate database schema on startup
+            try:
+                await validate_database_schema()
+            except Exception as schema_exc:
+                logger.warning(
+                    "Database schema validation warning",
+                    error=str(schema_exc),
+                    hint="Run 'alembic upgrade head' to apply migrations"
+                )
+            
+            # Create default admin user if no users exist
+            try:
+                from backend.services.auth_service import AuthService
+                auth_service = AuthService()
+                admin_user = await auth_service.create_default_admin()
+                if admin_user:
+                    logger.info(
+                        "Default admin user created - CHANGE PASSWORD IMMEDIATELY",
+                        username=admin_user.username,
+                        email=admin_user.email
+                    )
+            except Exception as exc:
+                logger.warning("Could not create default admin user", error=str(exc))
+                
+    except RuntimeError as exc:
+        logger.error("Failed to initialize database", error=str(exc), status=db_status)
+        # For critical database failure, we could choose to exit here
+        # For now, allow app to start for health checks but log critical error
+    
+    # Initialize Redis connection with retry (non-critical)
+    redis_status = "disconnected"
+    
+    async def _init_redis():
+        import redis.asyncio as redis_lib
+        redis_client = redis_lib.from_url(settings.REDIS_URL)
         await redis_client.ping()
         await redis_client.close()
-        redis_status = "connected"
-        logger.info("Redis connection established", status=redis_status)
-    except Exception as exc:
-        logger.error("Failed to initialize Redis", error=str(exc), status=redis_status)
     
-    # Test Ollama connection
+    redis_connected = await _connect_with_retry(
+        name="Redis",
+        connect_fn=_init_redis,
+        max_retries=3,
+        delay=1.0,
+        critical=False  # Redis is non-critical - warn and continue
+    )
+    if redis_connected:
+        redis_status = "connected"
+    
+    # Test Ollama connection with retry (non-critical - optional service)
     ollama_status = "disconnected"
-    try:
+    
+    async def _init_ollama():
         import urllib.request
         req = urllib.request.Request(
             f"{settings.OLLAMA_URL}/api/tags",
             method='GET'
         )
-        with urllib.request.urlopen(req, timeout=5) as response:
-            if response.status == 200:
-                ollama_status = "connected"
-                logger.info("Ollama connection established", status=ollama_status)
-    except Exception as exc:
-        logger.warning("Ollama not available", error=str(exc), status=ollama_status)
+        # Run in thread pool to avoid blocking
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(
+            None,
+            lambda: urllib.request.urlopen(req, timeout=5)
+        )
+    
+    ollama_connected = await _connect_with_retry(
+        name="Ollama",
+        connect_fn=_init_ollama,
+        max_retries=2,
+        delay=2.0,
+        critical=False  # Ollama is optional - warn and continue
+    )
+    if ollama_connected:
+        ollama_status = "connected"
+    
+    # Initialize OpenTelemetry tracing
+    if settings.OTEL_ENABLED:
+        tracing_provider = setup_tracing(
+            app,
+            service_name=settings.OTEL_SERVICE_NAME,
+            otlp_endpoint=settings.OTEL_EXPORTER_ENDPOINT or None
+        )
+        if tracing_provider:
+            logger.info(
+                "OpenTelemetry tracing initialized",
+                service_name=settings.OTEL_SERVICE_NAME,
+                exporter_endpoint=settings.OTEL_EXPORTER_ENDPOINT or "none"
+            )
     
     # Service status summary
     logger.info(
@@ -212,19 +440,34 @@ async def startup_event() -> None:
 @app.on_event("shutdown")
 async def shutdown_event() -> None:
     """
-    Handle application shutdown.
+    Handle graceful application shutdown.
     
     This function is called when the application shuts down and performs
-    cleanup tasks such as:
-    - Closing database connections
+    cleanup tasks including:
+    - Closing database connection pools
     - Closing Redis connections
-    - Graceful agent shutdown
+    - Flushing logs
     """
-    logger.info("Application shutting down")
+    logger.info("Application shutting down gracefully...")
     
-    # Future: Close database connections (Phase 5)
-    # Future: Close Redis connections (Phase 4)
-    # Future: Graceful agent shutdown (Phase 2)
+    # Close database connections
+    try:
+        from backend.db.session import engine
+        if engine:
+            await engine.dispose()
+            logger.info("Database connections closed")
+    except Exception as exc:
+        logger.warning("Error closing database connections", error=str(exc))
+    
+    # Close Redis connections
+    try:
+        import redis.asyncio as redis_lib
+        settings = get_settings()
+        redis_client = redis_lib.from_url(settings.REDIS_URL)
+        await redis_client.close()
+        logger.info("Redis connections closed")
+    except Exception as exc:
+        logger.debug("Redis cleanup skipped", error=str(exc))
     
     logger.info("Application shutdown complete")
 

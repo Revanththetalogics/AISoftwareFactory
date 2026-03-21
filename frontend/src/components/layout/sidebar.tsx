@@ -90,11 +90,13 @@ export function Sidebar() {
     <aside 
       className="fixed left-0 top-0 z-40 h-screen w-[--sidebar-width] border-r border-border-default bg-bg-panel/95 backdrop-blur-xl"
       style={{ '--sidebar-width': '280px' } as React.CSSProperties}
+      role="complementary"
+      aria-label="Application sidebar"
     >
       <div className="flex h-full flex-col">
         {/* Logo */}
         <div className="flex h-[--topbar-height] items-center gap-3 border-b border-border-default px-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg shadow-violet-500/20">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg shadow-violet-500/20" aria-hidden="true">
             <Sparkles className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -105,13 +107,17 @@ export function Sidebar() {
 
         <ScrollArea className="flex-1 py-4">
           {/* Main Navigation */}
-          <nav className="space-y-1 px-3">
+          <nav className="space-y-1 px-3" role="navigation" aria-label="Main navigation">
             {mainNavItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
               const Icon = item.icon;
 
               return (
-                <Link key={item.href} href={item.href}>
+                <Link 
+                  key={item.href} 
+                  href={item.href}
+                  aria-current={isActive ? 'page' : undefined}
+                >
                   <Button
                     variant="ghost"
                     className={cn(
@@ -121,10 +127,10 @@ export function Sidebar() {
                         : 'text-text-secondary hover:bg-bg-hover hover:text-text-primary',
                     )}
                   >
-                    <Icon className={cn('h-5 w-5', isActive && 'text-state-running')} />
+                    <Icon className={cn('h-5 w-5', isActive && 'text-state-running')} aria-hidden="true" />
                     <span className="flex-1">{item.label}</span>
                     {item.badge && (
-                      <span className="rounded-full bg-state-running-dim px-2 py-0.5 text-xs text-state-running">
+                      <span className="rounded-full bg-state-running-dim px-2 py-0.5 text-xs text-state-running" aria-label={`${item.label} badge: ${item.badge}`}>
                         {item.badge}
                       </span>
                     )}
@@ -196,13 +202,17 @@ export function Sidebar() {
         </ScrollArea>
 
         {/* Bottom Navigation */}
-        <div className="border-t border-border-default p-3">
+        <nav className="border-t border-border-default p-3" role="navigation" aria-label="Settings navigation">
           {bottomNavItems.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;
 
             return (
-              <Link key={item.href} href={item.href}>
+              <Link 
+                key={item.href} 
+                href={item.href}
+                aria-current={isActive ? 'page' : undefined}
+              >
                 <Button
                   variant="ghost"
                   className={cn(
@@ -212,13 +222,13 @@ export function Sidebar() {
                       : 'text-text-secondary hover:bg-bg-hover hover:text-text-primary'
                   )}
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-5 w-5" aria-hidden="true" />
                   <span className="flex-1">{item.label}</span>
                 </Button>
               </Link>
             );
           })}
-        </div>
+        </nav>
       </div>
     </aside>
   );

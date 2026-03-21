@@ -92,6 +92,7 @@ class ApiClient {
       const response = await this.requestWithTimeout(url, {
         ...options,
         headers,
+        credentials: 'include', // Include httpOnly cookies in requests
       });
 
       if (!response.ok) {
@@ -236,6 +237,14 @@ class ApiClient {
     });
     this.setToken(response.access_token);
     return response;
+  }
+
+  async logout() {
+    // Call backend to clear httpOnly cookies
+    await this.request<{ message: string }>('/auth/logout', {
+      method: 'POST',
+    });
+    this.setToken(null);
   }
 
   async register(data: RegisterRequest) {

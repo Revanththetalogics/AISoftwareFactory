@@ -2,19 +2,24 @@
 Authentication Service for AI Software Factory.
 
 This module provides JWT-based authentication with secure token generation,
-validation, and user management.
+validation, and database-backed user management.
 """
 
 import hashlib
 import secrets
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.config import get_settings
 from backend.core.logging import get_logger
 from backend.core.exceptions import AuthenticationError, AuthorizationError
+from backend.db.session import AsyncSessionLocal
+from backend.models.database import DBUser
 
 logger = get_logger(__name__)
 
@@ -124,63 +129,215 @@ class AuthService:
             logger.warning("Invalid token", error=str(exc))
             raise AuthenticationError("Invalid or expired token")
     
-    def authenticate_user(self, username: str, password: str) -> Optional[Dict[str, Any]]:
+    async def get_user_by_username(self, username: str) -> Optional[DBUser]:
         """
-        Authenticate user credentials.
-        
-        This is a simplified version. In production, this would:
-        - Query database for user
-        - Verify password hash
-        - Check user status (active/banned)
-        - Return user data if valid
+        Get user by username from database.
         
         Args:
-            username: Username/email
+            username: User's username
+            
+        Returns:
+            DBUser: User record if found and active, None otherwise
+        """
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(
+                select(DBUser).where(
+                    DBUser.username == username,
+                    DBUser.is_active == True
+                )
+            )
+            return result.scalar_one_or_none()
+    
+    async def get_user_by_id(self, user_id: str) -> Optional[DBUser]:
+        """
+        Get user by ID from database.
+        
+        Args:
+            user_id: User's unique ID
+            
+        Returns:
+            DBUser: User record if found and active, None otherwise
+        """
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(
+                select(DBUser).where(
+                    DBUser.id == user_id,
+                    DBUser.is_active == True
+                )
+            )
+            return result.scalar_one_or_none()
+    
+    async def get_user_by_email(self, email: str) -> Optional[DBUser]:
+        """
+        Get user by email from database.
+        
+        Args:
+            email: User's email address
+            
+        Returns:
+            DBUser: User record if found and active, None otherwise
+        """
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(
+                select(DBUser).where(
+                    DBUser.email == email,
+                    DBUser.is_active == True
+                )
+            )
+            return result.scalar_one_or_none()
+    
+    async def authenticate_user(self, username: str, password: str) -> Optional[Dict[str, Any]]:
+        """
+        Authenticate user credentials against database.
+        
+        Args:
+            username: Username or email
             password: Plain text password
             
         Returns:
             Dict: User data if authenticated, None otherwise
         """
-        # Mock user data - replace with database query in production
-        mock_users = {
-            "admin": {
-                "user_id": "user-admin-001",
-                "username": "admin",
-                "email": "admin@example.com",
-                "hashed_password": self.get_password_hash("admin123"),
-                "permissions": ["read", "write", "execute", "admin"],
-                "is_active": True
-            },
-            "developer": {
-                "user_id": "user-dev-001", 
-                "username": "developer",
-                "email": "dev@example.com",
-                "hashed_password": self.get_password_hash("dev123"),
-                "permissions": ["read", "write", "execute"],
-                "is_active": True
-            }
-        }
+        # Try to find user by username or email
+        user = await self.get_user_by_username(username)
+        if not user:
+            user = await self.get_user_by_email(username)
         
-        user = mock_users.get(username)
         if not user:
             logger.warning("User not found", username=username)
             return None
             
-        if not user["is_active"]:
+        if not user.is_active:
             logger.warning("Inactive user attempted login", username=username)
             return None
             
-        if not self.verify_password(password, user["hashed_password"]):
+        if not self.verify_password(password, user.hashed_password):
             logger.warning("Invalid password", username=username)
             return None
+        
+        # Update last login timestamp
+        async with AsyncSessionLocal() as session:
+            user_in_session = await session.get(DBUser, user.id)
+            if user_in_session:
+                user_in_session.last_login = datetime.now(timezone.utc)
+                await session.commit()
             
         # Return user data without sensitive information
         return {
-            "user_id": user["user_id"],
-            "username": user["username"],
-            "email": user["email"],
-            "permissions": user["permissions"]
+            "user_id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "permissions": user.permissions or [],
+            "is_superuser": user.is_superuser
         }
+    
+    async def create_default_admin(self) -> Optional[DBUser]:
+        """
+        Create default admin user if no users exist in database.
+        
+        This is called during application startup to ensure at least
+        one admin user exists for initial access.
+        
+        Returns:
+            DBUser: Created admin user, or None if users already exist
+        """
+        async with AsyncSessionLocal() as session:
+            # Check if any users exist
+            result = await session.execute(select(DBUser).limit(1))
+            existing_user = result.scalar_one_or_none()
+            
+            if existing_user:
+                logger.debug("Users already exist, skipping default admin creation")
+                return None
+            
+            # Create default admin user
+            admin_user = DBUser(
+                id=str(uuid.uuid4()),
+                username="admin",
+                email="admin@example.com",
+                hashed_password=self.get_password_hash("admin123"),
+                first_name="System",
+                last_name="Administrator",
+                is_active=True,
+                is_superuser=True,
+                permissions=["read", "write", "execute", "admin"],
+            )
+            
+            session.add(admin_user)
+            await session.commit()
+            await session.refresh(admin_user)
+            
+            logger.info(
+                "Default admin user created",
+                user_id=admin_user.id,
+                username=admin_user.username,
+                email=admin_user.email
+            )
+            
+            return admin_user
+    
+    async def create_user(
+        self,
+        username: str,
+        email: str,
+        password: str,
+        first_name: str = None,
+        last_name: str = None,
+        permissions: list = None,
+        is_superuser: bool = False
+    ) -> DBUser:
+        """
+        Create a new user in the database.
+        
+        Args:
+            username: Unique username
+            email: Unique email address
+            password: Plain text password (will be hashed)
+            first_name: User's first name
+            last_name: User's last name
+            permissions: List of permission strings
+            is_superuser: Whether user has superuser privileges
+            
+        Returns:
+            DBUser: Created user record
+            
+        Raises:
+            ValueError: If username or email already exists
+        """
+        async with AsyncSessionLocal() as session:
+            # Check for existing username
+            existing = await session.execute(
+                select(DBUser).where(DBUser.username == username)
+            )
+            if existing.scalar_one_or_none():
+                raise ValueError(f"Username '{username}' already exists")
+            
+            # Check for existing email
+            existing = await session.execute(
+                select(DBUser).where(DBUser.email == email)
+            )
+            if existing.scalar_one_or_none():
+                raise ValueError(f"Email '{email}' already exists")
+            
+            # Create new user
+            new_user = DBUser(
+                id=str(uuid.uuid4()),
+                username=username,
+                email=email,
+                hashed_password=self.get_password_hash(password),
+                first_name=first_name,
+                last_name=last_name,
+                is_active=True,
+                is_superuser=is_superuser,
+                permissions=permissions or ["read"],
+            )
+            
+            session.add(new_user)
+            await session.commit()
+            await session.refresh(new_user)
+            
+            logger.info("User created", user_id=new_user.id, username=new_user.username)
+            
+            return new_user
     
     def create_user_session(self, user_data: Dict[str, Any]) -> Dict[str, str]:
         """

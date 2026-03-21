@@ -5,7 +5,9 @@ This module provides additional validation utilities for securing API inputs
 and preventing common security vulnerabilities.
 """
 
+import ipaddress
 import re
+import socket
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
@@ -13,6 +15,22 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic.networks import EmailStr
 
 from backend.core.exceptions import ValidationError
+
+
+# SSRF Protection - Blocked IP ranges
+BLOCKED_IP_RANGES = [
+    ipaddress.ip_network('10.0.0.0/8'),       # Private Class A
+    ipaddress.ip_network('172.16.0.0/12'),    # Private Class B
+    ipaddress.ip_network('192.168.0.0/16'),   # Private Class C
+    ipaddress.ip_network('127.0.0.0/8'),      # Loopback
+    ipaddress.ip_network('169.254.0.0/16'),   # Link-local
+    ipaddress.ip_network('0.0.0.0/8'),        # Current network
+    ipaddress.ip_network('224.0.0.0/4'),      # Multicast
+    ipaddress.ip_network('240.0.0.0/4'),      # Reserved
+    ipaddress.ip_network('::1/128'),          # IPv6 loopback
+    ipaddress.ip_network('fc00::/7'),         # IPv6 unique local
+    ipaddress.ip_network('fe80::/10'),        # IPv6 link-local
+]
 
 
 class SanitizedString(str):
@@ -96,6 +114,98 @@ def validate_url_format(url: str) -> bool:
             
         return True
     except:
+        return False
+
+
+def validate_url_safe(url: str) -> bool:
+    """
+    Validate URL is safe from SSRF attacks.
+    
+    This function performs comprehensive SSRF protection by:
+    1. Validating URL scheme (only http/https)
+    2. Resolving the hostname to IP
+    3. Checking if the resolved IP is in blocked private ranges
+    
+    Args:
+        url: URL to validate
+        
+    Returns:
+        bool: True if URL is safe from SSRF attacks
+        
+    Raises:
+        ValidationError: If URL is potentially dangerous
+        
+    Example:
+        >>> validate_url_safe("https://example.com")
+        True
+        >>> validate_url_safe("http://192.168.1.1/admin")
+        False
+    """
+    try:
+        parsed = urlparse(url)
+        
+        # Check for valid scheme
+        if parsed.scheme not in ['http', 'https']:
+            return False
+        
+        hostname = parsed.hostname
+        if not hostname:
+            return False
+        
+        # Block localhost variants
+        if hostname.lower() in ['localhost', 'localhost.localdomain']:
+            return False
+        
+        # Resolve hostname to IP for comprehensive check
+        try:
+            # Get all IP addresses for the hostname
+            addr_info = socket.getaddrinfo(hostname, None)
+            
+            for info in addr_info:
+                ip_str = info[4][0]
+                try:
+                    ip = ipaddress.ip_address(ip_str)
+                    
+                    # Check against all blocked ranges
+                    for blocked in BLOCKED_IP_RANGES:
+                        if ip in blocked:
+                            return False
+                            
+                except ValueError:
+                    # Invalid IP format, skip
+                    continue
+                    
+        except socket.gaierror:
+            # DNS resolution failed - could be malicious or just unreachable
+            # Be cautious and allow (validation will fail at connection time)
+            pass
+        except socket.timeout:
+            # DNS timeout - allow to proceed
+            pass
+            
+        return True
+        
+    except Exception:
+        return False
+
+
+def is_ip_in_blocked_range(ip_str: str) -> bool:
+    """
+    Check if an IP address is in a blocked private range.
+    
+    Args:
+        ip_str: IP address string
+        
+    Returns:
+        bool: True if IP is in a blocked range
+    """
+    try:
+        ip = ipaddress.ip_address(ip_str)
+        for blocked in BLOCKED_IP_RANGES:
+            if ip in blocked:
+                return True
+        return False
+    except ValueError:
         return False
 
 

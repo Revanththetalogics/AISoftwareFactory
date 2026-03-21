@@ -15,6 +15,8 @@ export default function DashboardLayout({
         <Sidebar />
         <TopNav />
         <main 
+          id="main-content"
+          role="main"
           className="fixed left-[--sidebar-width] right-0 top-[--topbar-height] bottom-0 overflow-auto bg-bg-base p-6"
           style={{
             '--sidebar-width': '280px',

@@ -22,14 +22,16 @@ interface SidebarSectionProps {
 }
 
 export function SidebarSection({ title, items, pathname, colorScheme }: SidebarSectionProps) {
+  const sectionId = `nav-section-${title.toLowerCase().replace(/\s+/g, '-')}`;
+  
   return (
     <>
       <div className="mb-2 px-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+        <h3 id={sectionId} className="text-xs font-semibold uppercase tracking-wider text-slate-500">
           {title}
         </h3>
       </div>
-      <nav className="space-y-1 px-3">
+      <nav className="space-y-1 px-3" role="navigation" aria-labelledby={sectionId}>
         {items.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (

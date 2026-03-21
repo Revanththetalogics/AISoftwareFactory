@@ -13,6 +13,7 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends, Query
 from pydantic import BaseModel, Field
 
 from backend.core.logging import get_logger
+from backend.api.dependencies import get_current_user, User
 from backend.testing.intelligence_engine import TestIntelligenceEngine
 from backend.testing.agents.test_generator import TestGeneratorAgent
 from backend.testing.agents.bug_detector import BugDetectorAgent
@@ -156,6 +157,7 @@ async def get_coverage_analyzer():
 @router.post("/generate-tests", response_model=GenerateTestsResponse)
 async def generate_tests(
     request: GenerateTestsRequest,
+    current_user: User = Depends(get_current_user),
     agent: TestGeneratorAgent = Depends(get_test_generator),
 ):
     """
@@ -194,6 +196,7 @@ async def generate_tests(
 @router.post("/detect-bugs", response_model=DetectBugsResponse)
 async def detect_bugs(
     request: DetectBugsRequest,
+    current_user: User = Depends(get_current_user),
     agent: BugDetectorAgent = Depends(get_bug_detector),
 ):
     """
@@ -259,6 +262,7 @@ async def detect_bugs(
 @router.post("/fix-bug", response_model=FixBugResponse)
 async def fix_bug(
     request: FixBugRequest,
+    current_user: User = Depends(get_current_user),
     agent: AutoFixerAgent = Depends(get_auto_fixer),
 ):
     """
@@ -299,6 +303,7 @@ async def fix_bug(
 async def batch_fix(
     bug_ids: List[str],
     auto_apply: bool = False,
+    current_user: User = Depends(get_current_user),
     agent: AutoFixerAgent = Depends(get_auto_fixer),
 ):
     """
@@ -315,6 +320,7 @@ async def batch_fix(
 @router.post("/preview-fix")
 async def preview_fix(
     request: FixBugRequest,
+    current_user: User = Depends(get_current_user),
     agent: AutoFixerAgent = Depends(get_auto_fixer),
 ):
     """
@@ -341,6 +347,7 @@ async def preview_fix(
 @router.post("/rollback-fix/{fix_id}")
 async def rollback_fix(
     fix_id: str,
+    current_user: User = Depends(get_current_user),
     agent: AutoFixerAgent = Depends(get_auto_fixer),
 ):
     """
@@ -364,6 +371,7 @@ async def rollback_fix(
 @router.post("/run-tests", response_model=RunTestsResponse)
 async def run_tests(
     request: RunTestsRequest,
+    current_user: User = Depends(get_current_user),
     runner: SelfHealingTestRunner = Depends(get_test_runner),
 ):
     """
@@ -399,6 +407,7 @@ async def run_tests(
 @router.post("/analyze-coverage", response_model=CoverageResponse)
 async def analyze_coverage(
     request: CoverageRequest,
+    current_user: User = Depends(get_current_user),
     analyzer: CoverageAnalyzer = Depends(get_coverage_analyzer),
 ):
     """
@@ -444,6 +453,7 @@ async def analyze_coverage(
 
 @router.get("/health", response_model=TestHealthResponse)
 async def get_test_health(
+    current_user: User = Depends(get_current_user),
     engine: TestIntelligenceEngine = Depends(get_intelligence_engine),
     analyzer: CoverageAnalyzer = Depends(get_coverage_analyzer),
     runner: SelfHealingTestRunner = Depends(get_test_runner),
@@ -482,6 +492,7 @@ async def get_test_health(
 
 @router.get("/flaky-tests")
 async def get_flaky_tests(
+    current_user: User = Depends(get_current_user),
     runner: SelfHealingTestRunner = Depends(get_test_runner),
 ):
     """Get list of detected flaky tests."""
@@ -497,6 +508,7 @@ async def get_flaky_tests(
 async def quarantine_test(
     test_id: str,
     reason: str = "",
+    current_user: User = Depends(get_current_user),
     runner: SelfHealingTestRunner = Depends(get_test_runner),
 ):
     """Quarantine a flaky test."""
@@ -511,6 +523,7 @@ async def quarantine_test(
 @router.post("/unquarantine-test/{test_id}")
 async def unquarantine_test(
     test_id: str,
+    current_user: User = Depends(get_current_user),
     runner: SelfHealingTestRunner = Depends(get_test_runner),
 ):
     """Remove a test from quarantine."""
@@ -529,6 +542,7 @@ async def generate_e2e_tests(
     page_path: str,
     user_flow: List[str],
     page_description: str = "",
+    current_user: User = Depends(get_current_user),
     agent: FrontendTesterAgent = Depends(get_frontend_tester),
 ):
     """
@@ -562,6 +576,7 @@ async def run_visual_regression(
     page_path: str,
     viewports: Optional[List[Dict[str, int]]] = None,
     threshold: float = 0.1,
+    current_user: User = Depends(get_current_user),
     agent: FrontendTesterAgent = Depends(get_frontend_tester),
 ):
     """
@@ -595,6 +610,7 @@ async def run_visual_regression(
 @router.post("/frontend/accessibility-audit")
 async def run_accessibility_audit(
     page_path: str,
+    current_user: User = Depends(get_current_user),
     agent: FrontendTesterAgent = Depends(get_frontend_tester),
 ):
     """Run accessibility audit on a page."""
@@ -610,6 +626,7 @@ async def run_accessibility_audit(
 
 @router.get("/frontend/statistics")
 async def get_frontend_statistics(
+    current_user: User = Depends(get_current_user),
     agent: FrontendTesterAgent = Depends(get_frontend_tester),
 ):
     """Get frontend testing statistics."""
@@ -621,6 +638,7 @@ async def get_frontend_statistics(
 @router.post("/run-full-suite")
 async def run_full_test_suite(
     background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
     engine: TestIntelligenceEngine = Depends(get_intelligence_engine),
 ):
     """

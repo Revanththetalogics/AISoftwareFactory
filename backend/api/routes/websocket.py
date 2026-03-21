@@ -69,6 +69,17 @@ async def global_websocket(websocket: WebSocket):
         - notification: General notifications
     """
     user = await get_websocket_user(websocket)
+    
+    # SECURITY: Reject unauthenticated connections
+    if user is None:
+        await websocket.close(code=4001, reason="Authentication required")
+        logger.warning(
+            "WebSocket connection closed: authentication required",
+            channel="global",
+            client=websocket.client.host if websocket.client else "unknown",
+        )
+        return
+    
     await global_manager.connect(websocket)
     _global_connections.add(websocket)
     
@@ -144,6 +155,18 @@ async def project_websocket(websocket: WebSocket, project_id: str):
         - completion: Project completion notification
     """
     user = await get_websocket_user(websocket)
+    
+    # SECURITY: Reject unauthenticated connections
+    if user is None:
+        await websocket.close(code=4001, reason="Authentication required")
+        logger.warning(
+            "WebSocket connection closed: authentication required",
+            channel="project",
+            project_id=project_id,
+            client=websocket.client.host if websocket.client else "unknown",
+        )
+        return
+    
     await websocket.accept()
     
     # Add to project-specific connections
@@ -231,6 +254,18 @@ async def workflow_websocket(websocket: WebSocket, workflow_id: str):
         - status_change: Workflow status changes
     """
     user = await get_websocket_user(websocket)
+    
+    # SECURITY: Reject unauthenticated connections
+    if user is None:
+        await websocket.close(code=4001, reason="Authentication required")
+        logger.warning(
+            "WebSocket connection closed: authentication required",
+            channel="workflow",
+            workflow_id=workflow_id,
+            client=websocket.client.host if websocket.client else "unknown",
+        )
+        return
+    
     await websocket.accept()
     
     # Add to workflow-specific connections

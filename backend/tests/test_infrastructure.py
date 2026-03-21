@@ -103,7 +103,9 @@ class TestHealthChecker:
         
         # Just verify it runs without error
         import asyncio
-        status, message = asyncio.run(checker.check_disk_space())
+        status, message, details = asyncio.run(checker.check_disk_space())
         
         assert status in [HealthStatus.HEALTHY, HealthStatus.DEGRADED, HealthStatus.UNHEALTHY]
         assert isinstance(message, str)
+        assert isinstance(details, dict)
+        assert "free_gb" in details

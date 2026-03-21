@@ -58,15 +58,25 @@ def clear_correlation_id() -> None:
 
 class CorrelationIdFilter(logging.Filter):
     """
-    Logging filter that adds correlation ID to log records.
+    Logging filter that adds correlation ID and trace context to log records.
     
     This filter ensures all log records include the current correlation ID
-    for request tracing across the application.
+    and OpenTelemetry trace/span IDs for request tracing across the application.
     """
     
     def filter(self, record: logging.LogRecord) -> bool:
-        """Add correlation ID to log record."""
+        """Add correlation ID and trace context to log record."""
         record.correlation_id = get_correlation_id()
+        
+        # Add OpenTelemetry trace context if available
+        try:
+            from backend.infrastructure.tracing import get_current_trace_id, get_current_span_id
+            record.trace_id = get_current_trace_id() or ""
+            record.span_id = get_current_span_id() or ""
+        except Exception:
+            record.trace_id = ""
+            record.span_id = ""
+        
         return True
 
 
@@ -98,6 +108,10 @@ class CustomJsonFormatter(jsonlogger.JsonFormatter):
         
         # Add correlation ID for request tracing
         log_record["correlation_id"] = getattr(record, "correlation_id", "")
+        
+        # Add OpenTelemetry trace context for distributed tracing
+        log_record["trace_id"] = getattr(record, "trace_id", "")
+        log_record["span_id"] = getattr(record, "span_id", "")
         
         # Add source location
         log_record["source"] = {
@@ -153,7 +167,7 @@ def configure_logging() -> None:
     if settings.is_development or settings.is_testing:
         # Use human-readable format for development
         formatter = logging.Formatter(
-            fmt="%(asctime)s | %(levelname)-8s | %(correlation_id)s | %(name)s | %(message)s",
+            fmt="%(asctime)s | %(levelname)-8s | %(correlation_id)s | %(trace_id)s | %(name)s | %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
     else:

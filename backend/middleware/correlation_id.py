@@ -2,13 +2,23 @@
 Correlation ID middleware for request tracing.
 
 This middleware ensures every request has a correlation ID for distributed tracing,
-either from an incoming header or generated fresh.
+either from an incoming header or generated fresh. Also integrates with OpenTelemetry
+for trace ID propagation.
 """
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 from backend.core.logging import set_correlation_id, clear_correlation_id, get_correlation_id
+
+
+def _get_otel_trace_id() -> str:
+    """Get current OpenTelemetry trace ID if available."""
+    try:
+        from backend.infrastructure.tracing import get_current_trace_id
+        return get_current_trace_id()
+    except Exception:
+        return ""
 
 
 class CorrelationIdMiddleware(BaseHTTPMiddleware):
@@ -69,8 +79,16 @@ class CorrelationIdMiddleware(BaseHTTPMiddleware):
             # Process request
             response = await call_next(request)
             
-            # Add correlation ID to response
+            # Add correlation ID to response headers
+            # X-Correlation-ID for standard tracing
             response.headers[self.header_name] = get_correlation_id()
+            # X-Request-ID for compatibility with common patterns
+            response.headers["X-Request-ID"] = get_correlation_id()
+            
+            # Add trace ID to response if OpenTelemetry is available (for distributed tracing)
+            trace_id = _get_otel_trace_id()
+            if trace_id:
+                response.headers["X-Trace-ID"] = trace_id
             
             return response
             
