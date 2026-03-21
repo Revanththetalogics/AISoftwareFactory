@@ -9,8 +9,8 @@ from enum import StrEnum
 from typing import Any
 
 from langchain.callbacks.manager import CallbackManagerForLLMRun
-from langchain.llms.base import LLM
-from pydantic import Field
+from langchain_core.language_models.llms import LLM
+from pydantic import BaseModel, Field
 
 from backend.core.config import get_settings
 from backend.core.logging import get_logger
@@ -25,19 +25,27 @@ class ModelProvider(StrEnum):
     ANTHROPIC = "anthropic"
 
 
-class OllamaLLM(LLM):
+class OllamaLLM(LLM, BaseModel):
     """
     LangChain-compatible LLM wrapper for Ollama.
 
     This is a stub implementation that will be fully integrated in Phase 3
     when the Ollama service is configured.
 
+    Inherits from both LangChain LLM and Pydantic BaseModel to properly
+    handle Field() annotations and provide validation.
+
     TODO: Full Ollama integration in Phase 3
     """
 
     model: str = Field(default="qwen2.5-coder")
     base_url: str = Field(default="http://localhost:11434")
-    temperature: float = Field(default=0.7)
+    temperature: float = Field(default=0.7, ge=0.0, le=1.0)
+
+    model_config = {
+        "arbitrary_types_allowed": True,
+        "extra": "allow"
+    }
 
     @property
     def _llm_type(self) -> str:

@@ -69,10 +69,14 @@ class TestOllamaLLM:
         """Test default initialization."""
         llm = OllamaLLM()
 
-        # Access field values directly - OllamaLLM is LangChain LLM, not Pydantic model
+        # Access field values directly - now inherits from Pydantic BaseModel
         assert llm.model == "qwen2.5-coder"
         assert llm.base_url == "http://localhost:11434"
         assert llm.temperature == 0.7
+
+        # Also test model_dump works now
+        model_dict = llm.model_dump()
+        assert model_dict["model"] == "qwen2.5-coder"
 
     def test_init_custom_values(self):
         """Test initialization with custom values."""
@@ -86,6 +90,10 @@ class TestOllamaLLM:
         assert llm.model == "deepseek-coder"
         assert llm.base_url == "http://custom:1234"
         assert llm.temperature == 0.5
+
+        # Also test model_dump works
+        model_dict = llm.model_dump()
+        assert model_dict["model"] == "deepseek-coder"
 
     def test_llm_type_property(self):
         """Test _llm_type property."""

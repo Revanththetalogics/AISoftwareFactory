@@ -61,10 +61,14 @@ class TestOllamaLLM:
         """Test default OllamaLLM initialization."""
         llm = OllamaLLM()
 
-        # Access field values directly - OllamaLLM is LangChain LLM, not Pydantic model
+        # Access field values directly - now inherits from Pydantic BaseModel
         assert llm.model == "qwen2.5-coder"
         assert llm.base_url == "http://localhost:11434"
         assert llm.temperature == 0.7
+
+        # Also test model_dump works now
+        model_dict = llm.model_dump()
+        assert model_dict["model"] == "qwen2.5-coder"
 
     def test_custom_initialization(self):
         """Test OllamaLLM with custom values."""
