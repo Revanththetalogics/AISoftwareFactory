@@ -588,6 +588,91 @@ class TestCreateUser:
 
             assert "already exists" in str(exc_info.value).lower()
 
+    @pytest.mark.asyncio
+    async def test_create_user_duplicate_email_raises_error(self):
+        """Test create_user raises error for duplicate email."""
+        service = AuthService()
+
+        existing_user = Mock()
+
+        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_local:
+            mock_session = AsyncMock()
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=None)
+            mock_session_local.return_value = mock_session
+
+            # First execute returns None (username doesn't exist)
+            # Second execute returns existing user (email exists)
+            call_count = [0]
+            def execute_side_effect(*args, **kwargs):
+                call_count[0] += 1
+                mock_result = Mock()
+                if call_count[0] == 1:
+                    # Username check - not found
+                    mock_result.scalar_one_or_none = Mock(return_value=None)
+                else:
+                    # Email check - found (duplicate)
+                    mock_result.scalar_one_or_none = Mock(return_value=existing_user)
+                return mock_result
+
+            mock_session.execute = AsyncMock(side_effect=execute_side_effect)
+
+            with pytest.raises(ValueError) as exc_info:
+                await service.create_user(
+                    username="newuser",
+                    email="existing@example.com",
+                    password="password123",
+                )
+
+            assert "email" in str(exc_info.value).lower()
+            assert "already exists" in str(exc_info.value).lower()
+
+
+class TestGetUserByEmail:
+    """Tests for get_user_by_email method."""
+
+    @pytest.mark.asyncio
+    async def test_get_user_by_email_found(self):
+        """Test get_user_by_email returns user when found."""
+        service = AuthService()
+        mock_user = Mock()
+        mock_user.email = "test@example.com"
+        mock_user.is_active = True
+
+        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_local:
+            mock_session = AsyncMock()
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=None)
+            mock_session_local.return_value = mock_session
+
+            mock_result = Mock()
+            mock_result.scalar_one_or_none = Mock(return_value=mock_user)
+            mock_session.execute = AsyncMock(return_value=mock_result)
+
+            result = await service.get_user_by_email("test@example.com")
+
+            assert result == mock_user
+            mock_session.execute.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_get_user_by_email_not_found(self):
+        """Test get_user_by_email returns None when not found."""
+        service = AuthService()
+
+        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_local:
+            mock_session = AsyncMock()
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=None)
+            mock_session_local.return_value = mock_session
+
+            mock_result = Mock()
+            mock_result.scalar_one_or_none = Mock(return_value=None)
+            mock_session.execute = AsyncMock(return_value=mock_result)
+
+            result = await service.get_user_by_email("nonexistent@example.com")
+
+            assert result is None
+
 
 class TestGetAuthService:
     """Tests for get_auth_service function."""

@@ -183,3 +183,84 @@ class TestBaseAgent:
         assert result["query"] == "test query"
         assert result["results"] == []
         assert result["total"] == 0
+
+    def test_repr(self):
+        """Test string representation of agent."""
+        agent = ConcreteTestAgent(
+            agent_id="agent-123",
+            name="Test Agent",
+        )
+
+        repr_str = repr(agent)
+
+        assert "ConcreteTestAgent" in repr_str
+        assert "Test Agent" in repr_str
+        assert "agent-123" in repr_str
+
+    def test_identity_property(self):
+        """Test identity property."""
+        agent = ConcreteTestAgent(
+            agent_id="agent-123",
+            name="Test Agent",
+            role="Tester",
+        )
+
+        identity = agent.identity
+
+        assert identity.agent_id == "agent-123"
+        assert identity.name == "Test Agent"
+        assert identity.role == "Tester"
+
+    def test_task_with_deadline(self):
+        """Test task creation with deadline."""
+        from datetime import datetime
+
+        deadline = datetime(2024, 12, 31)
+        task = Task(
+            task_type="test",
+            description="Test task",
+            deadline=deadline,
+        )
+
+        result = task.to_dict()
+        assert result["deadline"] == deadline.isoformat()
+
+    def test_task_with_parent_task(self):
+        """Test task creation with parent task ID."""
+        task = Task(
+            task_type="subtask",
+            description="Subtask",
+            parent_task_id="parent-123",
+        )
+
+        assert task.parent_task_id == "parent-123"
+        assert task.to_dict()["parent_task_id"] == "parent-123"
+
+    def test_task_result_with_error(self):
+        """Test task result with error."""
+        result = TaskResult(
+            task_id="task-123",
+            status=TaskStatus.FAILED,
+            error="Something went wrong",
+        )
+
+        result_dict = result.to_dict()
+        assert result_dict["error"] == "Something went wrong"
+        assert result_dict["status"] == "failed"
+
+    def test_agent_status_enum(self):
+        """Test AgentStatus enum values."""
+        from backend.agents.base_agent import AgentStatus
+
+        assert AgentStatus.IDLE.value == "idle"
+        assert AgentStatus.BUSY.value == "busy"
+        assert AgentStatus.OFFLINE.value == "offline"
+        assert AgentStatus.ERROR.value == "error"
+
+    def test_task_status_enum(self):
+        """Test TaskStatus enum values."""
+        assert TaskStatus.PENDING.value == "pending"
+        assert TaskStatus.IN_PROGRESS.value == "in_progress"
+        assert TaskStatus.COMPLETED.value == "completed"
+        assert TaskStatus.FAILED.value == "failed"
+        assert TaskStatus.CANCELLED.value == "cancelled"

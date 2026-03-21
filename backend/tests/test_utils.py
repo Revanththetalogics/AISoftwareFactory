@@ -4,7 +4,7 @@ Tests for utility modules.
 
 from datetime import datetime
 
-from backend.utils.formatters import format_bytes, format_datetime, format_duration
+from backend.utils.formatters import format_bytes, format_datetime, format_duration, truncate_string
 from backend.utils.id_generator import generate_id, generate_timestamp_id, generate_uuid
 from backend.utils.security import hash_password, verify_password
 from backend.utils.validators import validate_email, validate_project_name, validate_url
@@ -117,11 +117,68 @@ class TestFormatters:
         """Test duration formatting in hours."""
         assert format_duration(7200) == "2.0h"
 
+    def test_format_duration_days(self):
+        """Test duration formatting in days (covers lines 45-46)."""
+        # 86400 seconds = 1 day
+        assert format_duration(86400) == "1.0d"
+        assert format_duration(172800) == "2.0d"
+        assert format_duration(86400 * 7) == "7.0d"
+
     def test_format_bytes(self):
         """Test bytes formatting."""
         assert format_bytes(512) == "512.0 B"
         assert format_bytes(1024) == "1.0 KB"
         assert format_bytes(1024 * 1024) == "1.0 MB"
+
+    def test_format_bytes_gb(self):
+        """Test bytes formatting for GB."""
+        assert format_bytes(1024 * 1024 * 1024) == "1.0 GB"
+
+    def test_format_bytes_tb(self):
+        """Test bytes formatting for TB."""
+        assert format_bytes(1024 * 1024 * 1024 * 1024) == "1.0 TB"
+
+    def test_format_bytes_pb(self):
+        """Test bytes formatting for PB (covers line 63)."""
+        # This covers the final return statement for PB
+        pb_bytes = 1024 * 1024 * 1024 * 1024 * 1024  # 1 PB
+        assert format_bytes(pb_bytes) == "1.0 PB"
+        # Test larger PB values
+        assert format_bytes(pb_bytes * 2) == "2.0 PB"
+
+    def test_truncate_string_short(self):
+        """Test truncate_string when text is shorter than max_length (covers line 78)."""
+        text = "Hello, World!"
+        result = truncate_string(text, max_length=100)
+        assert result == text
+
+    def test_truncate_string_exact_length(self):
+        """Test truncate_string when text equals max_length (covers line 78)."""
+        text = "Hello"
+        result = truncate_string(text, max_length=5)
+        assert result == text
+
+    def test_truncate_string_long(self):
+        """Test truncate_string when text exceeds max_length (covers lines 79-80)."""
+        text = "This is a very long string that needs to be truncated"
+        result = truncate_string(text, max_length=20)
+        assert len(result) == 20
+        assert result.endswith("...")
+        assert result == "This is a very lo..."
+
+    def test_truncate_string_custom_suffix(self):
+        """Test truncate_string with custom suffix (covers lines 78-80)."""
+        text = "Hello, World! How are you?"
+        result = truncate_string(text, max_length=15, suffix=">>")
+        assert len(result) == 15
+        assert result.endswith(">>")
+        assert result == "Hello, World!>>"
+
+    def test_truncate_string_empty_suffix(self):
+        """Test truncate_string with empty suffix."""
+        text = "Hello, World!"
+        result = truncate_string(text, max_length=5, suffix="")
+        assert result == "Hello"
 
 
 class TestSecurity:
