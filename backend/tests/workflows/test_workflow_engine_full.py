@@ -30,11 +30,16 @@ class TestWorkflowEngine:
             engine = WorkflowEngine()
             state = WorkflowState(project_id="test-123")
 
-            # Mock graph execution
+            # Mock graph execution - use invoke for sync, ainvoke for async
+            if hasattr(engine._graph, 'ainvoke'):
+                mock_method = "ainvoke"
+            else:
+                mock_method = "invoke"
+            
             with patch.object(
                 engine._graph,
-                "ainvoke",
-                new_callable=AsyncMock,
+                mock_method,
+                new_callable=AsyncMock if mock_method == "ainvoke" else Mock,
                 return_value=state,
             ):
                 result = await engine.run(state)
@@ -49,10 +54,15 @@ class TestWorkflowEngine:
             state = WorkflowState(project_id="test-123")
 
             # Mock graph execution to raise an exception
+            if hasattr(engine._graph, 'ainvoke'):
+                mock_method = "ainvoke"
+            else:
+                mock_method = "invoke"
+            
             with patch.object(
                 engine._graph,
-                "ainvoke",
-                new_callable=AsyncMock,
+                mock_method,
+                new_callable=AsyncMock if mock_method == "ainvoke" else Mock,
                 side_effect=RuntimeError("Workflow failed"),
             ):
                 result = await engine.run(state)

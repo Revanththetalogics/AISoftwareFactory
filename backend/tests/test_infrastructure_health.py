@@ -153,32 +153,39 @@ class TestCheckDatabase:
         # Mock SQLAlchemy inspector
         mock_inspector = Mock()
         mock_inspector.get_table_names.return_value = ['users', 'projects', 'workflows', 'tasks', 'other_table']
-
+        
         async def mock_run_sync(fn):
-            return fn(mock_session)
-
+            # Create a mock sync session with connection
+            mock_sync_session = Mock()
+            mock_connection = Mock()
+            mock_sync_session.connection = Mock(return_value=mock_connection)
+            result = fn(mock_sync_session)
+            return result
+        
         mock_session.run_sync = mock_run_sync
+        
+        # Patch the inspect function to return our mock inspector
+        with patch('sqlalchemy.inspect', return_value=mock_inspector):
+            mock_pool = Mock()
+            mock_pool.size.return_value = 10
+            mock_pool.checkedin.return_value = 8
+            mock_pool.checkedout.return_value = 2
+            mock_pool.overflow.return_value = 0
 
-        mock_pool = Mock()
-        mock_pool.size.return_value = 10
-        mock_pool.checkedin.return_value = 8
-        mock_pool.checkedout.return_value = 2
-        mock_pool.overflow.return_value = 0
+            mock_engine = Mock()
+            mock_engine.pool = mock_pool
 
-        mock_engine = Mock()
-        mock_engine.pool = mock_pool
+            mock_session_ctx = AsyncMock()
+            mock_session_ctx.__aenter__.return_value = mock_session
+            mock_session_ctx.__aexit__.return_value = None
 
-        mock_session_ctx = AsyncMock()
-        mock_session_ctx.__aenter__.return_value = mock_session
-        mock_session_ctx.__aexit__.return_value = None
+            with patch('backend.db.session.AsyncSessionLocal', return_value=mock_session_ctx), \
+                 patch('backend.db.session.engine', mock_engine):
+                status, message, details = await checker.check_database()
 
-        with patch('backend.db.session.AsyncSessionLocal', return_value=mock_session_ctx), \
-             patch('backend.db.session.engine', mock_engine):
-            status, message, details = await checker.check_database()
-
-            assert status == HealthStatus.HEALTHY
-            assert "Database OK" in message
-            assert "pool_stats" in details
+                assert status == HealthStatus.HEALTHY
+                assert "Database OK" in message
+                assert "pool_stats" in details
 
     @pytest.mark.asyncio
     async def test_check_database_missing_tables(self):
@@ -192,34 +199,41 @@ class TestCheckDatabase:
         # Mock SQLAlchemy inspector - simulate missing tables
         mock_inspector = Mock()
         mock_inspector.get_table_names.return_value = ['workflows', 'tasks']  # Missing 'users' and 'projects'
-
+        
         async def mock_run_sync(fn):
-            return fn(mock_session)
-
+            # Create a mock sync session with connection
+            mock_sync_session = Mock()
+            mock_connection = Mock()
+            mock_sync_session.connection = Mock(return_value=mock_connection)
+            result = fn(mock_sync_session)
+            return result
+        
         mock_session.run_sync = mock_run_sync
+        
+        # Patch the inspect function to return our mock inspector
+        with patch('sqlalchemy.inspect', return_value=mock_inspector):
+            mock_pool = Mock()
+            mock_pool.size.return_value = 10
+            mock_pool.checkedin.return_value = 8
+            mock_pool.checkedout.return_value = 2
+            mock_pool.overflow.return_value = 0
 
-        mock_pool = Mock()
-        mock_pool.size.return_value = 10
-        mock_pool.checkedin.return_value = 8
-        mock_pool.checkedout.return_value = 2
-        mock_pool.overflow.return_value = 0
+            mock_engine = Mock()
+            mock_engine.pool = mock_pool
 
-        mock_engine = Mock()
-        mock_engine.pool = mock_pool
+            mock_session_ctx = AsyncMock()
+            mock_session_ctx.__aenter__.return_value = mock_session
+            mock_session_ctx.__aexit__.return_value = None
 
-        mock_session_ctx = AsyncMock()
-        mock_session_ctx.__aenter__.return_value = mock_session
-        mock_session_ctx.__aexit__.return_value = None
+            with patch('backend.db.session.AsyncSessionLocal', return_value=mock_session_ctx), \
+                 patch('backend.db.session.engine', mock_engine):
+                status, message, details = await checker.check_database()
 
-        with patch('backend.db.session.AsyncSessionLocal', return_value=mock_session_ctx), \
-             patch('backend.db.session.engine', mock_engine):
-            status, message, details = await checker.check_database()
-
-            # Should be degraded due to missing tables
-            assert status == HealthStatus.DEGRADED
-            assert "missing tables" in message.lower()
-            assert "users" in message
-            assert "projects" in message
+                # Should be degraded due to missing tables
+                assert status == HealthStatus.DEGRADED
+                assert "missing tables" in message.lower()
+                assert "users" in message
+                assert "projects" in message
 
     @pytest.mark.asyncio
     async def test_check_database_slow_query(self):
@@ -234,36 +248,43 @@ class TestCheckDatabase:
         # Mock SQLAlchemy inspector
         mock_inspector = Mock()
         mock_inspector.get_table_names.return_value = ['users', 'projects', 'workflows', 'tasks']
-
+        
         async def mock_run_sync(fn):
-            return fn(mock_session)
-
+            # Create a mock sync session with connection
+            mock_sync_session = Mock()
+            mock_connection = Mock()
+            mock_sync_session.connection = Mock(return_value=mock_connection)
+            result = fn(mock_sync_session)
+            return result
+        
         mock_session.run_sync = mock_run_sync
+        
+        # Patch the inspect function to return our mock inspector
+        with patch('sqlalchemy.inspect', return_value=mock_inspector):
+            mock_pool = Mock()
+            mock_pool.size.return_value = 10
+            mock_pool.checkedin.return_value = 8
+            mock_pool.checkedout.return_value = 2
+            mock_pool.overflow.return_value = 0
 
-        mock_pool = Mock()
-        mock_pool.size.return_value = 10
-        mock_pool.checkedin.return_value = 8
-        mock_pool.checkedout.return_value = 2
-        mock_pool.overflow.return_value = 0
+            mock_engine = Mock()
+            mock_engine.pool = mock_pool
 
-        mock_engine = Mock()
-        mock_engine.pool = mock_pool
+            mock_session_ctx = AsyncMock()
+            mock_session_ctx.__aenter__.return_value = mock_session
+            mock_session_ctx.__aexit__.return_value = None
 
-        mock_session_ctx = AsyncMock()
-        mock_session_ctx.__aenter__.return_value = mock_session
-        mock_session_ctx.__aexit__.return_value = None
+            with patch('backend.db.session.AsyncSessionLocal', return_value=mock_session_ctx), \
+                 patch('backend.db.session.engine', mock_engine), \
+                 patch('time.time') as mock_time:
+                # Simulate 1500ms query time
+                mock_time.side_effect = [0, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5]
 
-        with patch('backend.db.session.AsyncSessionLocal', return_value=mock_session_ctx), \
-             patch('backend.db.session.engine', mock_engine), \
-             patch('time.time') as mock_time:
-            # Simulate 1500ms query time
-            mock_time.side_effect = [0, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5]
+                status, message, details = await checker.check_database()
 
-            status, message, details = await checker.check_database()
-
-            # Should be degraded due to slow query
-            assert status == HealthStatus.DEGRADED
-            assert "slow" in message.lower()
+                # Should be degraded due to slow query
+                assert status == HealthStatus.DEGRADED
+                assert "slow" in message.lower()
 
     @pytest.mark.asyncio
     async def test_check_database_exception(self):
