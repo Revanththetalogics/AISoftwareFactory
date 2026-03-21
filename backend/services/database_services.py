@@ -9,7 +9,7 @@ This module provides database-backed service implementations for:
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import uuid4
 
 from sqlalchemy import delete, select, update
@@ -32,9 +32,9 @@ class DatabaseProjectService:
         self,
         name: str,
         description: str,
-        requirements: Optional[str] = None,
-        tech_stack: Optional[Dict[str, Any]] = None,
-        owner_id: Optional[str] = None,
+        requirements: str | None = None,
+        tech_stack: dict[str, Any] | None = None,
+        owner_id: str | None = None,
         db: AsyncSession = None
     ) -> DBProject:
         """Create a new project in the database."""
@@ -54,9 +54,9 @@ class DatabaseProjectService:
         db: AsyncSession,
         name: str,
         description: str,
-        requirements: Optional[str] = None,
-        tech_stack: Optional[Dict[str, Any]] = None,
-        owner_id: Optional[str] = None
+        requirements: str | None = None,
+        tech_stack: dict[str, Any] | None = None,
+        owner_id: str | None = None
     ) -> DBProject:
         """Internal method to create project."""
         # Sanitize inputs
@@ -84,7 +84,7 @@ class DatabaseProjectService:
         logger.info("Project created in database", project_id=project.id, name=project.name)
         return project
 
-    async def get_project(self, project_id: str, db: AsyncSession = None) -> Optional[DBProject]:
+    async def get_project(self, project_id: str, db: AsyncSession = None) -> DBProject | None:
         """Get project by ID."""
         with PerformanceTimer("get_project", project_id=project_id):
             if db is None:
@@ -93,7 +93,7 @@ class DatabaseProjectService:
 
             return await self._get_project(db, project_id)
 
-    async def _get_project(self, db: AsyncSession, project_id: str) -> Optional[DBProject]:
+    async def _get_project(self, db: AsyncSession, project_id: str) -> DBProject | None:
         """Internal method to get project."""
         stmt = select(DBProject).where(DBProject.id == project_id)
         result = await db.execute(stmt)
@@ -108,12 +108,12 @@ class DatabaseProjectService:
 
     async def list_projects(
         self,
-        owner_id: Optional[str] = None,
-        status: Optional[str] = None,
+        owner_id: str | None = None,
+        status: str | None = None,
         skip: int = 0,
         limit: int = 100,
         db: AsyncSession = None
-    ) -> List[DBProject]:
+    ) -> list[DBProject]:
         """List projects with optional filtering."""
         with PerformanceTimer("list_projects", owner_id=owner_id, status=status, limit=limit) as timer:
             if db is None:
@@ -128,11 +128,11 @@ class DatabaseProjectService:
     async def _list_projects(
         self,
         db: AsyncSession,
-        owner_id: Optional[str] = None,
-        status: Optional[str] = None,
+        owner_id: str | None = None,
+        status: str | None = None,
         skip: int = 0,
         limit: int = 100
-    ) -> List[DBProject]:
+    ) -> list[DBProject]:
         """Internal method to list projects."""
         stmt = select(DBProject)
 
@@ -152,9 +152,9 @@ class DatabaseProjectService:
     async def update_project(
         self,
         project_id: str,
-        updates: Dict[str, Any],
+        updates: dict[str, Any],
         db: AsyncSession = None
-    ) -> Optional[DBProject]:
+    ) -> DBProject | None:
         """Update project fields."""
         with PerformanceTimer("update_project", project_id=project_id) as timer:
             if db is None:
@@ -173,8 +173,8 @@ class DatabaseProjectService:
         self,
         db: AsyncSession,
         project_id: str,
-        updates: Dict[str, Any]
-    ) -> Optional[DBProject]:
+        updates: dict[str, Any]
+    ) -> DBProject | None:
         """Internal method to update project."""
         # Sanitize text fields
         if "name" in updates:
@@ -225,8 +225,8 @@ class DatabaseWorkflowService:
         self,
         name: str,
         project_id: str,
-        steps: List[Dict[str, Any]],
-        created_by: Optional[str] = None,
+        steps: list[dict[str, Any]],
+        created_by: str | None = None,
         db: AsyncSession = None
     ) -> DBWorkflow:
         """Create a new workflow in the database."""
@@ -241,8 +241,8 @@ class DatabaseWorkflowService:
         db: AsyncSession,
         name: str,
         project_id: str,
-        steps: List[Dict[str, Any]],
-        created_by: Optional[str] = None
+        steps: list[dict[str, Any]],
+        created_by: str | None = None
     ) -> DBWorkflow:
         """Internal method to create workflow."""
         workflow = DBWorkflow(
@@ -265,7 +265,7 @@ class DatabaseWorkflowService:
         logger.info("Workflow created in database", workflow_id=workflow.id, name=workflow.name)
         return workflow
 
-    async def get_workflow(self, workflow_id: str, db: AsyncSession = None) -> Optional[DBWorkflow]:
+    async def get_workflow(self, workflow_id: str, db: AsyncSession = None) -> DBWorkflow | None:
         """Get workflow by ID."""
         if db is None:
             async with get_db_context() as db:
@@ -273,7 +273,7 @@ class DatabaseWorkflowService:
 
         return await self._get_workflow(db, workflow_id)
 
-    async def _get_workflow(self, db: AsyncSession, workflow_id: str) -> Optional[DBWorkflow]:
+    async def _get_workflow(self, db: AsyncSession, workflow_id: str) -> DBWorkflow | None:
         """Internal method to get workflow."""
         stmt = select(DBWorkflow).where(DBWorkflow.id == workflow_id)
         result = await db.execute(stmt)
@@ -283,9 +283,9 @@ class DatabaseWorkflowService:
         self,
         workflow_id: str,
         status: WorkflowStatus,
-        current_step_id: Optional[str] = None,
+        current_step_id: str | None = None,
         db: AsyncSession = None
-    ) -> Optional[DBWorkflow]:
+    ) -> DBWorkflow | None:
         """Update workflow status."""
         if db is None:
             async with get_db_context() as db:
@@ -298,8 +298,8 @@ class DatabaseWorkflowService:
         db: AsyncSession,
         workflow_id: str,
         status: WorkflowStatus,
-        current_step_id: Optional[str] = None
-    ) -> Optional[DBWorkflow]:
+        current_step_id: str | None = None
+    ) -> DBWorkflow | None:
         """Internal method to update workflow status."""
         updates = {
             "status": status,
@@ -328,7 +328,7 @@ class DatabaseAgentService:
         self,
         name: str,
         role: str,
-        capabilities: List[str],
+        capabilities: list[str],
         db: AsyncSession = None
     ) -> DBAgent:
         """Register a new agent in the database."""
@@ -343,7 +343,7 @@ class DatabaseAgentService:
         db: AsyncSession,
         name: str,
         role: str,
-        capabilities: List[str]
+        capabilities: list[str]
     ) -> DBAgent:
         """Internal method to register agent."""
         agent = DBAgent(
@@ -362,7 +362,7 @@ class DatabaseAgentService:
         logger.info("Agent registered in database", agent_id=agent.id, name=agent.name)
         return agent
 
-    async def get_agent(self, agent_id: str, db: AsyncSession = None) -> Optional[DBAgent]:
+    async def get_agent(self, agent_id: str, db: AsyncSession = None) -> DBAgent | None:
         """Get agent by ID."""
         if db is None:
             async with get_db_context() as db:
@@ -370,7 +370,7 @@ class DatabaseAgentService:
 
         return await self._get_agent(db, agent_id)
 
-    async def _get_agent(self, db: AsyncSession, agent_id: str) -> Optional[DBAgent]:
+    async def _get_agent(self, db: AsyncSession, agent_id: str) -> DBAgent | None:
         """Internal method to get agent."""
         stmt = select(DBAgent).where(DBAgent.id == agent_id)
         result = await db.execute(stmt)
@@ -378,10 +378,10 @@ class DatabaseAgentService:
 
     async def list_agents(
         self,
-        role: Optional[str] = None,
-        status: Optional[str] = None,
+        role: str | None = None,
+        status: str | None = None,
         db: AsyncSession = None
-    ) -> List[DBAgent]:
+    ) -> list[DBAgent]:
         """List agents with optional filtering."""
         if db is None:
             async with get_db_context() as db:
@@ -392,9 +392,9 @@ class DatabaseAgentService:
     async def _list_agents(
         self,
         db: AsyncSession,
-        role: Optional[str] = None,
-        status: Optional[str] = None
-    ) -> List[DBAgent]:
+        role: str | None = None,
+        status: str | None = None
+    ) -> list[DBAgent]:
         """Internal method to list agents."""
         stmt = select(DBAgent)
 

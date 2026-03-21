@@ -6,7 +6,6 @@ This module provides WebSocket endpoints for real-time communication.
 
 import json
 from datetime import datetime
-from typing import Dict, Set
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -17,16 +16,16 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/ws", tags=["websocket"])
 
 # Connection managers for different channels
-_project_connections: Dict[str, Set[WebSocket]] = {}
-_workflow_connections: Dict[str, Set[WebSocket]] = {}
-_global_connections: Set[WebSocket] = set()
+_project_connections: dict[str, set[WebSocket]] = {}
+_workflow_connections: dict[str, set[WebSocket]] = {}
+_global_connections: set[WebSocket] = set()
 
 
 class ConnectionManager:
     """Manage WebSocket connections."""
 
     def __init__(self):
-        self.active_connections: Set[WebSocket] = set()
+        self.active_connections: set[WebSocket] = set()
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()

@@ -152,3 +152,38 @@ class TestSimulationLayer:
         )
 
         assert result.status == TestStatus.FAILED
+
+
+class TestSimulationReportExtendedCoverage:
+    """Tests for extended coverage - line 117 (duration_ms when completed_at is None)."""
+
+    def test_duration_ms_when_completed_at_none_line_117(self):
+        """Test line 117: duration_ms returns 0.0 when completed_at is None."""
+
+        report = SimulationReport(
+            project_name="test_project",
+            results=[],
+            # completed_at is None by default
+        )
+
+        # Line 117: when completed_at is None, should return 0.0
+        assert report.completed_at is None
+        assert report.duration_ms == 0.0
+
+    def test_duration_ms_when_completed_at_set(self):
+        """Test duration_ms when completed_at is set."""
+        from datetime import datetime, timedelta
+
+        started = datetime.utcnow()
+        completed = started + timedelta(seconds=5)  # 5 seconds = 5000ms
+
+        report = SimulationReport(
+            project_name="test_project",
+            results=[],
+        )
+        # Set started_at and completed_at
+        report.started_at = started
+        report.completed_at = completed
+
+        # Should return duration in milliseconds
+        assert report.duration_ms == pytest.approx(5000, rel=0.1)

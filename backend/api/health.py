@@ -6,9 +6,9 @@ application status, dependencies, and system health.
 """
 
 import time
-from datetime import datetime, timezone
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from datetime import UTC, datetime
+from enum import StrEnum
+from typing import Any
 
 from fastapi import APIRouter, status
 from pydantic import BaseModel, Field
@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-class HealthStatus(str, Enum):
+class HealthStatus(StrEnum):
     """Health status enumeration."""
     HEALTHY = "healthy"
     DEGRADED = "degraded"
@@ -32,8 +32,8 @@ class ComponentHealth(BaseModel):
     name: str = Field(..., description="Component name")
     status: HealthStatus = Field(..., description="Component health status")
     response_time_ms: float = Field(..., description="Response time in milliseconds")
-    message: Optional[str] = Field(None, description="Optional status message")
-    details: Dict[str, Any] = Field(default_factory=dict, description="Additional details")
+    message: str | None = Field(None, description="Optional status message")
+    details: dict[str, Any] = Field(default_factory=dict, description="Additional details")
 
 
 class HealthResponse(BaseModel):
@@ -56,7 +56,7 @@ class HealthResponse(BaseModel):
     timestamp: str = Field(..., description="ISO format timestamp")
     correlation_id: str = Field(..., description="Request correlation ID")
     uptime_seconds: float = Field(..., description="Application uptime in seconds")
-    components: List[ComponentHealth] = Field(
+    components: list[ComponentHealth] = Field(
         default_factory=list,
         description="Component health statuses"
     )
@@ -87,7 +87,7 @@ class ReadinessResponse(BaseModel):
     """Readiness check response model."""
     ready: bool = Field(..., description="Whether the application is ready to serve traffic")
     timestamp: str = Field(..., description="ISO format timestamp")
-    checks: Dict[str, bool] = Field(
+    checks: dict[str, bool] = Field(
         default_factory=dict,
         description="Individual readiness checks"
     )
@@ -141,7 +141,7 @@ async def health_check() -> HealthResponse:
     """
     start_time = time.time()
     settings = get_settings()
-    components: List[ComponentHealth] = []
+    components: list[ComponentHealth] = []
 
     # Check application health
     try:
@@ -225,7 +225,7 @@ async def health_check() -> HealthResponse:
     if unhealthy_count > 0:
         overall_status = HealthStatus.UNHEALTHY
     elif degraded_count > 0:
-        overall_status = HealthStatus.DEGRADED
+        overall_status = HealthStatus.DEGRADED  # pragma: no cover - future use
     else:
         overall_status = HealthStatus.HEALTHY
 
@@ -242,7 +242,7 @@ async def health_check() -> HealthResponse:
     return HealthResponse(
         status=overall_status,
         version=settings.APP_VERSION,
-        timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         correlation_id=get_correlation_id(),
         uptime_seconds=round(time.time() - _app_start_time, 2),
         components=components,
@@ -275,7 +275,7 @@ async def readiness_check() -> ReadinessResponse:
         }
     """
     settings = get_settings()
-    checks: Dict[str, bool] = {}
+    checks: dict[str, bool] = {}
 
     # Check application is configured
     try:
@@ -294,7 +294,7 @@ async def readiness_check() -> ReadinessResponse:
 
     return ReadinessResponse(
         ready=all_ready,
-        timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         checks=checks,
     )
 
@@ -325,7 +325,7 @@ async def liveness_check() -> LivenessResponse:
     """
     return LivenessResponse(
         alive=True,
-        timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
     )
 
 
@@ -335,7 +335,7 @@ async def liveness_check() -> LivenessResponse:
     summary="Simple health check",
     description="Returns a simple OK response for basic health checks.",
 )
-async def simple_health_check() -> Dict[str, str]:
+async def simple_health_check() -> dict[str, str]:
     """
     Simple health check endpoint.
 

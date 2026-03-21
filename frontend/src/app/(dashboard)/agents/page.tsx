@@ -4,7 +4,7 @@
 export const dynamic = 'force-dynamic';
 
 import { motion } from 'framer-motion';
-import { Bot, Activity, Clock, Pause, Play, RefreshCw, Zap, Terminal } from 'lucide-react';
+import { Bot, Clock, Pause, Play, RefreshCw, Zap, Terminal } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

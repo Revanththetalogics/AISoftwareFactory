@@ -7,7 +7,7 @@ for maintaining state across interactions.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import uuid4
 
 from backend.core.logging import get_logger
@@ -21,15 +21,15 @@ class Message:
     role: str  # user, assistant, system
     content: str
     timestamp: datetime = field(default_factory=datetime.utcnow)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class Conversation:
     """A conversation session."""
     conversation_id: str
-    messages: List[Message] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    messages: list[Message] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.utcnow)
 
 
@@ -49,13 +49,13 @@ class ContextManager:
             max_tokens: Maximum tokens in context window
         """
         self._max_tokens = max_tokens
-        self._conversations: Dict[str, Conversation] = {}
+        self._conversations: dict[str, Conversation] = {}
         self._logger = get_logger(__name__)
 
     def create_conversation(
         self,
-        conversation_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        conversation_id: str | None = None,
+        metadata: dict[str, Any] | None = None
     ) -> str:
         """
         Create a new conversation.
@@ -88,7 +88,7 @@ class ContextManager:
         conversation_id: str,
         role: str,
         content: str,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: dict[str, Any] | None = None
     ) -> bool:
         """
         Add a message to a conversation.
@@ -123,8 +123,8 @@ class ContextManager:
     def get_context(
         self,
         conversation_id: str,
-        max_messages: Optional[int] = None
-    ) -> List[Dict[str, Any]]:
+        max_messages: int | None = None
+    ) -> list[dict[str, Any]]:
         """
         Get conversation context.
 
@@ -153,7 +153,7 @@ class ContextManager:
             for msg in messages
         ]
 
-    def get_conversation_summary(self, conversation_id: str) -> Optional[str]:
+    def get_conversation_summary(self, conversation_id: str) -> str | None:
         """
         Get a summary of the conversation.
 

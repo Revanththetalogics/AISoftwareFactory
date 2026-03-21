@@ -7,13 +7,8 @@ import {
   Filter, 
   Download, 
   Trash2, 
-  ChevronDown,
   X,
   Terminal,
-  Info,
-  AlertTriangle,
-  AlertCircle,
-  CheckCircle2,
 } from 'lucide-react';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -49,14 +44,6 @@ export interface LogStreamProps {
   onLineClick?: (log: LogEntry) => void;
   onClear?: () => void;
 }
-
-const levelIcons: Record<LogLevel, React.ElementType> = {
-  info: Info,
-  warn: AlertTriangle,
-  error: AlertCircle,
-  debug: Terminal,
-  success: CheckCircle2,
-};
 
 const levelColors: Record<LogLevel, string> = {
   info: 'text-state-running',
@@ -375,7 +362,7 @@ export function MiniLogViewer({
 
   return (
     <div className={cn('space-y-1 font-system text-xs', className)}>
-      {recentLogs.map((log, index) => (
+      {recentLogs.map((log) => (
         <div key={log.id} className="flex items-start gap-2 opacity-75 hover:opacity-100 transition-opacity">
           <span className="text-text-tertiary shrink-0">
             {log.timestamp.toLocaleTimeString()}

@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from backend.agents.base_agent import BaseAgent, Task, TaskResult, TaskStatus
 from backend.core.logging import get_logger
@@ -49,7 +49,7 @@ class VisualDiff:
     diff_percentage: float
     is_significant: bool
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "baseline_path": self.baseline_path,
             "current_path": self.current_path,
@@ -68,16 +68,16 @@ class E2ETestResult:
     duration_ms: float
     browser: str
     url: str
-    error_message: Optional[str] = None
-    screenshot_path: Optional[str] = None
-    video_path: Optional[str] = None
-    visual_diff: Optional[VisualDiff] = None
-    accessibility_violations: List[Dict] = field(default_factory=list)
-    console_errors: List[str] = field(default_factory=list)
-    network_errors: List[str] = field(default_factory=list)
+    error_message: str | None = None
+    screenshot_path: str | None = None
+    video_path: str | None = None
+    visual_diff: VisualDiff | None = None
+    accessibility_violations: list[dict] = field(default_factory=list)
+    console_errors: list[str] = field(default_factory=list)
+    network_errors: list[str] = field(default_factory=list)
     executed_at: datetime = field(default_factory=datetime.utcnow)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "test_name": self.test_name,
             "status": self.status.value,
@@ -103,12 +103,12 @@ class GeneratedE2ETest:
     description: str
     test_code: str
     target_url: str
-    user_flow: List[str]
-    assertions: List[str]
-    selectors: Dict[str, str]
+    user_flow: list[str]
+    assertions: list[str]
+    selectors: dict[str, str]
     generated_at: datetime = field(default_factory=datetime.utcnow)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "name": self.name,
@@ -166,8 +166,8 @@ class FrontendTesterAgent(BaseAgent):
         self._llm = LLMFactory.create_llm()
         self._base_url = base_url
         self._playwright_available = self._check_playwright()
-        self._test_history: List[E2ETestResult] = []
-        self._selector_healing_cache: Dict[str, str] = {}
+        self._test_history: list[E2ETestResult] = []
+        self._selector_healing_cache: dict[str, str] = {}
 
     async def execute_task(self, task: Task) -> TaskResult:
         """
@@ -219,10 +219,10 @@ class FrontendTesterAgent(BaseAgent):
     async def generate_e2e_tests_from_flow(
         self,
         page_path: str,
-        user_flow: List[str],
+        user_flow: list[str],
         page_description: str = "",
         generate_assertions: bool = True
-    ) -> List[GeneratedE2ETest]:
+    ) -> list[GeneratedE2ETest]:
         """
         Generate E2E tests from a user flow description.
 
@@ -287,9 +287,9 @@ Return the complete test file code with imports and test cases."""
     async def generate_tests_from_component(
         self,
         component_name: str,
-        component_props: Dict[str, Any],
-        component_usage_examples: List[str]
-    ) -> List[GeneratedE2ETest]:
+        component_props: dict[str, Any],
+        component_usage_examples: list[str]
+    ) -> list[GeneratedE2ETest]:
         """
         Generate tests for a React component.
 
@@ -341,9 +341,9 @@ Return the complete test file code."""
     async def run_visual_regression_test(
         self,
         page_path: str,
-        viewport_sizes: List[Dict[str, int]] = None,
+        viewport_sizes: list[dict[str, int]] = None,
         threshold: float = 0.1
-    ) -> List[E2ETestResult]:
+    ) -> list[E2ETestResult]:
         """
         Run visual regression tests.
 
@@ -435,7 +435,7 @@ Return the complete test file code."""
     async def run_accessibility_audit(
         self,
         page_path: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Run accessibility audit using axe-core.
 
@@ -488,7 +488,7 @@ Return the complete test file code."""
         broken_selector: str,
         page_content: str,
         element_description: str
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Heal a broken selector using AI.
 
@@ -539,7 +539,7 @@ Return only the selector string."""
             self._logger.error("Failed to heal selector", error=str(e))
             return None
 
-    def get_test_statistics(self) -> Dict[str, Any]:
+    def get_test_statistics(self) -> dict[str, Any]:
         """
         Get statistics about frontend tests.
 
@@ -577,7 +577,7 @@ Return only the selector string."""
         except ImportError:
             return False
 
-    def _extract_selectors(self, test_code: str) -> Dict[str, str]:
+    def _extract_selectors(self, test_code: str) -> dict[str, str]:
         """Extract selectors from generated test code."""
         selectors = {}
 
@@ -617,7 +617,7 @@ Return only the selector string."""
             is_significant=False,
         )
 
-    def _group_by_browser(self) -> Dict[str, int]:
+    def _group_by_browser(self) -> dict[str, int]:
         """Group test results by browser."""
         by_browser = {}
         for result in self._test_history:
@@ -625,7 +625,7 @@ Return only the selector string."""
             by_browser[browser] = by_browser.get(browser, 0) + 1
         return by_browser
 
-    async def _generate_e2e_tests_task(self, task: Task) -> Dict[str, Any]:
+    async def _generate_e2e_tests_task(self, task: Task) -> dict[str, Any]:
         """Handle generate_e2e_tests task type."""
         tests = await self.generate_e2e_tests_from_flow(
             page_path=task.context["page_path"],
@@ -639,12 +639,12 @@ Return only the selector string."""
             "tests": [t.to_dict() for t in tests],
         }
 
-    async def _run_e2e_tests_task(self, task: Task) -> Dict[str, Any]:
+    async def _run_e2e_tests_task(self, task: Task) -> dict[str, Any]:
         """Handle run_e2e_tests task type."""
         # This would execute the actual Playwright tests
         return {"status": "not_implemented_in_simulation"}
 
-    async def _visual_regression_task(self, task: Task) -> Dict[str, Any]:
+    async def _visual_regression_task(self, task: Task) -> dict[str, Any]:
         """Handle visual_regression task type."""
         results = await self.run_visual_regression_test(
             page_path=task.context["page_path"],
@@ -661,7 +661,7 @@ Return only the selector string."""
             "results": [r.to_dict() for r in results],
         }
 
-    async def _accessibility_audit_task(self, task: Task) -> Dict[str, Any]:
+    async def _accessibility_audit_task(self, task: Task) -> dict[str, Any]:
         """Handle accessibility_audit task type."""
         result = await self.run_accessibility_audit(
             page_path=task.context["page_path"],
@@ -669,7 +669,7 @@ Return only the selector string."""
 
         return result
 
-    async def _cross_browser_test_task(self, task: Task) -> Dict[str, Any]:
+    async def _cross_browser_test_task(self, task: Task) -> dict[str, Any]:
         """Handle cross_browser_test task type."""
         browsers = task.context.get("browsers", ["chromium", "firefox", "webkit"])
 

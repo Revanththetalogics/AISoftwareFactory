@@ -103,3 +103,67 @@ class TestCICDGenerator:
 
         assert "trigger:" in yaml_content or "pr:" in yaml_content
         assert "jobs:" in yaml_content or "steps:" in yaml_content
+
+    def test_generate_github_actions_python_with_docker(self):
+        """Test generating GitHub Actions with Docker enabled (line 167)."""
+        yaml_content = self.generator.generate_github_actions_python(
+            project_name="myproject",
+            python_versions=["3.11"],
+            enable_docker=True,
+        )
+
+        assert "name: CI/CD Pipeline" in yaml_content
+        assert "docker/setup-buildx-action" in yaml_content
+        assert "docker/login-action" in yaml_content
+        assert "docker/build-push-action" in yaml_content
+        assert "build:" in yaml_content
+
+    def test_generate_github_actions_python_with_deploy(self):
+        """Test generating GitHub Actions with deploy enabled (line 198)."""
+        yaml_content = self.generator.generate_github_actions_python(
+            project_name="myproject",
+            python_versions=["3.11"],
+            enable_docker=True,  # Deploy requires docker
+            enable_deploy=True,
+            deploy_platform="aws",
+        )
+
+        assert "name: CI/CD Pipeline" in yaml_content
+        assert "deploy:" in yaml_content
+        assert "Deploy to AWS" in yaml_content
+        assert "environment: production" in yaml_content
+
+    def test_generate_github_actions_python_with_gcp_deploy(self):
+        """Test generating GitHub Actions with GCP deploy platform."""
+        yaml_content = self.generator.generate_github_actions_python(
+            project_name="myproject",
+            enable_docker=True,
+            enable_deploy=True,
+            deploy_platform="gcp",
+        )
+
+        assert "Deploy to GCP" in yaml_content
+
+    def test_generate_azure_pipelines_node(self):
+        """Test generating Azure Pipelines for Node.js (line 440)."""
+        yaml_content = self.generator.generate_azure_pipelines(
+            project_name="myproject",
+            language="node",
+        )
+
+        assert "trigger:" in yaml_content
+        assert "Node18:" in yaml_content or "node" in yaml_content.lower()
+        assert "npm ci" in yaml_content
+        assert "npm run lint" in yaml_content
+        assert "npm run test" in yaml_content
+        assert "npm run build" in yaml_content
+
+    def test_generate_azure_pipelines_unsupported_language(self):
+        """Test generating Azure Pipelines for unsupported language (lines 381-384)."""
+        yaml_content = self.generator.generate_azure_pipelines(
+            project_name="myproject",
+            language="rust",
+        )
+
+        assert "# Unsupported language: rust" in yaml_content
+

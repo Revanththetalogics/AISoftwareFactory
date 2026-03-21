@@ -5,7 +5,6 @@ This module provides dependency injection for authentication, authorization,
 and common services with database-backed user management.
 """
 
-from typing import Optional
 
 from fastapi import Depends, HTTPException, Request, WebSocket, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -44,7 +43,7 @@ class User:
 
 async def get_current_user(
     request: Request,
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
     auth_service: AuthService = Depends(get_auth_service),
 ) -> User:
     """
@@ -122,7 +121,7 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(exc),
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from exc
 
 
 async def require_permissions(
@@ -166,7 +165,7 @@ async def require_permissions(
 async def get_websocket_user(
     websocket: WebSocket,
     auth_service: AuthService = Depends(get_auth_service),
-) -> Optional[User]:
+) -> User | None:
     """
     Get user from WebSocket connection.
 

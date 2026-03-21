@@ -5,8 +5,9 @@ This module provides end-to-end testing for generated applications
 including API testing and workflow validation.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from backend.core.logging import get_logger
 
@@ -17,10 +18,10 @@ logger = get_logger(__name__)
 class TestCase:
     """Integration test case."""
     name: str
-    setup: Optional[Callable] = None
+    setup: Callable | None = None
     execute: Callable = None
     validate: Callable = None
-    teardown: Optional[Callable] = None
+    teardown: Callable | None = None
 
 
 @dataclass
@@ -29,8 +30,8 @@ class TestResult:
     name: str
     success: bool
     duration: float
-    error: Optional[str] = None
-    details: Optional[Dict[str, Any]] = None
+    error: str | None = None
+    details: dict[str, Any] | None = None
 
 
 class IntegrationTester:
@@ -42,7 +43,7 @@ class IntegrationTester:
 
     def __init__(self):
         """Initialize the integration tester."""
-        self._test_cases: Dict[str, TestCase] = {}
+        self._test_cases: dict[str, TestCase] = {}
         self._logger = get_logger(__name__)
 
     def register_test(self, test_case: TestCase):
@@ -124,7 +125,7 @@ class IntegrationTester:
                 error=str(e)
             )
 
-    async def run_all_tests(self) -> List[TestResult]:
+    async def run_all_tests(self) -> list[TestResult]:
         """
         Run all registered tests.
 
@@ -142,7 +143,7 @@ class IntegrationTester:
     async def test_api_workflow(
         self,
         base_url: str,
-        workflow: List[Dict[str, Any]]
+        workflow: list[dict[str, Any]]
     ) -> TestResult:
         """
         Test an API workflow.

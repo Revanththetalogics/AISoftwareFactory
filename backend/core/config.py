@@ -6,7 +6,6 @@ It supports environment-based configuration with type safety and validation.
 """
 
 from functools import lru_cache
-from typing import List
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -203,14 +202,14 @@ class Settings(BaseSettings):
         return v
 
     @property
-    def allowed_hosts_list(self) -> List[str]:
+    def allowed_hosts_list(self) -> list[str]:
         """Get allowed hosts as a list."""
         if not self.ALLOWED_HOSTS:
             return []
         return [host.strip() for host in self.ALLOWED_HOSTS.split(",") if host.strip()]
 
     @property
-    def cors_origins_list(self) -> List[str]:
+    def cors_origins_list(self) -> list[str]:
         """
         Get CORS origins as a list.
 
@@ -246,7 +245,7 @@ class Settings(BaseSettings):
         return self.ENVIRONMENT == "testing"
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> Settings:
     """
     Get cached settings instance.

@@ -6,15 +6,15 @@ This module provides deployment orchestration and management capabilities.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from enum import StrEnum
+from typing import Any
 
 from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
 
-class DeploymentStatus(str, Enum):
+class DeploymentStatus(StrEnum):
     """Deployment status."""
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
@@ -23,7 +23,7 @@ class DeploymentStatus(str, Enum):
     ROLLED_BACK = "rolled_back"
 
 
-class DeploymentEnvironment(str, Enum):
+class DeploymentEnvironment(StrEnum):
     """Deployment environments."""
     DEVELOPMENT = "dev"
     STAGING = "staging"
@@ -45,10 +45,10 @@ class DeploymentStep:
     name: str
     status: DeploymentStatus = DeploymentStatus.PENDING
     message: str = ""
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -78,10 +78,10 @@ class DeploymentResult:
     project_name: str
     environment: DeploymentEnvironment
     status: DeploymentStatus = DeploymentStatus.PENDING
-    steps: List[DeploymentStep] = field(default_factory=list)
+    steps: list[DeploymentStep] = field(default_factory=list)
     started_at: datetime = field(default_factory=datetime.now)
-    completed_at: Optional[datetime] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    completed_at: datetime | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     @property
     def duration_seconds(self) -> float:
@@ -94,7 +94,7 @@ class DeploymentResult:
         """Check if deployment was successful."""
         return self.status == DeploymentStatus.SUCCESS
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "deployment_id": self.deployment_id,
@@ -131,13 +131,13 @@ class DeploymentOrchestrator:
     def __init__(self):
         """Initialize the deployment orchestrator."""
         self._logger = get_logger(__name__)
-        self._deployments: Dict[str, DeploymentResult] = {}
+        self._deployments: dict[str, DeploymentResult] = {}
 
     async def deploy(
         self,
         project_name: str,
         environment: DeploymentEnvironment,
-        deployment_id: Optional[str] = None,
+        deployment_id: str | None = None,
     ) -> DeploymentResult:
         """
         Execute a deployment.
@@ -351,7 +351,7 @@ class DeploymentOrchestrator:
 
         return result
 
-    def get_deployment(self, deployment_id: str) -> Optional[DeploymentResult]:
+    def get_deployment(self, deployment_id: str) -> DeploymentResult | None:
         """
         Get a deployment by ID.
 
@@ -365,9 +365,9 @@ class DeploymentOrchestrator:
 
     def list_deployments(
         self,
-        project_name: Optional[str] = None,
-        environment: Optional[DeploymentEnvironment] = None,
-    ) -> List[DeploymentResult]:
+        project_name: str | None = None,
+        environment: DeploymentEnvironment | None = None,
+    ) -> list[DeploymentResult]:
         """
         List deployments.
 

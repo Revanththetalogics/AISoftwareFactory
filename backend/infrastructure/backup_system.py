@@ -11,7 +11,7 @@ import os
 import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from backend.core.config import get_settings
 from backend.core.logging import get_logger
@@ -34,9 +34,9 @@ class BackupSystem:
 
     def __init__(
         self,
-        backup_dir: Optional[str] = None,
-        retention_days: Optional[int] = None,
-        schedule: Optional[str] = None,
+        backup_dir: str | None = None,
+        retention_days: int | None = None,
+        schedule: str | None = None,
     ):
         """
         Initialize the backup system.
@@ -67,10 +67,10 @@ class BackupSystem:
 
     async def create_backup(
         self,
-        name: Optional[str] = None,
+        name: str | None = None,
         include_databases: bool = True,
         include_files: bool = True
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create a system backup.
 
@@ -139,7 +139,7 @@ class BackupSystem:
 
         return backup_info
 
-    async def _backup_database(self, backup_path: Path) -> Dict[str, Any]:
+    async def _backup_database(self, backup_path: Path) -> dict[str, Any]:
         """
         Backup PostgreSQL database using pg_dump.
 
@@ -220,7 +220,7 @@ class BackupSystem:
                 )
                 return {"success": False, "error": error_msg}
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self._logger.error("Database backup timed out")
             return {"success": False, "error": "Backup timed out"}
         except FileNotFoundError:
@@ -315,7 +315,7 @@ class BackupSystem:
         await process.communicate()
         return process.returncode == 0
 
-    async def verify_backup(self, backup_name: str) -> Dict[str, Any]:
+    async def verify_backup(self, backup_name: str) -> dict[str, Any]:
         """
         Verify backup integrity.
 
@@ -404,7 +404,7 @@ class BackupSystem:
 
         return removed_count
 
-    def list_backups(self) -> List[Dict[str, Any]]:
+    def list_backups(self) -> list[dict[str, Any]]:
         """
         List available backups.
 

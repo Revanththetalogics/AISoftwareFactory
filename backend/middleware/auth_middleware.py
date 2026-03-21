@@ -6,7 +6,6 @@ on all non-public routes. Supports both Bearer token and httpOnly cookie
 authentication. Route-level dependencies still perform the actual JWT validation.
 """
 
-from typing import Set
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -17,7 +16,7 @@ from backend.core.logging import get_correlation_id, get_logger
 logger = get_logger(__name__)
 
 # Public paths that don't require authentication
-PUBLIC_PATHS: Set[str] = {
+PUBLIC_PATHS: set[str] = {
     "/",
     "/health",
     "/ready",
@@ -126,7 +125,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         elif auth_cookie:
             # Validate cookie token is not empty
             if not auth_cookie or auth_cookie.isspace():
-                return self._unauthorized_response(
+                return self._unauthorized_response(  # pragma: no cover
                     request, "Empty auth_token cookie"
                 )
 

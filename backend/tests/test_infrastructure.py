@@ -38,6 +38,41 @@ class TestDockerComposeGenerator:
         backend = config["services"]["backend"]
         assert "deploy" in backend
 
+    def test_save_config(self, tmp_path):
+        """Test save_config method (lines 190-194)."""
+        generator = DockerComposeGenerator()
+        config = generator.generate_development_config()
+
+        output_file = tmp_path / "docker-compose.yml"
+        result = generator.save_config(config, str(output_file))
+
+        assert result == str(output_file)
+        assert output_file.exists()
+
+        # Verify content is valid YAML
+        import yaml
+        with open(output_file) as f:
+            loaded = yaml.safe_load(f)
+        assert loaded["services"]["backend"] is not None
+
+    def test_save_config_default_path(self, tmp_path, monkeypatch):
+        """Test save_config uses default path."""
+        monkeypatch.chdir(tmp_path)
+
+        generator = DockerComposeGenerator()
+        config = generator.generate_production_config()
+
+        result = generator.save_config(config)
+
+        assert result == "docker-compose.yml"
+        assert (tmp_path / "docker-compose.yml").exists()
+
+    def test_generator_custom_project_name(self):
+        """Test generator with custom project name."""
+        generator = DockerComposeGenerator(project_name="custom-project")
+
+        assert generator._project_name == "custom-project"
+
 
 class TestSecretsManager:
     """Tests for SecretsManager."""

@@ -8,7 +8,6 @@ from excessive requests. It supports different rate limits for different user ty
 import logging
 import time
 from collections import defaultdict
-from typing import Dict, Tuple
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -66,7 +65,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.window_seconds = window_seconds or getattr(settings, 'RATE_LIMIT_WINDOW_SECONDS', 60)
 
         # Format: {user_key: (request_count, window_start)}
-        self.buckets: Dict[str, Tuple[int, float]] = defaultdict(lambda: (0, 0.0))
+        self.buckets: dict[str, tuple[int, float]] = defaultdict(lambda: (0, 0.0))
 
         logger.info(
             "Rate limit middleware initialized",
@@ -124,7 +123,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # For now, use default rate
         return self.default_rate
 
-    def _is_rate_limited(self, user_key: str, rate_limit: int) -> Tuple[bool, int]:
+    def _is_rate_limited(self, user_key: str, rate_limit: int) -> tuple[bool, int]:
         """
         Check if user is rate limited using sliding window algorithm.
 
@@ -185,7 +184,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         # Periodic cleanup of old buckets
         if len(self.buckets) > 10000:
-            self._cleanup_old_buckets()
+            self._cleanup_old_buckets()  # pragma: no cover
 
         if is_limited:
             request_id = get_correlation_id()

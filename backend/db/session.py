@@ -5,8 +5,8 @@ This module provides database engine and session management
 using SQLAlchemy with connection pooling.
 """
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine

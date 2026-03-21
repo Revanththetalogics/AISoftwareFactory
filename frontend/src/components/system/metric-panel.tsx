@@ -7,7 +7,6 @@ import {
   TrendingDown, 
   Minus, 
   Activity,
-  Zap,
   Cpu,
   HardDrive,
   Network,
@@ -42,12 +41,6 @@ const statusColors = {
   normal: 'text-state-success',
   warning: 'text-state-warning',
   critical: 'text-state-error',
-};
-
-const statusBg = {
-  normal: 'bg-state-success-dim',
-  warning: 'bg-state-warning-dim',
-  critical: 'bg-state-error-dim',
 };
 
 /**

@@ -5,13 +5,13 @@ This module defines Pydantic models for API validation and serialization.
 """
 
 from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from enum import StrEnum
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class ProjectStatus(str, Enum):
+class ProjectStatus(StrEnum):
     """Project status values."""
     DRAFT = "draft"
     ACTIVE = "active"
@@ -32,17 +32,17 @@ class ProjectCreate(BaseModel):
 
     name: str = Field(..., min_length=1, max_length=100, description="Project name")
     description: str = Field(..., min_length=1, description="Project description")
-    requirements: Optional[str] = Field(None, description="Project requirements")
-    tech_stack: Optional[Dict[str, Any]] = Field(None, description="Technology stack preferences")
+    requirements: str | None = Field(None, description="Project requirements")
+    tech_stack: dict[str, Any] | None = Field(None, description="Technology stack preferences")
 
 
 class ProjectUpdate(BaseModel):
     """Request model for updating a project."""
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
-    description: Optional[str] = None
-    requirements: Optional[str] = None
-    status: Optional[ProjectStatus] = None
-    tech_stack: Optional[Dict[str, Any]] = None
+    name: str | None = Field(None, min_length=1, max_length=100)
+    description: str | None = None
+    requirements: str | None = None
+    status: ProjectStatus | None = None
+    tech_stack: dict[str, Any] | None = None
 
 
 class ProjectResponse(BaseModel):
@@ -52,14 +52,14 @@ class ProjectResponse(BaseModel):
     id: str
     name: str
     description: str
-    requirements: Optional[str] = None
+    requirements: str | None = None
     status: ProjectStatus
-    tech_stack: Optional[Dict[str, Any]] = None
-    current_phase: Optional[str] = None
+    tech_stack: dict[str, Any] | None = None
+    current_phase: str | None = None
     progress_percent: int = Field(0, ge=0, le=100)
     created_at: datetime
     updated_at: datetime
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class WorkflowExecuteRequest(BaseModel):
@@ -73,8 +73,8 @@ class WorkflowExecuteRequest(BaseModel):
     })
 
     project_id: str = Field(..., description="Project ID")
-    phase: Optional[str] = Field(None, description="Specific phase to execute")
-    context: Optional[Dict[str, Any]] = Field(None, description="Execution context")
+    phase: str | None = Field(None, description="Specific phase to execute")
+    context: dict[str, Any] | None = Field(None, description="Execution context")
     async_execution: bool = Field(True, description="Execute asynchronously")
 
 
@@ -85,14 +85,14 @@ class WorkflowStatusResponse(BaseModel):
     workflow_id: str
     project_id: str
     status: str
-    current_phase: Optional[str] = None
+    current_phase: str | None = None
     progress_percent: int = Field(0, ge=0, le=100)
     steps_completed: int = 0
     steps_total: int = 0
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    error_message: Optional[str] = None
-    logs: List[str] = Field(default_factory=list)
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    error_message: str | None = None
+    logs: list[str] = Field(default_factory=list)
 
 
 class AgentResponse(BaseModel):
@@ -102,18 +102,18 @@ class AgentResponse(BaseModel):
     agent_id: str
     name: str
     role: str
-    capabilities: List[str]
+    capabilities: list[str]
     status: str
-    current_task: Optional[str] = None
-    last_active: Optional[datetime] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    current_task: str | None = None
+    last_active: datetime | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class AgentTaskRequest(BaseModel):
     """Request model for assigning a task to an agent."""
     task_type: str
     description: str
-    context: Optional[Dict[str, Any]] = None
+    context: dict[str, Any] | None = None
     priority: str = "medium"
 
 
@@ -140,7 +140,7 @@ class DeploymentRequest(BaseModel):
     project_id: str
     environment: str = Field(..., pattern="^(dev|staging|production)$")
     version: str
-    config: Optional[Dict[str, Any]] = None
+    config: dict[str, Any] | None = None
 
 
 class DeploymentResponse(BaseModel):
@@ -152,36 +152,36 @@ class DeploymentResponse(BaseModel):
     environment: str
     version: str
     status: str
-    steps: List[Dict[str, Any]] = Field(default_factory=list)
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    error_message: Optional[str] = None
-    url: Optional[str] = None
+    steps: list[dict[str, Any]] = Field(default_factory=list)
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    error_message: str | None = None
+    url: str | None = None
 
 
 class CodeGenerationRequest(BaseModel):
     """Request model for code generation."""
     project_id: str
     component_type: str
-    specifications: Dict[str, Any]
+    specifications: dict[str, Any]
     language: str = "python"
-    framework: Optional[str] = None
+    framework: str | None = None
 
 
 class CodeGenerationResponse(BaseModel):
     """Response model for generated code."""
     generation_id: str
     project_id: str
-    files: List[Dict[str, str]]
+    files: list[dict[str, str]]
     language: str
-    quality_score: Optional[float] = None
-    warnings: List[str] = Field(default_factory=list)
+    quality_score: float | None = None
+    warnings: list[str] = Field(default_factory=list)
 
 
 class WebSocketMessage(BaseModel):
     """Model for WebSocket messages."""
     type: str
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
     timestamp: datetime = Field(default_factory=datetime.now)
 
 
@@ -190,5 +190,5 @@ class HealthCheckResponse(BaseModel):
     status: str
     version: str
     timestamp: datetime
-    components: Dict[str, str]
+    components: dict[str, str]
     uptime_seconds: float

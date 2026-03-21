@@ -10,7 +10,6 @@ The SameSite=Lax cookie attribute provides the primary CSRF defense.
 """
 
 import secrets
-from typing import Set, Tuple
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -26,7 +25,7 @@ CSRF_HEADER_NAME = "X-CSRF-Token"
 CSRF_TOKEN_LENGTH = 32
 
 # Paths exempt from CSRF protection
-CSRF_EXEMPT_PATHS: Set[str] = {
+CSRF_EXEMPT_PATHS: set[str] = {
     "/",
     "/health",
     "/ready",
@@ -43,7 +42,7 @@ CSRF_EXEMPT_PATHS: Set[str] = {
 }
 
 # Path prefixes exempt from CSRF protection
-CSRF_EXEMPT_PREFIXES: Tuple[str, ...] = (
+CSRF_EXEMPT_PREFIXES: tuple[str, ...] = (
     "/api/v1/health/",
     "/api/v1/webhooks/",  # Webhooks typically have their own auth
     "/_next/",
@@ -52,7 +51,7 @@ CSRF_EXEMPT_PREFIXES: Tuple[str, ...] = (
 )
 
 # Methods that require CSRF validation (state-changing)
-CSRF_PROTECTED_METHODS: Set[str] = {"POST", "PUT", "PATCH", "DELETE"}
+CSRF_PROTECTED_METHODS: set[str] = {"POST", "PUT", "PATCH", "DELETE"}
 
 
 def generate_csrf_token() -> str:

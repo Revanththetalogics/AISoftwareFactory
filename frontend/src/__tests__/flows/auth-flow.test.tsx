@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AuthProvider, useAuth } from '@/lib/auth/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -204,7 +204,6 @@ describe('Auth Flow Integration Tests', () => {
       );
 
       // The spinner should be visible during loading
-      const spinner = document.querySelector('.animate-spin');
       // Note: This may or may not be present depending on timing
       // Just verify the component renders without error
       expect(document.body).toBeInTheDocument();
@@ -245,8 +244,6 @@ describe('Auth Flow Integration Tests', () => {
     });
 
     it('shows dashboard content when authenticated', async () => {
-      const user = userEvent.setup();
-      
       // First, set up authenticated state
       const futureExpiry = new Date(Date.now() + 3600000).toISOString();
       localStorageMock.getItem.mockImplementation((key: string) => {

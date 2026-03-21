@@ -7,7 +7,7 @@ and prompt optimization for different tasks.
 
 from dataclasses import dataclass, field
 from string import Template
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from backend.core.logging import get_logger
 
@@ -29,8 +29,8 @@ class PromptTemplate:
     name: str
     template: str
     description: str = ""
-    variables: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    variables: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def render(self, **kwargs) -> str:
         """
@@ -63,9 +63,9 @@ class PromptTemplate:
             )
             raise ValueError(
                 f"Missing required variable '{missing_var}' in template '{self.name}'"
-            )
+            ) from exc
 
-    def validate_variables(self, **kwargs) -> List[str]:
+    def validate_variables(self, **kwargs) -> list[str]:
         """
         Validate that all required variables are provided.
 
@@ -104,7 +104,7 @@ class PromptManager:
 
     def __init__(self):
         """Initialize the prompt manager."""
-        self._templates: Dict[str, PromptTemplate] = {}
+        self._templates: dict[str, PromptTemplate] = {}
         self._logger = get_logger(__name__)
 
         # Initialize default templates
@@ -460,8 +460,8 @@ Return the complete test code:""",
         name: str,
         template: str,
         description: str = "",
-        variables: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        variables: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> PromptTemplate:
         """
         Register a new prompt template.
@@ -496,7 +496,7 @@ Return the complete test code:""",
 
         return prompt_template
 
-    def get_template(self, name: str) -> Optional[PromptTemplate]:
+    def get_template(self, name: str) -> PromptTemplate | None:
         """
         Get a template by name.
 
@@ -538,7 +538,7 @@ Return the complete test code:""",
 
         return template.render(**kwargs)
 
-    def list_templates(self) -> List[str]:
+    def list_templates(self) -> list[str]:
         """
         List all registered template names.
 
@@ -547,7 +547,7 @@ Return the complete test code:""",
         """
         return list(self._templates.keys())
 
-    def get_templates_by_category(self, category: str) -> List[PromptTemplate]:
+    def get_templates_by_category(self, category: str) -> list[PromptTemplate]:
         """
         Get templates by category.
 

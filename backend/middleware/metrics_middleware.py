@@ -9,7 +9,6 @@ This middleware collects HTTP request metrics including:
 """
 
 import time
-from typing import Optional
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -40,7 +39,7 @@ class PrometheusMetricsMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app,
-        exclude_paths: Optional[list] = None,
+        exclude_paths: list | None = None,
     ):
         """
         Initialize middleware.

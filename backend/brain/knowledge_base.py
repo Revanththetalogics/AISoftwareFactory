@@ -6,7 +6,7 @@ knowledge system.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import uuid4
 
 from backend.brain.embeddings import EmbeddingEngine
@@ -27,8 +27,8 @@ class KnowledgeBase:
     def __init__(
         self,
         name: str,
-        vector_store: Optional[VectorStore] = None,
-        embedding_engine: Optional[EmbeddingEngine] = None
+        vector_store: VectorStore | None = None,
+        embedding_engine: EmbeddingEngine | None = None
     ):
         """
         Initialize the knowledge base.
@@ -41,14 +41,14 @@ class KnowledgeBase:
         self._name = name
         self._vector_store = vector_store or VectorStore(name)
         self._embedding_engine = embedding_engine or EmbeddingEngine()
-        self._documents: Dict[str, Dict[str, Any]] = {}
+        self._documents: dict[str, dict[str, Any]] = {}
         self._logger = get_logger(__name__)
 
     async def add_document(
         self,
         content: str,
-        metadata: Optional[Dict[str, Any]] = None,
-        doc_id: Optional[str] = None,
+        metadata: dict[str, Any] | None = None,
+        doc_id: str | None = None,
         chunk_size: int = 500,
         chunk_overlap: int = 50
     ) -> str:
@@ -114,8 +114,8 @@ class KnowledgeBase:
         self,
         query: str,
         top_k: int = 5,
-        filter_metadata: Optional[Dict[str, Any]] = None
-    ) -> List[Dict[str, Any]]:
+        filter_metadata: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """
         Search the knowledge base.
 
@@ -168,7 +168,7 @@ class KnowledgeBase:
         text: str,
         chunk_size: int,
         chunk_overlap: int
-    ) -> List[str]:
+    ) -> list[str]:
         """Split text into overlapping chunks."""
         chunks = []
         start = 0
@@ -181,7 +181,7 @@ class KnowledgeBase:
 
         return chunks
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get knowledge base statistics."""
         return {
             "name": self._name,

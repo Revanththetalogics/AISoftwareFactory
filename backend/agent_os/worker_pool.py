@@ -8,7 +8,7 @@ and health monitoring.
 import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import uuid4
 
 from backend.core.logging import get_logger
@@ -22,7 +22,7 @@ class Worker:
     worker_id: str
     name: str
     status: str = "idle"  # idle, busy, unhealthy
-    current_task: Optional[str] = None
+    current_task: str | None = None
     started_at: datetime = field(default_factory=datetime.utcnow)
     last_heartbeat: datetime = field(default_factory=datetime.utcnow)
     total_tasks: int = 0
@@ -47,7 +47,7 @@ class WorkerPool:
         """
         self._min_workers = min_workers
         self._max_workers = max_workers
-        self._workers: Dict[str, Worker] = {}
+        self._workers: dict[str, Worker] = {}
         self._running = False
         self._logger = get_logger(__name__)
 
@@ -65,7 +65,7 @@ class WorkerPool:
         self._logger.info("Worker created", worker_id=worker.worker_id, name=name)
         return worker
 
-    async def scale_up(self, count: int = 1) -> List[Worker]:
+    async def scale_up(self, count: int = 1) -> list[Worker]:
         """
         Scale up the worker pool.
 
@@ -120,7 +120,7 @@ class WorkerPool:
         )
         return removed
 
-    def get_available_worker(self) -> Optional[Worker]:
+    def get_available_worker(self) -> Worker | None:
         """
         Get an available (idle) worker.
 
@@ -167,7 +167,7 @@ class WorkerPool:
             if not success:
                 worker.failed_tasks += 1
 
-    def get_pool_status(self) -> Dict[str, Any]:
+    def get_pool_status(self) -> dict[str, Any]:
         """
         Get worker pool status.
 

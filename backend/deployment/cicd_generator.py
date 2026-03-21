@@ -6,22 +6,21 @@ including GitHub Actions, GitLab CI, and Azure DevOps.
 """
 
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Dict, List, Optional
+from enum import StrEnum
 
 from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
 
-class CIPlatform(str, Enum):
+class CIPlatform(StrEnum):
     """Supported CI/CD platforms."""
     GITHUB_ACTIONS = "github_actions"
     GITLAB_CI = "gitlab_ci"
     AZURE_DEVOPS = "azure_devops"
 
 
-class TriggerEvent(str, Enum):
+class TriggerEvent(StrEnum):
     """Pipeline trigger events."""
     PUSH = "push"
     PULL_REQUEST = "pull_request"
@@ -43,9 +42,9 @@ class PipelineStep:
     """
     name: str
     command: str
-    working_directory: Optional[str] = None
-    environment: Dict[str, str] = field(default_factory=dict)
-    condition: Optional[str] = None
+    working_directory: str | None = None
+    environment: dict[str, str] = field(default_factory=dict)
+    condition: str | None = None
 
 
 @dataclass
@@ -63,10 +62,10 @@ class PipelineJob:
     """
     name: str
     runs_on: str = "ubuntu-latest"
-    steps: List[PipelineStep] = field(default_factory=list)
-    needs: List[str] = field(default_factory=list)
-    environment: Optional[str] = None
-    if_condition: Optional[str] = None
+    steps: list[PipelineStep] = field(default_factory=list)
+    needs: list[str] = field(default_factory=list)
+    environment: str | None = None
+    if_condition: str | None = None
 
 
 class CICDGenerator:
@@ -92,8 +91,8 @@ class CICDGenerator:
     def generate_github_actions_python(
         self,
         project_name: str,
-        python_versions: Optional[List[str]] = None,
-        branches: Optional[List[str]] = None,
+        python_versions: list[str] | None = None,
+        branches: list[str] | None = None,
         enable_docker: bool = False,
         enable_deploy: bool = False,
         deploy_platform: str = "aws",
@@ -224,8 +223,8 @@ jobs:
     def generate_github_actions_node(
         self,
         project_name: str,
-        node_versions: Optional[List[str]] = None,
-        branches: Optional[List[str]] = None,
+        node_versions: list[str] | None = None,
+        branches: list[str] | None = None,
         package_manager: str = "npm",
     ) -> str:
         """

@@ -8,7 +8,8 @@ and configurable timeouts.
 
 import os
 import time
-from typing import Any, AsyncIterator, Dict, List, Optional
+from collections.abc import AsyncIterator
+from typing import Any
 
 from backend.core.config import get_settings
 from backend.core.logging import get_logger
@@ -29,7 +30,7 @@ class OpenAIProvider(BaseLLMProvider):
     OpenAI LLM provider for cloud model execution.
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """
         Initialize OpenAI provider.
 
@@ -51,18 +52,18 @@ class OpenAIProvider(BaseLLMProvider):
                     api_key=self.api_key,
                     base_url=self.base_url
                 )
-            except ImportError:
+            except ImportError as exc:
                 raise ImportError(
                     "OpenAI package not installed. "
                     "Install with: pip install openai"
-                )
+                ) from exc
         return self._client
 
     async def generate(
         self,
         prompt: str,
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         **kwargs
     ) -> str:
         """
@@ -147,7 +148,7 @@ class OpenAIProvider(BaseLLMProvider):
         self,
         prompt: str,
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         **kwargs
     ) -> AsyncIterator[str]:
         """
@@ -185,9 +186,9 @@ class OpenAIProvider(BaseLLMProvider):
 
     async def chat(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         **kwargs
     ) -> str:
         """
@@ -262,9 +263,9 @@ class OpenAIProvider(BaseLLMProvider):
 
     async def chat_stream(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         **kwargs
     ) -> AsyncIterator[str]:
         """
@@ -298,7 +299,7 @@ class OpenAIProvider(BaseLLMProvider):
             logger.error(f"OpenAI chat streaming error: {e}")
             raise
 
-    async def embed(self, text: str) -> List[float]:
+    async def embed(self, text: str) -> list[float]:
         """
         Generate embeddings using OpenAI.
 

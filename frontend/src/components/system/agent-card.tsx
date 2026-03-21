@@ -3,7 +3,6 @@
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Bot, 
   Brain, 
   Cog, 
   Rocket, 

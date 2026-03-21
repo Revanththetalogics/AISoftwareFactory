@@ -6,9 +6,10 @@ cron-like scheduling, priority-based execution, and dependency resolution.
 """
 
 import asyncio
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 from uuid import uuid4
 
 from backend.core.logging import get_logger
@@ -24,8 +25,8 @@ class ScheduledTask:
     scheduled_at: datetime
     priority: int
     execute: Callable
-    dependencies: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    dependencies: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class Scheduler:
@@ -38,7 +39,7 @@ class Scheduler:
 
     def __init__(self):
         """Initialize the scheduler."""
-        self._scheduled_tasks: Dict[str, ScheduledTask] = {}
+        self._scheduled_tasks: dict[str, ScheduledTask] = {}
         self._running = False
         self._task_queue: asyncio.PriorityQueue = asyncio.PriorityQueue()
         self._logger = get_logger(__name__)
@@ -47,10 +48,10 @@ class Scheduler:
         self,
         name: str,
         execute: Callable,
-        scheduled_at: Optional[datetime] = None,
+        scheduled_at: datetime | None = None,
         priority: int = 5,
-        dependencies: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        dependencies: list[str] | None = None,
+        metadata: dict[str, Any] | None = None
     ) -> str:
         """
         Schedule a task for execution.
@@ -100,7 +101,7 @@ class Scheduler:
             return True
         return False
 
-    async def get_ready_tasks(self) -> List[ScheduledTask]:
+    async def get_ready_tasks(self) -> list[ScheduledTask]:
         """
         Get tasks that are ready to execute.
 

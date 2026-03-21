@@ -5,7 +5,7 @@ This module provides resource allocation and management for agent execution.
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any
 
 from backend.core.logging import get_logger
 
@@ -36,7 +36,7 @@ class ResourceManager:
             gpu_count=1,
             storage_mb=102400
         )
-        self._allocated: Dict[str, ResourceAllocation] = {}
+        self._allocated: dict[str, ResourceAllocation] = {}
         self._logger = get_logger(__name__)
 
     def allocate(
@@ -118,7 +118,7 @@ class ResourceManager:
             storage_mb=self._total_resources.storage_mb - used_storage
         )
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """
         Get resource status.
 

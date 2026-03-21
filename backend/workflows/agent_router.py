@@ -5,7 +5,7 @@ This module provides task routing to appropriate agents or crews based on
 task type, phase, and agent capabilities.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from backend.agents.agent_registry import get_agent_registry
 from backend.agents.base_agent import BaseAgent
@@ -61,8 +61,8 @@ class AgentRouter:
     def select_agent_for_task(
         self,
         task: WorkflowTask,
-        phase: Optional[ProjectPhase] = None,
-    ) -> Optional[BaseAgent]:
+        phase: ProjectPhase | None = None,
+    ) -> BaseAgent | None:
         """
         Select the best agent for a workflow task.
 
@@ -132,7 +132,7 @@ class AgentRouter:
     def select_agents_for_phase(
         self,
         phase: ProjectPhase,
-    ) -> List[BaseAgent]:
+    ) -> list[BaseAgent]:
         """
         Select agents appropriate for a workflow phase.
 
@@ -177,7 +177,7 @@ class AgentRouter:
     async def route_and_execute(
         self,
         workflow_task: WorkflowTask,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Route a task to an agent and execute it.
 
@@ -247,7 +247,7 @@ class AgentRouter:
         # For now, return 0 as stub
         return 0
 
-    def get_available_agents(self) -> List[BaseAgent]:
+    def get_available_agents(self) -> list[BaseAgent]:
         """
         Get list of available agents.
 

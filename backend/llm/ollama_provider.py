@@ -8,7 +8,8 @@ and configurable timeouts.
 
 import os
 import time
-from typing import Any, AsyncIterator, Dict, List, Optional
+from collections.abc import AsyncIterator
+from typing import Any
 
 import aiohttp
 
@@ -31,7 +32,7 @@ class OllamaProvider(BaseLLMProvider):
     Ollama LLM provider for local model execution.
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """
         Initialize Ollama provider.
 
@@ -41,7 +42,7 @@ class OllamaProvider(BaseLLMProvider):
         super().__init__(config)
         self.base_url = self.config.get("base_url", os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"))
         self.model = self.config.get("model", os.getenv("OLLAMA_MODEL", "llama3.2"))
-        self._session: Optional[aiohttp.ClientSession] = None
+        self._session: aiohttp.ClientSession | None = None
 
     async def _get_session(self) -> aiohttp.ClientSession:
         """Get or create aiohttp session."""
@@ -53,7 +54,7 @@ class OllamaProvider(BaseLLMProvider):
         self,
         prompt: str,
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         **kwargs
     ) -> str:
         """
@@ -147,7 +148,7 @@ class OllamaProvider(BaseLLMProvider):
         self,
         prompt: str,
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         **kwargs
     ) -> AsyncIterator[str]:
         """
@@ -197,9 +198,9 @@ class OllamaProvider(BaseLLMProvider):
 
     async def chat(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         **kwargs
     ) -> str:
         """
@@ -286,9 +287,9 @@ class OllamaProvider(BaseLLMProvider):
 
     async def chat_stream(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         **kwargs
     ) -> AsyncIterator[str]:
         """
@@ -336,7 +337,7 @@ class OllamaProvider(BaseLLMProvider):
             logger.error(f"Ollama chat streaming error: {e}")
             raise
 
-    async def embed(self, text: str) -> List[float]:
+    async def embed(self, text: str) -> list[float]:
         """
         Generate embeddings using Ollama.
 

@@ -7,7 +7,7 @@ This module provides comprehensive test report generation in multiple formats.
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from backend.core.logging import get_logger
 
@@ -34,8 +34,8 @@ class ReportGenerator:
 
     def generate_json(
         self,
-        results: Dict[str, Any],
-        filename: Optional[str] = None
+        results: dict[str, Any],
+        filename: str | None = None
     ) -> str:
         """
         Generate JSON report.
@@ -58,8 +58,8 @@ class ReportGenerator:
 
     def generate_markdown(
         self,
-        results: Dict[str, Any],
-        filename: Optional[str] = None
+        results: dict[str, Any],
+        filename: str | None = None
     ) -> str:
         """
         Generate Markdown report.
@@ -113,8 +113,8 @@ class ReportGenerator:
 
     def generate_html(
         self,
-        results: Dict[str, Any],
-        filename: Optional[str] = None
+        results: dict[str, Any],
+        filename: str | None = None
     ) -> str:
         """
         Generate HTML report.

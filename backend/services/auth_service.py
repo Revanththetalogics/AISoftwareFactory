@@ -6,8 +6,8 @@ validation, and database-backed user management.
 """
 
 import uuid
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -68,8 +68,8 @@ class AuthService:
 
     def create_access_token(
         self,
-        data: Dict[str, Any],
-        expires_delta: Optional[timedelta] = None
+        data: dict[str, Any],
+        expires_delta: timedelta | None = None
     ) -> str:
         """
         Create JWT access token.
@@ -88,13 +88,13 @@ class AuthService:
         to_encode = data.copy()
 
         if expires_delta:
-            expire = datetime.now(timezone.utc) + expires_delta
+            expire = datetime.now(UTC) + expires_delta
         else:
-            expire = datetime.now(timezone.utc) + timedelta(
+            expire = datetime.now(UTC) + timedelta(
                 minutes=self.settings.ACCESS_TOKEN_EXPIRE_MINUTES
             )
 
-        to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc)})
+        to_encode.update({"exp": expire, "iat": datetime.now(UTC)})
 
         encoded_jwt = jwt.encode(
             to_encode,
@@ -103,7 +103,7 @@ class AuthService:
         )
         return encoded_jwt
 
-    def decode_token(self, token: str) -> Dict[str, Any]:
+    def decode_token(self, token: str) -> dict[str, Any]:
         """
         Decode and validate JWT token.
 
@@ -125,9 +125,9 @@ class AuthService:
             return payload
         except JWTError as exc:
             logger.warning("Invalid token", error=str(exc))
-            raise AuthenticationError("Invalid or expired token")
+            raise AuthenticationError("Invalid or expired token") from exc
 
-    async def get_user_by_username(self, username: str) -> Optional[DBUser]:
+    async def get_user_by_username(self, username: str) -> DBUser | None:
         """
         Get user by username from database.
 
@@ -146,7 +146,7 @@ class AuthService:
             )
             return result.scalar_one_or_none()
 
-    async def get_user_by_id(self, user_id: str) -> Optional[DBUser]:
+    async def get_user_by_id(self, user_id: str) -> DBUser | None:
         """
         Get user by ID from database.
 
@@ -165,7 +165,7 @@ class AuthService:
             )
             return result.scalar_one_or_none()
 
-    async def get_user_by_email(self, email: str) -> Optional[DBUser]:
+    async def get_user_by_email(self, email: str) -> DBUser | None:
         """
         Get user by email from database.
 
@@ -184,7 +184,7 @@ class AuthService:
             )
             return result.scalar_one_or_none()
 
-    async def authenticate_user(self, username: str, password: str) -> Optional[Dict[str, Any]]:
+    async def authenticate_user(self, username: str, password: str) -> dict[str, Any] | None:
         """
         Authenticate user credentials against database.
 
@@ -216,7 +216,7 @@ class AuthService:
         async with AsyncSessionLocal() as session:
             user_in_session = await session.get(DBUser, user.id)
             if user_in_session:
-                user_in_session.last_login = datetime.now(timezone.utc)
+                user_in_session.last_login = datetime.now(UTC)
                 await session.commit()
 
         # Return user data without sensitive information
@@ -228,7 +228,7 @@ class AuthService:
             "is_superuser": user.is_superuser
         }
 
-    async def create_default_admin(self) -> Optional[DBUser]:
+    async def create_default_admin(self) -> DBUser | None:
         """
         Create default admin user if no users exist in database.
 
@@ -337,7 +337,7 @@ class AuthService:
 
             return new_user
 
-    def create_user_session(self, user_data: Dict[str, Any]) -> Dict[str, str]:
+    def create_user_session(self, user_data: dict[str, Any]) -> dict[str, str]:
         """
         Create user session with access and refresh tokens.
 

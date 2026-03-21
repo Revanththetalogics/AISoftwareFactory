@@ -6,15 +6,15 @@ for AWS, Azure, and GCP.
 """
 
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict
+from enum import StrEnum
+from typing import Any
 
 from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
 
-class CloudProvider(str, Enum):
+class CloudProvider(StrEnum):
     """Supported cloud providers."""
     AWS = "aws"
     AZURE = "azure"
@@ -33,7 +33,7 @@ class ResourceConfig:
     """
     name: str
     resource_type: str
-    config: Dict[str, Any] = field(default_factory=dict)
+    config: dict[str, Any] = field(default_factory=dict)
 
 
 class TerraformGenerator:
@@ -64,7 +64,7 @@ class TerraformGenerator:
         region: str = "us-east-1",
         enable_ecs: bool = True,
         enable_rds: bool = True,
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """
         Generate basic AWS Terraform configuration.
 
@@ -364,7 +364,7 @@ resource "random_password" "db_password" {
         self,
         project_name: str,
         location: str = "eastus",
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """
         Generate basic Azure Terraform configuration.
 
@@ -477,7 +477,7 @@ output "virtual_network_id" {
         self,
         project_name: str,
         region: str = "us-central1",
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """
         Generate basic GCP Terraform configuration.
 

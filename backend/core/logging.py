@@ -9,7 +9,7 @@ import logging
 import sys
 import uuid
 from contextvars import ContextVar
-from typing import Any, Dict, Optional
+from typing import Any
 
 import structlog
 from pythonjsonlogger import jsonlogger
@@ -30,7 +30,7 @@ def get_correlation_id() -> str:
     return correlation_id.get("")
 
 
-def set_correlation_id(cid: Optional[str] = None) -> str:
+def set_correlation_id(cid: str | None = None) -> str:
     """
     Set or generate a correlation ID.
 
@@ -90,9 +90,9 @@ class CustomJsonFormatter(jsonlogger.JsonFormatter):
 
     def add_fields(
         self,
-        log_record: Dict[str, Any],
+        log_record: dict[str, Any],
         record: logging.LogRecord,
-        message_dict: Dict[str, Any],
+        message_dict: dict[str, Any],
     ) -> None:
         """Add custom fields to log record."""
         super().add_fields(log_record, record, message_dict)
@@ -248,7 +248,7 @@ class LoggingContext:
         """
         self.logger = logger
         self.context = context
-        self.bound_logger: Optional[structlog.stdlib.BoundLogger] = None
+        self.bound_logger: structlog.stdlib.BoundLogger | None = None
 
     def __enter__(self) -> structlog.stdlib.BoundLogger:
         """Enter context and bind logger."""

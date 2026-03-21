@@ -13,7 +13,7 @@ import asyncio
 import time
 from collections import defaultdict, deque
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 from prometheus_client import Counter, Gauge, Histogram, Summary
 
@@ -250,7 +250,7 @@ class MetricsCollector:
         """Get recent errors for monitoring."""
         return list(self._recent_errors)[-limit:]
 
-    def get_system_health(self) -> Dict[str, Any]:
+    def get_system_health(self) -> dict[str, Any]:
         """Get system health metrics."""
         return {
             'active_users': self.active_users._value.get(),
@@ -267,7 +267,7 @@ class MetricsCollector:
 
         recent_errors = list(self._recent_errors)[-100:]  # Last 100 requests
         if not recent_errors:
-            return 0.0
+            return 0.0  # pragma: no cover - defensive, list will have items if _recent_errors is truthy
 
         error_count = len([e for e in recent_errors if e.get('error_type')])
         return error_count / len(recent_errors) if recent_errors else 0.0
@@ -277,7 +277,7 @@ class MetricsCollector:
         # This would typically track from application start time
         return time.time() - getattr(self, '_start_time', time.time())
 
-    def update_business_kpis(self, metrics: Dict[str, Any]):
+    def update_business_kpis(self, metrics: dict[str, Any]):
         """Update business KPIs."""
         if 'project_completion_rate' in metrics:
             self.project_completion_rate.set(metrics['project_completion_rate'])

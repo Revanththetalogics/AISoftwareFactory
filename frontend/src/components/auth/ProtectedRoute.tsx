@@ -31,7 +31,7 @@ export function ProtectedRoute({ children, requiredPermissions }: ProtectedRoute
       const returnUrl = encodeURIComponent(pathname);
       router.push(`/login?returnUrl=${returnUrl}`);
     }
-  }, [isAuthenticated, isLoading, router, pathname]);
+  }, [isAuthenticated, isLoading, router, pathname, user]);
 
   // Check permissions if required
   const hasPermission = !requiredPermissions ||

@@ -5,7 +5,7 @@ This module provides the bridge between LangGraph workflows and CrewAI crews,
 enabling agent collaboration within workflow phases.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from crewai import Crew
 from crewai import Task as CrewTask
@@ -55,10 +55,10 @@ class CrewIntegration:
 
     def __init__(self):
         """Initialize the crew integration."""
-        self._crews: Dict[ProjectPhase, Crew] = {}
+        self._crews: dict[ProjectPhase, Crew] = {}
         self._logger = get_logger(__name__)
 
-    def assemble_crew_for_phase(self, phase: ProjectPhase) -> Optional[Crew]:
+    def assemble_crew_for_phase(self, phase: ProjectPhase) -> Crew | None:
         """
         Assemble the appropriate crew for a workflow phase.
 
@@ -95,8 +95,8 @@ class CrewIntegration:
     async def execute_phase(
         self,
         phase: ProjectPhase,
-        context: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        context: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Execute a workflow phase using the appropriate crew.
 
@@ -176,8 +176,8 @@ class CrewIntegration:
     def _create_tasks_for_phase(
         self,
         phase: ProjectPhase,
-        context: Dict[str, Any],
-    ) -> List[CrewTask]:
+        context: dict[str, Any],
+    ) -> list[CrewTask]:
         """
         Create CrewAI tasks for a workflow phase.
 
@@ -214,7 +214,7 @@ class CrewIntegration:
 
         return tasks
 
-    def _parse_crew_result(self, result: Any) -> Dict[str, Any]:
+    def _parse_crew_result(self, result: Any) -> dict[str, Any]:
         """
         Parse CrewAI result into a dictionary.
 
@@ -237,8 +237,8 @@ class CrewIntegration:
     def map_crew_output_to_state(
         self,
         phase: ProjectPhase,
-        crew_output: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        crew_output: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Map crew output to workflow state context.
 

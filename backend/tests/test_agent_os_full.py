@@ -845,7 +845,7 @@ class TestSchedulerFull:
 
             try:
                 await asyncio.wait_for(task, timeout=1.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 scheduler._running = False
 
         # Restore original
@@ -964,3 +964,170 @@ class TestScheduledTaskDataclass:
         )
         assert task.dependencies == []
         assert task.metadata == {}
+
+
+class TestTaskQueueFull:
+    """Comprehensive tests for TaskQueue to achieve 100% coverage."""
+
+    @pytest.fixture
+    def task_queue(self):
+        """Create a TaskQueue instance."""
+        from backend.agent_os.task_queue import TaskQueue
+        return TaskQueue()
+
+    @pytest.fixture
+    def mock_task(self):
+        """Create a mock task."""
+        from backend.models.task import Task, TaskPriority
+        task = Task(
+            task_id="test-task-123",
+            name="Test Task",
+            description="Test task",
+            priority=TaskPriority.MEDIUM
+        )
+        return task
+
+    @pytest.mark.asyncio
+    async def test_enqueue_to_invalid_queue_defaults_to_default(self, task_queue, mock_task):
+        """Test enqueue to invalid queue falls back to default (line 57)."""
+        result = await task_queue.enqueue(mock_task, queue_name="nonexistent_queue")
+
+        assert result == mock_task.task_id
+        assert len(task_queue._queues["default"]) == 1
+        assert task_queue._queues["default"][0] == mock_task
+
+    @pytest.mark.asyncio
+    async def test_dequeue_from_invalid_queue_returns_none(self, task_queue):
+        """Test dequeue from invalid queue returns None (line 88)."""
+        result = await task_queue.dequeue(queue_name="nonexistent_queue")
+
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_dequeue_from_empty_queue_returns_none(self, task_queue):
+        """Test dequeue from empty queue returns None (line 92)."""
+        result = await task_queue.dequeue(queue_name="default")
+
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_complete_task_success(self, task_queue, mock_task):
+        """Test completing task with success (lines 119-122)."""
+        from backend.models.task import TaskStatus
+
+        await task_queue.enqueue(mock_task)
+        dequeued = await task_queue.dequeue()
+
+        await task_queue.complete_task(dequeued, success=True)
+
+        assert dequeued.status == TaskStatus.COMPLETED
+        assert dequeued.completed_at is not None
+
+    @pytest.mark.asyncio
+    async def test_complete_task_failure(self, task_queue, mock_task):
+        """Test completing task with failure (lines 119-122)."""
+        from backend.models.task import TaskStatus
+
+        await task_queue.enqueue(mock_task)
+        dequeued = await task_queue.dequeue()
+
+        await task_queue.complete_task(dequeued, success=False)
+
+        assert dequeued.status == TaskStatus.FAILED
+        assert dequeued.completed_at is not None
+
+    @pytest.mark.asyncio
+    async def test_move_to_dead_letter(self, task_queue, mock_task):
+        """Test moving task to dead letter queue (lines 135-138)."""
+        from backend.models.task import TaskStatus
+
+        await task_queue.move_to_dead_letter(mock_task)
+
+        assert mock_task.status == TaskStatus.FAILED
+        assert len(task_queue._queues["dead_letter"]) == 1
+        assert task_queue._queues["dead_letter"][0] == mock_task
+
+    def test_get_all_queues_status(self, task_queue):
+        """Test getting status of all queues (line 162)."""
+        status = task_queue.get_all_queues_status()
+
+        assert "default" in status
+        assert "high_priority" in status
+        assert "langgraph" in status
+        assert "crewai" in status
+        assert "dead_letter" in status
+        assert all(v == 0 for v in status.values())
+
+    @pytest.mark.asyncio
+    async def test_get_all_queues_status_with_tasks(self, task_queue, mock_task):
+        """Test get_all_queues_status with tasks in queues."""
+        await task_queue.enqueue(mock_task, queue_name="default")
+
+        status = task_queue.get_all_queues_status()
+
+        assert status["default"] == 1
+        assert status["high_priority"] == 0
+
+    def test_get_queue_length(self, task_queue):
+        """Test getting queue length."""
+        length = task_queue.get_queue_length("default")
+        assert length == 0
+
+    def test_get_queue_length_nonexistent(self, task_queue):
+        """Test getting length of nonexistent queue."""
+        length = task_queue.get_queue_length("nonexistent")
+        assert length == 0
+
+    @pytest.mark.asyncio
+    async def test_enqueue_and_dequeue_full_cycle(self, task_queue, mock_task):
+        """Test full enqueue/dequeue cycle."""
+        from backend.models.task import TaskStatus
+
+        # Enqueue
+        task_id = await task_queue.enqueue(mock_task)
+        assert task_id == mock_task.task_id
+        assert mock_task.status == TaskStatus.QUEUED
+
+        # Dequeue
+        dequeued = await task_queue.dequeue()
+        assert dequeued == mock_task
+        assert dequeued.status == TaskStatus.RUNNING
+        assert dequeued.started_at is not None
+
+        # Complete
+        await task_queue.complete_task(dequeued, success=True)
+        assert dequeued.status == TaskStatus.COMPLETED
+
+    @pytest.mark.asyncio
+    async def test_enqueue_to_high_priority_queue(self, task_queue, mock_task):
+        """Test enqueue to high priority queue."""
+        await task_queue.enqueue(mock_task, queue_name="high_priority")
+
+        assert len(task_queue._queues["high_priority"]) == 1
+        assert task_queue.get_queue_length("high_priority") == 1
+
+    @pytest.mark.asyncio
+    async def test_enqueue_sorts_by_priority(self, task_queue):
+        """Test that enqueue sorts tasks by priority."""
+        from backend.models.task import Task, TaskPriority
+
+        high_task = Task(
+            task_id="high",
+            name="High Priority Task",
+            description="High priority",
+            priority=TaskPriority.HIGH
+        )
+        low_task = Task(
+            task_id="low",
+            name="Low Priority Task",
+            description="Low priority",
+            priority=TaskPriority.LOW
+        )
+
+        await task_queue.enqueue(low_task)
+        await task_queue.enqueue(high_task)
+
+        # High priority should be first after sorting
+        dequeued = await task_queue.dequeue()
+        assert dequeued.task_id == "high"
+

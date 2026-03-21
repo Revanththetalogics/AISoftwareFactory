@@ -5,7 +5,7 @@ This module provides business logic for project management operations.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import uuid4
 
 from backend.core.logging import get_logger
@@ -23,16 +23,16 @@ class ProjectService:
 
     def __init__(self):
         """Initialize the project service."""
-        self._projects: Dict[str, Dict[str, Any]] = {}
+        self._projects: dict[str, dict[str, Any]] = {}
         self._logger = get_logger(__name__)
 
     async def create_project(
         self,
         name: str,
         description: str,
-        requirements: Optional[str] = None,
-        created_by: Optional[str] = None
-    ) -> Dict[str, Any]:
+        requirements: str | None = None,
+        created_by: str | None = None
+    ) -> dict[str, Any]:
         """
         Create a new project.
 
@@ -66,7 +66,7 @@ class ProjectService:
 
         return project
 
-    async def get_project(self, project_id: str) -> Optional[Dict[str, Any]]:
+    async def get_project(self, project_id: str) -> dict[str, Any] | None:
         """
         Get a project by ID.
 
@@ -80,9 +80,9 @@ class ProjectService:
 
     async def list_projects(
         self,
-        status: Optional[str] = None,
-        created_by: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        status: str | None = None,
+        created_by: str | None = None
+    ) -> list[dict[str, Any]]:
         """
         List projects with optional filtering.
 
@@ -105,8 +105,8 @@ class ProjectService:
     async def update_project(
         self,
         project_id: str,
-        updates: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+        updates: dict[str, Any]
+    ) -> dict[str, Any] | None:
         """
         Update a project.
 
@@ -153,7 +153,7 @@ class ProjectService:
         self,
         project_id: str,
         progress_percent: float
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Update project progress.
 

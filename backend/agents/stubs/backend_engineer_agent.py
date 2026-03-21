@@ -6,7 +6,7 @@ for the AI Software Factory.
 """
 
 import time
-from typing import Any, Dict
+from typing import Any
 
 from backend.agents.base_agent import BaseAgent, Task, TaskResult, TaskStatus
 from backend.core.logging import get_logger
@@ -112,7 +112,7 @@ class BackendEngineerAgent(BaseAgent):
                 execution_time_ms=execution_time,
             )
 
-    async def _process_backend_task(self, task: Task) -> Dict[str, Any]:
+    async def _process_backend_task(self, task: Task) -> dict[str, Any]:
         """Process Backend Engineer-specific tasks."""
         task_handlers = {
             "api_design": self._handle_api_design,
@@ -126,7 +126,7 @@ class BackendEngineerAgent(BaseAgent):
         handler = task_handlers.get(task.task_type, self._handle_generic_task)
         return await handler(task)
 
-    async def _handle_api_design(self, task: Task) -> Dict[str, Any]:
+    async def _handle_api_design(self, task: Task) -> dict[str, Any]:
         """Handle API design tasks."""
         return {
             "api_design": f"API design for: {task.description}",
@@ -155,7 +155,7 @@ class BackendEngineerAgent(BaseAgent):
             "versioning": "URL path versioning (v1, v2)",
         }
 
-    async def _handle_database_design(self, task: Task) -> Dict[str, Any]:
+    async def _handle_database_design(self, task: Task) -> dict[str, Any]:
         """Handle database design tasks."""
         return {
             "database_design": f"Database design for: {task.description}",
@@ -182,7 +182,7 @@ class BackendEngineerAgent(BaseAgent):
             "constraints": ["Foreign key constraints", "Unique constraints"],
         }
 
-    async def _handle_business_logic(self, task: Task) -> Dict[str, Any]:
+    async def _handle_business_logic(self, task: Task) -> dict[str, Any]:
         """Handle business logic implementation tasks."""
         return {
             "business_logic": f"Business logic for: {task.description}",
@@ -203,7 +203,7 @@ class BackendEngineerAgent(BaseAgent):
             ],
         }
 
-    async def _handle_security(self, task: Task) -> Dict[str, Any]:
+    async def _handle_security(self, task: Task) -> dict[str, Any]:
         """Handle security implementation tasks."""
         return {
             "security": f"Security implementation for: {task.description}",
@@ -228,7 +228,7 @@ class BackendEngineerAgent(BaseAgent):
             ],
         }
 
-    async def _handle_performance(self, task: Task) -> Dict[str, Any]:
+    async def _handle_performance(self, task: Task) -> dict[str, Any]:
         """Handle performance optimization tasks."""
         return {
             "performance": f"Performance optimization for: {task.description}",
@@ -250,7 +250,7 @@ class BackendEngineerAgent(BaseAgent):
             },
         }
 
-    async def _handle_testing(self, task: Task) -> Dict[str, Any]:
+    async def _handle_testing(self, task: Task) -> dict[str, Any]:
         """Handle testing tasks."""
         return {
             "testing": f"Test suite for: {task.description}",
@@ -268,7 +268,7 @@ class BackendEngineerAgent(BaseAgent):
             },
         }
 
-    async def _handle_generic_task(self, task: Task) -> Dict[str, Any]:
+    async def _handle_generic_task(self, task: Task) -> dict[str, Any]:
         """Handle generic tasks."""
         return {
             "result": f"Processed: {task.description}",

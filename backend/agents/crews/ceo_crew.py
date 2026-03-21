@@ -5,7 +5,7 @@ This crew handles strategic decision making, project oversight,
 and executive-level coordination.
 """
 
-from typing import Any, Dict
+from typing import Any
 
 from crewai import Agent, Crew, Task
 
@@ -72,8 +72,8 @@ class CEOCrew(BaseAgent):
 
     async def make_strategic_decision(
         self,
-        context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        context: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Make a strategic decision based on context.
 
@@ -113,8 +113,8 @@ class CEOCrew(BaseAgent):
 
     async def review_project_status(
         self,
-        project_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        project_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Review project status and provide executive summary.
 

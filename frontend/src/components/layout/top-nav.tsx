@@ -2,18 +2,9 @@
 
 import { useState } from 'react';
 import { Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ThemeToggle, UserProfile } from './user-profile';
 import { NotificationCenter } from './notification-center';
-
-interface Notification {
-  id: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  title: string;
-  message: string;
-  timestamp: string;
-}
 
 export function TopNav() {
   const [searchQuery, setSearchQuery] = useState('');

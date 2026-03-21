@@ -5,10 +5,9 @@ This module provides formatting functions for dates, durations, and other data t
 """
 
 from datetime import datetime
-from typing import Optional, Union
 
 
-def format_datetime(dt: Optional[datetime]) -> Optional[str]:
+def format_datetime(dt: datetime | None) -> str | None:
     """
     Format a datetime to ISO string.
 
@@ -23,7 +22,7 @@ def format_datetime(dt: Optional[datetime]) -> Optional[str]:
     return dt.isoformat()
 
 
-def format_duration(seconds: Union[int, float]) -> str:
+def format_duration(seconds: int | float) -> str:
     """
     Format duration in seconds to human readable string.
 

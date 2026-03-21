@@ -5,7 +5,7 @@ This module provides a comprehensive exception hierarchy for proper error handli
 enabling consistent error responses and logging across the application.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class AISoftwareFactoryException(Exception):
@@ -31,10 +31,10 @@ class AISoftwareFactoryException(Exception):
 
     def __init__(
         self,
-        message: Optional[str] = None,
-        error_code: Optional[str] = None,
-        status_code: Optional[int] = None,
-        details: Optional[Dict[str, Any]] = None,
+        message: str | None = None,
+        error_code: str | None = None,
+        status_code: int | None = None,
+        details: dict[str, Any] | None = None,
     ):
         """
         Initialize exception with error details.
@@ -51,7 +51,7 @@ class AISoftwareFactoryException(Exception):
         self.details = details or {}
         super().__init__(self.message)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert exception to dictionary for API responses.
 
@@ -115,8 +115,8 @@ class ValidationError(AISoftwareFactoryException):
 
     def __init__(
         self,
-        message: Optional[str] = None,
-        errors: Optional[List[Dict[str, Any]]] = None,
+        message: str | None = None,
+        errors: list[dict[str, Any]] | None = None,
         **kwargs: Any,
     ):
         """
@@ -153,8 +153,8 @@ class ResourceNotFoundError(AISoftwareFactoryException):
 
     def __init__(
         self,
-        resource_type: Optional[str] = None,
-        resource_id: Optional[str] = None,
+        resource_type: str | None = None,
+        resource_id: str | None = None,
         **kwargs: Any,
     ):
         """
@@ -238,7 +238,7 @@ class ServiceUnavailableError(AISoftwareFactoryException):
 
     def __init__(
         self,
-        service: Optional[str] = None,
+        service: str | None = None,
         **kwargs: Any,
     ):
         """
@@ -314,7 +314,7 @@ class ExternalServiceError(AISoftwareFactoryException):
 
     def __init__(
         self,
-        service: Optional[str] = None,
+        service: str | None = None,
         **kwargs: Any,
     ):
         """

@@ -6,7 +6,7 @@ It supports registration, unregistration, and lookup of agents by ID or role.
 """
 
 from functools import lru_cache
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from backend.agents.base_agent import BaseAgent
 from backend.core.logging import get_logger
@@ -46,8 +46,8 @@ class AgentRegistry:
     def __init__(self):
         """Initialize the registry."""
         if not self._initialized:
-            self._agents: Dict[str, BaseAgent] = {}
-            self._agents_by_role: Dict[str, List[str]] = {}
+            self._agents: dict[str, BaseAgent] = {}
+            self._agents_by_role: dict[str, list[str]] = {}
             self._logger = get_logger(__name__)
             self._initialized = True
             self._logger.info("Agent registry initialized")
@@ -86,7 +86,7 @@ class AgentRegistry:
             role=role,
         )
 
-    def unregister(self, agent_id: str) -> Optional[BaseAgent]:
+    def unregister(self, agent_id: str) -> BaseAgent | None:
         """
         Unregister an agent from the registry.
 
@@ -115,7 +115,7 @@ class AgentRegistry:
 
         return agent
 
-    def get_by_id(self, agent_id: str) -> Optional[BaseAgent]:
+    def get_by_id(self, agent_id: str) -> BaseAgent | None:
         """
         Get agent by ID.
 
@@ -132,7 +132,7 @@ class AgentRegistry:
         """
         return self._agents.get(agent_id)
 
-    def get_by_role(self, role: str) -> List[BaseAgent]:
+    def get_by_role(self, role: str) -> list[BaseAgent]:
         """
         Get all agents with a specific role.
 
@@ -150,7 +150,7 @@ class AgentRegistry:
         agent_ids = self._agents_by_role.get(role, [])
         return [self._agents[aid] for aid in agent_ids if aid in self._agents]
 
-    def get_by_capability(self, capability: str) -> List[BaseAgent]:
+    def get_by_capability(self, capability: str) -> list[BaseAgent]:
         """
         Get all agents with a specific capability.
 
@@ -170,7 +170,7 @@ class AgentRegistry:
             if agent.has_capability(capability)
         ]
 
-    def list_all(self) -> List[BaseAgent]:
+    def list_all(self) -> list[BaseAgent]:
         """
         List all registered agents.
 
@@ -183,7 +183,7 @@ class AgentRegistry:
         """
         return list(self._agents.values())
 
-    def list_roles(self) -> List[str]:
+    def list_roles(self) -> list[str]:
         """
         List all registered roles.
 
@@ -215,7 +215,7 @@ class AgentRegistry:
         self._agents_by_role.clear()
         self._logger.warning("Agent registry cleared")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert registry state to dictionary.
 
@@ -237,7 +237,7 @@ class AgentRegistry:
         }
 
 
-@lru_cache()
+@lru_cache
 def get_agent_registry() -> AgentRegistry:
     """
     Get the singleton agent registry instance.

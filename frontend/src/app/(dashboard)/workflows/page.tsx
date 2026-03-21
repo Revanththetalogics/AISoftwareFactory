@@ -5,7 +5,7 @@ import { GitBranch, Settings, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useWorkflows, useExecuteWorkflow, useCancelWorkflow } from '@/lib/hooks';
+import { useWorkflows, useCancelWorkflow } from '@/lib/hooks';
 import { toast } from 'sonner';
 
 const containerVariants = {
@@ -20,23 +20,7 @@ const containerVariants = {
 
 export default function WorkflowsPage() {
   const { data: workflows = [], isLoading, refetch } = useWorkflows();
-  const executeWorkflow = useExecuteWorkflow();
   const cancelWorkflow = useCancelWorkflow();
-
-  const handleExecute = async (projectId?: string) => {
-    if (!projectId) {
-      toast.error('No project selected');
-      return;
-    }
-
-    try {
-      await executeWorkflow.mutateAsync({ project_id: projectId });
-      toast.success('Workflow started successfully');
-      refetch();
-    } catch {
-      toast.error('Failed to start workflow');
-    }
-  };
 
   const handleCancel = async (workflowId: string) => {
     try {

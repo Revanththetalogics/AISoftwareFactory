@@ -6,7 +6,7 @@ ELK stack integration support.
 """
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from backend.core.logging import get_logger
 
@@ -54,7 +54,7 @@ output {
 """
         return config
 
-    def generate_filebeat_config(self) -> Dict[str, Any]:
+    def generate_filebeat_config(self) -> dict[str, Any]:
         """Generate Filebeat configuration."""
         return {
             "filebeat.inputs": [
@@ -94,7 +94,7 @@ output {
 """
         return config
 
-    def generate_structlog_config(self) -> Dict[str, Any]:
+    def generate_structlog_config(self) -> dict[str, Any]:
         """Generate structlog configuration."""
         return {
             "processors": [

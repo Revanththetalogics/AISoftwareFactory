@@ -4,7 +4,6 @@ Ollama Provider for AI Software Factory.
 This module implements the Ollama LLM provider for local model inference.
 """
 
-from typing import Dict, List, Optional
 
 import httpx
 
@@ -63,8 +62,8 @@ class OllamaProvider(BaseLLMProvider):
         super().__init__(name="ollama", default_model=default_model)
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
-        self._client: Optional[httpx.AsyncClient] = None
-        self._available_models: List[str] = []
+        self._client: httpx.AsyncClient | None = None
+        self._available_models: list[str] = []
 
     def _get_client(self) -> httpx.AsyncClient:
         """Get or create HTTP client."""
@@ -101,7 +100,7 @@ class OllamaProvider(BaseLLMProvider):
             logger.warning("Ollama is not available", error=str(exc))
             return False
 
-    def get_available_models(self) -> List[str]:
+    def get_available_models(self) -> list[str]:
         """
         Get list of available models.
 
@@ -211,8 +210,8 @@ class OllamaProvider(BaseLLMProvider):
 
     async def chat(
         self,
-        messages: List[Dict[str, str]],
-        model: Optional[str] = None,
+        messages: list[dict[str, str]],
+        model: str | None = None,
         **kwargs,
     ) -> LLMResponse:
         """
@@ -301,7 +300,7 @@ class OllamaProvider(BaseLLMProvider):
             logger.error("Error pulling model", model=model, error=str(exc))
             return False
 
-    def get_capabilities(self) -> List[ModelCapability]:
+    def get_capabilities(self) -> list[ModelCapability]:
         """
         Get Ollama capabilities.
 

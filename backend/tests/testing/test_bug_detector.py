@@ -529,7 +529,7 @@ class TestBugDetectorAgent:
     @pytest.mark.asyncio
     async def test_run_static_analysis_syntax_error(self, bug_detector_agent, temp_syntax_error_file):
         """Test static analysis with syntax error file."""
-        with open(temp_syntax_error_file, 'r') as f:
+        with open(temp_syntax_error_file) as f:
             code = f.read()
 
         bugs = await bug_detector_agent._run_static_analysis(temp_syntax_error_file, code)
@@ -559,7 +559,7 @@ class TestBugDetectorAgent:
     @pytest.mark.asyncio
     async def test_run_pattern_matching(self, bug_detector_agent, temp_python_file):
         """Test pattern matching detection."""
-        with open(temp_python_file, 'r') as f:
+        with open(temp_python_file) as f:
             code = f.read()
 
         bugs = await bug_detector_agent._run_pattern_matching(temp_python_file, code)
@@ -570,7 +570,7 @@ class TestBugDetectorAgent:
     @pytest.mark.asyncio
     async def test_run_llm_review(self, bug_detector_agent, temp_python_file):
         """Test LLM review."""
-        with open(temp_python_file, 'r') as f:
+        with open(temp_python_file) as f:
             code = f.read()
 
         bugs = await bug_detector_agent._run_llm_review(temp_python_file, code)
@@ -582,7 +582,7 @@ class TestBugDetectorAgent:
         """Test LLM review with error."""
         bug_detector_agent._llm.generate = AsyncMock(side_effect=Exception("LLM failed"))
 
-        with open(temp_python_file, 'r') as f:
+        with open(temp_python_file) as f:
             code = f.read()
 
         bugs = await bug_detector_agent._run_llm_review(temp_python_file, code)
@@ -594,7 +594,7 @@ class TestBugDetectorAgent:
         """Test LLM review with invalid JSON response."""
         bug_detector_agent._llm.generate = AsyncMock(return_value="not valid json")
 
-        with open(temp_python_file, 'r') as f:
+        with open(temp_python_file) as f:
             code = f.read()
 
         bugs = await bug_detector_agent._run_llm_review(temp_python_file, code)

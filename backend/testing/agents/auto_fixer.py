@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from backend.agents.base_agent import BaseAgent, Task, TaskResult, TaskStatus
 from backend.core.logging import get_logger
@@ -51,7 +51,7 @@ class CodeChange:
     new_code: str
     description: str
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "file_path": self.file_path,
             "line_start": self.line_start,
@@ -70,15 +70,15 @@ class FixAttempt:
     file_path: str
     strategy: FixStrategy
     status: FixStatus
-    changes: List[CodeChange] = field(default_factory=list)
+    changes: list[CodeChange] = field(default_factory=list)
     diff: str = ""
-    validation_results: Dict[str, Any] = field(default_factory=dict)
-    error_message: Optional[str] = None
-    applied_at: Optional[datetime] = None
-    rolled_back_at: Optional[datetime] = None
-    backup_path: Optional[str] = None
+    validation_results: dict[str, Any] = field(default_factory=dict)
+    error_message: str | None = None
+    applied_at: datetime | None = None
+    rolled_back_at: datetime | None = None
+    backup_path: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "bug_id": self.bug_id,
@@ -101,9 +101,9 @@ class ValidationResult:
     syntax_valid: bool
     tests_pass: bool
     no_new_issues: bool
-    messages: List[str] = field(default_factory=list)
+    messages: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "passed": self.passed,
             "syntax_valid": self.syntax_valid,
@@ -157,7 +157,7 @@ class AutoFixerAgent(BaseAgent):
         self._backup_dir = Path(backup_dir)
         self._backup_dir.mkdir(exist_ok=True)
         self._fix_patterns = self._load_fix_patterns()
-        self._fix_history: List[FixAttempt] = []
+        self._fix_history: list[FixAttempt] = []
 
     async def execute_task(self, task: Task) -> TaskResult:
         """
@@ -210,7 +210,7 @@ class AutoFixerAgent(BaseAgent):
         file_path: str,
         bug_description: str,
         suggested_fix: str,
-        line_number: Optional[int] = None,
+        line_number: int | None = None,
         auto_apply: bool = False,
         validate: bool = True
     ) -> FixAttempt:
@@ -273,10 +273,10 @@ class AutoFixerAgent(BaseAgent):
 
     async def batch_fix(
         self,
-        bugs: List[Dict[str, Any]],
+        bugs: list[dict[str, Any]],
         auto_apply: bool = False,
         stop_on_failure: bool = True
-    ) -> List[FixAttempt]:
+    ) -> list[FixAttempt]:
         """
         Fix multiple bugs in batch.
 
@@ -363,8 +363,8 @@ class AutoFixerAgent(BaseAgent):
         file_path: str,
         bug_description: str,
         suggested_fix: str,
-        line_number: Optional[int] = None
-    ) -> Dict[str, Any]:
+        line_number: int | None = None
+    ) -> dict[str, Any]:
         """
         Preview a fix without applying it.
 
@@ -390,7 +390,7 @@ class AutoFixerAgent(BaseAgent):
             "validation_estimate": "Will validate syntax and run tests",
         }
 
-    def get_fix_statistics(self) -> Dict[str, Any]:
+    def get_fix_statistics(self) -> dict[str, Any]:
         """
         Get statistics about fixes.
 
@@ -419,7 +419,7 @@ class AutoFixerAgent(BaseAgent):
 
     # Private methods
 
-    def _load_fix_patterns(self) -> Dict[str, Any]:
+    def _load_fix_patterns(self) -> dict[str, Any]:
         """Load pattern-based fix definitions."""
         return {
             "bare_except": {
@@ -449,7 +449,7 @@ class AutoFixerAgent(BaseAgent):
         bug_id: str,
         file_path: str,
         bug_description: str,
-        line_number: Optional[int]
+        line_number: int | None
     ) -> FixAttempt:
         """Try to fix using pattern matching."""
         fix_attempt = FixAttempt(
@@ -461,7 +461,7 @@ class AutoFixerAgent(BaseAgent):
         )
 
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path) as f:
                 original_code = f.read()
 
             new_code = original_code
@@ -506,7 +506,7 @@ class AutoFixerAgent(BaseAgent):
         file_path: str,
         bug_description: str,
         suggested_fix: str,
-        line_number: Optional[int]
+        line_number: int | None
     ) -> FixAttempt:
         """Try to fix using LLM."""
         fix_attempt = FixAttempt(
@@ -518,7 +518,7 @@ class AutoFixerAgent(BaseAgent):
         )
 
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path) as f:
                 original_code = f.read()
 
             prompt = f"""Fix this bug in the code:
@@ -640,7 +640,7 @@ Provide the complete fixed code. Only return the code, no explanations."""
         # Return as-is if no code block found
         return response.strip()
 
-    async def _auto_fix_task(self, task: Task) -> Dict[str, Any]:
+    async def _auto_fix_task(self, task: Task) -> dict[str, Any]:
         """Handle auto_fix task type."""
         fix_attempt = await self.fix_bug(
             bug_id=task.context["bug_id"],
@@ -654,7 +654,7 @@ Provide the complete fixed code. Only return the code, no explanations."""
 
         return fix_attempt.to_dict()
 
-    async def _batch_fix_task(self, task: Task) -> Dict[str, Any]:
+    async def _batch_fix_task(self, task: Task) -> dict[str, Any]:
         """Handle batch_fix task type."""
         fixes = await self.batch_fix(
             bugs=task.context["bugs"],
@@ -669,7 +669,7 @@ Provide the complete fixed code. Only return the code, no explanations."""
             "fixes": [f.to_dict() for f in fixes],
         }
 
-    async def _rollback_task(self, task: Task) -> Dict[str, Any]:
+    async def _rollback_task(self, task: Task) -> dict[str, Any]:
         """Handle rollback task type."""
         success = await self.rollback_fix(task.context["fix_id"])
 
@@ -678,7 +678,7 @@ Provide the complete fixed code. Only return the code, no explanations."""
             "rolled_back": success,
         }
 
-    async def _preview_fix_task(self, task: Task) -> Dict[str, Any]:
+    async def _preview_fix_task(self, task: Task) -> dict[str, Any]:
         """Handle preview_fix task type."""
         return await self.preview_fix(
             bug_id=task.context["bug_id"],

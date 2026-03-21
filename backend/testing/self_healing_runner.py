@@ -12,10 +12,11 @@ This module provides:
 import asyncio
 import random
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from backend.core.logging import get_logger
 from backend.testing.intelligence_engine import TestCase
@@ -41,15 +42,15 @@ class TestExecutionResult:
     status: TestResultStatus
     duration_ms: float
     attempt_number: int
-    error_message: Optional[str] = None
-    stack_trace: Optional[str] = None
+    error_message: str | None = None
+    stack_trace: str | None = None
     healing_applied: bool = False
     healing_description: str = ""
-    screenshot_path: Optional[str] = None
+    screenshot_path: str | None = None
     console_output: str = ""
     executed_at: datetime = field(default_factory=datetime.utcnow)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "test_id": self.test_id,
             "test_name": self.test_name,
@@ -70,11 +71,11 @@ class FlakyTest:
     test_name: str
     failure_rate: float
     last_failure: datetime
-    failure_patterns: List[str] = field(default_factory=list)
+    failure_patterns: list[str] = field(default_factory=list)
     quarantined: bool = False
-    quarantined_at: Optional[datetime] = None
+    quarantined_at: datetime | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "test_id": self.test_id,
             "test_name": self.test_name,
@@ -97,8 +98,8 @@ class TestSuiteResult:
     flaky: int
     healed: int
     skipped: int
-    results: List[TestExecutionResult] = field(default_factory=list)
-    execution_log: List[str] = field(default_factory=list)
+    results: list[TestExecutionResult] = field(default_factory=list)
+    execution_log: list[str] = field(default_factory=list)
 
     @property
     def duration_seconds(self) -> float:
@@ -110,7 +111,7 @@ class TestSuiteResult:
             return 0.0
         return (self.passed + self.healed) / self.total_tests
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "suite_name": self.suite_name,
             "start_time": self.start_time.isoformat(),
@@ -169,15 +170,15 @@ class SelfHealingTestRunner:
         self._parallel_workers = parallel_workers
 
         self._logger = get_logger(__name__)
-        self._execution_history: Dict[str, List[TestExecutionResult]] = {}
-        self._flaky_tests: Dict[str, FlakyTest] = {}
-        self._healing_strategies: List[Callable] = []
+        self._execution_history: dict[str, list[TestExecutionResult]] = {}
+        self._flaky_tests: dict[str, FlakyTest] = {}
+        self._healing_strategies: list[Callable] = []
 
         self._register_default_healing_strategies()
 
     async def run_suite(
         self,
-        test_cases: List[TestCase],
+        test_cases: list[TestCase],
         suite_name: str = "test_suite",
         stop_on_first_failure: bool = False,
         run_quarantined: bool = False,
@@ -295,7 +296,7 @@ class SelfHealingTestRunner:
         """
         return await self._run_test_with_healing(test_case, enable_retry)
 
-    def get_flaky_tests(self) -> List[FlakyTest]:
+    def get_flaky_tests(self) -> list[FlakyTest]:
         """
         Get list of detected flaky tests.
 
@@ -345,7 +346,7 @@ class SelfHealingTestRunner:
 
         return True
 
-    def get_execution_statistics(self) -> Dict[str, Any]:
+    def get_execution_statistics(self) -> dict[str, Any]:
         """
         Get execution statistics.
 
@@ -472,7 +473,7 @@ class SelfHealingTestRunner:
                 return execution_result
 
         # Should not reach here
-        return TestExecutionResult(
+        return TestExecutionResult(  # pragma: no cover
             test_id=test_case.id,
             test_name=test_case.name,
             status=TestResultStatus.FAILED,
@@ -481,7 +482,7 @@ class SelfHealingTestRunner:
             error_message="Max retries exceeded",
         )
 
-    async def _execute_test(self, test_case: TestCase) -> Dict[str, Any]:
+    async def _execute_test(self, test_case: TestCase) -> dict[str, Any]:
         """Execute a single test."""
         # This would integrate with pytest or Playwright
         # For now, simulate test execution
@@ -499,7 +500,7 @@ class SelfHealingTestRunner:
     async def _attempt_healing(
         self,
         test_case: TestCase,
-        failure_result: Dict[str, Any]
+        failure_result: dict[str, Any]
     ) -> bool:
         """Attempt to heal a failing test."""
         for strategy in self._healing_strategies:
@@ -515,7 +516,7 @@ class SelfHealingTestRunner:
     async def _heal_timing_issues(
         self,
         test_case: TestCase,
-        failure_result: Dict[str, Any]
+        failure_result: dict[str, Any]
     ) -> bool:
         """Heal timing-related issues."""
         error = failure_result.get("error", "")
@@ -530,7 +531,7 @@ class SelfHealingTestRunner:
     async def _heal_selector_issues(
         self,
         test_case: TestCase,
-        failure_result: Dict[str, Any]
+        failure_result: dict[str, Any]
     ) -> bool:
         """Heal selector-related issues."""
         error = failure_result.get("error", "")
@@ -545,7 +546,7 @@ class SelfHealingTestRunner:
     async def _heal_network_issues(
         self,
         test_case: TestCase,
-        failure_result: Dict[str, Any]
+        failure_result: dict[str, Any]
     ) -> bool:
         """Heal network-related issues."""
         error = failure_result.get("error", "")
@@ -557,7 +558,7 @@ class SelfHealingTestRunner:
 
         return False
 
-    def _sort_tests_by_priority(self, test_cases: List[TestCase]) -> List[TestCase]:
+    def _sort_tests_by_priority(self, test_cases: list[TestCase]) -> list[TestCase]:
         """Sort tests by priority and failure history."""
         def sort_key(tc: TestCase):
             # Priority score (lower is higher priority)
@@ -587,7 +588,7 @@ class SelfHealingTestRunner:
             self._execution_history[result.test_id][-20:]
         )
 
-    def _update_flaky_test_tracking(self, results: List[TestExecutionResult]):
+    def _update_flaky_test_tracking(self, results: list[TestExecutionResult]):
         """Update flaky test tracking based on results."""
         for result in results:
             if result.test_id not in self._execution_history:

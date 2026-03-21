@@ -5,7 +5,7 @@ This module provides business logic for workflow management operations.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import uuid4
 
 from backend.core.logging import get_logger
@@ -25,7 +25,7 @@ class WorkflowService:
 
     def __init__(self):
         """Initialize the workflow service."""
-        self._workflows: Dict[str, Workflow] = {}
+        self._workflows: dict[str, Workflow] = {}
         self._engine = WorkflowEngine()
         self._logger = get_logger(__name__)
 
@@ -34,8 +34,8 @@ class WorkflowService:
         name: str,
         project_id: str,
         description: str = "",
-        steps: Optional[List[Dict[str, Any]]] = None,
-        created_by: Optional[str] = None
+        steps: list[dict[str, Any]] | None = None,
+        created_by: str | None = None
     ) -> Workflow:
         """
         Create a new workflow.
@@ -74,7 +74,7 @@ class WorkflowService:
 
         return workflow
 
-    async def get_workflow(self, workflow_id: str) -> Optional[Workflow]:
+    async def get_workflow(self, workflow_id: str) -> Workflow | None:
         """
         Get a workflow by ID.
 
@@ -88,9 +88,9 @@ class WorkflowService:
 
     async def list_workflows(
         self,
-        project_id: Optional[str] = None,
-        status: Optional[WorkflowStatus] = None
-    ) -> List[Workflow]:
+        project_id: str | None = None,
+        status: WorkflowStatus | None = None
+    ) -> list[Workflow]:
         """
         List workflows with optional filtering.
 
@@ -110,7 +110,7 @@ class WorkflowService:
 
         return workflows
 
-    async def start_workflow(self, workflow_id: str) -> Optional[Workflow]:
+    async def start_workflow(self, workflow_id: str) -> Workflow | None:
         """
         Start a workflow execution.
 
@@ -153,7 +153,7 @@ class WorkflowService:
         self,
         workflow_id: str,
         status: str
-    ) -> Optional[Workflow]:
+    ) -> Workflow | None:
         """
         Update workflow status.
 
@@ -185,7 +185,7 @@ class WorkflowService:
 
         return workflow
 
-    async def cancel_workflow(self, workflow_id: str) -> Optional[Workflow]:
+    async def cancel_workflow(self, workflow_id: str) -> Workflow | None:
         """
         Cancel a workflow.
 

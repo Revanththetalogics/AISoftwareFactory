@@ -5,6 +5,7 @@ Tests for Code Generator.
 import pytest
 
 from backend.codegen.generator import (
+    CodeFramework,
     CodeGenerator,
     CodeLanguage,
     CodeTemplate,
@@ -197,3 +198,116 @@ class TestCodeGenerator:
         self.generator.register_template(template)
 
         assert "custom" in self.generator.list_templates()
+
+
+class TestCodeGeneratorExtendedCoverage:
+    """Tests for extended coverage - lines 376-382, 405-411, 438, 478, 481."""
+
+    def setup_method(self):
+        """Create fresh generator for each test."""
+        from backend.codegen.generator import CodeGenerator
+        self.generator = CodeGenerator()
+
+    def test_generate_from_template_generic_exception_lines_376_382(self):
+        """Test lines 376-382: generic Exception handling in generate."""
+        from unittest.mock import patch
+
+        # Create a template
+        bad_template = CodeTemplate(
+            name="bad_template",
+            template="$value",
+            language=CodeLanguage.PYTHON,
+            variables=["value"],
+        )
+        self.generator.register_template(bad_template)
+
+        # Mock the template's render to raise a RuntimeError (not ValueError)
+        def raise_runtime_error(**kwargs):
+            raise RuntimeError("Unexpected error during rendering")
+
+        # Patch the template directly in the generator's templates dict
+        with patch.object(self.generator._templates["bad_template"], 'render', side_effect=raise_runtime_error):
+            result = self.generator.generate(
+                "bad_template",
+                {"value": "test"},  # Variables as dict
+            )
+
+            # Lines 376-382: should catch exception and return error
+            assert result.success is False
+            assert "Unexpected error" in result.error
+
+    def test_generate_from_description_lines_405_411(self):
+        """Test lines 405-411: generate_from_description method."""
+        result = self.generator.generate_from_description(
+            description="A function that adds two numbers",
+            language=CodeLanguage.PYTHON,
+            framework=CodeFramework.FASTAPI,
+        )
+
+        # Lines 405-411: should return placeholder code
+        assert result.success is True
+        assert "TODO" in result.content
+        assert result.language == CodeLanguage.PYTHON
+        assert result.framework == CodeFramework.FASTAPI
+        assert result.metadata["source"] == "description"
+
+    def test_generate_from_description_without_framework(self):
+        """Test generate_from_description without framework."""
+        result = self.generator.generate_from_description(
+            description="A simple utility function",
+            language=CodeLanguage.TYPESCRIPT,
+        )
+
+        assert result.success is True
+        assert result.language == CodeLanguage.TYPESCRIPT
+        assert result.framework is None
+
+    def test_list_templates_filter_by_framework_line_438(self):
+        """Test line 438: list_templates with framework filter."""
+        # Register a template with a specific framework
+        template = CodeTemplate(
+            name="fastapi_custom",
+            template="# FastAPI custom",
+            language=CodeLanguage.PYTHON,
+            framework=CodeFramework.FASTAPI,
+            variables=[],
+        )
+        self.generator.register_template(template)
+
+        # Filter by framework (line 437-438)
+        templates = self.generator.list_templates(framework=CodeFramework.FASTAPI)
+
+        assert "fastapi_custom" in templates
+        assert "fastapi_endpoint" in templates  # Built-in
+
+        # Filter by different framework
+        templates_react = self.generator.list_templates(framework=CodeFramework.REACT)
+
+        # fastapi_custom should not be in React templates
+        assert "fastapi_custom" not in templates_react
+
+    def test_validate_code_empty_line_478(self):
+        """Test line 478: empty code validation."""
+        result = self.generator.validate_code("", CodeLanguage.PYTHON)
+
+        # Lines 477-478: empty code should report issue
+        assert result["valid"] is False
+        assert any(issue["type"] == "empty" for issue in result["issues"])
+
+    def test_validate_code_whitespace_only(self):
+        """Test validation with whitespace only code."""
+        result = self.generator.validate_code("   \n\t\n   ", CodeLanguage.PYTHON)
+
+        # Should also be considered empty after strip
+        assert result["valid"] is False
+
+    def test_validate_code_too_large_line_481(self):
+        """Test lines 480-481: code size validation."""
+        # Create code that exceeds 100KB
+        large_code = "x = 1\n" * 20001  # About 140KB
+
+        result = self.generator.validate_code(large_code, CodeLanguage.PYTHON)
+
+        # Lines 480-481: should report size issue
+        assert result["valid"] is False
+        assert any(issue["type"] == "size" for issue in result["issues"])

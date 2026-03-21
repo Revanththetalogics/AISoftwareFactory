@@ -8,7 +8,7 @@ import shutil
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from backend.core.logging import get_logger
 
@@ -33,7 +33,7 @@ class FileArtifact:
     language: str = ""
     created_at: datetime = field(default_factory=datetime.now)
     modified_at: datetime = field(default_factory=datetime.now)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     @property
     def filename(self) -> str:
@@ -45,7 +45,7 @@ class FileArtifact:
         """Get the file extension."""
         return Path(self.path).suffix
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "path": self.path,
@@ -72,10 +72,10 @@ class ProjectStructure:
     """
     root_path: str
     name: str
-    files: List[FileArtifact] = field(default_factory=list)
-    directories: List[str] = field(default_factory=list)
+    files: list[FileArtifact] = field(default_factory=list)
+    directories: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "root_path": self.root_path,
@@ -134,8 +134,8 @@ class FileManager:
         # Ensure the resolved path is within base_path
         try:
             resolved.relative_to(self.base_path)
-        except ValueError:
-            raise ValueError(f"Path '{relative_path}' is outside base directory")
+        except ValueError as exc:
+            raise ValueError(f"Path '{relative_path}' is outside base directory") from exc
 
         return resolved
 
@@ -144,7 +144,7 @@ class FileManager:
         relative_path: str,
         content: str,
         language: str = "",
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> FileArtifact:
         """
         Write content to a file.
@@ -183,7 +183,7 @@ class FileManager:
             metadata=metadata or {},
         )
 
-    def read_file(self, relative_path: str) -> Optional[FileArtifact]:
+    def read_file(self, relative_path: str) -> FileArtifact | None:
         """
         Read a file.
 
@@ -198,7 +198,7 @@ class FileManager:
         if not file_path.exists():
             return None
 
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         stat = file_path.stat()
@@ -276,7 +276,7 @@ class FileManager:
         relative_path: str = "",
         pattern: str = "*",
         recursive: bool = True,
-    ) -> List[FileArtifact]:
+    ) -> list[FileArtifact]:
         """
         List files in a directory.
 
@@ -303,7 +303,7 @@ class FileManager:
         for file_path in path_iterator:
             if file_path.is_file():
                 try:
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
 
                     stat = file_path.stat()
@@ -313,7 +313,7 @@ class FileManager:
                         content=content,
                         modified_at=datetime.fromtimestamp(stat.st_mtime),
                     ))
-                except (IOError, UnicodeDecodeError) as exc:
+                except (OSError, UnicodeDecodeError) as exc:
                     self._logger.warning(
                         "Could not read file",
                         path=str(file_path),
@@ -348,7 +348,7 @@ class FileManager:
 
             if path.is_file():
                 try:
-                    with open(path, "r", encoding="utf-8") as f:
+                    with open(path, encoding="utf-8") as f:
                         content = f.read()
 
                     stat = path.stat()
@@ -358,7 +358,7 @@ class FileManager:
                         content=content,
                         modified_at=datetime.fromtimestamp(stat.st_mtime),
                     ))
-                except (IOError, UnicodeDecodeError):
+                except (OSError, UnicodeDecodeError):
                     pass
             elif path.is_dir():
                 directories.append(str(relative))
@@ -370,7 +370,7 @@ class FileManager:
             directories=directories,
         )
 
-    def copy_file(self, source: str, destination: str) -> Optional[FileArtifact]:
+    def copy_file(self, source: str, destination: str) -> FileArtifact | None:
         """
         Copy a file.
 
@@ -396,7 +396,7 @@ class FileManager:
 
         return self.read_file(destination)
 
-    def move_file(self, source: str, destination: str) -> Optional[FileArtifact]:
+    def move_file(self, source: str, destination: str) -> FileArtifact | None:
         """
         Move a file.
 

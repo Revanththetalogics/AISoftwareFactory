@@ -7,11 +7,11 @@ for the project lifecycle.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from enum import StrEnum
+from typing import Any
 
 
-class ProjectPhase(str, Enum):
+class ProjectPhase(StrEnum):
     """
     Project lifecycle phases.
 
@@ -28,7 +28,7 @@ class ProjectPhase(str, Enum):
     FAILED = "failed"
 
 
-class PhaseStatus(str, Enum):
+class PhaseStatus(StrEnum):
     """Status of a workflow phase."""
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
@@ -53,13 +53,13 @@ class PhaseState:
     """
     phase: ProjectPhase
     status: PhaseStatus = PhaseStatus.PENDING
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    output: Dict[str, Any] = field(default_factory=dict)
-    error: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    output: dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert phase state to dictionary."""
         return {
             "phase": self.phase.value,
@@ -90,8 +90,8 @@ class WorkflowState:
     """
     project_id: str
     current_phase: ProjectPhase = ProjectPhase.IDEA
-    phases: Dict[ProjectPhase, PhaseState] = field(default_factory=dict)
-    context: Dict[str, Any] = field(default_factory=dict)
+    phases: dict[ProjectPhase, PhaseState] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
 
@@ -102,7 +102,7 @@ class WorkflowState:
                 if phase not in (ProjectPhase.COMPLETE, ProjectPhase.FAILED):
                     self.phases[phase] = PhaseState(phase=phase)
 
-    def get_phase_state(self, phase: ProjectPhase) -> Optional[PhaseState]:
+    def get_phase_state(self, phase: ProjectPhase) -> PhaseState | None:
         """Get the state of a specific phase."""
         return self.phases.get(phase)
 
@@ -110,8 +110,8 @@ class WorkflowState:
         self,
         phase: ProjectPhase,
         status: PhaseStatus,
-        output: Optional[Dict[str, Any]] = None,
-        error: Optional[str] = None,
+        output: dict[str, Any] | None = None,
+        error: str | None = None,
     ) -> None:
         """Update the status of a phase."""
         if phase not in self.phases:
@@ -153,14 +153,14 @@ class WorkflowState:
         phase_state = self.phases.get(phase)
         return phase_state is not None and phase_state.status == PhaseStatus.COMPLETED
 
-    def get_completed_phases(self) -> List[ProjectPhase]:
+    def get_completed_phases(self) -> list[ProjectPhase]:
         """Get list of completed phases."""
         return [
             phase for phase, state in self.phases.items()
             if state.status == PhaseStatus.COMPLETED
         ]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert workflow state to dictionary."""
         return {
             "project_id": self.project_id,
@@ -176,7 +176,7 @@ class WorkflowState:
 
 
 # Define valid phase transitions
-VALID_TRANSITIONS: Dict[ProjectPhase, List[ProjectPhase]] = {
+VALID_TRANSITIONS: dict[ProjectPhase, list[ProjectPhase]] = {
     ProjectPhase.IDEA: [ProjectPhase.REQUIREMENTS, ProjectPhase.FAILED],
     ProjectPhase.REQUIREMENTS: [ProjectPhase.ARCHITECTURE, ProjectPhase.FAILED],
     ProjectPhase.ARCHITECTURE: [ProjectPhase.IMPLEMENTATION, ProjectPhase.FAILED],
@@ -202,7 +202,7 @@ def can_transition(from_phase: ProjectPhase, to_phase: ProjectPhase) -> bool:
     return to_phase in VALID_TRANSITIONS.get(from_phase, [])
 
 
-def get_next_phases(phase: ProjectPhase) -> List[ProjectPhase]:
+def get_next_phases(phase: ProjectPhase) -> list[ProjectPhase]:
     """
     Get valid next phases from the current phase.
 

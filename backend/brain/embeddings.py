@@ -6,7 +6,6 @@ and OpenAI embeddings.
 """
 
 import os
-from typing import List, Optional
 
 from backend.core.logging import get_logger
 
@@ -24,7 +23,7 @@ class EmbeddingEngine:
     def __init__(
         self,
         provider: str = "local",
-        model_name: Optional[str] = None
+        model_name: str | None = None
     ):
         """
         Initialize the embedding engine.
@@ -44,7 +43,7 @@ class EmbeddingEngine:
             return "text-embedding-3-small"
         return "all-MiniLM-L6-v2"
 
-    async def embed(self, texts: List[str]) -> List[List[float]]:
+    async def embed(self, texts: list[str]) -> list[list[float]]:
         """
         Generate embeddings for texts.
 
@@ -59,7 +58,7 @@ class EmbeddingEngine:
         else:
             return await self._embed_local(texts)
 
-    async def _embed_local(self, texts: List[str]) -> List[List[float]]:
+    async def _embed_local(self, texts: list[str]) -> list[list[float]]:
         """Generate embeddings using local model."""
         try:
             from sentence_transformers import SentenceTransformer
@@ -81,7 +80,7 @@ class EmbeddingEngine:
             )
             raise
 
-    async def _embed_openai(self, texts: List[str]) -> List[List[float]]:
+    async def _embed_openai(self, texts: list[str]) -> list[list[float]]:
         """Generate embeddings using OpenAI API."""
         try:
             import openai

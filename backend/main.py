@@ -15,7 +15,7 @@ Example:
 """
 
 import asyncio
-from typing import Awaitable, Callable
+from collections.abc import Awaitable, Callable
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -498,7 +498,7 @@ async def root() -> dict:
 
 
 # For running with: python -m backend.main
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     import uvicorn
 
     settings = get_settings()

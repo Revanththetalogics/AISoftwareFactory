@@ -6,7 +6,7 @@ for the AI Software Factory.
 """
 
 import time
-from typing import Any, Dict
+from typing import Any
 
 from backend.agents.base_agent import BaseAgent, Task, TaskResult, TaskStatus
 from backend.core.logging import get_logger
@@ -117,7 +117,7 @@ class CEOAgent(BaseAgent):
                 execution_time_ms=execution_time,
             )
 
-    async def _process_ceo_task(self, task: Task) -> Dict[str, Any]:
+    async def _process_ceo_task(self, task: Task) -> dict[str, Any]:
         """
         Process CEO-specific tasks.
 
@@ -139,7 +139,7 @@ class CEOAgent(BaseAgent):
         handler = task_handlers.get(task.task_type, self._handle_generic_task)
         return await handler(task)
 
-    async def _handle_strategic_planning(self, task: Task) -> Dict[str, Any]:
+    async def _handle_strategic_planning(self, task: Task) -> dict[str, Any]:
         """Handle strategic planning tasks."""
         return {
             "plan": f"Strategic plan for: {task.description}",
@@ -148,7 +148,7 @@ class CEOAgent(BaseAgent):
             "resources_needed": ["Team A", "Team B"],
         }
 
-    async def _handle_decision_making(self, task: Task) -> Dict[str, Any]:
+    async def _handle_decision_making(self, task: Task) -> dict[str, Any]:
         """Handle decision making tasks."""
         return {
             "decision": f"Decision on: {task.description}",
@@ -157,7 +157,7 @@ class CEOAgent(BaseAgent):
             "risk_level": "low",
         }
 
-    async def _handle_resource_allocation(self, task: Task) -> Dict[str, Any]:
+    async def _handle_resource_allocation(self, task: Task) -> dict[str, Any]:
         """Handle resource allocation tasks."""
         return {
             "allocation": f"Resource plan for: {task.description}",
@@ -169,7 +169,7 @@ class CEOAgent(BaseAgent):
             },
         }
 
-    async def _handle_risk_assessment(self, task: Task) -> Dict[str, Any]:
+    async def _handle_risk_assessment(self, task: Task) -> dict[str, Any]:
         """Handle risk assessment tasks."""
         return {
             "assessment": f"Risk analysis for: {task.description}",
@@ -179,7 +179,7 @@ class CEOAgent(BaseAgent):
             ],
         }
 
-    async def _handle_generic_task(self, task: Task) -> Dict[str, Any]:
+    async def _handle_generic_task(self, task: Task) -> dict[str, Any]:
         """Handle generic tasks."""
         return {
             "result": f"Processed: {task.description}",

@@ -9,7 +9,7 @@ import ast
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from backend.agents.base_agent import BaseAgent, Task, TaskResult, TaskStatus
 from backend.core.logging import get_logger
@@ -29,7 +29,7 @@ class CodeComponent:
     signature: str
     docstring: str = ""
     complexity: int = 1
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
     is_async: bool = False
     is_private: bool = False
 
@@ -43,12 +43,12 @@ class GeneratedTest:
     test_code: str
     test_type: str  # unit, integration, edge_case, error
     description: str
-    fixtures: List[str] = field(default_factory=list)
-    mocks: List[str] = field(default_factory=list)
+    fixtures: list[str] = field(default_factory=list)
+    mocks: list[str] = field(default_factory=list)
     assertions_count: int = 0
     generated_at: datetime = field(default_factory=datetime.utcnow)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "name": self.name,
@@ -149,7 +149,7 @@ class TestGeneratorAgent(BaseAgent):
         include_edge_cases: bool = True,
         include_error_cases: bool = True,
         include_property_tests: bool = False,
-    ) -> List[GeneratedTest]:
+    ) -> list[GeneratedTest]:
         """
         Generate comprehensive tests for a file.
 
@@ -202,7 +202,7 @@ class TestGeneratorAgent(BaseAgent):
         stack_trace: str,
         code_snippet: str,
         file_path: str
-    ) -> Optional[GeneratedTest]:
+    ) -> GeneratedTest | None:
         """
         Generate a regression test from an error.
 
@@ -255,7 +255,7 @@ Return only the test code."""
         self,
         existing_test_code: str,
         source_code: str
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Suggest improvements for existing tests.
 
@@ -298,7 +298,7 @@ Return as JSON array of suggestions."""
 
     # Private methods
 
-    def _load_prompts(self) -> Dict[str, str]:
+    def _load_prompts(self) -> dict[str, str]:
         """Load prompt templates."""
         return {
             "unit_test": """Generate pytest unit tests for this {component_type}:
@@ -355,10 +355,10 @@ Identify potential exceptions and error conditions:
 Generate pytest tests using pytest.raises():""",
         }
 
-    async def _analyze_file(self, file_path: str) -> List[CodeComponent]:
+    async def _analyze_file(self, file_path: str) -> list[CodeComponent]:
         """Analyze a file to extract testable components."""
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path) as f:
                 code = f.read()
 
             tree = ast.parse(code)
@@ -425,7 +425,7 @@ Generate pytest tests using pytest.raises():""",
                 complexity += len(child.values) - 1
         return complexity
 
-    def _extract_dependencies(self, node: ast.AST) -> List[str]:
+    def _extract_dependencies(self, node: ast.AST) -> list[str]:
         """Extract external dependencies from a function."""
         dependencies = []
         for child in ast.walk(node):
@@ -455,10 +455,10 @@ Generate pytest tests using pytest.raises():""",
         self,
         component: CodeComponent,
         file_path: str
-    ) -> List[GeneratedTest]:
+    ) -> list[GeneratedTest]:
         """Generate unit tests for a component."""
         # Read the full code
-        with open(file_path, 'r') as f:
+        with open(file_path) as f:
             code = f.read()
 
         prompt = self._prompts["unit_test"].format(
@@ -496,7 +496,7 @@ Generate pytest tests using pytest.raises():""",
         self,
         component: CodeComponent,
         file_path: str
-    ) -> List[GeneratedTest]:
+    ) -> list[GeneratedTest]:
         """Generate edge case tests."""
         prompt = self._prompts["edge_case"].format(
             component_type=component.component_type,
@@ -530,9 +530,9 @@ Generate pytest tests using pytest.raises():""",
         self,
         component: CodeComponent,
         file_path: str
-    ) -> List[GeneratedTest]:
+    ) -> list[GeneratedTest]:
         """Generate error handling tests."""
-        with open(file_path, 'r') as f:
+        with open(file_path) as f:
             code = f.read()
 
         prompt = self._prompts["error_case"].format(
@@ -568,7 +568,7 @@ Generate pytest tests using pytest.raises():""",
         """Sanitize a name for use in test function names."""
         return re.sub(r'[^a-zA-Z0-9_]', '_', name).lower()
 
-    async def _generate_tests_task(self, task: Task) -> Dict[str, Any]:
+    async def _generate_tests_task(self, task: Task) -> dict[str, Any]:
         """Handle generate_tests task type."""
         file_path = task.context.get("file_path")
         if not file_path:
@@ -586,7 +586,7 @@ Generate pytest tests using pytest.raises():""",
             "tests": [t.to_dict() for t in tests],
         }
 
-    async def _generate_regression_test_task(self, task: Task) -> Dict[str, Any]:
+    async def _generate_regression_test_task(self, task: Task) -> dict[str, Any]:
         """Handle generate_regression_test task type."""
         test = await self.generate_test_from_error(
             error_message=task.context["error_message"],
@@ -599,7 +599,7 @@ Generate pytest tests using pytest.raises():""",
             "test": test.to_dict() if test else None,
         }
 
-    async def _generate_integration_tests_task(self, task: Task) -> Dict[str, Any]:
+    async def _generate_integration_tests_task(self, task: Task) -> dict[str, Any]:
         """Handle generate_integration_tests task type."""
         # Integration test generation logic
         return {"status": "not_implemented"}

@@ -10,7 +10,7 @@ Tests cover:
 - User session creation
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -137,8 +137,8 @@ class TestTokenGeneration:
         payload = service.decode_token(token)
 
         # Verify expiry is approximately 1 hour from now
-        exp_time = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
-        now = datetime.now(timezone.utc)
+        exp_time = datetime.fromtimestamp(payload["exp"], tz=UTC)
+        now = datetime.now(UTC)
         delta = exp_time - now
 
         assert timedelta(minutes=55) < delta < timedelta(minutes=65)

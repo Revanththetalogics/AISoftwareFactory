@@ -10,16 +10,6 @@ function ProblematicComponent({ shouldThrow = false }: { shouldThrow?: boolean }
   return <div data-testid="child-content">Normal content</div>;
 }
 
-// Component that throws on click
-function ThrowOnClick() {
-  // Note: This is a simplified test component - state is tracked via static property
-  if ((ThrowOnClick as unknown as { trigger: boolean }).trigger) {
-    throw new Error('Triggered error');
-  }
-  
-  return <button onClick={() => { (ThrowOnClick as unknown as { trigger: boolean }).trigger = true; }}>Trigger Error</button>;
-}
-
 describe('ErrorBoundary', () => {
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 

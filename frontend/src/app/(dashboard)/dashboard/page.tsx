@@ -2,16 +2,15 @@
 
 export const dynamic = 'force-dynamic';
 
-import { Bot, FolderKanban, Brain, Activity, CheckCircle2, Sparkles, Zap, ArrowRight } from 'lucide-react';
+import { Bot, Brain, Activity, Sparkles, Zap, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { AgentCard, AgentGrid } from '@/components/system/agent-card';
-import { MetricPanel, SystemMetrics } from '@/components/system/metric-panel';
+import { SystemMetrics } from '@/components/system/metric-panel';
 import { ExecutionTimeline } from '@/components/system/execution-timeline';
-import { LogStream, MiniLogViewer } from '@/components/system/log-stream';
+import { MiniLogViewer } from '@/components/system/log-stream';
 import { containerVariants, slideVariants } from '@/lib/motion-variants';
 import type { TimelinePhase } from '@/components/system/execution-timeline';
 import type { LogLevel, LogEntry } from '@/components/system/log-stream';

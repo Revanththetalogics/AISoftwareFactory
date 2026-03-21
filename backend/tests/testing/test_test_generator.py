@@ -590,3 +590,87 @@ def func():
         # Should complete but with no tests found
         # or fail depending on implementation
         assert result.task_id == "task_error"
+
+
+class TestTestGeneratorExtendedCoverage:
+    """Tests for extended coverage - line 425 (BoolOp complexity)."""
+
+    @pytest.fixture
+    def test_generator_agent(self):
+        """Create TestGeneratorAgent with mocked LLM."""
+        from unittest.mock import AsyncMock, Mock, patch
+
+        from backend.testing.agents.test_generator import TestGeneratorAgent
+
+        mock_llm = Mock()
+        mock_llm.generate = AsyncMock(return_value="def test(): pass")
+        with patch('backend.testing.agents.test_generator.LLMFactory.create_llm', return_value=mock_llm):
+            agent = TestGeneratorAgent()
+            agent._llm = mock_llm
+            return agent
+
+    def test_calculate_complexity_with_boolop_line_425(self, test_generator_agent):
+        """Test line 425: BoolOp complexity calculation."""
+        import ast
+
+        code = '''
+def complex_function(a, b, c, d, e):
+    if a and b and c:  # BoolOp with 3 values: +2
+        return 1
+    if a or b or c or d or e:  # BoolOp with 5 values: +4
+        return 2
+    return 0
+'''
+        tree = ast.parse(code)
+        func_node = tree.body[0]
+
+        complexity = test_generator_agent._calculate_complexity(func_node)
+
+        # Base: 1
+        # First if: +1
+        # First BoolOp "a and b and c" (3 values): +2
+        # Second if: +1
+        # Second BoolOp "a or b or c or d or e" (5 values): +4
+        # Total: 1 + 1 + 2 + 1 + 4 = 9
+        assert complexity == 9
+
+    def test_calculate_complexity_nested_boolop(self, test_generator_agent):
+        """Test BoolOp complexity with nested conditions."""
+        import ast
+
+        code = '''
+def nested_func(x, y, z):
+    while x and y:  # While: +1, BoolOp (2 values): +1
+        for i in range(10):  # For: +1
+            if z or x:  # If: +1, BoolOp (2 values): +1
+                pass
+'''
+        tree = ast.parse(code)
+        func_node = tree.body[0]
+
+        complexity = test_generator_agent._calculate_complexity(func_node)
+
+        # Base: 1
+        # While: +1
+        # BoolOp "x and y" (2 values): +1
+        # For: +1
+        # If: +1
+        # BoolOp "z or x" (2 values): +1
+        # Total: 1 + 1 + 1 + 1 + 1 + 1 = 6
+        assert complexity == 6
+
+    def test_calculate_complexity_single_boolop(self, test_generator_agent):
+        """Test single BoolOp with 2 operands."""
+        import ast
+
+        code = '''
+def simple_func(a, b):
+    return a and b  # BoolOp with 2 values: +1
+'''
+        tree = ast.parse(code)
+        func_node = tree.body[0]
+
+        complexity = test_generator_agent._calculate_complexity(func_node)
+
+        # Base: 1, BoolOp (2 values): +1 = 2
+        assert complexity == 2

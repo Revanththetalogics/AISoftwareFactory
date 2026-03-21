@@ -6,7 +6,7 @@ for observability and monitoring.
 """
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from backend.core.logging import get_logger
 
@@ -47,7 +47,7 @@ scrape_configs:
 """
         return config
 
-    def generate_grafana_datasource(self) -> Dict[str, Any]:
+    def generate_grafana_datasource(self) -> dict[str, Any]:
         """Generate Grafana datasource configuration."""
         return {
             "apiVersion": 1,
@@ -62,7 +62,7 @@ scrape_configs:
             ]
         }
 
-    def generate_dashboard_config(self) -> Dict[str, Any]:
+    def generate_dashboard_config(self) -> dict[str, Any]:
         """Generate Grafana dashboard configuration."""
         return {
             "dashboard": {

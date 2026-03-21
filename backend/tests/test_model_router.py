@@ -90,7 +90,7 @@ class TestOllamaLLM:
         result = llm._call("Test prompt for model")
 
         assert "[Stub Response from test-model]" in result
-        assert "22" in result  # Length of prompt
+        assert "21" in result  # Length of prompt
 
     def test_call_with_stop_and_run_manager(self):
         """Test _call with stop sequences and run manager."""
@@ -326,8 +326,8 @@ class TestIntegration:
         router = get_model_router()
         llm = router.get_llm(task_type="code")
 
-        # Call the LLM (stub)
-        result = llm("Write a function to add two numbers")
+        # Call the LLM using _call method (stub)
+        result = llm._call("Write a function to add two numbers")
 
         assert "[Stub Response from" in result
         assert "qwen2.5-coder" in result
@@ -349,7 +349,7 @@ class TestIntegration:
         assert llms["general"].model == "llama3.2"
         assert llms["chat"].model == "qwen2.5"
 
-        # All should be able to generate responses
+        # All should be able to generate responses using _call
         for task, llm in llms.items():
-            result = llm(f"Test prompt for {task}")
+            result = llm._call(f"Test prompt for {task}")
             assert "[Stub Response from" in result

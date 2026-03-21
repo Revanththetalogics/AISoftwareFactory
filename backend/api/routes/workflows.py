@@ -5,7 +5,6 @@ This module provides REST endpoints for workflow management and execution.
 Uses DatabaseWorkflowService for database-backed workflow persistence.
 """
 
-from typing import List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -47,7 +46,7 @@ def _db_workflow_to_response(workflow) -> WorkflowStatusResponse:
     )
 
 
-async def _execute_workflow_real(workflow_id: str, project_id: str, phase: Optional[str]):
+async def _execute_workflow_real(workflow_id: str, project_id: str, phase: str | None):
     """
     Execute workflow using the real LangGraph engine.
 
@@ -208,15 +207,15 @@ async def get_workflow_status(
 
 @router.get(
     "",
-    response_model=List[WorkflowStatusResponse],
+    response_model=list[WorkflowStatusResponse],
     summary="List workflows",
 )
 async def list_workflows(
-    project_id: Optional[str] = None,
-    workflow_status: Optional[str] = None,
+    project_id: str | None = None,
+    workflow_status: str | None = None,
     user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> List[WorkflowStatusResponse]:
+) -> list[WorkflowStatusResponse]:
     """
     List workflow executions with optional filtering.
     """
@@ -292,12 +291,12 @@ async def cancel_workflow(
 
 @router.get(
     "/phases/available",
-    response_model=List[str],
+    response_model=list[str],
     summary="Get available workflow phases",
 )
 async def get_available_phases(
     user=Depends(get_current_user),
-) -> List[str]:
+) -> list[str]:
     """
     Get list of available workflow phases.
     """

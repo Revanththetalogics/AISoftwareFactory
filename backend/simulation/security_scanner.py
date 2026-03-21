@@ -8,7 +8,7 @@ including dependency checks and static analysis.
 import ast
 import re
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from backend.core.logging import get_logger
 
@@ -21,8 +21,8 @@ class SecurityIssue:
     severity: str  # critical, high, medium, low
     category: str
     message: str
-    line: Optional[int] = None
-    code_snippet: Optional[str] = None
+    line: int | None = None
+    code_snippet: str | None = None
 
 
 class SecurityScanner:
@@ -52,7 +52,7 @@ class SecurityScanner:
         self,
         code: str,
         language: str = "python"
-    ) -> List[SecurityIssue]:
+    ) -> list[SecurityIssue]:
         """
         Scan code for security issues.
 
@@ -71,7 +71,7 @@ class SecurityScanner:
 
         return issues
 
-    def _scan_python_patterns(self, code: str) -> List[SecurityIssue]:
+    def _scan_python_patterns(self, code: str) -> list[SecurityIssue]:
         """Scan Python code using regex patterns."""
         issues = []
         lines = code.split("\n")
@@ -90,7 +90,7 @@ class SecurityScanner:
 
         return issues
 
-    async def _scan_python_ast(self, code: str) -> List[SecurityIssue]:
+    async def _scan_python_ast(self, code: str) -> list[SecurityIssue]:
         """Scan Python code using AST analysis."""
         issues = []
 
@@ -138,8 +138,8 @@ class SecurityScanner:
 
     async def scan_dependencies(
         self,
-        requirements: List[str]
-    ) -> List[SecurityIssue]:
+        requirements: list[str]
+    ) -> list[SecurityIssue]:
         """
         Scan dependencies for known vulnerabilities.
 
@@ -162,7 +162,7 @@ class SecurityScanner:
             pkg_name = req.split("==")[0].split(">=")[0].strip()
 
             if pkg_name in vulnerable_packages:
-                for min_ver, max_ver, cve in vulnerable_packages[pkg_name]:
+                for _min_ver, _max_ver, cve in vulnerable_packages[pkg_name]:
                     issues.append(SecurityIssue(
                         severity="high",
                         category="vulnerable_dependency",
@@ -184,7 +184,7 @@ class SecurityScanner:
         }
         return severity_map.get(pattern_name, "low")
 
-    def generate_report(self, issues: List[SecurityIssue]) -> Dict[str, Any]:
+    def generate_report(self, issues: list[SecurityIssue]) -> dict[str, Any]:
         """Generate security scan report."""
         severity_counts = {
             "critical": 0,

@@ -6,15 +6,15 @@ Dockerfiles, docker-compose files, and .dockerignore.
 """
 
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from enum import StrEnum
+from typing import Any
 
 from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
 
-class ServiceType(str, Enum):
+class ServiceType(StrEnum):
     """Types of services."""
     WEB = "web"
     API = "api"
@@ -42,16 +42,16 @@ class DockerService:
     """
     name: str
     service_type: ServiceType
-    image: Optional[str] = None
-    build_context: Optional[str] = None
+    image: str | None = None
+    build_context: str | None = None
     dockerfile: str = "Dockerfile"
-    ports: List[str] = field(default_factory=list)
-    environment: Dict[str, str] = field(default_factory=dict)
-    volumes: List[str] = field(default_factory=list)
-    depends_on: List[str] = field(default_factory=list)
-    command: Optional[str] = None
+    ports: list[str] = field(default_factory=list)
+    environment: dict[str, str] = field(default_factory=dict)
+    volumes: list[str] = field(default_factory=list)
+    depends_on: list[str] = field(default_factory=list)
+    command: str | None = None
 
-    def to_compose_dict(self) -> Dict[str, Any]:
+    def to_compose_dict(self) -> dict[str, Any]:
         """Convert to docker-compose service dict."""
         service = {}
 
@@ -110,7 +110,7 @@ class DockerGenerator:
         app_name: str = "app",
         port: int = 8000,
         use_venv: bool = False,
-        extra_packages: Optional[List[str]] = None,
+        extra_packages: list[str] | None = None,
     ) -> str:
         """
         Generate a Dockerfile for Python applications.
@@ -231,7 +231,7 @@ CMD [{(', '.join(f'"{cmd}"' for cmd in start_command.split()))}]
 
     def generate_compose(
         self,
-        services: List[DockerService],
+        services: list[DockerService],
         project_name: str = "myproject",
         version: str = "3.8",
     ) -> str:
@@ -328,7 +328,7 @@ services:
 
         return compose
 
-    def generate_dockerignore(self, extra_patterns: Optional[List[str]] = None) -> str:
+    def generate_dockerignore(self, extra_patterns: list[str] | None = None) -> str:
         """
         Generate a .dockerignore file.
 

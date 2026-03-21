@@ -8,8 +8,8 @@ defining the common interface and functionality for agent operations.
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from enum import StrEnum
+from typing import Any
 from uuid import uuid4
 
 from backend.core.logging import get_logger
@@ -17,7 +17,7 @@ from backend.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-class TaskStatus(str, Enum):
+class TaskStatus(StrEnum):
     """Task execution status."""
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
@@ -26,7 +26,7 @@ class TaskStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
-class AgentStatus(str, Enum):
+class AgentStatus(StrEnum):
     """Agent status."""
     IDLE = "idle"
     BUSY = "busy"
@@ -49,10 +49,10 @@ class AgentIdentity:
     agent_id: str
     name: str
     role: str
-    capabilities: List[str] = field(default_factory=list)
+    capabilities: list[str] = field(default_factory=list)
     description: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert identity to dictionary."""
         return {
             "agent_id": self.agent_id,
@@ -80,12 +80,12 @@ class Task:
     task_id: str = field(default_factory=lambda: str(uuid4()))
     task_type: str = ""
     description: str = ""
-    context: Dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
     priority: int = 3
-    deadline: Optional[datetime] = None
-    parent_task_id: Optional[str] = None
+    deadline: datetime | None = None
+    parent_task_id: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert task to dictionary."""
         return {
             "task_id": self.task_id,
@@ -113,12 +113,12 @@ class TaskResult:
     """
     task_id: str
     status: TaskStatus
-    output: Dict[str, Any] = field(default_factory=dict)
-    error: Optional[str] = None
+    output: dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
     execution_time_ms: float = 0.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert result to dictionary."""
         return {
             "task_id": self.task_id,
@@ -150,10 +150,10 @@ class BaseAgent(ABC):
 
     def __init__(
         self,
-        agent_id: Optional[str] = None,
-        name: Optional[str] = None,
-        role: Optional[str] = None,
-        capabilities: Optional[List[str]] = None,
+        agent_id: str | None = None,
+        name: str | None = None,
+        role: str | None = None,
+        capabilities: list[str] | None = None,
         description: str = "",
     ):
         """
@@ -221,9 +221,9 @@ class BaseAgent(ABC):
             >>> print(result.status)
             'completed'
         """
-        pass
+        pass  # pragma: no cover
 
-    async def query_memory(self, query: str) -> Dict[str, Any]:
+    async def query_memory(self, query: str) -> dict[str, Any]:
         """
         Query the project brain/memory system.
 
@@ -258,7 +258,7 @@ class BaseAgent(ABC):
         """
         return capability in self._identity.capabilities
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert agent to dictionary representation.
 

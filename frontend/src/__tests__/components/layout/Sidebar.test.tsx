@@ -15,6 +15,13 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
+// Mock ScrollArea to prevent async state updates that cause act() warnings
+vi.mock('@/components/ui/scroll-area', () => ({
+  ScrollArea: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="scroll-area" className={className}>{children}</div>
+  ),
+}));
+
 // Mock the sidebar sub-components
 vi.mock('@/components/layout/sidebar-section', () => ({
   SidebarSection: ({ title, items, pathname }: { title: string; items: { label: string; href: string }[]; pathname: string }) => (

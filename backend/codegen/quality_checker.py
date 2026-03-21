@@ -6,15 +6,15 @@ This module provides code quality analysis and checking capabilities.
 
 import re
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from enum import StrEnum
+from typing import Any
 
 from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
 
-class IssueSeverity(str, Enum):
+class IssueSeverity(StrEnum):
     """Severity levels for code issues."""
     CRITICAL = "critical"
     HIGH = "high"
@@ -23,7 +23,7 @@ class IssueSeverity(str, Enum):
     INFO = "info"
 
 
-class IssueCategory(str, Enum):
+class IssueCategory(StrEnum):
     """Categories of code issues."""
     STYLE = "style"
     SECURITY = "security"
@@ -52,12 +52,12 @@ class CodeIssue:
     message: str
     severity: IssueSeverity
     category: IssueCategory
-    line: Optional[int] = None
-    column: Optional[int] = None
-    file_path: Optional[str] = None
+    line: int | None = None
+    column: int | None = None
+    file_path: str | None = None
     suggestion: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "rule_id": self.rule_id,
@@ -84,10 +84,10 @@ class QualityReport:
         metrics: Additional metrics
     """
     file_path: str
-    issues: List[CodeIssue] = field(default_factory=list)
+    issues: list[CodeIssue] = field(default_factory=list)
     score: float = 100.0
     language: str = ""
-    metrics: Dict[str, Any] = field(default_factory=dict)
+    metrics: dict[str, Any] = field(default_factory=dict)
 
     @property
     def issue_count(self) -> int:
@@ -104,7 +104,7 @@ class QualityReport:
         """Get number of high severity issues."""
         return sum(1 for i in self.issues if i.severity == IssueSeverity.HIGH)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "file_path": self.file_path,
@@ -178,7 +178,7 @@ class QualityChecker:
 
         return report
 
-    def _check_python_code(self, code: str, file_path: str) -> List[CodeIssue]:
+    def _check_python_code(self, code: str, file_path: str) -> list[CodeIssue]:
         """Check Python code for issues."""
         issues = []
         lines = code.split("\n")
@@ -259,7 +259,7 @@ class QualityChecker:
 
         return issues
 
-    def _calculate_score(self, issues: List[CodeIssue]) -> float:
+    def _calculate_score(self, issues: list[CodeIssue]) -> float:
         """
         Calculate quality score based on issues.
 
@@ -287,7 +287,7 @@ class QualityChecker:
 
         return max(0.0, 100.0 - total_deduction)
 
-    def _calculate_metrics(self, code: str, language: str) -> Dict[str, Any]:
+    def _calculate_metrics(self, code: str, language: str) -> dict[str, Any]:
         """
         Calculate code metrics.
 
@@ -314,7 +314,7 @@ class QualityChecker:
 
         return metrics
 
-    def check_project(self, files: Dict[str, str]) -> Dict[str, QualityReport]:
+    def check_project(self, files: dict[str, str]) -> dict[str, QualityReport]:
         """
         Check quality of multiple files.
 

@@ -7,7 +7,6 @@ TODO: Wire to DatabaseDeploymentService once implemented in database_services.py
 Currently using DeploymentOrchestrator which uses in-memory storage.
 """
 
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -40,11 +39,11 @@ async def create_deployment(
     """
     try:
         env = DeploymentEnvironment(request.environment)
-    except ValueError:
+    except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid environment: {request.environment}",
-        )
+        ) from exc
 
     result = _orchestrator.create_deployment(
         project_id=request.project_id,
@@ -77,14 +76,14 @@ async def create_deployment(
 
 @router.get(
     "",
-    response_model=List[DeploymentResponse],
+    response_model=list[DeploymentResponse],
     summary="List deployments",
 )
 async def list_deployments(
     project_id: str = None,
     environment: str = None,
     user=Depends(get_current_user),
-) -> List[DeploymentResponse]:
+) -> list[DeploymentResponse]:
     """
     List deployments with optional filtering.
     """
@@ -195,12 +194,12 @@ async def cancel_deployment(
 
 @router.get(
     "/environments/available",
-    response_model=List[str],
+    response_model=list[str],
     summary="Get available environments",
 )
 async def get_available_environments(
     user=Depends(get_current_user),
-) -> List[str]:
+) -> list[str]:
     """
     Get list of available deployment environments.
     """

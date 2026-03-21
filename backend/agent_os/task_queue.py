@@ -5,7 +5,6 @@ This module provides Redis-based task queue management for distributed task proc
 """
 
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from backend.core.logging import get_logger
 from backend.models.task import Task, TaskStatus
@@ -29,7 +28,7 @@ class TaskQueue:
             redis_client: Optional Redis client for persistence
         """
         self._redis = redis_client
-        self._queues: Dict[str, List[Task]] = {
+        self._queues: dict[str, list[Task]] = {
             "default": [],
             "high_priority": [],
             "langgraph": [],
@@ -74,7 +73,7 @@ class TaskQueue:
     async def dequeue(
         self,
         queue_name: str = "default"
-    ) -> Optional[Task]:
+    ) -> Task | None:
         """
         Get the next task from the queue.
 
@@ -152,7 +151,7 @@ class TaskQueue:
         """
         return len(self._queues.get(queue_name, []))
 
-    def get_all_queues_status(self) -> Dict[str, int]:
+    def get_all_queues_status(self) -> dict[str, int]:
         """
         Get status of all queues.
 

@@ -6,13 +6,13 @@ workflow definitions, steps, triggers, and execution state.
 """
 
 from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from enum import StrEnum
+from typing import Any
 
 from pydantic import BaseModel, Field
 
 
-class WorkflowStatus(str, Enum):
+class WorkflowStatus(StrEnum):
     """Status of a workflow execution."""
     PENDING = "pending"
     RUNNING = "running"
@@ -22,7 +22,7 @@ class WorkflowStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
-class WorkflowTrigger(str, Enum):
+class WorkflowTrigger(StrEnum):
     """Types of workflow triggers."""
     MANUAL = "manual"
     SCHEDULED = "scheduled"
@@ -48,10 +48,10 @@ class WorkflowStep(BaseModel):
     step_id: str = Field(..., description="Unique step identifier")
     name: str = Field(..., description="Step name")
     description: str = Field(default="", description="Step description")
-    agent_role: Optional[str] = Field(default=None, description="Agent role for execution")
-    crew_type: Optional[str] = Field(default=None, description="Crew type to use")
-    dependencies: List[str] = Field(default_factory=list, description="Dependent step IDs")
-    config: Dict[str, Any] = Field(default_factory=dict, description="Step configuration")
+    agent_role: str | None = Field(default=None, description="Agent role for execution")
+    crew_type: str | None = Field(default=None, description="Crew type to use")
+    dependencies: list[str] = Field(default_factory=list, description="Dependent step IDs")
+    config: dict[str, Any] = Field(default_factory=dict, description="Step configuration")
     timeout_seconds: int = Field(default=300, description="Execution timeout")
     retry_count: int = Field(default=3, description="Retry attempts")
 
@@ -84,16 +84,16 @@ class Workflow(BaseModel):
     version: str = Field(default="1.0.0", description="Workflow version")
     status: WorkflowStatus = Field(default=WorkflowStatus.PENDING, description="Current status")
     trigger: WorkflowTrigger = Field(default=WorkflowTrigger.MANUAL, description="Trigger type")
-    project_id: Optional[str] = Field(default=None, description="Associated project ID")
-    steps: List[WorkflowStep] = Field(default_factory=list, description="Workflow steps")
-    current_step_id: Optional[str] = Field(default=None, description="Current step ID")
-    completed_steps: List[str] = Field(default_factory=list, description="Completed step IDs")
-    failed_steps: List[str] = Field(default_factory=list, description="Failed step IDs")
-    context: Dict[str, Any] = Field(default_factory=dict, description="Execution context")
-    started_at: Optional[datetime] = Field(default=None, description="Start timestamp")
-    completed_at: Optional[datetime] = Field(default=None, description="Completion timestamp")
-    created_by: Optional[str] = Field(default=None, description="Creator user ID")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    project_id: str | None = Field(default=None, description="Associated project ID")
+    steps: list[WorkflowStep] = Field(default_factory=list, description="Workflow steps")
+    current_step_id: str | None = Field(default=None, description="Current step ID")
+    completed_steps: list[str] = Field(default_factory=list, description="Completed step IDs")
+    failed_steps: list[str] = Field(default_factory=list, description="Failed step IDs")
+    context: dict[str, Any] = Field(default_factory=dict, description="Execution context")
+    started_at: datetime | None = Field(default=None, description="Start timestamp")
+    completed_at: datetime | None = Field(default=None, description="Completion timestamp")
+    created_by: str | None = Field(default=None, description="Creator user ID")
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
     class Config:
         json_encoders = {
@@ -108,7 +108,7 @@ class Workflow(BaseModel):
         """Check if workflow can be executed."""
         return self.status in [WorkflowStatus.PENDING, WorkflowStatus.PAUSED]
 
-    def get_next_steps(self) -> List[WorkflowStep]:
+    def get_next_steps(self) -> list[WorkflowStep]:
         """Get steps that are ready to execute (dependencies met)."""
         ready = []
         for step in self.steps:

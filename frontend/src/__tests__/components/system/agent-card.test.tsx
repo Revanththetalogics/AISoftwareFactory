@@ -1,14 +1,15 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AgentCard, AgentGrid, type AgentRole, type AgentStatus } from '@/components/system/agent-card';
 
-// Mock framer-motion
+// Mock framer-motion - filter out framer-motion specific props from DOM
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, onClick, className, ...props }: React.PropsWithChildren<{ onClick?: () => void; className?: string }>) => (
-      <div onClick={onClick} className={className} {...props}>{children}</div>
-    ),
+    div: (props: React.PropsWithChildren<{ onClick?: () => void; className?: string }>) => {
+      const { children, onClick, className } = props;
+      return <div onClick={onClick} className={className}>{children}</div>;
+    },
   },
   AnimatePresence: ({ children }: React.PropsWithChildren) => <>{children}</>,
 }));

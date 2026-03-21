@@ -7,7 +7,7 @@ for all simulation tests.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from backend.core.logging import get_logger
 from backend.simulation.integration_tester import IntegrationTester
@@ -27,7 +27,7 @@ class TestSuiteResult:
     passed: int
     failed: int
     skipped: int
-    results: List[Dict[str, Any]] = field(default_factory=list)
+    results: list[dict[str, Any]] = field(default_factory=list)
 
 
 class TestRunner:
@@ -50,7 +50,7 @@ class TestRunner:
         self,
         code: str,
         language: str = "python",
-        requirements: Optional[List[str]] = None
+        requirements: list[str] | None = None
     ) -> TestSuiteResult:
         """
         Run complete test suite on code.
@@ -127,7 +127,7 @@ class TestRunner:
             results=results
         )
 
-    def generate_report(self, result: TestSuiteResult) -> Dict[str, Any]:
+    def generate_report(self, result: TestSuiteResult) -> dict[str, Any]:
         """Generate comprehensive test report."""
         total = result.passed + result.failed + result.skipped
         duration = (result.end_time - result.start_time).total_seconds()

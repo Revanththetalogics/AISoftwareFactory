@@ -5,7 +5,8 @@ This module provides execution of CrewAI crews with integration
 into the AgentOS runtime environment.
 """
 
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any
 from uuid import uuid4
 
 from backend.core.logging import get_logger
@@ -23,16 +24,16 @@ class CrewExecutor:
 
     def __init__(self):
         """Initialize the crew executor."""
-        self._active_crews: Dict[str, Any] = {}
+        self._active_crews: dict[str, Any] = {}
         self._logger = get_logger(__name__)
 
     async def execute_crew(
         self,
         crew_name: str,
         crew_factory: Callable,
-        inputs: Optional[Dict[str, Any]] = None,
-        task_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        inputs: dict[str, Any] | None = None,
+        task_id: str | None = None
+    ) -> dict[str, Any]:
         """
         Execute a CrewAI crew.
 
@@ -96,7 +97,7 @@ class CrewExecutor:
             if execution_id in self._active_crews:
                 del self._active_crews[execution_id]
 
-    def get_active_crews(self) -> List[Dict[str, Any]]:
+    def get_active_crews(self) -> list[dict[str, Any]]:
         """
         Get list of active crew executions.
 

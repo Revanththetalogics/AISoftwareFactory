@@ -374,6 +374,75 @@ class TestDeploymentRoutes:
         assert "staging" in result
         assert "prod" in result  # DeploymentEnvironment.PRODUCTION.value
 
+    @pytest.mark.asyncio
+    async def test_create_deployment_invalid_environment_value(self, mock_user):
+        """Test creating deployment with invalid environment raises HTTPException (covers lines 43-44)."""
+        from backend.api.models import DeploymentRequest
+        from backend.api.routes.deployments import create_deployment
+
+        # Create request with invalid environment
+        request = MagicMock(spec=DeploymentRequest)
+        request.project_id = "test-project"
+        request.environment = "invalid_environment"
+        request.version = "1.0.0"
+        request.config = {}
+
+        with pytest.raises(HTTPException) as exc_info:
+            await create_deployment(request=request, user=mock_user)
+
+        assert exc_info.value.status_code == 400
+        assert "Invalid environment" in exc_info.value.detail
+
+    @pytest.mark.asyncio
+    async def test_get_deployment_success(self, mock_user, sample_deployment):
+        """Test getting existing deployment (covers line 140)."""
+        from backend.api.routes.deployments import get_deployment
+
+        with patch('backend.api.routes.deployments._orchestrator') as mock_orch:
+            mock_orch.get_deployment.return_value = sample_deployment
+
+            result = await get_deployment(deployment_id="deploy-123", user=mock_user)
+
+        assert result.deployment_id == "deploy-123"
+        assert result.environment == "dev"  # DeploymentEnvironment.DEVELOPMENT.value
+        mock_orch.get_deployment.assert_called_once_with("deploy-123")
+
+    @pytest.mark.asyncio
+    async def test_cancel_deployment_success(self, mock_user, sample_deployment):
+        """Test successful deployment cancellation (covers lines 174-182)."""
+        from backend.api.routes.deployments import cancel_deployment
+        from backend.deployment.orchestrator import DeploymentStatus
+
+        # After cancellation, deployment keeps its status but is no longer active
+        sample_deployment.status = DeploymentStatus.PENDING
+
+        with patch('backend.api.routes.deployments._orchestrator') as mock_orch:
+            mock_orch.cancel_deployment.return_value = True
+            mock_orch.get_deployment.return_value = sample_deployment
+
+            result = await cancel_deployment(deployment_id="deploy-123", user=mock_user)
+
+        assert result.deployment_id == "deploy-123"
+        assert result.status == "pending"  # Status from mock
+        mock_orch.cancel_deployment.assert_called_once_with("deploy-123")
+
+    @pytest.mark.asyncio
+    async def test_list_deployments_with_filters(self, mock_user, sample_deployment):
+        """Test listing deployments with valid filters."""
+        from backend.api.routes.deployments import list_deployments
+
+        with patch('backend.api.routes.deployments._orchestrator') as mock_orch:
+            mock_orch.list_deployments.return_value = [sample_deployment]
+
+            result = await list_deployments(
+                project_id="test-project",
+                environment="dev",
+                user=mock_user
+            )
+
+        assert len(result) == 1
+        assert result[0].deployment_id == "deploy-123"
+
 
 # ==============================================================================
 # Project Routes Tests
@@ -631,6 +700,99 @@ class TestProjectRoutes:
         assert exc_info.value.status_code == 400
         assert "Cannot activate" in exc_info.value.detail
 
+    @pytest.mark.asyncio
+    async def test_update_project_with_status_change(self, mock_db, mock_user, sample_project):
+        """Test updating project with status field conversion."""
+        from backend.api.models import ProjectStatus, ProjectUpdate
+        from backend.api.routes.projects import update_project
+
+        updated_project = MagicMock()
+        updated_project.id = "project-123"
+        updated_project.name = "Updated Project"
+        updated_project.description = sample_project.description
+        updated_project.requirements = sample_project.requirements
+        updated_project.status = "active"
+        updated_project.tech_stack = sample_project.tech_stack
+        updated_project.current_phase = "implementation"
+        updated_project.progress_percent = 25
+        updated_project.created_at = sample_project.created_at
+        updated_project.updated_at = datetime.now()
+        updated_project.metadata = {}
+
+        with patch('backend.api.routes.projects.project_service') as mock_service:
+            mock_service.get_project = AsyncMock(return_value=sample_project)
+            mock_service.update_project = AsyncMock(return_value=updated_project)
+
+            request = ProjectUpdate(name="Updated Project", status=ProjectStatus.ACTIVE)
+            result = await update_project(
+                project_id="project-123",
+                request=request,
+                user=mock_user,
+                db=mock_db
+            )
+
+        assert result.status == ProjectStatus.ACTIVE
+        # Verify status was converted to string value in update call
+        mock_service.update_project.assert_called_once()
+        call_args = mock_service.update_project.call_args
+        assert "status" in call_args.kwargs.get("updates", call_args[1].get("updates", {})) or \
+               (len(call_args.args) > 1 and "status" in str(call_args))
+
+    @pytest.mark.asyncio
+    async def test_delete_project_success(self, mock_db, mock_user, sample_project):
+        """Test successful project deletion (covers line 290)."""
+        from backend.api.routes.projects import delete_project
+
+        with patch('backend.api.routes.projects.project_service') as mock_service:
+            mock_service.get_project = AsyncMock(return_value=sample_project)
+            mock_service.delete_project = AsyncMock(return_value=True)
+
+            # Should complete without exception
+            result = await delete_project(
+                project_id="project-123",
+                user=mock_user,
+                db=mock_db
+            )
+
+        # delete_project returns None on success
+        assert result is None
+        mock_service.delete_project.assert_called_once_with("project-123", db=mock_db)
+
+    @pytest.mark.asyncio
+    async def test_activate_project_success(self, mock_db, mock_user, sample_project):
+        """Test successful project activation (covers lines 333-348)."""
+        from backend.api.routes.projects import activate_project
+
+        sample_project.status = "draft"  # Must be draft to activate
+
+        activated_project = MagicMock()
+        activated_project.id = "project-123"
+        activated_project.name = sample_project.name
+        activated_project.description = sample_project.description
+        activated_project.requirements = sample_project.requirements
+        activated_project.status = "active"
+        activated_project.tech_stack = sample_project.tech_stack
+        activated_project.current_phase = "requirements"
+        activated_project.progress_percent = 0
+        activated_project.created_at = sample_project.created_at
+        activated_project.updated_at = datetime.now()
+        activated_project.metadata = {}
+
+        with patch('backend.api.routes.projects.project_service') as mock_service:
+            mock_service.get_project = AsyncMock(return_value=sample_project)
+            mock_service.update_project = AsyncMock(return_value=activated_project)
+
+            result = await activate_project(
+                project_id="project-123",
+                user=mock_user,
+                db=mock_db
+            )
+
+        from backend.api.models import ProjectStatus
+        assert result.status == ProjectStatus.ACTIVE
+        assert result.current_phase == "requirements"
+        mock_service.update_project.assert_called_once()
+
 
 # ==============================================================================
 # Workflow Routes Tests
@@ -810,6 +972,195 @@ class TestWorkflowRoutes:
         )
 
         assert result == []
+
+    @pytest.mark.asyncio
+    async def test_list_workflows_with_valid_status_filter(self, mock_db, mock_user, sample_workflow):
+        """Test listing workflows with valid status filter (covers line 236)."""
+        from backend.api.routes.workflows import list_workflows
+        from backend.models.workflow import WorkflowStatus
+
+        sample_workflow.status = WorkflowStatus.RUNNING
+
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = [sample_workflow]
+        mock_db.execute = AsyncMock(return_value=mock_result)
+
+        result = await list_workflows(
+            project_id="project-123",
+            workflow_status="running",  # Valid status
+            user=mock_user,
+            db=mock_db
+        )
+
+        assert len(result) == 1
+        mock_db.execute.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_execute_workflow_sync_execution(self, mock_db, mock_user, mock_workflow_service, sample_workflow):
+        """Test execute workflow with synchronous execution (covers line 179)."""
+        from fastapi import BackgroundTasks
+
+        from backend.api.routes.workflows import execute_workflow
+
+        mock_workflow_service.create_workflow.return_value = sample_workflow
+
+        # Mock the background execution function
+        with patch('backend.api.routes.workflows._execute_workflow_real', new_callable=AsyncMock) as mock_exec:
+            from backend.api.models import WorkflowExecuteRequest
+
+            request = WorkflowExecuteRequest(
+                project_id="project-123",
+                phase="requirements",
+                async_execution=False  # Synchronous execution
+            )
+
+            background_tasks = BackgroundTasks()
+
+            await execute_workflow(
+                request=request,
+                background_tasks=background_tasks,
+                user=mock_user,
+                db=mock_db,
+                workflow_service=mock_workflow_service
+            )
+
+            # With async_execution=False, _execute_workflow_real should be called directly
+            mock_exec.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_execute_workflow_async_execution(self, mock_db, mock_user, mock_workflow_service, sample_workflow):
+        """Test execute workflow with async execution (covers lines 171-177)."""
+        from fastapi import BackgroundTasks
+
+        from backend.api.routes.workflows import execute_workflow
+
+        mock_workflow_service.create_workflow.return_value = sample_workflow
+
+        from backend.api.models import WorkflowExecuteRequest
+
+        request = WorkflowExecuteRequest(
+            project_id="project-123",
+            phase="implementation",
+            async_execution=True  # Async execution
+        )
+
+        background_tasks = BackgroundTasks()
+
+        result = await execute_workflow(
+            request=request,
+            background_tasks=background_tasks,
+            user=mock_user,
+            db=mock_db,
+            workflow_service=mock_workflow_service
+        )
+
+        assert result.workflow_id == "workflow-123"
+
+
+class TestExecuteWorkflowReal:
+    """Tests for _execute_workflow_real internal function."""
+
+    @pytest.mark.asyncio
+    async def test_execute_workflow_real_workflow_not_found(self):
+        """Test workflow execution when workflow not found (covers lines 67-68)."""
+        from backend.api.routes.workflows import _execute_workflow_real
+
+        with patch('backend.api.routes.workflows.DatabaseWorkflowService') as mock_service_class:
+            mock_service = AsyncMock()
+            mock_service.update_workflow_status.return_value = None  # Workflow not found
+            mock_service_class.return_value = mock_service
+
+            # Should handle gracefully and return
+            await _execute_workflow_real("nonexistent-workflow", "project-123", "requirements")
+
+            # No exception should be raised - just returns early
+
+    @pytest.mark.asyncio
+    async def test_execute_workflow_real_exception_handling(self):
+        """Test workflow execution exception handling (covers lines 111-119)."""
+        from backend.api.routes.workflows import _execute_workflow_real
+
+        mock_workflow = MagicMock()
+        mock_workflow.id = "workflow-123"
+
+        with patch('backend.api.routes.workflows.DatabaseWorkflowService') as mock_service_class:
+            mock_service = AsyncMock()
+            mock_service.update_workflow_status.return_value = mock_workflow
+            mock_service_class.return_value = mock_service
+
+            with patch('backend.api.routes.workflows.WorkflowEngine') as mock_engine_class:
+                mock_engine = MagicMock()
+                mock_engine.run = AsyncMock(side_effect=Exception("Engine error"))
+                mock_engine_class.return_value = mock_engine
+
+                # Should catch exception and update status to FAILED
+                await _execute_workflow_real("workflow-123", "project-123", "requirements")
+
+                # Verify update_workflow_status was called with FAILED
+                calls = mock_service.update_workflow_status.call_args_list
+                # At least one call should be for FAILED status
+                assert any(
+                    'FAILED' in str(call) or 'failed' in str(call).lower()
+                    for call in calls
+                )
+
+    @pytest.mark.asyncio
+    async def test_execute_workflow_real_success_complete(self):
+        """Test successful workflow execution to completion (covers lines 98-102)."""
+        from backend.api.routes.workflows import _execute_workflow_real
+        from backend.workflows.state_machine import ProjectPhase
+
+        mock_workflow = MagicMock()
+        mock_workflow.id = "workflow-123"
+
+        with patch('backend.api.routes.workflows.DatabaseWorkflowService') as mock_service_class:
+            mock_service = AsyncMock()
+            mock_service.update_workflow_status.return_value = mock_workflow
+            mock_service_class.return_value = mock_service
+
+            with patch('backend.api.routes.workflows.WorkflowEngine') as mock_engine_class:
+                mock_engine = MagicMock()
+
+                # Create mock final state
+                mock_final_state = MagicMock()
+                mock_final_state.current_phase = ProjectPhase.COMPLETE
+                mock_engine.run = AsyncMock(return_value=mock_final_state)
+                mock_engine_class.return_value = mock_engine
+
+                await _execute_workflow_real("workflow-123", "project-123", "requirements")
+
+                # Should call update_workflow_status with COMPLETED
+                calls = mock_service.update_workflow_status.call_args_list
+                assert len(calls) >= 2  # At least RUNNING and COMPLETED
+
+    @pytest.mark.asyncio
+    async def test_execute_workflow_real_failed_phase(self):
+        """Test workflow execution that ends in FAILED phase (covers lines 91-96)."""
+        from backend.api.routes.workflows import _execute_workflow_real
+        from backend.workflows.state_machine import ProjectPhase
+
+        mock_workflow = MagicMock()
+        mock_workflow.id = "workflow-123"
+
+        with patch('backend.api.routes.workflows.DatabaseWorkflowService') as mock_service_class:
+            mock_service = AsyncMock()
+            mock_service.update_workflow_status.return_value = mock_workflow
+            mock_service_class.return_value = mock_service
+
+            with patch('backend.api.routes.workflows.WorkflowEngine') as mock_engine_class:
+                mock_engine = MagicMock()
+
+                # Create mock final state with FAILED phase
+                mock_final_state = MagicMock()
+                mock_final_state.current_phase = ProjectPhase.FAILED
+                mock_engine.run = AsyncMock(return_value=mock_final_state)
+                mock_engine_class.return_value = mock_engine
+
+                await _execute_workflow_real("workflow-123", "project-123", "requirements")
+
+                # Should call update_workflow_status with FAILED status
+                calls = mock_service.update_workflow_status.call_args_list
+                assert len(calls) >= 2
 
 
 # ==============================================================================

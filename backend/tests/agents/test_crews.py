@@ -501,3 +501,553 @@ class TestEngineeringCrew:
         result = await eng_crew.create_tests("code")
 
         assert result["test_type"] == "unit"
+
+
+class TestPlanningCrew:
+    """Tests for planning_crew module."""
+
+    @patch('backend.agents.crews.planning_crew.get_ceo_role')
+    @patch('backend.agents.crews.planning_crew.get_product_manager_role')
+    @patch('backend.agents.crews.planning_crew.Crew')
+    def test_create_planning_crew(
+        self,
+        mock_crew_class,
+        mock_pm_role,
+        mock_ceo_role
+    ):
+        """Test creating planning crew."""
+        from backend.agents.crews.planning_crew import create_planning_crew
+
+        mock_agent = Mock()
+        mock_ceo_role.return_value = mock_agent
+        mock_pm_role.return_value = mock_agent
+
+        mock_crew_instance = Mock()
+        mock_crew_class.return_value = mock_crew_instance
+
+        crew = create_planning_crew()
+
+        assert crew == mock_crew_instance
+        mock_ceo_role.assert_called_once_with(llm=None)
+        mock_pm_role.assert_called_once_with(llm=None)
+        mock_crew_class.assert_called_once()
+
+    @patch('backend.agents.crews.planning_crew.get_ceo_role')
+    @patch('backend.agents.crews.planning_crew.get_product_manager_role')
+    @patch('backend.agents.crews.planning_crew.Crew')
+    def test_create_planning_crew_with_llm(
+        self,
+        mock_crew_class,
+        mock_pm_role,
+        mock_ceo_role
+    ):
+        """Test creating planning crew with custom LLM."""
+        from backend.agents.crews.planning_crew import create_planning_crew
+
+        mock_llm = Mock()
+        mock_agent = Mock()
+        mock_ceo_role.return_value = mock_agent
+        mock_pm_role.return_value = mock_agent
+
+        mock_crew_instance = Mock()
+        mock_crew_class.return_value = mock_crew_instance
+
+        create_planning_crew(llm=mock_llm)
+
+        mock_ceo_role.assert_called_once_with(llm=mock_llm)
+        mock_pm_role.assert_called_once_with(llm=mock_llm)
+
+    @patch('backend.agents.crews.planning_crew.Task')
+    def test_create_requirements_task(self, mock_task_class):
+        """Test creating requirements task."""
+        from backend.agents.crews.planning_crew import create_requirements_task
+
+        mock_task = Mock()
+        mock_task_class.return_value = mock_task
+
+        task = create_requirements_task("Build a web app")
+
+        assert task == mock_task
+        mock_task_class.assert_called_once()
+        call_args = mock_task_class.call_args
+        assert "Build a web app" in call_args.kwargs['description']
+
+    @patch('backend.agents.crews.planning_crew.Task')
+    def test_create_product_strategy_task(self, mock_task_class):
+        """Test creating product strategy task."""
+        from backend.agents.crews.planning_crew import create_product_strategy_task
+
+        mock_task = Mock()
+        mock_task_class.return_value = mock_task
+
+        task = create_product_strategy_task("Requirements doc")
+
+        assert task == mock_task
+        mock_task_class.assert_called_once()
+        call_args = mock_task_class.call_args
+        assert "Requirements doc" in call_args.kwargs['description']
+
+
+class TestDesignCrew:
+    """Tests for design_crew module."""
+
+    @patch('backend.agents.crews.design_crew.get_ceo_role')
+    @patch('backend.agents.crews.design_crew.get_architect_role')
+    @patch('backend.agents.crews.design_crew.get_product_manager_role')
+    @patch('backend.agents.crews.design_crew.Crew')
+    def test_create_design_crew(
+        self,
+        mock_crew_class,
+        mock_pm_role,
+        mock_architect_role,
+        mock_ceo_role
+    ):
+        """Test creating design crew."""
+        from backend.agents.crews.design_crew import create_design_crew
+
+        mock_agent = Mock()
+        mock_ceo_role.return_value = mock_agent
+        mock_architect_role.return_value = mock_agent
+        mock_pm_role.return_value = mock_agent
+
+        mock_crew_instance = Mock()
+        mock_crew_class.return_value = mock_crew_instance
+
+        crew = create_design_crew()
+
+        assert crew == mock_crew_instance
+        mock_ceo_role.assert_called_once_with(llm=None)
+        mock_architect_role.assert_called_once_with(llm=None)
+        mock_pm_role.assert_called_once_with(llm=None)
+
+    @patch('backend.agents.crews.design_crew.get_ceo_role')
+    @patch('backend.agents.crews.design_crew.get_architect_role')
+    @patch('backend.agents.crews.design_crew.get_product_manager_role')
+    @patch('backend.agents.crews.design_crew.Crew')
+    def test_create_design_crew_with_llm(
+        self,
+        mock_crew_class,
+        mock_pm_role,
+        mock_architect_role,
+        mock_ceo_role
+    ):
+        """Test creating design crew with LLM."""
+        from backend.agents.crews.design_crew import create_design_crew
+
+        mock_llm = Mock()
+        mock_agent = Mock()
+        mock_ceo_role.return_value = mock_agent
+        mock_architect_role.return_value = mock_agent
+        mock_pm_role.return_value = mock_agent
+
+        mock_crew_instance = Mock()
+        mock_crew_class.return_value = mock_crew_instance
+
+        create_design_crew(llm=mock_llm)
+
+        mock_ceo_role.assert_called_once_with(llm=mock_llm)
+        mock_architect_role.assert_called_once_with(llm=mock_llm)
+        mock_pm_role.assert_called_once_with(llm=mock_llm)
+
+    @patch('backend.agents.crews.design_crew.Task')
+    def test_create_architecture_task(self, mock_task_class):
+        """Test creating architecture task."""
+        from backend.agents.crews.design_crew import create_architecture_task
+
+        mock_task = Mock()
+        mock_task_class.return_value = mock_task
+
+        task = create_architecture_task("Requirements document")
+
+        assert task == mock_task
+        mock_task_class.assert_called_once()
+        call_args = mock_task_class.call_args
+        assert "Requirements document" in call_args.kwargs['description']
+
+    @patch('backend.agents.crews.design_crew.Task')
+    def test_create_technology_selection_task(self, mock_task_class):
+        """Test creating technology selection task."""
+        from backend.agents.crews.design_crew import create_technology_selection_task
+
+        mock_task = Mock()
+        mock_task_class.return_value = mock_task
+
+        task = create_technology_selection_task("Architecture doc")
+
+        assert task == mock_task
+        mock_task_class.assert_called_once()
+        call_args = mock_task_class.call_args
+        assert "Architecture doc" in call_args.kwargs['description']
+
+
+class TestImplementationCrew:
+    """Tests for implementation_crew module."""
+
+    @patch('backend.agents.crews.implementation_crew.get_architect_role')
+    @patch('backend.agents.crews.implementation_crew.get_backend_engineer_role')
+    @patch('backend.agents.crews.implementation_crew.get_frontend_engineer_role')
+    @patch('backend.agents.crews.implementation_crew.get_product_manager_role')
+    @patch('backend.agents.crews.implementation_crew.Crew')
+    def test_create_implementation_crew(
+        self,
+        mock_crew_class,
+        mock_pm_role,
+        mock_frontend_role,
+        mock_backend_role,
+        mock_architect_role
+    ):
+        """Test creating implementation crew."""
+        from backend.agents.crews.implementation_crew import create_implementation_crew
+
+        mock_agent = Mock()
+        mock_architect_role.return_value = mock_agent
+        mock_backend_role.return_value = mock_agent
+        mock_frontend_role.return_value = mock_agent
+        mock_pm_role.return_value = mock_agent
+
+        mock_crew_instance = Mock()
+        mock_crew_class.return_value = mock_crew_instance
+
+        crew = create_implementation_crew()
+
+        assert crew == mock_crew_instance
+        mock_architect_role.assert_called_once_with(llm=None)
+        mock_backend_role.assert_called_once_with(llm=None)
+        mock_frontend_role.assert_called_once_with(llm=None)
+        mock_pm_role.assert_called_once_with(llm=None)
+
+    @patch('backend.agents.crews.implementation_crew.get_architect_role')
+    @patch('backend.agents.crews.implementation_crew.get_backend_engineer_role')
+    @patch('backend.agents.crews.implementation_crew.get_frontend_engineer_role')
+    @patch('backend.agents.crews.implementation_crew.get_product_manager_role')
+    @patch('backend.agents.crews.implementation_crew.Crew')
+    def test_create_implementation_crew_with_llm(
+        self,
+        mock_crew_class,
+        mock_pm_role,
+        mock_frontend_role,
+        mock_backend_role,
+        mock_architect_role
+    ):
+        """Test creating implementation crew with LLM."""
+        from backend.agents.crews.implementation_crew import create_implementation_crew
+
+        mock_llm = Mock()
+        mock_agent = Mock()
+        mock_architect_role.return_value = mock_agent
+        mock_backend_role.return_value = mock_agent
+        mock_frontend_role.return_value = mock_agent
+        mock_pm_role.return_value = mock_agent
+
+        mock_crew_instance = Mock()
+        mock_crew_class.return_value = mock_crew_instance
+
+        create_implementation_crew(llm=mock_llm)
+
+        mock_architect_role.assert_called_once_with(llm=mock_llm)
+        mock_backend_role.assert_called_once_with(llm=mock_llm)
+        mock_frontend_role.assert_called_once_with(llm=mock_llm)
+        mock_pm_role.assert_called_once_with(llm=mock_llm)
+
+    @patch('backend.agents.crews.implementation_crew.Task')
+    def test_create_backend_implementation_task(self, mock_task_class):
+        """Test creating backend implementation task."""
+        from backend.agents.crews.implementation_crew import create_backend_implementation_task
+
+        mock_task = Mock()
+        mock_task_class.return_value = mock_task
+
+        task = create_backend_implementation_task("Architecture", "Requirements")
+
+        assert task == mock_task
+        mock_task_class.assert_called_once()
+        call_args = mock_task_class.call_args
+        assert "Architecture" in call_args.kwargs['description']
+        assert "Requirements" in call_args.kwargs['description']
+
+    @patch('backend.agents.crews.implementation_crew.Task')
+    def test_create_frontend_implementation_task(self, mock_task_class):
+        """Test creating frontend implementation task."""
+        from backend.agents.crews.implementation_crew import create_frontend_implementation_task
+
+        mock_task = Mock()
+        mock_task_class.return_value = mock_task
+
+        task = create_frontend_implementation_task("Architecture doc", "Requirements doc")
+
+        assert task == mock_task
+        mock_task_class.assert_called_once()
+        call_args = mock_task_class.call_args
+        assert "Architecture doc" in call_args.kwargs['description']
+        assert "Requirements doc" in call_args.kwargs['description']
+
+
+class TestDeploymentCrew:
+    """Tests for deployment_crew module."""
+
+    @patch('backend.agents.crews.deployment_crew.get_devops_engineer_role')
+    @patch('backend.agents.crews.deployment_crew.get_architect_role')
+    @patch('backend.agents.crews.deployment_crew.get_backend_engineer_role')
+    @patch('backend.agents.crews.deployment_crew.Crew')
+    def test_create_deployment_crew(
+        self,
+        mock_crew_class,
+        mock_backend_role,
+        mock_architect_role,
+        mock_devops_role
+    ):
+        """Test creating deployment crew."""
+        from backend.agents.crews.deployment_crew import create_deployment_crew
+
+        mock_agent = Mock()
+        mock_devops_role.return_value = mock_agent
+        mock_architect_role.return_value = mock_agent
+        mock_backend_role.return_value = mock_agent
+
+        mock_crew_instance = Mock()
+        mock_crew_class.return_value = mock_crew_instance
+
+        crew = create_deployment_crew()
+
+        assert crew == mock_crew_instance
+        mock_devops_role.assert_called_once_with(llm=None)
+        mock_architect_role.assert_called_once_with(llm=None)
+        mock_backend_role.assert_called_once_with(llm=None)
+
+    @patch('backend.agents.crews.deployment_crew.get_devops_engineer_role')
+    @patch('backend.agents.crews.deployment_crew.get_architect_role')
+    @patch('backend.agents.crews.deployment_crew.get_backend_engineer_role')
+    @patch('backend.agents.crews.deployment_crew.Crew')
+    def test_create_deployment_crew_with_llm(
+        self,
+        mock_crew_class,
+        mock_backend_role,
+        mock_architect_role,
+        mock_devops_role
+    ):
+        """Test creating deployment crew with LLM."""
+        from backend.agents.crews.deployment_crew import create_deployment_crew
+
+        mock_llm = Mock()
+        mock_agent = Mock()
+        mock_devops_role.return_value = mock_agent
+        mock_architect_role.return_value = mock_agent
+        mock_backend_role.return_value = mock_agent
+
+        mock_crew_instance = Mock()
+        mock_crew_class.return_value = mock_crew_instance
+
+        create_deployment_crew(llm=mock_llm)
+
+        mock_devops_role.assert_called_once_with(llm=mock_llm)
+        mock_architect_role.assert_called_once_with(llm=mock_llm)
+        mock_backend_role.assert_called_once_with(llm=mock_llm)
+
+    @patch('backend.agents.crews.deployment_crew.Task')
+    def test_create_infrastructure_task(self, mock_task_class):
+        """Test creating infrastructure task."""
+        from backend.agents.crews.deployment_crew import create_infrastructure_task
+
+        mock_task = Mock()
+        mock_task_class.return_value = mock_task
+
+        task = create_infrastructure_task("Architecture document")
+
+        assert task == mock_task
+        mock_task_class.assert_called_once()
+        call_args = mock_task_class.call_args
+        assert "Architecture document" in call_args.kwargs['description']
+
+    @patch('backend.agents.crews.deployment_crew.Task')
+    def test_create_cicd_task(self, mock_task_class):
+        """Test creating CI/CD task."""
+        from backend.agents.crews.deployment_crew import create_cicd_task
+
+        mock_task = Mock()
+        mock_task_class.return_value = mock_task
+
+        task = create_cicd_task("Infrastructure doc")
+
+        assert task == mock_task
+        mock_task_class.assert_called_once()
+        call_args = mock_task_class.call_args
+        assert "Infrastructure doc" in call_args.kwargs['description']
+
+
+class TestAgentRoles:
+    """Tests for all agent role functions."""
+
+    @patch('backend.agents.roles.architect_role.Agent')
+    def test_get_architect_role(self, mock_agent_class):
+        """Test get_architect_role creates correct agent."""
+        from backend.agents.roles.architect_role import get_architect_role
+
+        mock_agent = Mock()
+        mock_agent_class.return_value = mock_agent
+
+        agent = get_architect_role()
+
+        assert agent == mock_agent
+        mock_agent_class.assert_called_once()
+        call_kwargs = mock_agent_class.call_args.kwargs
+        assert call_kwargs['role'] == "System Architect"
+        assert call_kwargs['verbose'] is True
+        assert call_kwargs['allow_delegation'] is True
+        assert call_kwargs['llm'] is None
+
+    @patch('backend.agents.roles.architect_role.Agent')
+    def test_get_architect_role_with_llm(self, mock_agent_class):
+        """Test get_architect_role with custom LLM."""
+        from backend.agents.roles.architect_role import get_architect_role
+
+        mock_llm = Mock()
+        mock_agent = Mock()
+        mock_agent_class.return_value = mock_agent
+
+        get_architect_role(llm=mock_llm)
+
+        call_kwargs = mock_agent_class.call_args.kwargs
+        assert call_kwargs['llm'] == mock_llm
+
+    @patch('backend.agents.roles.backend_engineer_role.Agent')
+    def test_get_backend_engineer_role(self, mock_agent_class):
+        """Test get_backend_engineer_role creates correct agent."""
+        from backend.agents.roles.backend_engineer_role import get_backend_engineer_role
+
+        mock_agent = Mock()
+        mock_agent_class.return_value = mock_agent
+
+        agent = get_backend_engineer_role()
+
+        assert agent == mock_agent
+        call_kwargs = mock_agent_class.call_args.kwargs
+        assert call_kwargs['role'] == "Backend Engineer"
+        assert call_kwargs['allow_delegation'] is False
+
+    @patch('backend.agents.roles.backend_engineer_role.Agent')
+    def test_get_backend_engineer_role_with_llm(self, mock_agent_class):
+        """Test get_backend_engineer_role with custom LLM."""
+        from backend.agents.roles.backend_engineer_role import get_backend_engineer_role
+
+        mock_llm = Mock()
+        mock_agent = Mock()
+        mock_agent_class.return_value = mock_agent
+
+        get_backend_engineer_role(llm=mock_llm)
+
+        call_kwargs = mock_agent_class.call_args.kwargs
+        assert call_kwargs['llm'] == mock_llm
+
+    @patch('backend.agents.roles.devops_engineer_role.Agent')
+    def test_get_devops_engineer_role(self, mock_agent_class):
+        """Test get_devops_engineer_role creates correct agent."""
+        from backend.agents.roles.devops_engineer_role import get_devops_engineer_role
+
+        mock_agent = Mock()
+        mock_agent_class.return_value = mock_agent
+
+        agent = get_devops_engineer_role()
+
+        assert agent == mock_agent
+        call_kwargs = mock_agent_class.call_args.kwargs
+        assert call_kwargs['role'] == "DevOps Engineer"
+
+    @patch('backend.agents.roles.devops_engineer_role.Agent')
+    def test_get_devops_engineer_role_with_llm(self, mock_agent_class):
+        """Test get_devops_engineer_role with custom LLM."""
+        from backend.agents.roles.devops_engineer_role import get_devops_engineer_role
+
+        mock_llm = Mock()
+        mock_agent = Mock()
+        mock_agent_class.return_value = mock_agent
+
+        get_devops_engineer_role(llm=mock_llm)
+
+        call_kwargs = mock_agent_class.call_args.kwargs
+        assert call_kwargs['llm'] == mock_llm
+
+    @patch('backend.agents.roles.frontend_engineer_role.Agent')
+    def test_get_frontend_engineer_role(self, mock_agent_class):
+        """Test get_frontend_engineer_role creates correct agent."""
+        from backend.agents.roles.frontend_engineer_role import get_frontend_engineer_role
+
+        mock_agent = Mock()
+        mock_agent_class.return_value = mock_agent
+
+        agent = get_frontend_engineer_role()
+
+        assert agent == mock_agent
+        call_kwargs = mock_agent_class.call_args.kwargs
+        assert call_kwargs['role'] == "Frontend Engineer"
+
+    @patch('backend.agents.roles.frontend_engineer_role.Agent')
+    def test_get_frontend_engineer_role_with_llm(self, mock_agent_class):
+        """Test get_frontend_engineer_role with custom LLM."""
+        from backend.agents.roles.frontend_engineer_role import get_frontend_engineer_role
+
+        mock_llm = Mock()
+        mock_agent = Mock()
+        mock_agent_class.return_value = mock_agent
+
+        get_frontend_engineer_role(llm=mock_llm)
+
+        call_kwargs = mock_agent_class.call_args.kwargs
+        assert call_kwargs['llm'] == mock_llm
+
+    @patch('backend.agents.roles.product_manager_role.Agent')
+    def test_get_product_manager_role(self, mock_agent_class):
+        """Test get_product_manager_role creates correct agent."""
+        from backend.agents.roles.product_manager_role import get_product_manager_role
+
+        mock_agent = Mock()
+        mock_agent_class.return_value = mock_agent
+
+        agent = get_product_manager_role()
+
+        assert agent == mock_agent
+        call_kwargs = mock_agent_class.call_args.kwargs
+        assert call_kwargs['role'] == "Product Manager"
+        assert call_kwargs['allow_delegation'] is True
+
+    @patch('backend.agents.roles.product_manager_role.Agent')
+    def test_get_product_manager_role_with_llm(self, mock_agent_class):
+        """Test get_product_manager_role with custom LLM."""
+        from backend.agents.roles.product_manager_role import get_product_manager_role
+
+        mock_llm = Mock()
+        mock_agent = Mock()
+        mock_agent_class.return_value = mock_agent
+
+        get_product_manager_role(llm=mock_llm)
+
+        call_kwargs = mock_agent_class.call_args.kwargs
+        assert call_kwargs['llm'] == mock_llm
+
+    @patch('backend.agents.roles.ceo_role.Agent')
+    def test_get_ceo_role(self, mock_agent_class):
+        """Test get_ceo_role creates correct agent."""
+        from backend.agents.roles.ceo_role import get_ceo_role
+
+        mock_agent = Mock()
+        mock_agent_class.return_value = mock_agent
+
+        agent = get_ceo_role()
+
+        assert agent == mock_agent
+        call_kwargs = mock_agent_class.call_args.kwargs
+        assert call_kwargs['role'] == "Chief Executive Officer"
+        assert call_kwargs['allow_delegation'] is True
+
+    @patch('backend.agents.roles.ceo_role.Agent')
+    def test_get_ceo_role_with_llm(self, mock_agent_class):
+        """Test get_ceo_role with custom LLM."""
+        from backend.agents.roles.ceo_role import get_ceo_role
+
+        mock_llm = Mock()
+        mock_agent = Mock()
+        mock_agent_class.return_value = mock_agent
+
+        get_ceo_role(llm=mock_llm)
+
+        call_kwargs = mock_agent_class.call_args.kwargs
+        assert call_kwargs['llm'] == mock_llm

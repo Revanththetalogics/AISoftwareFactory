@@ -8,11 +8,11 @@ and common data structures for LLM requests and responses.
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from enum import StrEnum
+from typing import Any
 
 
-class ModelCapability(str, Enum):
+class ModelCapability(StrEnum):
     """Capabilities that models may have."""
     CODE_GENERATION = "code_generation"
     CODE_REVIEW = "code_review"
@@ -38,14 +38,14 @@ class LLMRequest:
         context: Additional context for the request
     """
     prompt: str
-    model: Optional[str] = None
+    model: str | None = None
     max_tokens: int = 1024
     temperature: float = 0.7
     top_p: float = 0.9
-    stop_sequences: List[str] = field(default_factory=list)
-    context: Dict[str, Any] = field(default_factory=dict)
+    stop_sequences: list[str] = field(default_factory=list)
+    context: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert request to dictionary."""
         return {
             "prompt": self.prompt,
@@ -80,9 +80,9 @@ class LLMResponse:
     completion_tokens: int = 0
     total_tokens: int = 0
     finish_reason: str = ""
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
-    error: Optional[str] = None
+    error: str | None = None
 
     def __post_init__(self):
         """Calculate total_tokens if not provided."""
@@ -94,7 +94,7 @@ class LLMResponse:
         """Check if response was successful."""
         return self.error is None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert response to dictionary."""
         return {
             "text": self.text,
@@ -152,7 +152,7 @@ class BaseLLMProvider(ABC):
             >>> response = await provider.generate(request)
             >>> print(response.text)
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def is_available(self) -> bool:
@@ -162,19 +162,19 @@ class BaseLLMProvider(ABC):
         Returns:
             True if the provider can serve requests
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
-    def get_available_models(self) -> List[str]:
+    def get_available_models(self) -> list[str]:
         """
         Get list of available models.
 
         Returns:
             List of model names/identifiers
         """
-        pass
+        pass  # pragma: no cover
 
-    def get_capabilities(self) -> List[ModelCapability]:
+    def get_capabilities(self) -> list[ModelCapability]:
         """
         Get provider capabilities.
 

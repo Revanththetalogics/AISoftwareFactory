@@ -5,9 +5,10 @@ This module provides pass/fail criteria and quality gates for
 code validation.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from backend.core.logging import get_logger
 
@@ -49,7 +50,7 @@ class ValidationEngine:
 
     def __init__(self):
         """Initialize the validation engine."""
-        self._rules: List[ValidationRule] = []
+        self._rules: list[ValidationRule] = []
         self._logger = get_logger(__name__)
 
         # Default rules
@@ -84,8 +85,8 @@ class ValidationEngine:
     async def validate(
         self,
         code: str,
-        context: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        context: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Run all validation rules.
 
@@ -151,7 +152,7 @@ class ValidationEngine:
     async def _check_syntax(
         self,
         code: str,
-        context: Dict[str, Any]
+        context: dict[str, Any]
     ) -> ValidationResult:
         """Check code syntax."""
         try:
@@ -174,7 +175,7 @@ class ValidationEngine:
     async def _check_vulnerabilities(
         self,
         code: str,
-        context: Dict[str, Any]
+        context: dict[str, Any]
     ) -> ValidationResult:
         """Check for critical vulnerabilities."""
         from backend.simulation.security_scanner import SecurityScanner

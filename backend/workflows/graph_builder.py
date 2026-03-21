@@ -5,8 +5,9 @@ This module provides LangGraph workflow construction for complex
 agent orchestration and state management.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 from backend.core.logging import get_logger
 
@@ -18,7 +19,7 @@ class Node:
     """A node in the workflow graph."""
     name: str
     action: Callable
-    transitions: Dict[str, str]  # condition -> next_node
+    transitions: dict[str, str]  # condition -> next_node
 
 
 class GraphBuilder:
@@ -31,15 +32,15 @@ class GraphBuilder:
 
     def __init__(self):
         """Initialize the graph builder."""
-        self._nodes: Dict[str, Node] = {}
-        self._entry_point: Optional[str] = None
+        self._nodes: dict[str, Node] = {}
+        self._entry_point: str | None = None
         self._logger = get_logger(__name__)
 
     def add_node(
         self,
         name: str,
         action: Callable,
-        transitions: Optional[Dict[str, str]] = None
+        transitions: dict[str, str] | None = None
     ) -> 'GraphBuilder':
         """
         Add a node to the graph.
@@ -96,8 +97,8 @@ class GraphBuilder:
 
     async def execute(
         self,
-        initial_state: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        initial_state: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Execute the workflow graph.
 
@@ -157,7 +158,7 @@ class GraphBuilder:
 
         return state
 
-    def get_graph_structure(self) -> Dict[str, Any]:
+    def get_graph_structure(self) -> dict[str, Any]:
         """Get the graph structure for visualization."""
         return {
             "entry_point": self._entry_point,

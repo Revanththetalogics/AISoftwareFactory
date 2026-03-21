@@ -5,8 +5,8 @@ This module provides a unified interface for routing requests to different
 LLM providers, with Ollama as the primary local inference engine.
 """
 
-from enum import Enum
-from typing import Any, Dict, Optional
+from enum import StrEnum
+from typing import Any
 
 from langchain.callbacks.manager import CallbackManagerForLLMRun
 from langchain.llms.base import LLM
@@ -18,7 +18,7 @@ from backend.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-class ModelProvider(str, Enum):
+class ModelProvider(StrEnum):
     """Supported LLM providers."""
     OLLAMA = "ollama"
     OPENAI = "openai"
@@ -46,8 +46,8 @@ class OllamaLLM(LLM):
     def _call(
         self,
         prompt: str,
-        stop: Optional[list] = None,
-        run_manager: Optional[CallbackManagerForLLMRun] = None,
+        stop: list | None = None,
+        run_manager: CallbackManagerForLLMRun | None = None,
         **kwargs: Any,
     ) -> str:
         """
@@ -63,7 +63,7 @@ class OllamaLLM(LLM):
         return f"[Stub Response from {self.model}]: Processing prompt of length {len(prompt)}"
 
     @property
-    def _identifying_params(self) -> Dict[str, Any]:
+    def _identifying_params(self) -> dict[str, Any]:
         return {
             "model": self.model,
             "base_url": self.base_url,
@@ -90,7 +90,7 @@ class ModelRouter:
     def __init__(self):
         """Initialize the model router."""
         self.settings = get_settings()
-        self._models: Dict[str, Any] = {}
+        self._models: dict[str, Any] = {}
         self._default_model = "qwen2.5-coder"
 
         logger.info("Model router initialized")
@@ -98,7 +98,7 @@ class ModelRouter:
     def get_llm(
         self,
         task_type: str = "general",
-        model_name: Optional[str] = None,
+        model_name: str | None = None,
         provider: ModelProvider = ModelProvider.OLLAMA,
     ) -> LLM:
         """
@@ -152,7 +152,7 @@ class ModelRouter:
         }
         return task_model_map.get(task_type, self._default_model)
 
-    def list_available_models(self) -> Dict[str, list]:
+    def list_available_models(self) -> dict[str, list]:
         """
         List available models by provider.
 
@@ -176,7 +176,7 @@ class ModelRouter:
             ModelProvider.ANTHROPIC.value: ["claude-3"],  # Future
         }
 
-    def get_model_info(self, model_name: str) -> Dict[str, Any]:
+    def get_model_info(self, model_name: str) -> dict[str, Any]:
         """
         Get information about a specific model.
 
@@ -208,7 +208,7 @@ class ModelRouter:
 
 
 # Singleton instance
-_model_router: Optional[ModelRouter] = None
+_model_router: ModelRouter | None = None
 
 
 def get_model_router() -> ModelRouter:

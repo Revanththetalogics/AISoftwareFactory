@@ -7,7 +7,7 @@ across sessions and interactions.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import uuid4
 
 from backend.core.logging import get_logger
@@ -25,7 +25,7 @@ class Memory:
     importance: float = 1.0
     created_at: datetime = field(default_factory=datetime.utcnow)
     access_count: int = 0
-    last_accessed: Optional[datetime] = None
+    last_accessed: datetime | None = None
 
 
 class MemoryStore:
@@ -38,8 +38,8 @@ class MemoryStore:
 
     def __init__(self):
         """Initialize the memory store."""
-        self._memories: Dict[str, Memory] = {}
-        self._agent_memories: Dict[str, List[str]] = {}  # agent_id -> memory_ids
+        self._memories: dict[str, Memory] = {}
+        self._agent_memories: dict[str, list[str]] = {}  # agent_id -> memory_ids
         self._logger = get_logger(__name__)
 
     def store(
@@ -90,10 +90,10 @@ class MemoryStore:
     def retrieve(
         self,
         agent_id: str,
-        query: Optional[str] = None,
-        memory_type: Optional[str] = None,
+        query: str | None = None,
+        memory_type: str | None = None,
         limit: int = 10
-    ) -> List[Memory]:
+    ) -> list[Memory]:
         """
         Retrieve memories for an agent.
 
@@ -161,7 +161,7 @@ class MemoryStore:
         self._logger.info("Memory forgotten", memory_id=memory_id)
         return True
 
-    def get_agent_memory_stats(self, agent_id: str) -> Dict[str, Any]:
+    def get_agent_memory_stats(self, agent_id: str) -> dict[str, Any]:
         """
         Get memory statistics for an agent.
 

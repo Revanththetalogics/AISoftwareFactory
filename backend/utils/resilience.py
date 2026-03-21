@@ -8,7 +8,8 @@ and resilience wrappers for external service calls.
 import asyncio
 import functools
 import time
-from typing import Any, Callable, Optional, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from backend.core.logging import get_logger
 
@@ -190,19 +191,19 @@ async def with_timeout(
     """
     try:
         return await asyncio.wait_for(coro, timeout=timeout_seconds)
-    except asyncio.TimeoutError:
+    except TimeoutError as exc:
         logger.error(
             "Operation timed out",
             operation=operation_name,
             timeout_seconds=timeout_seconds
         )
-        raise TimeoutError(f"{operation_name} timed out after {timeout_seconds}s")
+        raise TimeoutError(f"{operation_name} timed out after {timeout_seconds}s") from exc
 
 
 async def with_resilience(
     func: Callable,
     circuit_breaker: CircuitBreaker,
-    timeout_seconds: Optional[float] = None,
+    timeout_seconds: float | None = None,
     operation_name: str = "operation",
     *args,
     **kwargs
@@ -258,8 +259,8 @@ async def with_resilience(
 
 def resilient(
     circuit_breaker: CircuitBreaker,
-    timeout_seconds: Optional[float] = None,
-    operation_name: Optional[str] = None
+    timeout_seconds: float | None = None,
+    operation_name: str | None = None
 ):
     """
     Decorator to add resilience to async functions.

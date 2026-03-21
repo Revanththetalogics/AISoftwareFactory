@@ -6,10 +6,11 @@ multi-step processes with dependencies and parallel execution.
 """
 
 import asyncio
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from backend.core.logging import get_logger
 
@@ -30,12 +31,12 @@ class PipelineStep:
     """A step in the pipeline."""
     name: str
     action: Callable
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
     status: StepStatus = StepStatus.PENDING
     result: Any = None
-    error: Optional[str] = None
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    error: str | None = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
 
 
 class Pipeline:
@@ -54,14 +55,14 @@ class Pipeline:
             name: Pipeline name
         """
         self._name = name
-        self._steps: Dict[str, PipelineStep] = {}
+        self._steps: dict[str, PipelineStep] = {}
         self._logger = get_logger(__name__)
 
     def add_step(
         self,
         name: str,
         action: Callable,
-        dependencies: Optional[List[str]] = None
+        dependencies: list[str] | None = None
     ) -> 'Pipeline':
         """
         Add a step to the pipeline.
@@ -83,7 +84,7 @@ class Pipeline:
         self._logger.info("Step added", pipeline=self._name, step=name)
         return self
 
-    async def execute(self, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def execute(self, context: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         Execute the pipeline.
 
@@ -138,7 +139,7 @@ class Pipeline:
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
             # Process results
-            for name, result in zip(ready_steps, results):
+            for name, result in zip(ready_steps, results, strict=False):
                 if isinstance(result, Exception):
                     failed.add(name)
                     self._steps[name].status = StepStatus.FAILED
@@ -170,7 +171,7 @@ class Pipeline:
     async def _execute_step(
         self,
         name: str,
-        context: Dict[str, Any]
+        context: dict[str, Any]
     ):
         """Execute a single step."""
         step = self._steps[name]
@@ -199,7 +200,7 @@ class Pipeline:
             self._logger.error("Step failed", step=name, error=str(e))
             raise
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get current pipeline status."""
         return {
             "pipeline": self._name,

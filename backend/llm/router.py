@@ -6,7 +6,6 @@ providers with fallback logic and model selection.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 
 from backend.core.logging import get_logger
 from backend.llm.providers.base import BaseLLMProvider, LLMRequest, LLMResponse
@@ -30,7 +29,7 @@ class ModelConfig:
     name: str
     provider: str
     priority: int = 1
-    capabilities: List[str] = field(default_factory=list)
+    capabilities: list[str] = field(default_factory=list)
     context_window: int = 4096
     cost_per_1k_tokens: float = 0.0
 
@@ -64,8 +63,8 @@ to the best available provider based on model requirements, availability,
         Args:
             default_model: Default model to use
         """
-        self.providers: Dict[str, BaseLLMProvider] = {}
-        self.model_configs: Dict[str, ModelConfig] = {}
+        self.providers: dict[str, BaseLLMProvider] = {}
+        self.model_configs: dict[str, ModelConfig] = {}
         self.default_model = default_model
         self._logger = get_logger(__name__)
 
@@ -177,7 +176,7 @@ to the best available provider based on model requirements, availability,
         self.providers[provider.name] = provider
         self._logger.info("Provider registered", provider=provider.name)
 
-    def get_provider(self, name: str) -> Optional[BaseLLMProvider]:
+    def get_provider(self, name: str) -> BaseLLMProvider | None:
         """
         Get a provider by name.
 
@@ -204,7 +203,7 @@ to the best available provider based on model requirements, availability,
             return False
         return await provider.is_available()
 
-    def get_available_providers(self) -> List[str]:
+    def get_available_providers(self) -> list[str]:
         """
         Get list of registered provider names.
 
@@ -250,7 +249,7 @@ to the best available provider based on model requirements, availability,
     async def generate(
         self,
         request: LLMRequest,
-        model: Optional[str] = None,
+        model: str | None = None,
     ) -> LLMResponse:
         """
         Generate text using the appropriate provider.
@@ -377,7 +376,7 @@ to the best available provider based on model requirements, availability,
             error="All LLM providers are unavailable",
         )
 
-    def get_model_info(self, model: str) -> Optional[ModelConfig]:
+    def get_model_info(self, model: str) -> ModelConfig | None:
         """
         Get information about a model.
 
@@ -389,7 +388,7 @@ to the best available provider based on model requirements, availability,
         """
         return self.model_configs.get(model)
 
-    def list_models(self) -> List[str]:
+    def list_models(self) -> list[str]:
         """
         List all configured models.
 
@@ -398,7 +397,7 @@ to the best available provider based on model requirements, availability,
         """
         return list(self.model_configs.keys())
 
-    async def health_check(self) -> Dict[str, bool]:
+    async def health_check(self) -> dict[str, bool]:
         """
         Check health of all providers.
 

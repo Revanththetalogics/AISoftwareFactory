@@ -969,7 +969,7 @@ class TestContextManagerFull:
         conv_id = manager.create_conversation()
 
         # Add many long messages
-        for i in range(10):
+        for _i in range(10):
             manager.add_message(conv_id, "user", "A" * 100)
 
         # Should have trimmed some messages but kept at least 2

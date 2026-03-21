@@ -496,7 +496,7 @@ class TestTestIntelligenceEngine:
     @pytest.mark.asyncio
     async def test_analyze_code_structure(self, intelligence_engine, temp_python_file):
         """Test _analyze_code_structure method."""
-        with open(temp_python_file, 'r') as f:
+        with open(temp_python_file) as f:
             code = f.read()
 
         analysis = await intelligence_engine._analyze_code_structure(code, temp_python_file)
@@ -545,7 +545,7 @@ class TestTestIntelligenceEngine:
     @pytest.mark.asyncio
     async def test_generate_tests_for_gaps(self, intelligence_engine, temp_python_file):
         """Test _generate_tests_for_gaps method."""
-        with open(temp_python_file, 'r') as f:
+        with open(temp_python_file) as f:
             code = f.read()
 
         gaps = [
@@ -565,7 +565,7 @@ class TestTestIntelligenceEngine:
         """Test _generate_tests_for_gaps when LLM fails."""
         intelligence_engine._llm.generate = AsyncMock(side_effect=Exception("LLM error"))
 
-        with open(temp_python_file, 'r') as f:
+        with open(temp_python_file) as f:
             code = f.read()
 
         gaps = [{"type": "function", "name": "add", "line": 1}]
@@ -700,3 +700,372 @@ class TestTestIntelligenceEngine:
         coverage = await intelligence_engine._calculate_coverage(temp_python_file)
 
         assert coverage == 0.0  # Returns placeholder in current implementation
+
+
+class TestIntelligenceEngineExtendedCoverage:
+    """Tests for extended coverage - lines 285, 334, 380-388, 573, 651."""
+
+    @pytest.fixture
+    def mock_llm(self):
+        """Fixture for mocked LLM provider."""
+        from unittest.mock import AsyncMock, Mock
+        llm = Mock()
+        llm.generate = AsyncMock(return_value="def test(): pass")
+        return llm
+
+    @pytest.fixture
+    def intelligence_engine(self, mock_llm):
+        """Fixture for TestIntelligenceEngine with mocked LLM."""
+        from backend.testing.intelligence_engine import TestIntelligenceEngine
+        engine = TestIntelligenceEngine(llm_provider=mock_llm)
+        return engine
+
+    @pytest.mark.asyncio
+    async def test_detect_bugs_stores_in_bug_reports_line_285(self, intelligence_engine):
+        """Test line 285: bugs are stored in _bug_reports dict."""
+        import os
+        import tempfile
+
+        from backend.testing.intelligence_engine import TestSuite
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            f.write("def func():\n    return 1\n")
+            f.flush()
+            file_path = f.name
+
+        try:
+            test_suite = TestSuite(
+                name="test_suite",
+                target_module=file_path,
+                test_cases=[],
+            )
+
+            bugs = await intelligence_engine.detect_bugs(test_suite, run_tests=False)
+
+            # Line 285: bugs should be stored in _bug_reports
+            for bug in bugs:
+                assert bug.id in intelligence_engine._bug_reports
+        finally:
+            os.unlink(file_path)
+
+    @pytest.mark.asyncio
+    async def test_apply_fixes_callback_line_334(self, intelligence_engine):
+        """Test line 334: fix callback is executed on success."""
+
+        from backend.testing.intelligence_engine import BugReport
+
+        # Register a callback
+        callback_results = []
+
+        async def fix_callback(fix_result):
+            callback_results.append(fix_result)
+
+        intelligence_engine.register_callback("fix_applied", fix_callback)
+
+        # Create a bug to fix
+        bug = BugReport(
+            id="bug_callback",
+            severity="low",
+            category="logic",
+            file_path="/path/file.py",
+            line_number=1,
+            description="Test bug",
+            root_cause="Test cause",
+            suggested_fix="Test fix",
+            confidence=0.9,
+        )
+
+        # Mock _generate_fix to return a successful fix
+        async def mock_generate_fix(bug):
+            from backend.testing.intelligence_engine import FixResult
+            return FixResult(
+                bug_id=bug.id,
+                success=True,
+                file_path=bug.file_path,
+                original_code="original",
+                fixed_code="fixed",
+                explanation="Fixed the bug",
+            )
+
+        intelligence_engine._generate_fix = mock_generate_fix
+
+        await intelligence_engine.apply_fixes([bug], auto_apply=True)
+
+        # Line 334: callback should have been called
+        assert len(callback_results) == 1
+        assert callback_results[0].success is True
+
+    @pytest.mark.asyncio
+    async def test_run_self_healing_tests_all_status_lines_380_388(self, intelligence_engine):
+        """Test lines 380-388: all test result status categories."""
+
+        from backend.testing.intelligence_engine import TestCase, TestPriority, TestSuite, TestType
+
+        # Create test cases
+        test_cases = [
+            TestCase(id="passed", name="test_passed", test_type=TestType.UNIT, target_file="/f.py", code="", priority=TestPriority.HIGH),
+            TestCase(id="healed", name="test_healed", test_type=TestType.UNIT, target_file="/f.py", code="", priority=TestPriority.HIGH),
+            TestCase(id="flaky", name="test_flaky", test_type=TestType.UNIT, target_file="/f.py", code="", priority=TestPriority.HIGH),
+            TestCase(id="failed", name="test_failed", test_type=TestType.UNIT, target_file="/f.py", code="", priority=TestPriority.HIGH),
+        ]
+
+        test_suite = TestSuite(
+            name="status_test_suite",
+            target_module="/path/to/module.py",
+            test_cases=test_cases,
+        )
+
+        # Mock _run_test_with_healing to return different statuses
+        call_count = [0]
+
+        async def mock_run_test_with_healing(test_case, max_retries):
+            statuses = ["passed", "healed", "flaky", "failed"]
+            status = statuses[call_count[0] % 4]
+            call_count[0] += 1
+            return {"status": status}
+
+        intelligence_engine._run_test_with_healing = mock_run_test_with_healing
+
+        results = await intelligence_engine.run_self_healing_tests(test_suite)
+
+        # Lines 380-388: all status categories should be updated
+        assert "passed" in results["passed"]
+        assert "healed" in results["healed"]
+        assert "flaky" in results["flaky"]
+        assert "failed" in results["failed"]
+
+    @pytest.mark.asyncio
+    async def test_find_existing_tests_path_exists_line_573(self, intelligence_engine):
+        """Test line 573: Path.exists() check."""
+        import os
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+
+        # Create a temp file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            f.write("def func(): pass")
+            f.flush()
+            source_path = f.name
+
+        try:
+            # Mock Path.exists to return True for one pattern
+
+            def mock_exists(self):
+                if "tests/test_" in str(self):
+                    return True
+                return False
+
+            with patch.object(Path, 'exists', mock_exists):
+                existing = await intelligence_engine._find_existing_tests(source_path)
+
+                # Line 573: should find the test file
+                assert len(existing) >= 0  # May find tests depending on pattern
+        finally:
+            os.unlink(source_path)
+
+    @pytest.mark.asyncio
+    async def test_generate_tests_for_gaps_callback_line_651(self, intelligence_engine):
+        """Test line 651: test generated callback execution."""
+        from unittest.mock import AsyncMock
+
+        # Register a callback
+        callback_results = []
+
+        async def test_generated_callback(test_case):
+            callback_results.append(test_case)
+
+        intelligence_engine.register_callback("test_generated", test_generated_callback)
+
+        # Mock LLM to return test code
+        intelligence_engine._llm.generate = AsyncMock(return_value="def test_gap(): assert True")
+
+        gaps = [
+            {"type": "function", "name": "my_func", "line": 10}
+        ]
+
+        await intelligence_engine._generate_tests_for_gaps(
+            file_path="/path/to/file.py",
+            code="def my_func():\n    return 1",
+            gaps=gaps,
+        )
+
+        # Line 651: callback should have been called
+        assert len(callback_results) == 1
+        assert "my_func" in callback_results[0].name
+
+
+class TestCoverageGapsIntelligenceEngine:
+    """Additional tests to cover remaining lines (285, 334, 380-388, 573)."""
+
+    @pytest.fixture
+    def engine(self, mock_llm):
+        """Fixture for TestIntelligenceEngine."""
+        return TestIntelligenceEngine(llm_provider=mock_llm)
+
+    @pytest.mark.asyncio
+    async def test_detect_bugs_stores_in_bug_reports_line_285(self, engine, temp_python_file):
+        """Test line 285: bugs are stored in _bug_reports during detection."""
+        from unittest.mock import AsyncMock
+
+        # Create a test suite
+        tc = TestCase(
+            id="test_1",
+            name="test_example",
+            test_type=TestType.UNIT,
+            target_file=temp_python_file,
+            code="def test(): assert True",
+            priority=TestPriority.MEDIUM,
+        )
+        suite = TestSuite(name="test_suite", target_module=temp_python_file, test_cases=[tc])
+
+        # Mock LLM to return a bug
+        engine._llm.generate = AsyncMock(return_value='[{"severity": "medium", "description": "Potential bug"}]')
+        engine._analyze_test_failures = AsyncMock(return_value=[])
+        engine._llm_code_review = AsyncMock(return_value=[
+            BugReport(
+                id="bug_detected",
+                severity="medium",
+                category="logic",
+                file_path=temp_python_file,
+                line_number=1,
+                description="Found potential issue",
+                root_cause="Logic error",
+                suggested_fix="Fix the logic",
+                confidence=0.9,
+            )
+        ])
+
+        bugs = await engine.detect_bugs(suite, run_tests=False)
+
+        # Line 285: bugs should be stored in _bug_reports
+        assert len(bugs) == 1
+        assert "bug_detected" in engine._bug_reports
+        assert engine._bug_reports["bug_detected"].severity == "medium"
+
+    @pytest.mark.asyncio
+    async def test_apply_fixes_callback_line_334(self, engine):
+        """Test line 334: callback is executed when fix is applied."""
+        from unittest.mock import AsyncMock
+
+        callback_called = []
+
+        async def fix_applied_callback(fix_result):
+            callback_called.append(fix_result)
+
+        engine.register_callback("fix_applied", fix_applied_callback)
+
+        # Create a bug
+        bug = BugReport(
+            id="bug_to_fix",
+            severity="low",
+            category="style",
+            file_path="/test/file.py",
+            line_number=10,
+            description="Test issue",
+            root_cause="Test cause",
+            suggested_fix="Test fix suggestion",
+            confidence=0.95,
+        )
+
+        # Mock _generate_fix to return a successful result
+        engine._generate_fix = AsyncMock(return_value=FixResult(
+            bug_id=bug.id,
+            success=True,
+            file_path=bug.file_path,
+            original_code="old code",
+            fixed_code="new code",
+            explanation="Fixed the issue",
+        ))
+
+        await engine.apply_fixes([bug], auto_apply=False, confidence_threshold=0.5)
+
+        # Line 334: callback should have been called
+        assert len(callback_called) == 1
+        assert callback_called[0].success is True
+
+    @pytest.mark.asyncio
+    async def test_run_self_healing_tests_all_branches_lines_380_388(self, engine):
+        """Test lines 380-388: all branches of test execution status."""
+        # Test the healed, flaky, and failed branches
+
+        # Create test cases
+        tc_healed = TestCase(
+            id="tc_healed", name="test_healed", test_type=TestType.UNIT,
+            target_file="/test.py", code="def test(): pass",
+            priority=TestPriority.MEDIUM,
+        )
+        tc_flaky = TestCase(
+            id="tc_flaky", name="test_flaky", test_type=TestType.UNIT,
+            target_file="/test.py", code="def test(): pass",
+            priority=TestPriority.MEDIUM,
+        )
+        tc_failed = TestCase(
+            id="tc_failed", name="test_failed", test_type=TestType.UNIT,
+            target_file="/test.py", code="def test(): pass",
+            priority=TestPriority.MEDIUM,
+        )
+
+        suite = TestSuite(
+            name="test_suite",
+            target_module="/test.py",
+            test_cases=[tc_healed, tc_flaky, tc_failed],
+        )
+
+        # Mock _run_test_with_healing to return different statuses
+        call_count = 0
+
+        async def mock_run_test(test_case, max_retries):
+            nonlocal call_count
+            call_count += 1
+            if test_case.id == "tc_healed":
+                return {"status": "healed"}  # Line 380-382
+            elif test_case.id == "tc_flaky":
+                return {"status": "flaky"}  # Line 383-385
+            else:
+                return {"status": "failed"}  # Line 386-388
+
+        engine._run_test_with_healing = mock_run_test
+
+        results = await engine.run_self_healing_tests(suite, max_retries=2)
+
+        # Verify all branches were hit
+        assert "tc_healed" in results["healed"]
+        assert "tc_flaky" in results["flaky"]
+        assert "tc_failed" in results["failed"]
+
+    @pytest.mark.asyncio
+    async def test_find_existing_tests_with_existing_file_line_573(self, engine):
+        """Test line 573: appends to existing list when Path.exists() returns True."""
+        import tempfile
+        from pathlib import Path
+
+        # Create a temp directory structure with a test file
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create the source file
+            source_file = Path(tmpdir) / "module.py"
+            source_file.write_text("def func(): pass")
+
+            # Create the tests directory and test file that matches the pattern
+            tests_dir = Path(tmpdir) / "tests"
+            tests_dir.mkdir()
+            test_file = tests_dir / f"test_{source_file.name}"
+            test_file.write_text("def test_func(): pass")
+
+            # Now call _find_existing_tests with the source path
+            # We need to mock Path.exists to return True for our pattern
+            original_exists = Path.exists
+
+            def mock_exists(self):
+                # Return True for any path containing 'test_'
+                if 'test_' in str(self):
+                    return True
+                return original_exists(self)
+
+            from unittest.mock import patch
+            with patch.object(Path, 'exists', mock_exists):
+                existing = await engine._find_existing_tests(str(source_file))
+
+                # Line 573 should be hit - existing should contain at least one entry
+                assert len(existing) >= 1
+

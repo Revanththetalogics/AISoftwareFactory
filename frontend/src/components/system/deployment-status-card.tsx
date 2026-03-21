@@ -3,13 +3,11 @@
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { 
-  Server, 
   CheckCircle2, 
   XCircle, 
   AlertCircle,
   Clock,
   GitCommit,
-  ExternalLink,
   Activity,
   Cpu,
   HardDrive,
@@ -18,7 +16,6 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 
 export type DeploymentEnvironment = 'development' | 'staging' | 'production';

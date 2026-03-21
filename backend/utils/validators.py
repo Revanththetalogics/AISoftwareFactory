@@ -5,7 +5,6 @@ This module provides validation functions for common data types.
 """
 
 import re
-from typing import Optional
 
 EMAIL_PATTERN = re.compile(
     r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
@@ -52,7 +51,7 @@ def validate_url(url: str) -> bool:
     return bool(URL_PATTERN.match(url))
 
 
-def validate_project_name(name: str) -> tuple[bool, Optional[str]]:
+def validate_project_name(name: str) -> tuple[bool, str | None]:
     """
     Validate a project name.
 

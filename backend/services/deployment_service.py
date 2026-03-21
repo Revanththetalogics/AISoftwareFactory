@@ -5,7 +5,7 @@ This module provides business logic for deployment management operations.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import uuid4
 
 from backend.core.logging import get_logger
@@ -23,7 +23,7 @@ class DeploymentService:
 
     def __init__(self):
         """Initialize the deployment service."""
-        self._deployments: Dict[str, Dict[str, Any]] = {}
+        self._deployments: dict[str, dict[str, Any]] = {}
         self._logger = get_logger(__name__)
 
     async def create_deployment(
@@ -31,8 +31,8 @@ class DeploymentService:
         project_id: str,
         environment: str,
         version: str,
-        config: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        config: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Create a new deployment.
 
@@ -70,7 +70,7 @@ class DeploymentService:
 
         return deployment
 
-    async def get_deployment(self, deployment_id: str) -> Optional[Dict[str, Any]]:
+    async def get_deployment(self, deployment_id: str) -> dict[str, Any] | None:
         """
         Get a deployment by ID.
 
@@ -84,9 +84,9 @@ class DeploymentService:
 
     async def list_deployments(
         self,
-        project_id: Optional[str] = None,
-        environment: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        project_id: str | None = None,
+        environment: str | None = None
+    ) -> list[dict[str, Any]]:
         """
         List deployments with optional filtering.
 
@@ -110,10 +110,10 @@ class DeploymentService:
         self,
         deployment_id: str,
         status: str,
-        steps: Optional[List[Dict[str, Any]]] = None,
-        error_message: Optional[str] = None,
-        url: Optional[str] = None
-    ) -> Optional[Dict[str, Any]]:
+        steps: list[dict[str, Any]] | None = None,
+        error_message: str | None = None,
+        url: str | None = None
+    ) -> dict[str, Any] | None:
         """
         Update deployment status.
 

@@ -6,11 +6,12 @@ analyzes test results, and makes decisions about test generation, bug detection,
 and automatic fixes.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from backend.core.logging import get_logger
 from backend.llm.base_provider import BaseLLMProvider
@@ -48,15 +49,15 @@ class TestCase:
     code: str
     priority: TestPriority
     description: str = ""
-    dependencies: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    dependencies: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.utcnow)
-    last_run: Optional[datetime] = None
+    last_run: datetime | None = None
     success_count: int = 0
     failure_count: int = 0
     is_flaky: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "name": self.name,
@@ -81,16 +82,16 @@ class BugReport:
     severity: str  # critical, high, medium, low
     category: str  # syntax, logic, security, performance
     file_path: str
-    line_number: Optional[int]
+    line_number: int | None
     description: str
     root_cause: str
     suggested_fix: str
     confidence: float
-    test_case_id: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    test_case_id: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
     detected_at: datetime = field(default_factory=datetime.utcnow)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "severity": self.severity,
@@ -116,9 +117,9 @@ class FixResult:
     fixed_code: str
     explanation: str
     applied_at: datetime = field(default_factory=datetime.utcnow)
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "bug_id": self.bug_id,
             "success": self.success,
@@ -134,13 +135,13 @@ class TestSuite:
     """Collection of test cases for a module or feature."""
     name: str
     target_module: str
-    test_cases: List[TestCase] = field(default_factory=list)
+    test_cases: list[TestCase] = field(default_factory=list)
     coverage_percentage: float = 0.0
     mutation_score: float = 0.0
-    last_execution: Optional[datetime] = None
+    last_execution: datetime | None = None
     execution_time_ms: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "target_module": self.target_module,
@@ -171,7 +172,7 @@ class TestIntelligenceEngine:
         >>> fixes = await engine.apply_fixes(bugs)
     """
 
-    def __init__(self, llm_provider: Optional[BaseLLMProvider] = None):
+    def __init__(self, llm_provider: BaseLLMProvider | None = None):
         """
         Initialize the test intelligence engine.
 
@@ -180,15 +181,15 @@ class TestIntelligenceEngine:
         """
         self._llm = llm_provider or LLMFactory.create_llm()
         self._logger = get_logger(__name__)
-        self._test_suites: Dict[str, TestSuite] = {}
-        self._bug_reports: Dict[str, BugReport] = {}
-        self._fix_history: List[FixResult] = []
-        self._execution_patterns: Dict[str, Any] = {}
+        self._test_suites: dict[str, TestSuite] = {}
+        self._bug_reports: dict[str, BugReport] = {}
+        self._fix_history: list[FixResult] = []
+        self._execution_patterns: dict[str, Any] = {}
 
         # Callbacks for different events
-        self._on_test_generated: List[Callable] = []
-        self._on_bug_detected: List[Callable] = []
-        self._on_fix_applied: List[Callable] = []
+        self._on_test_generated: list[Callable] = []
+        self._on_bug_detected: list[Callable] = []
+        self._on_fix_applied: list[Callable] = []
 
         self._logger.info("TestIntelligenceEngine initialized")
 
@@ -252,7 +253,7 @@ class TestIntelligenceEngine:
         self,
         test_suite: TestSuite,
         run_tests: bool = True
-    ) -> List[BugReport]:
+    ) -> list[BugReport]:
         """
         Detect bugs in code using multiple strategies.
 
@@ -294,10 +295,10 @@ class TestIntelligenceEngine:
 
     async def apply_fixes(
         self,
-        bugs: List[BugReport],
+        bugs: list[BugReport],
         auto_apply: bool = False,
         confidence_threshold: float = 0.85
-    ) -> List[FixResult]:
+    ) -> list[FixResult]:
         """
         Apply automatic fixes to detected bugs.
 
@@ -345,7 +346,7 @@ class TestIntelligenceEngine:
         self,
         test_suite: TestSuite,
         max_retries: int = 3
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Run tests with self-healing capabilities.
 
@@ -407,7 +408,7 @@ class TestIntelligenceEngine:
         error_message: str,
         stack_trace: str,
         code_context: str
-    ) -> Optional[TestCase]:
+    ) -> TestCase | None:
         """
         Generate a new test case from a production failure.
 
@@ -466,7 +467,7 @@ Return only the test code."""
             self._logger.error("Failed to generate test from failure", error=str(e))
             return None
 
-    def get_test_health_report(self) -> Dict[str, Any]:
+    def get_test_health_report(self) -> dict[str, Any]:
         """
         Generate comprehensive test health report.
 
@@ -516,13 +517,13 @@ Return only the test code."""
     async def _read_file(self, file_path: str) -> str:
         """Read file content."""
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path) as f:
                 return f.read()
         except Exception as e:
             self._logger.error("Failed to read file", file_path=file_path, error=str(e))
             return ""
 
-    async def _analyze_code_structure(self, code: str, file_path: str) -> Dict[str, Any]:
+    async def _analyze_code_structure(self, code: str, file_path: str) -> dict[str, Any]:
         """Analyze code structure to identify testable components."""
         import ast
 
@@ -560,7 +561,7 @@ Return only the test code."""
             self._logger.error("Syntax error in code", file_path=file_path, error=str(e))
             return {"functions": [], "classes": [], "total_lines": 0}
 
-    async def _find_existing_tests(self, file_path: str) -> List[str]:
+    async def _find_existing_tests(self, file_path: str) -> list[str]:
         """Find existing tests for a file."""
         test_patterns = [
             f"tests/test_{Path(file_path).name}",
@@ -576,9 +577,9 @@ Return only the test code."""
 
     def _identify_test_gaps(
         self,
-        analysis: Dict[str, Any],
-        existing_tests: List[str]
-    ) -> List[Dict[str, Any]]:
+        analysis: dict[str, Any],
+        existing_tests: list[str]
+    ) -> list[dict[str, Any]]:
         """Identify gaps in test coverage."""
         gaps = []
 
@@ -606,8 +607,8 @@ Return only the test code."""
         self,
         file_path: str,
         code: str,
-        gaps: List[Dict[str, Any]]
-    ) -> List[TestCase]:
+        gaps: list[dict[str, Any]]
+    ) -> list[TestCase]:
         """Generate test cases for identified gaps."""
         test_cases = []
 
@@ -665,17 +666,17 @@ Return only the test code."""
         # For now, return a placeholder
         return 0.0
 
-    async def _static_analysis(self, file_path: str) -> List[BugReport]:
+    async def _static_analysis(self, file_path: str) -> list[BugReport]:
         """Run static analysis to find bugs."""
         # This would integrate with tools like pylint, bandit, mypy
         return []
 
-    async def _analyze_test_failures(self, test_suite: TestSuite) -> List[BugReport]:
+    async def _analyze_test_failures(self, test_suite: TestSuite) -> list[BugReport]:
         """Analyze test failures to identify bugs."""
         # This would run tests and analyze failures
         return []
 
-    async def _llm_code_review(self, file_path: str) -> List[BugReport]:
+    async def _llm_code_review(self, file_path: str) -> list[BugReport]:
         """Use LLM to review code for bugs."""
         code = await self._read_file(file_path)
 
@@ -769,7 +770,7 @@ Provide the fixed code section only."""
         self,
         test_case: TestCase,
         max_retries: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Run a test with self-healing capabilities."""
         # This would implement the actual test execution with healing
         # For now, return a placeholder

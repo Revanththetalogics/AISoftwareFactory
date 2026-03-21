@@ -5,15 +5,15 @@ This module provides environment configuration management for deployments.
 """
 
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from enum import StrEnum
+from typing import Any
 
 from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
 
-class EnvironmentType(str, Enum):
+class EnvironmentType(StrEnum):
     """Environment types."""
     DEVELOPMENT = "development"
     STAGING = "staging"
@@ -37,7 +37,7 @@ class EnvironmentVariable:
     is_secret: bool = False
     description: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -61,18 +61,18 @@ class EnvironmentConfig:
     """
     name: str
     environment_type: EnvironmentType
-    variables: List[EnvironmentVariable] = field(default_factory=list)
-    secrets: Dict[str, str] = field(default_factory=dict, repr=False)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    variables: list[EnvironmentVariable] = field(default_factory=list)
+    secrets: dict[str, str] = field(default_factory=dict, repr=False)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def get_variable(self, name: str) -> Optional[EnvironmentVariable]:
+    def get_variable(self, name: str) -> EnvironmentVariable | None:
         """Get a variable by name."""
         for var in self.variables:
             if var.name == name:
                 return var
         return None
 
-    def get_secret(self, name: str) -> Optional[str]:
+    def get_secret(self, name: str) -> str | None:
         """Get a secret value."""
         return self.secrets.get(name)
 
@@ -90,7 +90,7 @@ class EnvironmentConfig:
 
         return "\n".join(lines) + "\n"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "name": self.name,
@@ -121,14 +121,14 @@ class EnvironmentManager:
 
     def __init__(self):
         """Initialize the environment manager."""
-        self._environments: Dict[str, EnvironmentConfig] = {}
+        self._environments: dict[str, EnvironmentConfig] = {}
         self._logger = get_logger(__name__)
 
     def create_environment(
         self,
         name: str,
         env_type: EnvironmentType,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> EnvironmentConfig:
         """
         Create a new environment.
@@ -157,7 +157,7 @@ class EnvironmentManager:
 
         return env
 
-    def get_environment(self, name: str) -> Optional[EnvironmentConfig]:
+    def get_environment(self, name: str) -> EnvironmentConfig | None:
         """
         Get an environment by name.
 
@@ -266,7 +266,7 @@ class EnvironmentManager:
 
         return True
 
-    def generate_env_file(self, env_name: str) -> Optional[str]:
+    def generate_env_file(self, env_name: str) -> str | None:
         """
         Generate .env file content for an environment.
 
@@ -285,7 +285,7 @@ class EnvironmentManager:
     def generate_docker_env(
         self,
         env_name: str,
-    ) -> Optional[Dict[str, str]]:
+    ) -> dict[str, str] | None:
         """
         Generate Docker environment configuration.
 
@@ -313,7 +313,7 @@ class EnvironmentManager:
         self,
         env_name: str,
         namespace: str = "default",
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Generate Kubernetes ConfigMap YAML.
 
@@ -346,7 +346,7 @@ data:
         self,
         env_name: str,
         namespace: str = "default",
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Generate Kubernetes Secret YAML.
 
@@ -385,7 +385,7 @@ data:
 
         return yaml
 
-    def list_environments(self) -> List[str]:
+    def list_environments(self) -> list[str]:
         """List all environment names."""
         return list(self._environments.keys())
 
@@ -393,8 +393,8 @@ data:
         self,
         source_name: str,
         target_name: str,
-        target_type: Optional[EnvironmentType] = None,
-    ) -> Optional[EnvironmentConfig]:
+        target_type: EnvironmentType | None = None,
+    ) -> EnvironmentConfig | None:
         """
         Clone an environment.
 
@@ -436,7 +436,7 @@ data:
 
         return target
 
-    def validate_environment(self, env_name: str) -> Dict[str, Any]:
+    def validate_environment(self, env_name: str) -> dict[str, Any]:
         """
         Validate environment configuration.
 

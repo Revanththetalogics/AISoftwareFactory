@@ -5,7 +5,7 @@ This crew handles software development, code review, and technical
 implementation tasks.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from crewai import Agent, Crew, Task
 
@@ -71,8 +71,8 @@ class EngineeringCrew(BaseAgent):
 
     async def implement_feature(
         self,
-        feature_spec: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        feature_spec: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Implement a feature based on specification.
 
@@ -114,8 +114,8 @@ class EngineeringCrew(BaseAgent):
     async def review_code(
         self,
         code: str,
-        context: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        context: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Review code for quality and issues.
 
@@ -161,7 +161,7 @@ class EngineeringCrew(BaseAgent):
         self,
         code: str,
         test_type: str = "unit"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create tests for code.
 

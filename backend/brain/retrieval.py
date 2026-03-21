@@ -6,7 +6,7 @@ with keyword matching.
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any
 
 from backend.brain.knowledge_base import KnowledgeBase
 from backend.core.logging import get_logger
@@ -19,7 +19,7 @@ class RetrievalResult:
     """Retrieval result with relevance score."""
     text: str
     score: float
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
     source: str
 
 
@@ -47,7 +47,7 @@ class RetrievalEngine:
         top_k: int = 5,
         vector_weight: float = 0.7,
         keyword_weight: float = 0.3
-    ) -> List[RetrievalResult]:
+    ) -> list[RetrievalResult]:
         """
         Retrieve relevant documents using hybrid search.
 
@@ -114,7 +114,7 @@ class RetrievalEngine:
         query: str,
         context_window: int = 2,
         top_k: int = 3
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Retrieve documents with surrounding context.
 

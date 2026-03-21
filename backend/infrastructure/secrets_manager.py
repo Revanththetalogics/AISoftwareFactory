@@ -13,7 +13,6 @@ import base64
 import json
 import os
 from pathlib import Path
-from typing import Dict, Optional
 
 from cryptography.fernet import Fernet
 
@@ -102,8 +101,8 @@ class SecretsManager:
             self._vault_client.is_authenticated()
             logger.info("Vault client initialized successfully")
 
-        except ImportError:
-            raise ImportError("hvac package required for Vault integration. Install with: pip install hvac")
+        except ImportError as exc:
+            raise ImportError("hvac package required for Vault integration. Install with: pip install hvac") from exc
         except Exception as exc:
             logger.error("Vault initialization failed", error=str(exc))
             raise
@@ -116,8 +115,8 @@ class SecretsManager:
             self._aws_client = boto3.client('secretsmanager')
             logger.info("AWS Secrets Manager client initialized")
 
-        except ImportError:
-            raise ImportError("boto3 package required for AWS integration. Install with: pip install boto3")
+        except ImportError as exc:
+            raise ImportError("boto3 package required for AWS integration. Install with: pip install boto3") from exc
         except Exception as exc:
             logger.error("AWS Secrets Manager initialization failed", error=str(exc))
             raise
@@ -136,8 +135,8 @@ class SecretsManager:
             self._azure_client = SecretClient(vault_url=vault_url, credential=credential)
             logger.info("Azure Key Vault client initialized")
 
-        except ImportError:
-            raise ImportError("azure-identity and azure-keyvault-secrets packages required. Install with: pip install azure-identity azure-keyvault-secrets")
+        except ImportError as exc:
+            raise ImportError("azure-identity and azure-keyvault-secrets packages required. Install with: pip install azure-identity azure-keyvault-secrets") from exc
         except Exception as exc:
             logger.error("Azure Key Vault initialization failed", error=str(exc))
             raise
@@ -165,7 +164,7 @@ class SecretsManager:
             logger.error("Local encryption initialization failed", error=str(exc))
             raise
 
-    def get_secret(self, key: str, default: Optional[str] = None, required: bool = False) -> Optional[str]:
+    def get_secret(self, key: str, default: str | None = None, required: bool = False) -> str | None:
         """
         Get a secret value.
 
@@ -229,7 +228,7 @@ class SecretsManager:
             logger.error("Failed to set secret", key=key, error=str(exc))
             return False
 
-    def _get_vault_secret(self, key: str, default: Optional[str] = None) -> Optional[str]:
+    def _get_vault_secret(self, key: str, default: str | None = None) -> str | None:
         """Get secret from HashiCorp Vault."""
         try:
             # Assuming secrets are stored at /secret/data/{key}
@@ -249,7 +248,7 @@ class SecretsManager:
         except Exception:
             return False
 
-    def _get_aws_secret(self, key: str, default: Optional[str] = None) -> Optional[str]:
+    def _get_aws_secret(self, key: str, default: str | None = None) -> str | None:
         """Get secret from AWS Secrets Manager."""
         try:
             response = self._aws_client.get_secret_value(SecretId=key)
@@ -272,7 +271,7 @@ class SecretsManager:
         except Exception:
             return False
 
-    def _get_azure_secret(self, key: str, default: Optional[str] = None) -> Optional[str]:
+    def _get_azure_secret(self, key: str, default: str | None = None) -> str | None:
         """Get secret from Azure Key Vault."""
         try:
             secret = self._azure_client.get_secret(key)
@@ -288,7 +287,7 @@ class SecretsManager:
         except Exception:
             return False
 
-    def _get_local_secret(self, key: str, default: Optional[str] = None) -> Optional[str]:
+    def _get_local_secret(self, key: str, default: str | None = None) -> str | None:
         """Get secret from local encrypted storage."""
         try:
             secrets_file = Path(".secrets_encrypted")
@@ -331,7 +330,7 @@ class SecretsManager:
         except Exception:
             return False
 
-    def bulk_get_secrets(self, keys: list[str]) -> Dict[str, Optional[str]]:
+    def bulk_get_secrets(self, keys: list[str]) -> dict[str, str | None]:
         """
         Get multiple secrets at once.
 
@@ -366,7 +365,7 @@ def get_secrets_manager() -> SecretsManager:
     return secrets_manager
 
 
-def get_secret(key: str, default: Optional[str] = None) -> Optional[str]:
+def get_secret(key: str, default: str | None = None) -> str | None:
     """
     Convenience function to get a secret.
 

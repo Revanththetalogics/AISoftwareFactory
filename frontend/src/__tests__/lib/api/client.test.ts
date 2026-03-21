@@ -7,13 +7,13 @@ const originalFetch = globalThis.fetch;
 const mockFetch = vi.fn();
 
 describe('API Client', () => {
-  let ApiClient: new () => {
+  type ApiClientType = {
     setToken: (token: string | null) => void;
     getProjects: () => Promise<unknown>;
     login: (data: { username: string; password: string }) => Promise<unknown>;
     getHealth: () => Promise<unknown>;
   };
-  let api: InstanceType<typeof ApiClient>;
+  let api: ApiClientType;
 
   beforeEach(async () => {
     vi.resetModules();

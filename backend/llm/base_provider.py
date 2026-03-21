@@ -6,7 +6,8 @@ ensuring a consistent interface across different LLM implementations.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, AsyncIterator, Dict, List, Optional
+from collections.abc import AsyncIterator
+from typing import Any
 
 
 class BaseLLMProvider(ABC):
@@ -17,7 +18,7 @@ class BaseLLMProvider(ABC):
     consistent behavior across different LLM implementations.
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """
         Initialize the LLM provider.
 
@@ -31,7 +32,7 @@ class BaseLLMProvider(ABC):
         self,
         prompt: str,
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         **kwargs
     ) -> str:
         """
@@ -46,14 +47,14 @@ class BaseLLMProvider(ABC):
         Returns:
             Generated text
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def generate_stream(
         self,
         prompt: str,
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         **kwargs
     ) -> AsyncIterator[str]:
         """
@@ -68,14 +69,14 @@ class BaseLLMProvider(ABC):
         Yields:
             Chunks of generated text
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def chat(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         **kwargs
     ) -> str:
         """
@@ -90,14 +91,14 @@ class BaseLLMProvider(ABC):
         Returns:
             Generated response
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def chat_stream(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         **kwargs
     ) -> AsyncIterator[str]:
         """
@@ -112,10 +113,10 @@ class BaseLLMProvider(ABC):
         Yields:
             Chunks of generated response
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
-    async def embed(self, text: str) -> List[float]:
+    async def embed(self, text: str) -> list[float]:
         """
         Generate embeddings for text.
 
@@ -125,7 +126,7 @@ class BaseLLMProvider(ABC):
         Returns:
             Embedding vector
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def health_check(self) -> bool:
@@ -135,22 +136,22 @@ class BaseLLMProvider(ABC):
         Returns:
             True if healthy, False otherwise
         """
-        pass
+        pass  # pragma: no cover
 
     @property
     @abstractmethod
     def name(self) -> str:
         """Get provider name."""
-        pass
+        pass  # pragma: no cover
 
     @property
     @abstractmethod
     def supports_streaming(self) -> bool:
         """Check if provider supports streaming."""
-        pass
+        pass  # pragma: no cover
 
     @property
     @abstractmethod
     def supports_embeddings(self) -> bool:
         """Check if provider supports embeddings."""
-        pass
+        pass  # pragma: no cover

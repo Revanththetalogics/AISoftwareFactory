@@ -9,7 +9,6 @@ import subprocess
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Optional
 
 from backend.core.logging import get_logger
 
@@ -44,14 +43,14 @@ class Sandbox:
         """
         self._timeout = timeout
         self._memory_limit = memory_limit
-        self._temp_dir: Optional[Path] = None
+        self._temp_dir: Path | None = None
         self._logger = get_logger(__name__)
 
     async def execute(
         self,
         code: str,
         language: str = "python",
-        files: Optional[Dict[str, str]] = None
+        files: dict[str, str] | None = None
     ) -> SandboxResult:
         """
         Execute code in sandbox.

@@ -8,7 +8,7 @@ and preventing common security vulnerabilities.
 import ipaddress
 import re
 import socket
-from typing import Any, Dict, List, Optional
+from typing import Any
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -178,7 +178,7 @@ def validate_url_safe(url: str) -> bool:
             # DNS resolution failed - could be malicious or just unreachable
             # Be cautious and allow (validation will fail at connection time)
             pass
-        except socket.timeout:
+        except TimeoutError:
             # DNS timeout - allow to proceed
             pass
 
@@ -224,13 +224,14 @@ class SecureProjectCreate(BaseModel):
         max_length=2000,
         description="Project description"
     )
-    requirements: Optional[str] = Field(
+    requirements: str | None = Field(
         None,
         max_length=5000,
         description="Project requirements"
     )
 
     @field_validator('name')
+    @classmethod
     def validate_name(cls, v):
         """Validate and sanitize project name."""
         sanitized = sanitize_input(v, max_length=100)
@@ -239,11 +240,13 @@ class SecureProjectCreate(BaseModel):
         return sanitized
 
     @field_validator('description')
+    @classmethod
     def validate_description(cls, v):
         """Validate and sanitize project description."""
         return sanitize_input(v, max_length=2000)
 
     @field_validator('requirements')
+    @classmethod
     def validate_requirements(cls, v):
         """Validate and sanitize requirements."""
         if v is not None:
@@ -258,9 +261,10 @@ class SecureDeploymentRequest(BaseModel):
     project_id: str = Field(..., min_length=1, max_length=50)
     environment: str = Field(..., pattern="^(dev|staging|production)$")
     version: str = Field(..., pattern=r'^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$')
-    config: Optional[Dict[str, Any]] = None
+    config: dict[str, Any] | None = None
 
     @field_validator('project_id')
+    @classmethod
     def validate_project_id(cls, v):
         """Validate project ID format."""
         if not re.match(r'^[a-zA-Z0-9\-_]+$', v):
@@ -273,7 +277,7 @@ class SecureDeploymentRequest(BaseModel):
         if self.config:
             # Check for common sensitive keys
             sensitive_keys = ['password', 'secret', 'key', 'token', 'api_key']
-            for key, value in self.config.items():
+            for key, _value in self.config.items():
                 key_lower = key.lower()
                 if any(sensitive in key_lower for sensitive in sensitive_keys):
                     raise ValidationError(f"Configuration contains sensitive key: {key}")
@@ -316,7 +320,7 @@ def validate_pattern(value: str, pattern_name: str) -> bool:
     return bool(re.match(pattern, value))
 
 
-def batch_validate_fields(data: Dict[str, Any], validations: Dict[str, str]) -> List[str]:
+def batch_validate_fields(data: dict[str, Any], validations: dict[str, str]) -> list[str]:
     """
     Batch validate multiple fields against patterns.
 

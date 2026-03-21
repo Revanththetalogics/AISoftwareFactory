@@ -8,15 +8,15 @@ without requiring full deployment.
 import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from enum import StrEnum
+from typing import Any
 
 from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
 
-class TestStatus(str, Enum):
+class TestStatus(StrEnum):
     """Status of a simulation test."""
     PENDING = "pending"
     RUNNING = "running"
@@ -26,7 +26,7 @@ class TestStatus(str, Enum):
     ERROR = "error"
 
 
-class TestType(str, Enum):
+class TestType(StrEnum):
     """Types of simulation tests."""
     UNIT = "unit"
     INTEGRATION = "integration"
@@ -55,10 +55,10 @@ class TestResult:
     status: TestStatus = TestStatus.PENDING
     message: str = ""
     duration_ms: float = 0.0
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "test_name": self.test_name,
@@ -84,9 +84,9 @@ class SimulationReport:
         summary: Summary statistics
     """
     project_name: str
-    results: List[TestResult] = field(default_factory=list)
+    results: list[TestResult] = field(default_factory=list)
     started_at: datetime = field(default_factory=datetime.now)
-    completed_at: Optional[datetime] = None
+    completed_at: datetime | None = None
 
     @property
     def total_tests(self) -> int:
@@ -117,7 +117,7 @@ class SimulationReport:
             return (self.completed_at - self.started_at).total_seconds() * 1000
         return 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "project_name": self.project_name,
@@ -156,7 +156,7 @@ class SimulationLayer:
     async def run_simulation(
         self,
         project_name: str,
-        test_types: Optional[List[TestType]] = None,
+        test_types: list[TestType] | None = None,
     ) -> SimulationReport:
         """
         Run a full simulation on a project.

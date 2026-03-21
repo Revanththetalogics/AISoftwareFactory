@@ -5,7 +5,7 @@ This module provides the complete Retrieval-Augmented Generation pipeline
 combining knowledge retrieval with LLM generation.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from backend.brain.context_manager import ContextManager
 from backend.brain.knowledge_base import KnowledgeBase
@@ -27,7 +27,7 @@ class RAGPipeline:
     def __init__(
         self,
         knowledge_base: KnowledgeBase,
-        context_manager: Optional[ContextManager] = None,
+        context_manager: ContextManager | None = None,
         llm_provider: str = "ollama"
     ):
         """
@@ -47,10 +47,10 @@ class RAGPipeline:
     async def query(
         self,
         query: str,
-        conversation_id: Optional[str] = None,
+        conversation_id: str | None = None,
         top_k: int = 3,
-        system_prompt: Optional[str] = None
-    ) -> Dict[str, Any]:
+        system_prompt: str | None = None
+    ) -> dict[str, Any]:
         """
         Execute a RAG query.
 
@@ -128,8 +128,8 @@ class RAGPipeline:
         self,
         query: str,
         context: str,
-        history: List[Dict[str, Any]],
-        system_prompt: Optional[str] = None
+        history: list[dict[str, Any]],
+        system_prompt: str | None = None
     ) -> str:
         """Build the RAG prompt."""
         parts = []
@@ -158,6 +158,6 @@ class RAGPipeline:
 
         return "\n".join(parts)
 
-    def get_conversation_history(self, conversation_id: str) -> List[Dict[str, Any]]:
+    def get_conversation_history(self, conversation_id: str) -> list[dict[str, Any]]:
         """Get conversation history."""
         return self._context.get_context(conversation_id)

@@ -577,7 +577,7 @@ class TestSelfHealingTestRunner:
 
     def test_store_execution_result_limit(self, test_runner):
         """Test _store_execution_result keeps only last 20."""
-        for i in range(25):
+        for _i in range(25):
             result = TestExecutionResult(
                 test_id="test_1", test_name="test_1",
                 status=TestResultStatus.PASSED, duration_ms=100,
@@ -709,3 +709,196 @@ class TestSelfHealingTestRunner:
 
             # Should handle exceptions and count as failures
             assert result.failed >= len(sample_test_cases)
+
+
+class TestSelfHealingRunnerExtendedCoverage:
+    """Tests for extended coverage - lines 244-249, 458-475, 491, 594."""
+
+    @pytest.fixture
+    def test_runner(self):
+        """Fixture for SelfHealingTestRunner."""
+        from backend.testing.self_healing_runner import SelfHealingTestRunner
+        runner = SelfHealingTestRunner(
+            max_retries=3,
+            retry_delay_ms=10,
+            flaky_threshold=0.2,
+            enable_healing=True,
+            parallel_workers=1,
+        )
+        return runner
+
+    @pytest.fixture
+    def sample_test_cases(self):
+        """Create sample test cases."""
+        from backend.testing.intelligence_engine import TestCase, TestPriority, TestType
+        return [
+            TestCase(id="test_status", name="test_function", test_type=TestType.UNIT, target_file="/f.py", code="def test(): pass", priority=TestPriority.HIGH),
+        ]
+
+    @pytest.mark.asyncio
+    async def test_run_suite_flaky_status_line_244_245(self, test_runner, sample_test_cases):
+        """Test lines 244-245: FLAKY status handling."""
+        from backend.testing.self_healing_runner import TestExecutionResult, TestResultStatus
+
+        # Mock to return FLAKY status
+        async def mock_run_test_with_healing(tc, enable_retry=True):
+            return TestExecutionResult(
+                test_id=tc.id,
+                test_name=tc.name,
+                status=TestResultStatus.FLAKY,
+                duration_ms=100,
+                attempt_number=1,
+            )
+
+        test_runner._run_test_with_healing = mock_run_test_with_healing
+
+        result = await test_runner.run_suite(
+            test_cases=sample_test_cases,
+            suite_name="flaky_suite",
+        )
+
+        # Line 244-245: flaky count should be incremented
+        assert result.flaky == 1
+
+    @pytest.mark.asyncio
+    async def test_run_suite_healed_status_line_246_247(self, test_runner, sample_test_cases):
+        """Test lines 246-247: HEALED status handling."""
+        from backend.testing.self_healing_runner import TestExecutionResult, TestResultStatus
+
+        # Mock to return HEALED status
+        async def mock_run_test_with_healing(tc, enable_retry=True):
+            return TestExecutionResult(
+                test_id=tc.id,
+                test_name=tc.name,
+                status=TestResultStatus.HEALED,
+                duration_ms=100,
+                attempt_number=2,
+            )
+
+        test_runner._run_test_with_healing = mock_run_test_with_healing
+
+        result = await test_runner.run_suite(
+            test_cases=sample_test_cases,
+            suite_name="healed_suite",
+        )
+
+        # Line 246-247: healed count should be incremented
+        assert result.healed == 1
+
+    @pytest.mark.asyncio
+    async def test_run_suite_skipped_status_line_248_249(self, test_runner, sample_test_cases):
+        """Test lines 248-249: SKIPPED status handling."""
+        from backend.testing.self_healing_runner import TestExecutionResult, TestResultStatus
+
+        # Mock to return SKIPPED status
+        async def mock_run_test_with_healing(tc, enable_retry=True):
+            return TestExecutionResult(
+                test_id=tc.id,
+                test_name=tc.name,
+                status=TestResultStatus.SKIPPED,
+                duration_ms=0,
+                attempt_number=1,
+            )
+
+        test_runner._run_test_with_healing = mock_run_test_with_healing
+
+        result = await test_runner.run_suite(
+            test_cases=sample_test_cases,
+            suite_name="skipped_suite",
+        )
+
+        # Line 248-249: skipped count should be incremented
+        assert result.skipped == 1
+
+    @pytest.mark.asyncio
+    async def test_run_test_with_healing_exception_lines_458_475(self, test_runner, sample_test_cases):
+        """Test lines 458-475: exception handling in _run_test_with_healing."""
+        from unittest.mock import AsyncMock
+
+        from backend.testing.self_healing_runner import TestResultStatus
+
+        # Mock _execute_test to raise an exception
+        test_runner._execute_test = AsyncMock(side_effect=Exception("Test crashed"))
+
+        result = await test_runner._run_test_with_healing(
+            sample_test_cases[0],
+            enable_retry=True,
+        )
+
+        # Lines 458-475: should return FAILED status with error message
+        assert result.status == TestResultStatus.FAILED
+        assert "Test crashed" in result.error_message
+
+    @pytest.mark.asyncio
+    async def test_execute_test_failure_branch_line_491(self, test_runner, sample_test_cases):
+        """Test line 491: _execute_test failure branch."""
+        import random
+        from unittest.mock import patch
+
+        # Force the random failure branch (line 490-495)
+        with patch.object(random, 'random', return_value=0.05):  # 0.05 < 0.1
+            result = await test_runner._execute_test(sample_test_cases[0])
+
+            # Line 491: should return failure result
+            assert result["success"] is False
+            assert "error" in result
+
+    @pytest.mark.asyncio
+    async def test_update_flaky_test_tracking_no_history_line_594(self, test_runner):
+        """Test line 594: continue when test_id not in execution_history."""
+        from backend.testing.self_healing_runner import TestExecutionResult, TestResultStatus
+
+        # Create a result for a test that has no history
+        result = TestExecutionResult(
+            test_id="unknown_test",
+            test_name="test_unknown",
+            status=TestResultStatus.PASSED,
+            duration_ms=100,
+            attempt_number=1,
+        )
+
+        # Clear execution history to ensure test_id is not present
+        test_runner._execution_history.clear()
+
+        # Line 594: should continue (skip) when test_id not in history
+        test_runner._update_flaky_test_tracking([result])
+
+        # No flaky tests should be detected
+        assert "unknown_test" not in test_runner._flaky_tests
+
+    @pytest.mark.asyncio
+    async def test_flaky_test_detection_with_history(self, test_runner, sample_test_cases):
+        """Test flaky test detection when failure rate exceeds threshold."""
+        from backend.testing.self_healing_runner import TestExecutionResult, TestResultStatus
+
+        test_id = "flaky_test"
+        test_name = "test_flaky"
+
+        # Add enough history to trigger flaky detection (needs >= 5 results)
+        test_runner._execution_history[test_id] = []
+        for i in range(10):
+            # 50% failure rate (above 0.2 threshold)
+            status = TestResultStatus.FAILED if i % 2 == 0 else TestResultStatus.PASSED
+            test_runner._execution_history[test_id].append(
+                TestExecutionResult(
+                    test_id=test_id,
+                    test_name=test_name,
+                    status=status,
+                    duration_ms=100,
+                    attempt_number=1,
+                )
+            )
+
+        # Now call _update_flaky_test_tracking
+        new_result = TestExecutionResult(
+            test_id=test_id,
+            test_name=test_name,
+            status=TestResultStatus.FAILED,
+            duration_ms=100,
+            attempt_number=1,
+        )
+
+        test_runner._update_flaky_test_tracking([new_result])
+
+        # Flaky test should be detected
+        assert test_id in test_runner._flaky_tests

@@ -5,7 +5,7 @@ This module provides vector storage with ChromaDB integration for
 semantic search and similarity matching.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import uuid4
 
 import numpy as np
@@ -31,16 +31,16 @@ class VectorStore:
             collection_name: Name of the collection
         """
         self._collection_name = collection_name
-        self._vectors: Dict[str, Dict[str, Any]] = {}
+        self._vectors: dict[str, dict[str, Any]] = {}
         self._logger = get_logger(__name__)
 
     async def add(
         self,
-        texts: List[str],
-        embeddings: List[List[float]],
-        metadatas: Optional[List[Dict[str, Any]]] = None,
-        ids: Optional[List[str]] = None
-    ) -> List[str]:
+        texts: list[str],
+        embeddings: list[list[float]],
+        metadatas: list[dict[str, Any]] | None = None,
+        ids: list[str] | None = None
+    ) -> list[str]:
         """
         Add vectors to the store.
 
@@ -56,7 +56,7 @@ class VectorStore:
         ids = ids or [str(uuid4()) for _ in texts]
         metadatas = metadatas or [{} for _ in texts]
 
-        for id_, text, embedding, metadata in zip(ids, texts, embeddings, metadatas):
+        for id_, text, embedding, metadata in zip(ids, texts, embeddings, metadatas, strict=False):
             self._vectors[id_] = {
                 "text": text,
                 "embedding": embedding,
@@ -73,10 +73,10 @@ class VectorStore:
 
     async def search(
         self,
-        query_embedding: List[float],
+        query_embedding: list[float],
         top_k: int = 5,
-        filter_metadata: Optional[Dict[str, Any]] = None
-    ) -> List[Dict[str, Any]]:
+        filter_metadata: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """
         Search for similar vectors.
 
@@ -116,7 +116,7 @@ class VectorStore:
         results.sort(key=lambda x: x["score"], reverse=True)
         return results[:top_k]
 
-    async def delete(self, ids: List[str]) -> int:
+    async def delete(self, ids: list[str]) -> int:
         """
         Delete vectors by ID.
 
@@ -142,8 +142,8 @@ class VectorStore:
 
     def _cosine_similarity(
         self,
-        a: List[float],
-        b: List[float]
+        a: list[float],
+        b: list[float]
     ) -> float:
         """Calculate cosine similarity between two vectors."""
         a_array = np.array(a)

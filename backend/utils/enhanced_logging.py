@@ -11,7 +11,8 @@ This module provides advanced logging capabilities including:
 import asyncio
 import functools
 import time
-from typing import Any, Callable, Dict, Optional
+from collections.abc import Callable
+from typing import Any
 
 from backend.core.logging import get_logger
 
@@ -120,7 +121,7 @@ class BusinessEventLogger:
         )
 
     @staticmethod
-    def project_updated(project_id: str, user_id: str, changes: Dict[str, Any]):
+    def project_updated(project_id: str, user_id: str, changes: dict[str, Any]):
         """Log project update event."""
         logger.info(
             "Project updated",
@@ -173,7 +174,7 @@ class AuditTrailLogger:
     """Logger for security and compliance audit events."""
 
     @staticmethod
-    def user_login_attempt(username: str, success: bool, ip_address: Optional[str] = None):
+    def user_login_attempt(username: str, success: bool, ip_address: str | None = None):
         """Log user login attempt."""
         logger.info(
             "User login attempt",
@@ -215,7 +216,7 @@ class ErrorContextLogger:
     """Logger for enriching error context with operational data."""
 
     @staticmethod
-    def log_with_context(error: Exception, context: Dict[str, Any]):
+    def log_with_context(error: Exception, context: dict[str, Any]):
         """Log error with additional context."""
         logger.error(
             "Operation failed with error",

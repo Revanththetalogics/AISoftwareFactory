@@ -10,7 +10,7 @@ Features:
 - CSRF protection via SameSite cookie attribute
 """
 
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
@@ -286,7 +286,7 @@ async def refresh_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from exc
 
 
 @router.get(
@@ -359,7 +359,7 @@ async def logout(
     summary="Get test credentials",
     description="Get valid test user credentials for development"
 )
-async def get_test_credentials() -> Dict[str, Any]:
+async def get_test_credentials() -> dict[str, Any]:
     """
     Get test credentials for development environment.
 

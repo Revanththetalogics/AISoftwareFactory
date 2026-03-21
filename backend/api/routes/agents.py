@@ -5,7 +5,6 @@ This module provides REST endpoints for agent management and task assignment.
 Uses DatabaseAgentService for database-backed agent persistence.
 """
 
-from typing import List
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -37,7 +36,7 @@ def _db_agent_to_response(agent) -> AgentResponse:
 
 @router.get(
     "",
-    response_model=List[AgentResponse],
+    response_model=list[AgentResponse],
     summary="List all agents",
 )
 async def list_agents(
@@ -46,7 +45,7 @@ async def list_agents(
     user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     agent_service: DatabaseAgentService = Depends(get_agent_service),
-) -> List[AgentResponse]:
+) -> list[AgentResponse]:
     """
     List all registered agents and their status.
     """
@@ -99,7 +98,7 @@ async def get_agent(
 async def register_agent(
     name: str,
     role: str,
-    capabilities: List[str] = None,
+    capabilities: list[str] = None,
     user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     agent_service: DatabaseAgentService = Depends(get_agent_service),
@@ -181,12 +180,12 @@ async def assign_task(
 
 @router.get(
     "/roles/available",
-    response_model=List[str],
+    response_model=list[str],
     summary="Get available agent roles",
 )
 async def get_available_roles(
     user=Depends(get_current_user),
-) -> List[str]:
+) -> list[str]:
     """
     Get list of available agent roles.
     """

@@ -7,7 +7,7 @@ for all simulation components.
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from backend.core.logging import get_logger
 from backend.simulation.report_generator import ReportGenerator
@@ -24,7 +24,7 @@ class SimulationConfig:
     run_performance_test: bool = True
     run_integration_test: bool = True
     generate_reports: bool = True
-    output_formats: List[str] = None
+    output_formats: list[str] = None
 
     def __post_init__(self):
         if self.output_formats is None:
@@ -50,9 +50,9 @@ class SimulationOrchestrator:
         self,
         code: str,
         language: str = "python",
-        requirements: Optional[List[str]] = None,
-        config: Optional[SimulationConfig] = None
-    ) -> Dict[str, Any]:
+        requirements: list[str] | None = None,
+        config: SimulationConfig | None = None
+    ) -> dict[str, Any]:
         """
         Run complete simulation workflow.
 
@@ -134,7 +134,7 @@ class SimulationOrchestrator:
 
         return results
 
-    def get_simulation_summary(self, results: Dict[str, Any]) -> Dict[str, Any]:
+    def get_simulation_summary(self, results: dict[str, Any]) -> dict[str, Any]:
         """
         Get simulation summary.
 

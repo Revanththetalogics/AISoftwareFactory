@@ -6,7 +6,7 @@ for the AI Software Factory.
 """
 
 import time
-from typing import Any, Dict
+from typing import Any
 
 from backend.agents.base_agent import BaseAgent, Task, TaskResult, TaskStatus
 from backend.core.logging import get_logger
@@ -110,7 +110,7 @@ class ProductManagerAgent(BaseAgent):
                 execution_time_ms=execution_time,
             )
 
-    async def _process_pm_task(self, task: Task) -> Dict[str, Any]:
+    async def _process_pm_task(self, task: Task) -> dict[str, Any]:
         """Process Product Manager-specific tasks."""
         task_handlers = {
             "requirements": self._handle_requirements,
@@ -123,7 +123,7 @@ class ProductManagerAgent(BaseAgent):
         handler = task_handlers.get(task.task_type, self._handle_generic_task)
         return await handler(task)
 
-    async def _handle_requirements(self, task: Task) -> Dict[str, Any]:
+    async def _handle_requirements(self, task: Task) -> dict[str, Any]:
         """Handle requirements gathering tasks."""
         return {
             "requirements": f"Requirements for: {task.description}",
@@ -143,7 +143,7 @@ class ProductManagerAgent(BaseAgent):
             ],
         }
 
-    async def _handle_user_stories(self, task: Task) -> Dict[str, Any]:
+    async def _handle_user_stories(self, task: Task) -> dict[str, Any]:
         """Handle user story creation tasks."""
         return {
             "user_stories": [
@@ -170,7 +170,7 @@ class ProductManagerAgent(BaseAgent):
             ],
         }
 
-    async def _handle_feature_prioritization(self, task: Task) -> Dict[str, Any]:
+    async def _handle_feature_prioritization(self, task: Task) -> dict[str, Any]:
         """Handle feature prioritization tasks."""
         return {
             "prioritization": f"Feature priorities for: {task.description}",
@@ -185,7 +185,7 @@ class ProductManagerAgent(BaseAgent):
             },
         }
 
-    async def _handle_product_spec(self, task: Task) -> Dict[str, Any]:
+    async def _handle_product_spec(self, task: Task) -> dict[str, Any]:
         """Handle product specification tasks."""
         return {
             "specification": f"Product spec for: {task.description}",
@@ -195,7 +195,7 @@ class ProductManagerAgent(BaseAgent):
             "success_metrics": ["User adoption", "Retention rate", "NPS score"],
         }
 
-    async def _handle_ux_design(self, task: Task) -> Dict[str, Any]:
+    async def _handle_ux_design(self, task: Task) -> dict[str, Any]:
         """Handle UX design tasks."""
         return {
             "ux_design": f"UX design for: {task.description}",
@@ -204,7 +204,7 @@ class ProductManagerAgent(BaseAgent):
             "design_principles": ["Simplicity", "Consistency", "Accessibility"],
         }
 
-    async def _handle_generic_task(self, task: Task) -> Dict[str, Any]:
+    async def _handle_generic_task(self, task: Task) -> dict[str, Any]:
         """Handle generic tasks."""
         return {
             "result": f"Processed: {task.description}",

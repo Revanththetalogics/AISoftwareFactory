@@ -8,7 +8,7 @@ Provides endpoints for:
 - Test health monitoring
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -40,25 +40,25 @@ class GenerateTestsRequest(BaseModel):
 class GenerateTestsResponse(BaseModel):
     file_path: str
     tests_generated: int
-    tests: List[Dict[str, Any]]
+    tests: list[dict[str, Any]]
     generation_time_ms: float
 
 
 class DetectBugsRequest(BaseModel):
-    file_path: Optional[str] = Field(None, description="Path to specific file")
-    directory: Optional[str] = Field(None, description="Directory to scan")
+    file_path: str | None = Field(None, description="Path to specific file")
+    directory: str | None = Field(None, description="Directory to scan")
     use_static_analysis: bool = Field(True, description="Enable static analysis")
     use_llm_review: bool = Field(True, description="Enable LLM code review")
     min_confidence: float = Field(0.7, ge=0, le=1, description="Minimum confidence threshold")
 
 
 class DetectBugsResponse(BaseModel):
-    file_path: Optional[str]
-    directory: Optional[str]
+    file_path: str | None
+    directory: str | None
     bugs_found: int
-    by_severity: Dict[str, int]
-    by_category: Dict[str, int]
-    bugs: List[Dict[str, Any]]
+    by_severity: dict[str, int]
+    by_category: dict[str, int]
+    bugs: list[dict[str, Any]]
 
 
 class FixBugRequest(BaseModel):
@@ -66,7 +66,7 @@ class FixBugRequest(BaseModel):
     file_path: str = Field(..., description="Path to the file")
     bug_description: str = Field(..., description="Description of the bug")
     suggested_fix: str = Field("", description="Suggested fix")
-    line_number: Optional[int] = Field(None, description="Line number")
+    line_number: int | None = Field(None, description="Line number")
     auto_apply: bool = Field(False, description="Apply fix automatically")
 
 
@@ -81,8 +81,8 @@ class FixBugResponse(BaseModel):
 
 
 class RunTestsRequest(BaseModel):
-    test_suite: Optional[str] = Field(None, description="Test suite name")
-    file_pattern: Optional[str] = Field(None, description="File pattern to match")
+    test_suite: str | None = Field(None, description="Test suite name")
+    file_pattern: str | None = Field(None, description="File pattern to match")
     max_retries: int = Field(3, ge=0, le=5, description="Max retries for flaky tests")
     parallel_workers: int = Field(4, ge=1, le=10, description="Parallel workers")
 
@@ -96,12 +96,12 @@ class RunTestsResponse(BaseModel):
     healed: int
     pass_rate: float
     duration_seconds: float
-    results: List[Dict[str, Any]]
+    results: list[dict[str, Any]]
 
 
 class CoverageRequest(BaseModel):
     source_path: str = Field(..., description="Path to source code")
-    test_path: Optional[str] = Field(None, description="Path to tests")
+    test_path: str | None = Field(None, description="Path to tests")
     run_mutation_testing: bool = Field(False, description="Run mutation testing")
 
 
@@ -109,18 +109,18 @@ class CoverageResponse(BaseModel):
     timestamp: str
     overall_coverage: float
     overall_branch_coverage: float
-    mutation_score: Optional[float]
+    mutation_score: float | None
     files_analyzed: int
-    files_by_coverage_level: Dict[str, List[str]]
-    gaps: List[Dict[str, Any]]
+    files_by_coverage_level: dict[str, list[str]]
+    gaps: list[dict[str, Any]]
 
 
 class TestHealthResponse(BaseModel):
-    summary: Dict[str, Any]
-    flaky_tests: List[Dict[str, Any]]
-    recent_bugs: List[Dict[str, Any]]
-    recent_fixes: List[Dict[str, Any]]
-    coverage_trend: List[Dict[str, Any]]
+    summary: dict[str, Any]
+    flaky_tests: list[dict[str, Any]]
+    recent_bugs: list[dict[str, Any]]
+    recent_fixes: list[dict[str, Any]]
+    coverage_trend: list[dict[str, Any]]
 
 
 # Dependency injection
@@ -191,7 +191,7 @@ async def generate_tests(
 
     except Exception as e:
         logger.error("Test generation failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/detect-bugs", response_model=DetectBugsResponse)
@@ -257,7 +257,7 @@ async def detect_bugs(
 
     except Exception as e:
         logger.error("Bug detection failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/fix-bug", response_model=FixBugResponse)
@@ -297,12 +297,12 @@ async def fix_bug(
 
     except Exception as e:
         logger.error("Bug fix failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/batch-fix")
 async def batch_fix(
-    bug_ids: List[str],
+    bug_ids: list[str],
     auto_apply: bool = False,
     current_user: User = Depends(get_current_user),
     agent: AutoFixerAgent = Depends(get_auto_fixer),
@@ -342,7 +342,7 @@ async def preview_fix(
 
     except Exception as e:
         logger.error("Fix preview failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/rollback-fix/{fix_id}")
@@ -366,7 +366,7 @@ async def rollback_fix(
 
     except Exception as e:
         logger.error("Rollback failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/run-tests", response_model=RunTestsResponse)
@@ -402,7 +402,7 @@ async def run_tests(
 
     except Exception as e:
         logger.error("Test execution failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/analyze-coverage", response_model=CoverageResponse)
@@ -449,7 +449,7 @@ async def analyze_coverage(
 
     except Exception as e:
         logger.error("Coverage analysis failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/health", response_model=TestHealthResponse)
@@ -488,7 +488,7 @@ async def get_test_health(
 
     except Exception as e:
         logger.error("Health report failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/flaky-tests")
@@ -541,7 +541,7 @@ async def unquarantine_test(
 @router.post("/frontend/generate-e2e")
 async def generate_e2e_tests(
     page_path: str,
-    user_flow: List[str],
+    user_flow: list[str],
     page_description: str = "",
     current_user: User = Depends(get_current_user),
     agent: FrontendTesterAgent = Depends(get_frontend_tester),
@@ -569,13 +569,13 @@ async def generate_e2e_tests(
 
     except Exception as e:
         logger.error("E2E test generation failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/frontend/visual-regression")
 async def run_visual_regression(
     page_path: str,
-    viewports: Optional[List[Dict[str, int]]] = None,
+    viewports: list[dict[str, int]] | None = None,
     threshold: float = 0.1,
     current_user: User = Depends(get_current_user),
     agent: FrontendTesterAgent = Depends(get_frontend_tester),
@@ -605,7 +605,7 @@ async def run_visual_regression(
 
     except Exception as e:
         logger.error("Visual regression failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/frontend/accessibility-audit")
@@ -622,7 +622,7 @@ async def run_accessibility_audit(
 
     except Exception as e:
         logger.error("Accessibility audit failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/frontend/statistics")

@@ -4,7 +4,6 @@ Project Management API Routes.
 This module provides REST endpoints for project CRUD operations.
 """
 
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -77,16 +76,16 @@ async def create_project(
 
 @router.get(
     "",
-    response_model=List[ProjectResponse],
+    response_model=list[ProjectResponse],
     summary="List all projects",
 )
 async def list_projects(
-    status: Optional[ProjectStatus] = Query(None, description="Filter by status"),
+    status: ProjectStatus | None = Query(None, description="Filter by status"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> List[ProjectResponse]:
+) -> list[ProjectResponse]:
     """
     List all projects with optional filtering.
 

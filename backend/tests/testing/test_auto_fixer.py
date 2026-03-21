@@ -727,3 +727,125 @@ That should work."""
 
         assert fix_attempt.status == FixStatus.FAILED
         assert fix_attempt.error_message is not None
+
+
+class TestAutoFixerExtendedCoverage:
+    """Tests for extended coverage of auto_fixer.py - lines 261, 356-358, 611-613."""
+
+    @pytest.fixture
+    def auto_fixer_agent(self):
+        """Create AutoFixerAgent with mocked LLM."""
+        from unittest.mock import AsyncMock, Mock
+
+        from backend.testing.agents.auto_fixer import AutoFixerAgent
+
+        mock_llm = Mock()
+        mock_llm.generate = AsyncMock(return_value="fixed_code = True")
+        agent = AutoFixerAgent()
+        agent._llm = mock_llm
+        return agent
+
+    @pytest.fixture
+    def temp_python_file(self):
+        """Create a temporary Python file for testing."""
+        import os
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            f.write('''try:
+    x = 1
+except:
+    pass
+''')
+            f.flush()
+            yield f.name
+        os.unlink(f.name)
+
+    @pytest.mark.asyncio
+    async def test_fix_bug_auto_apply_fails_line_261(self, auto_fixer_agent, temp_python_file):
+        """Test line 261: fix_attempt.status = FixStatus.FAILED when auto_apply fails."""
+        from unittest.mock import AsyncMock, patch
+
+        # Mock _apply_fix to return False (failure)
+        with patch.object(auto_fixer_agent, '_apply_fix', new_callable=AsyncMock) as mock_apply:
+            mock_apply.return_value = False
+
+            fix_attempt = await auto_fixer_agent.fix_bug(
+                bug_id="bug_fail_apply",
+                file_path=temp_python_file,
+                bug_description="bare_except",
+                suggested_fix="Use except Exception:",
+                auto_apply=True,
+                validate=False,  # Skip validation to reach auto_apply
+            )
+
+            # Line 261: When _apply_fix returns False, status should be FAILED
+            assert fix_attempt.status == FixStatus.FAILED
+
+    @pytest.mark.asyncio
+    async def test_rollback_fix_exception_lines_356_358(self, auto_fixer_agent):
+        """Test lines 356-358: exception handling in rollback_fix."""
+        from unittest.mock import patch
+
+        from backend.testing.agents.auto_fixer import FixAttempt, FixStatus, FixStrategy
+
+        # Create a fix attempt with a backup path
+        fix_attempt = FixAttempt(
+            id="fix_rollback_exc",
+            bug_id="bug_123",
+            strategy=FixStrategy.PATTERN,
+            status=FixStatus.SUCCESS,
+            file_path="/path/to/file.py",
+            backup_path="/path/to/backup.bak",
+        )
+        auto_fixer_agent._fix_history.append(fix_attempt)
+
+        # Mock shutil.copy2 to raise an exception (line 356-358)
+        with patch('backend.testing.agents.auto_fixer.shutil.copy2') as mock_copy:
+            mock_copy.side_effect = Exception("Permission denied")
+
+            result = await auto_fixer_agent.rollback_fix("fix_rollback_exc")
+
+            # Should return False due to exception in rollback
+            assert result is False
+
+    @pytest.mark.asyncio
+    async def test_apply_fix_exception_lines_611_613(self, auto_fixer_agent):
+        """Test lines 611-613: exception handling in _apply_fix."""
+        import os
+        import tempfile
+        from unittest.mock import patch
+
+        from backend.testing.agents.auto_fixer import CodeChange, FixAttempt, FixStatus, FixStrategy
+
+        # Create a temp file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            f.write("original code")
+            f.flush()
+            file_path = f.name
+
+        try:
+            fix_attempt = FixAttempt(
+                id="fix_apply_exc",
+                bug_id="bug_456",
+                strategy=FixStrategy.LLM,
+                status=FixStatus.PENDING,
+                file_path=file_path,
+                changes=[CodeChange(
+                    file_path=file_path,
+                    line_start=1,
+                    line_end=1,
+                    original_code="original",
+                    new_code="new",
+                    description="Test fix",
+                )],
+            )
+
+            # Mock open to raise an exception when writing (line 611-613)
+            with patch('builtins.open', side_effect=Exception("Disk full")):
+                result = await auto_fixer_agent._apply_fix(fix_attempt)
+
+                # Should return False due to exception
+                assert result is False
+        finally:
+            if os.path.exists(file_path):
+                os.unlink(file_path)

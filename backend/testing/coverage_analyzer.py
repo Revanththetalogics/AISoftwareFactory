@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from backend.core.logging import get_logger
 from backend.llm.factory import LLMFactory
@@ -41,7 +41,7 @@ class LineCoverage:
     is_covered: bool
     execution_count: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "line_number": self.line_number,
             "is_executable": self.is_executable,
@@ -66,7 +66,7 @@ class FunctionCoverage:
             return 100.0
         return (self.covered_lines / self.total_lines) * 100
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "line_start": self.line_start,
@@ -85,8 +85,8 @@ class FileCoverage:
     total_lines: int
     executable_lines: int
     covered_lines: int
-    line_coverage: List[LineCoverage] = field(default_factory=list)
-    function_coverage: List[FunctionCoverage] = field(default_factory=list)
+    line_coverage: list[LineCoverage] = field(default_factory=list)
+    function_coverage: list[FunctionCoverage] = field(default_factory=list)
     branches_total: int = 0
     branches_covered: int = 0
 
@@ -116,14 +116,14 @@ class FileCoverage:
         else:
             return CoverageLevel.CRITICAL
 
-    def get_uncovered_lines(self) -> List[int]:
+    def get_uncovered_lines(self) -> list[int]:
         """Get list of uncovered line numbers."""
         return [
             lc.line_number for lc in self.line_coverage
             if lc.is_executable and not lc.is_covered
         ]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "file_path": self.file_path,
             "total_lines": self.total_lines,
@@ -148,7 +148,7 @@ class Mutation:
     mutation_type: str
     description: str
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "file_path": self.file_path,
@@ -168,7 +168,7 @@ class MutationResult:
     test_output: str = ""
     execution_time_ms: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "mutation": self.mutation.to_dict(),
             "killed": self.killed,
@@ -182,20 +182,20 @@ class CoverageReport:
     timestamp: datetime
     overall_coverage: float
     overall_branch_coverage: float
-    files: List[FileCoverage] = field(default_factory=list)
+    files: list[FileCoverage] = field(default_factory=list)
     mutation_score: float = 0.0
     total_mutations: int = 0
     killed_mutations: int = 0
 
     @property
-    def files_by_coverage_level(self) -> Dict[str, List[str]]:
+    def files_by_coverage_level(self) -> dict[str, list[str]]:
         """Group files by coverage level."""
         result = {level.value: [] for level in CoverageLevel}
         for fc in self.files:
             result[fc.coverage_level.value].append(fc.file_path)
         return result
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "timestamp": self.timestamp.isoformat(),
             "overall_coverage": round(self.overall_coverage, 2),
@@ -229,14 +229,14 @@ class CoverageAnalyzer:
         """Initialize the coverage analyzer."""
         self._logger = get_logger(__name__)
         self._llm = LLMFactory.create_llm()
-        self._coverage_history: List[CoverageReport] = []
+        self._coverage_history: list[CoverageReport] = []
         self._mutation_operators = self._load_mutation_operators()
 
     async def analyze_coverage(
         self,
         source_path: str,
-        test_path: Optional[str] = None,
-        exclude_patterns: List[str] = None
+        test_path: str | None = None,
+        exclude_patterns: list[str] = None
     ) -> CoverageReport:
         """
         Analyze test coverage for a source directory.
@@ -296,7 +296,7 @@ class CoverageAnalyzer:
         self,
         file_path: str,
         max_mutations: int = 50
-    ) -> List[MutationResult]:
+    ) -> list[MutationResult]:
         """
         Run mutation testing on a file.
 
@@ -310,7 +310,7 @@ class CoverageAnalyzer:
         self._logger.info("Running mutation testing", file_path=file_path)
 
         # Read source code
-        with open(file_path, 'r') as f:
+        with open(file_path) as f:
             source_code = f.read()
 
         # Generate mutations
@@ -339,7 +339,7 @@ class CoverageAnalyzer:
     async def identify_coverage_gaps(
         self,
         coverage_report: CoverageReport
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Identify coverage gaps and recommend tests.
 
@@ -361,7 +361,7 @@ class CoverageAnalyzer:
                 continue
 
             # Read the file to get context
-            with open(file_coverage.file_path, 'r') as f:
+            with open(file_coverage.file_path) as f:
                 lines = f.readlines()
 
             # Get context around uncovered lines
@@ -394,7 +394,7 @@ class CoverageAnalyzer:
     async def get_coverage_trend(
         self,
         days: int = 30
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Get coverage trend over time.
 
@@ -417,7 +417,7 @@ class CoverageAnalyzer:
 
         return trend
 
-    def get_coverage_statistics(self) -> Dict[str, Any]:
+    def get_coverage_statistics(self) -> dict[str, Any]:
         """
         Get coverage statistics.
 
@@ -446,7 +446,7 @@ class CoverageAnalyzer:
 
     # Private methods
 
-    def _load_mutation_operators(self) -> Dict[str, Any]:
+    def _load_mutation_operators(self) -> dict[str, Any]:
         """Load mutation operators."""
         return {
             "arithmetic": {
@@ -479,8 +479,8 @@ class CoverageAnalyzer:
     async def _run_coverage_py(
         self,
         source_path: str,
-        test_path: Optional[str]
-    ) -> Dict[str, Any]:
+        test_path: str | None
+    ) -> dict[str, Any]:
         """Run coverage.py and get results."""
         # This would run coverage.py via subprocess
         # For now, return simulated data
@@ -498,7 +498,7 @@ class CoverageAnalyzer:
                 continue
 
             # Simulate coverage data
-            with open(file, 'r') as f:
+            with open(file) as f:
                 lines = f.readlines()
 
             executable = len([line for line in lines if line.strip() and not line.strip().startswith('#')])
@@ -515,10 +515,10 @@ class CoverageAnalyzer:
     async def _analyze_file_coverage(
         self,
         file_path: str,
-        data: Dict[str, Any]
+        data: dict[str, Any]
     ) -> FileCoverage:
         """Analyze coverage for a single file."""
-        with open(file_path, 'r') as f:
+        with open(file_path) as f:
             lines = f.readlines()
 
         line_coverage = []
@@ -548,9 +548,9 @@ class CoverageAnalyzer:
             function_coverage=function_coverage,
         )
 
-    async def _analyze_function_coverage(self, file_path: str) -> List[FunctionCoverage]:
+    async def _analyze_function_coverage(self, file_path: str) -> list[FunctionCoverage]:
         """Analyze coverage at function level."""
-        with open(file_path, 'r') as f:
+        with open(file_path) as f:
             code = f.read()
 
         try:
@@ -590,7 +590,7 @@ class CoverageAnalyzer:
         file_path: str,
         source_code: str,
         max_mutations: int
-    ) -> List[Mutation]:
+    ) -> list[Mutation]:
         """Generate mutations for the source code."""
         mutations = []
         lines = source_code.splitlines()
@@ -670,7 +670,7 @@ class CoverageAnalyzer:
     async def _recommend_tests_for_gap(
         self,
         file_path: str,
-        uncovered_context: List[Dict],
+        uncovered_context: list[dict],
         coverage_percentage: float
     ) -> str:
         """Use LLM to recommend tests for uncovered code."""

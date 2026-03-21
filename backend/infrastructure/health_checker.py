@@ -7,10 +7,11 @@ schema integrity, and connection pool statistics.
 """
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict
+from typing import Any
 
 from backend.core.logging import get_logger
 
@@ -32,7 +33,7 @@ class HealthCheckResult:
     message: str
     timestamp: datetime
     latency_ms: float
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
 
 
 class HealthChecker:
@@ -46,7 +47,7 @@ class HealthChecker:
 
     def __init__(self):
         """Initialize the health checker."""
-        self._checks: Dict[str, Callable] = {}
+        self._checks: dict[str, Callable] = {}
         self._logger = get_logger(__name__)
 
     def register_check(self, name: str, check_fn: Callable):
@@ -60,7 +61,7 @@ class HealthChecker:
         self._checks[name] = check_fn
         self._logger.info("Health check registered", component=name)
 
-    async def check_health(self) -> Dict[str, Any]:
+    async def check_health(self) -> dict[str, Any]:
         """
         Run all health checks.
 
@@ -132,7 +133,7 @@ class HealthChecker:
             ]
         }
 
-    async def check_database(self) -> tuple[HealthStatus, str, Dict[str, Any]]:
+    async def check_database(self) -> tuple[HealthStatus, str, dict[str, Any]]:
         """
         Check database connectivity, query execution, and pool statistics.
 
@@ -141,7 +142,7 @@ class HealthChecker:
         """
         from sqlalchemy import text
 
-        details: Dict[str, Any] = {}
+        details: dict[str, Any] = {}
 
         try:
             from backend.db.session import AsyncSessionLocal, engine
@@ -213,14 +214,14 @@ class HealthChecker:
                 details
             )
 
-    async def check_redis(self) -> tuple[HealthStatus, str, Dict[str, Any]]:
+    async def check_redis(self) -> tuple[HealthStatus, str, dict[str, Any]]:
         """
         Check Redis connectivity with latency measurement.
 
         Returns:
             Tuple of (status, message, details)
         """
-        details: Dict[str, Any] = {}
+        details: dict[str, Any] = {}
 
         try:
             import redis.asyncio as redis
@@ -266,7 +267,7 @@ class HealthChecker:
                 details
             )
 
-    async def check_disk_space(self) -> tuple[HealthStatus, str, Dict[str, Any]]:
+    async def check_disk_space(self) -> tuple[HealthStatus, str, dict[str, Any]]:
         """
         Check available disk space.
 
@@ -275,7 +276,7 @@ class HealthChecker:
         """
         import shutil
 
-        details: Dict[str, Any] = {}
+        details: dict[str, Any] = {}
 
         try:
             total, used, free = shutil.disk_usage("/")

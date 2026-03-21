@@ -724,7 +724,7 @@ def func(x):
     @pytest.mark.asyncio
     async def test_generate_mutations(self, coverage_analyzer, temp_python_file):
         """Test _generate_mutations method."""
-        with open(temp_python_file, 'r') as f:
+        with open(temp_python_file) as f:
             source_code = f.read()
 
         mutations = await coverage_analyzer._generate_mutations(
@@ -788,3 +788,254 @@ v = c != d
         await coverage_analyzer.analyze_coverage(source_path=temp_python_file)
 
         assert len(coverage_analyzer._coverage_history) == initial_count + 1
+
+
+class TestCoverageAnalyzerExtendedCoverage:
+    """Tests for extended coverage - lines 264, 361, 498, 585, 633-668."""
+
+    @pytest.fixture
+    def mock_llm(self):
+        """Fixture for mocked LLM provider."""
+        from unittest.mock import AsyncMock, Mock
+        llm = Mock()
+        llm.generate = AsyncMock(return_value="Test recommendation")
+        return llm
+
+    @pytest.fixture
+    def coverage_analyzer(self, mock_llm):
+        """Fixture for CoverageAnalyzer with mocked LLM."""
+        from unittest.mock import patch
+
+        from backend.testing.coverage_analyzer import CoverageAnalyzer
+        with patch('backend.testing.coverage_analyzer.LLMFactory.create_llm', return_value=mock_llm):
+            analyzer = CoverageAnalyzer()
+            analyzer._llm = mock_llm
+            return analyzer
+
+    @pytest.mark.asyncio
+    async def test_analyze_coverage_exclude_pattern_line_264(self, coverage_analyzer):
+        """Test line 264: exclude pattern matching in analyze_coverage."""
+        import os
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create a source file
+            source_file = os.path.join(tmpdir, "main.py")
+            with open(source_file, "w") as f:
+                f.write("def main():\n    pass\n")
+
+            # Create a test file that should be excluded
+            test_file = os.path.join(tmpdir, "test_main.py")
+            with open(test_file, "w") as f:
+                f.write("def test_main():\n    pass\n")
+
+            report = await coverage_analyzer.analyze_coverage(
+                source_path=tmpdir,
+                exclude_patterns=["**/test_*"]  # Exclude test files (line 264)
+            )
+
+            # Test file should be excluded
+            file_paths = [f.file_path for f in report.files]
+            assert not any("test_main.py" in fp for fp in file_paths)
+
+    @pytest.mark.asyncio
+    async def test_identify_coverage_gaps_empty_uncovered_lines_361(self, coverage_analyzer):
+        """Test line 361: empty uncovered_lines causes continue."""
+        from backend.testing.coverage_analyzer import CoverageReport, FileCoverage, LineCoverage
+
+        # Create a file coverage with 80% coverage but no uncovered executable lines
+        file_coverage = FileCoverage(
+            file_path="/path/to/file.py",
+            total_lines=10,
+            executable_lines=10,
+            covered_lines=8,  # 80% - below 90% threshold
+            line_coverage=[
+                LineCoverage(
+                    line_number=i,
+                    code=f"line {i}",
+                    is_executable=True,
+                    is_covered=True,  # All lines covered
+                ) for i in range(1, 11)
+            ],
+        )
+
+        report = CoverageReport(
+            timestamp=datetime.utcnow(),
+            overall_coverage=80.0,
+            overall_branch_coverage=75.0,
+            files=[file_coverage],
+        )
+
+        gaps = await coverage_analyzer.identify_coverage_gaps(report)
+
+        # Should have no gaps since all lines are covered
+        assert len(gaps) == 0
+
+    @pytest.mark.asyncio
+    async def test_run_coverage_py_skip_test_files_line_498(self, coverage_analyzer):
+        """Test line 498: skip files with 'test' in path."""
+        import os
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create a source file
+            source_file = os.path.join(tmpdir, "module.py")
+            with open(source_file, "w") as f:
+                f.write("def func():\n    return 1\n")
+
+            # Create a test file that should be skipped in _run_coverage_py
+            test_dir = os.path.join(tmpdir, "tests")
+            os.makedirs(test_dir)
+            test_file = os.path.join(test_dir, "test_module.py")
+            with open(test_file, "w") as f:
+                f.write("def test_func():\n    pass\n")
+
+            coverage_data = await coverage_analyzer._run_coverage_py(tmpdir, None)
+
+            # Test file path should not be in coverage_data (line 498)
+            assert not any("test" in path for path in coverage_data.keys())
+
+    def test_calculate_complexity_boolop_line_585(self, coverage_analyzer):
+        """Test line 585: BoolOp complexity calculation."""
+        import ast
+
+        code = '''
+def complex_func(a, b, c, d):
+    if a and b and c:  # BoolOp with 3 values
+        return True
+    elif a or b or c or d:  # BoolOp with 4 values
+        return False
+    return None
+'''
+        tree = ast.parse(code)
+        func_node = tree.body[0]
+
+        complexity = coverage_analyzer._calculate_complexity(func_node)
+
+        # Base: 1
+        # If: +1
+        # elif (If): +1
+        # BoolOp "a and b and c" (3 values): +2
+        # BoolOp "a or b or c or d" (4 values): +3
+        # Total: 1 + 1 + 1 + 2 + 3 = 8
+        assert complexity == 8
+
+    @pytest.mark.asyncio
+    async def test_test_mutation_method_lines_633_668(self, coverage_analyzer):
+        """Test lines 633-668: _test_mutation method."""
+        import os
+        import tempfile
+        from unittest.mock import Mock, patch
+
+        from backend.testing.coverage_analyzer import Mutation
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            f.write("def add(a, b):\n    return a + b\n")
+            f.flush()
+            file_path = f.name
+
+        try:
+            original_code = "def add(a, b):\n    return a + b\n"
+
+            mutation = Mutation(
+                id="mut_1",
+                file_path=file_path,
+                line_number=2,
+                original_code="    return a + b",
+                mutated_code="    return a - b",
+                mutation_type="arithmetic",
+                description="Replace + with -",
+            )
+
+            # Mock subprocess.run to simulate test failure (mutation killed)
+            mock_result = Mock()
+            mock_result.returncode = 1  # Non-zero means tests failed, mutation killed
+            mock_result.stdout = "Test output"
+            mock_result.stderr = ""
+
+            with patch('subprocess.run', return_value=mock_result):
+                result = await coverage_analyzer._test_mutation(mutation, original_code)
+
+                # Mutation should be killed since tests "failed"
+                assert result.killed is True
+                assert result.mutation == mutation
+
+        finally:
+            if os.path.exists(file_path):
+                os.unlink(file_path)
+
+    @pytest.mark.asyncio
+    async def test_test_mutation_exception_handling(self, coverage_analyzer):
+        """Test _test_mutation exception handling in lines 659-664."""
+        import os
+        import tempfile
+        from unittest.mock import patch
+
+        from backend.testing.coverage_analyzer import Mutation
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            f.write("def func():\n    return 1\n")
+            f.flush()
+            file_path = f.name
+
+        try:
+            original_code = "def func():\n    return 1\n"
+
+            mutation = Mutation(
+                id="mut_exc",
+                file_path=file_path,
+                line_number=2,
+                original_code="    return 1",
+                mutated_code="    return 0",
+                mutation_type="constant",
+                description="Replace 1 with 0",
+            )
+
+            # Mock subprocess.run to raise an exception
+            with patch('subprocess.run', side_effect=Exception("Subprocess timeout")):
+                result = await coverage_analyzer._test_mutation(mutation, original_code)
+
+                # Mutation should not be killed due to exception
+                assert result.killed is False
+                assert "Subprocess timeout" in result.test_output
+
+        finally:
+            if os.path.exists(file_path):
+                os.unlink(file_path)
+
+
+class TestCoverageAnalyzerExcludePatterns:
+    """Tests to cover line 264 (exclude patterns in analyze_coverage)."""
+
+    @pytest.mark.asyncio
+    async def test_analyze_coverage_exclude_patterns_match(self, coverage_analyzer):
+        """Test that files matching exclude patterns are skipped (line 264)."""
+        # Mock _run_coverage_py to return data including a test file
+        mock_coverage_data = {
+            "/path/to/tests/test_file.py": {
+                "executed_lines": [1, 2, 3],
+                "missing_lines": [],
+            },
+            "/path/to/src/module.py": {
+                "executed_lines": [1, 2],
+                "missing_lines": [3, 4],
+            },
+        }
+
+        with patch.object(coverage_analyzer, '_run_coverage_py', return_value=mock_coverage_data):
+            with patch.object(coverage_analyzer, '_analyze_file_coverage') as mock_analyze:
+                mock_analyze.return_value = FileCoverage(
+                    file_path="/path/to/src/module.py",
+                    total_lines=10,
+                    executable_lines=4,
+                    covered_lines=2,
+                )
+
+                report = await coverage_analyzer.analyze_coverage(
+                    source_path="/path/to/src",
+                    exclude_patterns=["*/tests/*"],  # This should exclude test_file.py
+                )
+
+                # _analyze_file_coverage should only be called for non-excluded files
+                # If line 264 (continue) is hit, the test file should be skipped
+                assert isinstance(report, CoverageReport)

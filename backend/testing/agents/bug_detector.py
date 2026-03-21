@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from backend.agents.base_agent import BaseAgent, Task, TaskResult, TaskStatus
 from backend.core.logging import get_logger
@@ -49,11 +49,11 @@ class BugLocation:
     """Location of a bug in code."""
     file_path: str
     line_number: int
-    column: Optional[int] = None
-    function_name: Optional[str] = None
-    class_name: Optional[str] = None
+    column: int | None = None
+    function_name: str | None = None
+    class_name: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "file_path": self.file_path,
             "line_number": self.line_number,
@@ -79,10 +79,10 @@ class DetectedBug:
     detection_method: str
     fix_complexity: str  # simple, moderate, complex
     estimated_effort_minutes: int
-    related_bugs: List[str] = field(default_factory=list)
+    related_bugs: list[str] = field(default_factory=list)
     detected_at: datetime = field(default_factory=datetime.utcnow)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "severity": self.severity.value,
@@ -203,7 +203,7 @@ class BugDetectorAgent(BaseAgent):
         use_static_analysis: bool = True,
         use_llm_review: bool = True,
         min_confidence: float = 0.7
-    ) -> List[DetectedBug]:
+    ) -> list[DetectedBug]:
         """
         Detect bugs in a single file.
 
@@ -221,7 +221,7 @@ class BugDetectorAgent(BaseAgent):
         all_bugs = []
 
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path) as f:
                 code = f.read()
         except Exception as e:
             self._logger.error("Failed to read file", file_path=file_path, error=str(e))
@@ -266,9 +266,9 @@ class BugDetectorAgent(BaseAgent):
     async def detect_bugs_in_directory(
         self,
         directory: str,
-        file_patterns: List[str] = None,
+        file_patterns: list[str] = None,
         **kwargs
-    ) -> Dict[str, List[DetectedBug]]:
+    ) -> dict[str, list[DetectedBug]]:
         """
         Detect bugs in all files in a directory.
 
@@ -305,7 +305,7 @@ class BugDetectorAgent(BaseAgent):
         stack_trace: str,
         code_context: str,
         file_path: str
-    ) -> Optional[DetectedBug]:
+    ) -> DetectedBug | None:
         """
         Analyze a test failure to identify the root cause bug.
 
@@ -374,7 +374,7 @@ Provide analysis as JSON:
             self._logger.error("Failed to analyze test failure", error=str(e))
             return None
 
-    async def get_bug_statistics(self, bugs: List[DetectedBug]) -> Dict[str, Any]:
+    async def get_bug_statistics(self, bugs: list[DetectedBug]) -> dict[str, Any]:
         """
         Get statistics about detected bugs.
 
@@ -417,7 +417,7 @@ Provide analysis as JSON:
 
     # Private methods
 
-    def _load_bug_patterns(self) -> List[BugPattern]:
+    def _load_bug_patterns(self) -> list[BugPattern]:
         """Load bug detection patterns."""
         return [
             # Security patterns
@@ -492,7 +492,7 @@ Provide analysis as JSON:
             ),
         ]
 
-    async def _run_static_analysis(self, file_path: str, code: str) -> List[DetectedBug]:
+    async def _run_static_analysis(self, file_path: str, code: str) -> list[DetectedBug]:
         """Run static analysis using AST."""
         bugs = []
 
@@ -559,7 +559,7 @@ Provide analysis as JSON:
 
         return bugs
 
-    async def _run_pattern_matching(self, file_path: str, code: str) -> List[DetectedBug]:
+    async def _run_pattern_matching(self, file_path: str, code: str) -> list[DetectedBug]:
         """Run regex pattern matching for bug detection."""
         bugs = []
         lines = code.splitlines()
@@ -594,7 +594,7 @@ Provide analysis as JSON:
 
         return bugs
 
-    async def _run_llm_review(self, file_path: str, code: str) -> List[DetectedBug]:
+    async def _run_llm_review(self, file_path: str, code: str) -> list[DetectedBug]:
         """Run LLM-based code review."""
         prompt = f"""Review this Python code for bugs, security issues, and code smells:
 
@@ -655,7 +655,7 @@ If no issues found, return empty array []. Be thorough but only report real issu
             self._logger.error("LLM review failed", error=str(e))
             return []
 
-    async def _detect_bugs_task(self, task: Task) -> Dict[str, Any]:
+    async def _detect_bugs_task(self, task: Task) -> dict[str, Any]:
         """Handle detect_bugs task type."""
         file_path = task.context.get("file_path")
         directory = task.context.get("directory")
@@ -697,7 +697,7 @@ If no issues found, return empty array []. Be thorough but only report real issu
         else:
             raise ValueError("Either file_path or directory required")
 
-    async def _security_scan_task(self, task: Task) -> Dict[str, Any]:
+    async def _security_scan_task(self, task: Task) -> dict[str, Any]:
         """Handle security_scan task type."""
         file_path = task.context.get("file_path")
         bugs = await self.detect_bugs_in_file(
@@ -716,7 +716,7 @@ If no issues found, return empty array []. Be thorough but only report real issu
             "bugs": [b.to_dict() for b in security_bugs],
         }
 
-    async def _analyze_failure_task(self, task: Task) -> Dict[str, Any]:
+    async def _analyze_failure_task(self, task: Task) -> dict[str, Any]:
         """Handle analyze_test_failure task type."""
         bug = await self.analyze_test_failure(
             test_name=task.context["test_name"],
@@ -730,7 +730,7 @@ If no issues found, return empty array []. Be thorough but only report real issu
             "bug": bug.to_dict() if bug else None,
         }
 
-    async def _performance_audit_task(self, task: Task) -> Dict[str, Any]:
+    async def _performance_audit_task(self, task: Task) -> dict[str, Any]:
         """Handle performance_audit task type."""
         file_path = task.context.get("file_path")
         bugs = await self.detect_bugs_in_file(file_path)

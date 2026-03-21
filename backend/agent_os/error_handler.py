@@ -6,10 +6,11 @@ and circuit breaker pattern.
 """
 
 import asyncio
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 from backend.core.logging import get_logger
 
@@ -44,7 +45,7 @@ class CircuitBreaker:
         self._recovery_timeout = recovery_timeout
         self._state = CircuitState.CLOSED
         self._failures = 0
-        self._last_failure: Optional[datetime] = None
+        self._last_failure: datetime | None = None
 
     def can_execute(self) -> bool:
         """Check if execution is allowed."""
@@ -85,14 +86,14 @@ class ErrorHandler:
 
     def __init__(self):
         """Initialize the error handler."""
-        self._circuit_breakers: Dict[str, CircuitBreaker] = {}
+        self._circuit_breakers: dict[str, CircuitBreaker] = {}
         self._logger = get_logger(__name__)
 
     async def execute_with_retry(
         self,
         operation: Callable,
-        config: Optional[RetryConfig] = None,
-        circuit_name: Optional[str] = None,
+        config: RetryConfig | None = None,
+        circuit_name: str | None = None,
         *args,
         **kwargs
     ) -> Any:
@@ -166,7 +167,7 @@ class ErrorHandler:
         self,
         task_id: str,
         error: Exception,
-        context: Optional[Dict[str, Any]] = None
+        context: dict[str, Any] | None = None
     ):
         """
         Escalate an error to human-in-the-loop.

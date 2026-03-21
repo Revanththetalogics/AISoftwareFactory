@@ -6,7 +6,6 @@ This module provides functions for generating unique identifiers.
 
 import uuid
 from datetime import datetime
-from typing import Optional
 
 
 def generate_uuid() -> str:
@@ -19,7 +18,7 @@ def generate_uuid() -> str:
     return str(uuid.uuid4())
 
 
-def generate_id(prefix: Optional[str] = None) -> str:
+def generate_id(prefix: str | None = None) -> str:
     """
     Generate a unique ID with optional prefix.
 
@@ -35,7 +34,7 @@ def generate_id(prefix: Optional[str] = None) -> str:
     return unique_id
 
 
-def generate_timestamp_id(prefix: Optional[str] = None) -> str:
+def generate_timestamp_id(prefix: str | None = None) -> str:
     """
     Generate an ID with timestamp for sorting.
 

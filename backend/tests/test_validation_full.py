@@ -213,9 +213,8 @@ class TestValidateUrlSafe:
 
     def test_dns_timeout(self):
         """Test DNS timeout (covers lines 181-183)."""
-        import socket
         with patch('socket.getaddrinfo') as mock_dns:
-            mock_dns.side_effect = socket.timeout("DNS timeout")
+            mock_dns.side_effect = TimeoutError("DNS timeout")
             # DNS timeout should still allow URL to pass
             result = validate_url_safe("https://slow.example.com")
             assert result is True

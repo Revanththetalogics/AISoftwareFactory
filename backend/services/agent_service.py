@@ -4,7 +4,7 @@ Agent service for AI Software Factory.
 This module provides business logic for agent management operations.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from backend.agents.agent_registry import AgentRegistry
 from backend.agents.base_agent import AgentStatus
@@ -27,9 +27,9 @@ class AgentService:
 
     async def list_agents(
         self,
-        status: Optional[str] = None,
-        role: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        status: str | None = None,
+        role: str | None = None
+    ) -> list[dict[str, Any]]:
         """
         List all registered agents.
 
@@ -65,7 +65,7 @@ class AgentService:
 
         return agent_list
 
-    async def get_agent(self, agent_id: str) -> Optional[Dict[str, Any]]:
+    async def get_agent(self, agent_id: str) -> dict[str, Any] | None:
         """
         Get an agent by ID.
 
@@ -94,7 +94,7 @@ class AgentService:
         self,
         agent_id: str,
         task_id: str,
-        task_data: Dict[str, Any]
+        task_data: dict[str, Any]
     ) -> bool:
         """
         Assign a task to an agent.
@@ -149,7 +149,7 @@ class AgentService:
         self._logger.info("Agent released", agent_id=agent_id)
         return True
 
-    async def get_agent_activity(self) -> List[Dict[str, Any]]:
+    async def get_agent_activity(self) -> list[dict[str, Any]]:
         """
         Get recent agent activity.
 

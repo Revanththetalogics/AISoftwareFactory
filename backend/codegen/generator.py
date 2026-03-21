@@ -6,16 +6,16 @@ various programming languages and frameworks.
 """
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from string import Template
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
 
-class CodeLanguage(str, Enum):
+class CodeLanguage(StrEnum):
     """Supported programming languages."""
     PYTHON = "python"
     TYPESCRIPT = "typescript"
@@ -29,7 +29,7 @@ class CodeLanguage(str, Enum):
     MARKDOWN = "markdown"
 
 
-class CodeFramework(str, Enum):
+class CodeFramework(StrEnum):
     """Supported frameworks."""
     FASTAPI = "fastapi"
     REACT = "react"
@@ -54,10 +54,10 @@ class GeneratedCode:
     """
     content: str = ""
     language: CodeLanguage = CodeLanguage.PYTHON
-    framework: Optional[CodeFramework] = None
+    framework: CodeFramework | None = None
     file_path: str = ""
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    error: Optional[str] = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
 
     @property
     def success(self) -> bool:
@@ -81,9 +81,9 @@ class CodeTemplate:
     name: str
     template: str
     language: CodeLanguage
-    framework: Optional[CodeFramework] = None
+    framework: CodeFramework | None = None
     description: str = ""
-    variables: List[str] = field(default_factory=list)
+    variables: list[str] = field(default_factory=list)
 
     def render(self, **kwargs) -> str:
         """Render the template with variables."""
@@ -92,7 +92,7 @@ class CodeTemplate:
             return t.substitute(**kwargs)
         except KeyError as exc:
             missing_var = str(exc).strip("'")
-            raise ValueError(f"Missing required variable: {missing_var}")
+            raise ValueError(f"Missing required variable: {missing_var}") from exc
 
 
 class CodeGenerator:
@@ -115,7 +115,7 @@ class CodeGenerator:
 
     def __init__(self):
         """Initialize the code generator."""
-        self._templates: Dict[str, CodeTemplate] = {}
+        self._templates: dict[str, CodeTemplate] = {}
         self._logger = get_logger(__name__)
 
         # Initialize default templates
@@ -308,14 +308,14 @@ volumes:
         self._templates[template.name] = template
         self._logger.info("Template registered", template=template.name)
 
-    def get_template(self, name: str) -> Optional[CodeTemplate]:
+    def get_template(self, name: str) -> CodeTemplate | None:
         """Get a template by name."""
         return self._templates.get(name)
 
     def generate(
         self,
         template_name: str,
-        variables: Dict[str, str],
+        variables: dict[str, str],
         file_path: str = "",
     ) -> GeneratedCode:
         """
@@ -385,7 +385,7 @@ volumes:
         self,
         description: str,
         language: CodeLanguage,
-        framework: Optional[CodeFramework] = None,
+        framework: CodeFramework | None = None,
     ) -> GeneratedCode:
         """
         Generate code from a natural language description.
@@ -417,9 +417,9 @@ volumes:
 
     def list_templates(
         self,
-        language: Optional[CodeLanguage] = None,
-        framework: Optional[CodeFramework] = None,
-    ) -> List[str]:
+        language: CodeLanguage | None = None,
+        framework: CodeFramework | None = None,
+    ) -> list[str]:
         """
         List available templates.
 
@@ -439,7 +439,7 @@ volumes:
             templates.append(name)
         return templates
 
-    def validate_code(self, code: str, language: CodeLanguage) -> Dict[str, Any]:
+    def validate_code(self, code: str, language: CodeLanguage) -> dict[str, Any]:
         """
         Validate code syntax (basic checks).
 

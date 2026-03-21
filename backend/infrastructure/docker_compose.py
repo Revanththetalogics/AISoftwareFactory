@@ -5,7 +5,7 @@ This module provides Docker Compose configuration generation
 for local development and production deployment.
 """
 
-from typing import Any, Dict
+from typing import Any
 
 import yaml
 
@@ -31,7 +31,7 @@ class DockerComposeGenerator:
         self._project_name = project_name
         self._logger = get_logger(__name__)
 
-    def generate_development_config(self) -> Dict[str, Any]:
+    def generate_development_config(self) -> dict[str, Any]:
         """Generate development Docker Compose configuration."""
         config = {
             "version": "3.8",
@@ -97,7 +97,7 @@ class DockerComposeGenerator:
 
         return config
 
-    def generate_production_config(self) -> Dict[str, Any]:
+    def generate_production_config(self) -> dict[str, Any]:
         """Generate production Docker Compose configuration."""
         config = {
             "version": "3.8",
@@ -174,7 +174,7 @@ class DockerComposeGenerator:
 
     def save_config(
         self,
-        config: Dict[str, Any],
+        config: dict[str, Any],
         output_path: str = "docker-compose.yml"
     ) -> str:
         """

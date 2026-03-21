@@ -7,9 +7,10 @@ for generated applications.
 
 import asyncio
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from statistics import mean, median
-from typing import Any, Callable, Dict, List
+from typing import Any
 
 from backend.core.logging import get_logger
 
@@ -127,9 +128,9 @@ class PerformanceTester:
     async def benchmark_api(
         self,
         base_url: str,
-        endpoints: List[Dict[str, Any]],
+        endpoints: list[dict[str, Any]],
         duration: int = 60
-    ) -> Dict[str, PerformanceResult]:
+    ) -> dict[str, PerformanceResult]:
         """
         Benchmark API endpoints.
 
@@ -148,8 +149,8 @@ class PerformanceTester:
             method = endpoint.get("method", "GET")
             path = endpoint["path"]
 
-            # Create test function
-            async def test_fn():
+            # Create test function - capture path and method values in default args
+            async def test_fn(path=path, method=method):
                 import aiohttp
                 async with aiohttp.ClientSession() as session:
                     url = f"{base_url}{path}"
@@ -167,7 +168,7 @@ class PerformanceTester:
 
         return results
 
-    def generate_report(self, results: Dict[str, PerformanceResult]) -> Dict[str, Any]:
+    def generate_report(self, results: dict[str, PerformanceResult]) -> dict[str, Any]:
         """Generate performance test report."""
         report = {
             "summary": {

@@ -7,8 +7,8 @@ for workflow tasks.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from enum import Enum, StrEnum
+from typing import Any
 from uuid import uuid4
 
 from backend.core.logging import get_logger
@@ -24,7 +24,7 @@ class TaskPriority(int, Enum):
     CRITICAL = 4
 
 
-class TaskStatus(str, Enum):
+class TaskStatus(StrEnum):
     """Task execution status."""
     PENDING = "pending"
     ASSIGNED = "assigned"
@@ -62,17 +62,17 @@ class WorkflowTask:
     task_type: str = ""
     priority: TaskPriority = TaskPriority.MEDIUM
     status: TaskStatus = TaskStatus.PENDING
-    assigned_to: Optional[str] = None
-    project_id: Optional[str] = None
-    phase: Optional[str] = None
-    context: Dict[str, Any] = field(default_factory=dict)
+    assigned_to: str | None = None
+    project_id: str | None = None
+    phase: str | None = None
+    context: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    result: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    result: dict[str, Any] | None = None
+    error: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert task to dictionary."""
         return {
             "task_id": self.task_id,
@@ -115,9 +115,9 @@ class TaskManager:
 
     def __init__(self):
         """Initialize the task manager."""
-        self._tasks: Dict[str, WorkflowTask] = {}
-        self._pending_queue: List[str] = []
-        self._assigned_tasks: Dict[str, str] = {}  # task_id -> agent_id
+        self._tasks: dict[str, WorkflowTask] = {}
+        self._pending_queue: list[str] = []
+        self._assigned_tasks: dict[str, str] = {}  # task_id -> agent_id
         self._logger = get_logger(__name__)
 
     def create_task(
@@ -126,9 +126,9 @@ class TaskManager:
         description: str = "",
         task_type: str = "",
         priority: TaskPriority = TaskPriority.MEDIUM,
-        project_id: Optional[str] = None,
-        phase: Optional[str] = None,
-        context: Optional[Dict[str, Any]] = None,
+        project_id: str | None = None,
+        phase: str | None = None,
+        context: dict[str, Any] | None = None,
     ) -> WorkflowTask:
         """
         Create a new task.
@@ -211,7 +211,7 @@ class TaskManager:
     def complete_task(
         self,
         task_id: str,
-        result: Dict[str, Any],
+        result: dict[str, Any],
     ) -> bool:
         """
         Mark a task as completed.
@@ -273,11 +273,11 @@ class TaskManager:
 
         return True
 
-    def get_task(self, task_id: str) -> Optional[WorkflowTask]:
+    def get_task(self, task_id: str) -> WorkflowTask | None:
         """Get a task by ID."""
         return self._tasks.get(task_id)
 
-    def get_pending_tasks(self) -> List[WorkflowTask]:
+    def get_pending_tasks(self) -> list[WorkflowTask]:
         """Get all pending tasks sorted by priority."""
         return [
             self._tasks[task_id]
@@ -285,7 +285,7 @@ class TaskManager:
             if task_id in self._tasks
         ]
 
-    def get_assigned_tasks(self, agent_id: Optional[str] = None) -> List[WorkflowTask]:
+    def get_assigned_tasks(self, agent_id: str | None = None) -> list[WorkflowTask]:
         """
         Get assigned tasks.
 
@@ -303,14 +303,14 @@ class TaskManager:
                     tasks.append(task)
         return tasks
 
-    def get_tasks_by_project(self, project_id: str) -> List[WorkflowTask]:
+    def get_tasks_by_project(self, project_id: str) -> list[WorkflowTask]:
         """Get all tasks for a project."""
         return [
             task for task in self._tasks.values()
             if task.project_id == project_id
         ]
 
-    def get_tasks_by_phase(self, phase: str) -> List[WorkflowTask]:
+    def get_tasks_by_phase(self, phase: str) -> list[WorkflowTask]:
         """Get all tasks for a phase."""
         return [
             task for task in self._tasks.values()
@@ -324,7 +324,7 @@ class TaskManager:
             reverse=True,
         )
 
-    def get_next_pending_task(self) -> Optional[WorkflowTask]:
+    def get_next_pending_task(self) -> WorkflowTask | None:
         """Get the next pending task (highest priority)."""
         while self._pending_queue:
             task_id = self._pending_queue[0]
@@ -335,7 +335,7 @@ class TaskManager:
             self._pending_queue.pop(0)
         return None
 
-    def get_stats(self) -> Dict[str, int]:
+    def get_stats(self) -> dict[str, int]:
         """Get task statistics."""
         stats = {
             "total": len(self._tasks),
