@@ -6,7 +6,6 @@ HTTP responses with proper error codes and logging.
 """
 
 import traceback
-from typing import Any, Dict, Type, Union
 
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
@@ -14,7 +13,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 
 from backend.core.config import get_settings
 from backend.core.exceptions import AISoftwareFactoryException
-from backend.core.logging import get_logger, get_correlation_id
+from backend.core.logging import get_correlation_id, get_logger
 
 logger = get_logger(__name__)
 
@@ -22,28 +21,28 @@ logger = get_logger(__name__)
 class ErrorHandlerMiddleware(BaseHTTPMiddleware):
     """
     Middleware for global error handling.
-    
+
     This middleware catches all exceptions and:
     1. Logs errors with full context
     2. Converts custom exceptions to HTTP responses
     3. Returns generic 500 errors for unexpected exceptions (in production)
     4. Includes stack traces (in development)
     5. Adds correlation ID to error responses
-    
+
     Example:
         >>> app.add_middleware(ErrorHandlerMiddleware)
     """
-    
+
     def __init__(self, app):
         """
         Initialize middleware.
-        
+
         Args:
             app: FastAPI application
         """
         super().__init__(app)
         self.settings = get_settings()
-    
+
     async def dispatch(
         self,
         request: Request,
@@ -51,25 +50,25 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
     ) -> Response:
         """
         Process request with error handling.
-        
+
         Args:
             request: Incoming request
             call_next: Next middleware/handler in chain
-            
+
         Returns:
             Response from handler or error response
         """
         try:
             return await call_next(request)
-            
+
         except AISoftwareFactoryException as exc:
             # Handle custom application exceptions
             return self._handle_custom_exception(exc, request)
-            
+
         except Exception as exc:
             # Handle unexpected exceptions
             return self._handle_unexpected_exception(exc, request)
-    
+
     def _handle_custom_exception(
         self,
         exc: AISoftwareFactoryException,
@@ -77,16 +76,16 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
     ) -> JSONResponse:
         """
         Handle custom application exceptions.
-        
+
         Args:
             exc: Custom exception instance
             request: FastAPI request
-            
+
         Returns:
             JSON error response with standardized format
         """
         request_id = get_correlation_id()
-        
+
         # Log the error with context
         logger.error(
             "Application error",
@@ -97,7 +96,7 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
             method=request.method,
             request_id=request_id,
         )
-        
+
         # Build standardized error response
         error_response = {
             "error": {
@@ -107,12 +106,12 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
             },
             "request_id": request_id,
         }
-        
+
         return JSONResponse(
             status_code=exc.status_code,
             content=error_response,
         )
-    
+
     def _handle_unexpected_exception(
         self,
         exc: Exception,
@@ -120,19 +119,19 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
     ) -> JSONResponse:
         """
         Handle unexpected exceptions.
-        
+
         In production, returns a generic error message.
         In development, includes the full error details and stack trace.
-        
+
         Args:
             exc: Unexpected exception
             request: FastAPI request
-            
+
         Returns:
             JSON error response with standardized format
         """
         request_id = get_correlation_id()
-        
+
         # Log the full error with stack trace
         logger.exception(
             "Unexpected error",
@@ -142,7 +141,7 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
             method=request.method,
             request_id=request_id,
         )
-        
+
         if self.settings.is_development or self.settings.is_testing:
             # Return detailed error in development
             error_response = {
@@ -166,7 +165,7 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
                 },
                 "request_id": request_id,
             }
-        
+
         return JSONResponse(
             status_code=500,
             content=error_response,
@@ -176,19 +175,19 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
 def setup_exception_handlers(app) -> None:
     """
     Setup exception handlers for FastAPI application.
-    
+
     This function adds exception handlers for specific exception types
     that may be raised outside of the middleware context.
-    
+
     Args:
         app: FastAPI application instance
-        
+
     Example:
         >>> from fastapi import FastAPI
         >>> app = FastAPI()
         >>> setup_exception_handlers(app)
     """
-    
+
     @app.exception_handler(AISoftwareFactoryException)
     async def custom_exception_handler(
         request: Request,
@@ -196,7 +195,7 @@ def setup_exception_handlers(app) -> None:
     ) -> JSONResponse:
         """Handle custom application exceptions."""
         request_id = get_correlation_id()
-        
+
         logger.error(
             "Application error (handler)",
             error_code=exc.error_code,
@@ -205,7 +204,7 @@ def setup_exception_handlers(app) -> None:
             path=request.url.path,
             request_id=request_id,
         )
-        
+
         error_response = {
             "error": {
                 "code": exc.error_code,
@@ -214,12 +213,12 @@ def setup_exception_handlers(app) -> None:
             },
             "request_id": request_id,
         }
-        
+
         return JSONResponse(
             status_code=exc.status_code,
             content=error_response,
         )
-    
+
     @app.exception_handler(Exception)
     async def general_exception_handler(
         request: Request,
@@ -228,7 +227,7 @@ def setup_exception_handlers(app) -> None:
         """Handle unexpected exceptions."""
         settings = get_settings()
         request_id = get_correlation_id()
-        
+
         logger.exception(
             "Unexpected error (handler)",
             error_type=type(exc).__name__,
@@ -236,7 +235,7 @@ def setup_exception_handlers(app) -> None:
             path=request.url.path,
             request_id=request_id,
         )
-        
+
         if settings.is_development or settings.is_testing:
             error_response = {
                 "error": {
@@ -258,7 +257,7 @@ def setup_exception_handlers(app) -> None:
                 },
                 "request_id": request_id,
             }
-        
+
         return JSONResponse(
             status_code=500,
             content=error_response,

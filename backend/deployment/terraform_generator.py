@@ -6,8 +6,8 @@ for AWS, Azure, and GCP.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
 from enum import Enum
+from typing import Any, Dict
 
 from backend.core.logging import get_logger
 
@@ -25,7 +25,7 @@ class CloudProvider(str, Enum):
 class ResourceConfig:
     """
     Resource configuration.
-    
+
     Attributes:
         name: Resource name
         resource_type: Terraform resource type
@@ -39,13 +39,13 @@ class ResourceConfig:
 class TerraformGenerator:
     """
     Terraform configuration generator.
-    
+
     This class provides:
     - AWS infrastructure generation
     - Azure infrastructure generation
     - GCP infrastructure generation
     - Modular resource management
-    
+
     Example:
         >>> generator = TerraformGenerator()
         >>> config = generator.generate_aws_basic(
@@ -53,11 +53,11 @@ class TerraformGenerator:
         ...     region="us-east-1"
         ... )
     """
-    
+
     def __init__(self):
         """Initialize the Terraform generator."""
         self._logger = get_logger(__name__)
-    
+
     def generate_aws_basic(
         self,
         project_name: str,
@@ -67,29 +67,29 @@ class TerraformGenerator:
     ) -> Dict[str, str]:
         """
         Generate basic AWS Terraform configuration.
-        
+
         Args:
             project_name: Project name
             region: AWS region
             enable_ecs: Whether to include ECS
             enable_rds: Whether to include RDS
-            
+
         Returns:
             Dictionary mapping filenames to content
         """
         files = {}
-        
+
         # Main configuration
         files["main.tf"] = f'''terraform {{
   required_version = ">= 1.0"
-  
+
   required_providers {{
     aws = {{
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }}
   }}
-  
+
   backend "s3" {{
     bucket = "{project_name}-terraform-state"
     key    = "terraform.tfstate"
@@ -99,7 +99,7 @@ class TerraformGenerator:
 
 provider "aws" {{
   region = var.aws_region
-  
+
   default_tags {{
     tags = {{
       Project     = "{project_name}"
@@ -113,23 +113,23 @@ provider "aws" {{
 module "vpc" {{
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
-  
+
   name = "${{var.project_name}}-${{var.environment}}"
   cidr = "10.0.0.0/16"
-  
+
   azs             = ["{region}a", "{region}b", "{region}c"]
   private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
   public_subnets  = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
-  
+
   enable_nat_gateway = true
   enable_vpn_gateway = false
-  
+
   tags = {{
     Terraform = "true"
   }}
 }}
 '''
-        
+
         # Variables
         files["variables.tf"] = f'''variable "project_name" {{
   description = "Project name"
@@ -155,7 +155,7 @@ variable "app_port" {{
   default     = 8000
 }}
 '''
-        
+
         # Outputs
         files["outputs.tf"] = '''output "vpc_id" {
   description = "VPC ID"
@@ -172,12 +172,12 @@ output "public_subnets" {
   value       = module.vpc.public_subnets
 }
 '''
-        
+
         if enable_ecs:
             files["ecs.tf"] = '''# ECS Cluster
 resource "aws_ecs_cluster" "main" {
   name = "${var.project_name}-${var.environment}"
-  
+
   setting {
     name  = "containerInsights"
     value = "enabled"
@@ -186,9 +186,9 @@ resource "aws_ecs_cluster" "main" {
 
 resource "aws_ecs_cluster_capacity_providers" "main" {
   cluster_name = aws_ecs_cluster.main.name
-  
+
   capacity_providers = ["FARGATE", "FARGATE_SPOT"]
-  
+
   default_capacity_provider_strategy {
     base              = 1
     weight            = 1
@@ -205,7 +205,7 @@ resource "aws_ecs_task_definition" "app" {
   memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_execution.arn
   task_role_arn            = aws_iam_role.ecs_task.arn
-  
+
   container_definitions = jsonencode([{
     name  = "app"
     image = "${aws_ecr_repository.app.repository_url}:latest"
@@ -231,7 +231,7 @@ resource "aws_ecs_task_definition" "app" {
 resource "aws_ecr_repository" "app" {
   name                 = "${var.project_name}-${var.environment}"
   image_tag_mutability = "MUTABLE"
-  
+
   image_scanning_configuration {
     scan_on_push = true
   }
@@ -246,7 +246,7 @@ resource "aws_cloudwatch_log_group" "app" {
 # IAM Roles
 resource "aws_iam_role" "ecs_execution" {
   name = "${var.project_name}-ecs-execution"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -266,7 +266,7 @@ resource "aws_iam_role_policy_attachment" "ecs_execution" {
 
 resource "aws_iam_role" "ecs_task" {
   name = "${var.project_name}-ecs-task"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -279,13 +279,13 @@ resource "aws_iam_role" "ecs_task" {
   })
 }
 '''
-        
+
         if enable_rds:
             files["rds.tf"] = '''# RDS Subnet Group
 resource "aws_db_subnet_group" "main" {
   name       = "${var.project_name}-${var.environment}"
   subnet_ids = module.vpc.private_subnets
-  
+
   tags = {
     Name = "${var.project_name}-${var.environment}"
   }
@@ -295,14 +295,14 @@ resource "aws_db_subnet_group" "main" {
 resource "aws_security_group" "rds" {
   name_prefix = "${var.project_name}-rds-"
   vpc_id      = module.vpc.vpc_id
-  
+
   ingress {
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
     cidr_blocks = [module.vpc.vpc_cidr_block]
   }
-  
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -314,29 +314,29 @@ resource "aws_security_group" "rds" {
 # RDS Instance
 resource "aws_db_instance" "main" {
   identifier = "${var.project_name}-${var.environment}"
-  
+
   engine         = "postgres"
   engine_version = "15"
   instance_class = "db.t3.micro"
-  
+
   allocated_storage     = 20
   max_allocated_storage = 100
   storage_type          = "gp3"
   storage_encrypted     = true
-  
+
   db_name  = replace("${var.project_name}_${var.environment}", "-", "_")
   username = "dbadmin"
   password = random_password.db_password.result
-  
+
   vpc_security_group_ids = [aws_security_group.rds.id]
   db_subnet_group_name   = aws_db_subnet_group.main.name
-  
+
   backup_retention_period = 7
   backup_window          = "03:00-04:00"
   maintenance_window     = "Mon:04:00-Mon:05:00"
-  
+
   skip_final_snapshot = var.environment != "prod"
-  
+
   tags = {
     Name = "${var.project_name}-${var.environment}"
   }
@@ -348,7 +348,7 @@ resource "random_password" "db_password" {
   special = true
 }
 '''
-        
+
         self._logger.info(
             "AWS Terraform configuration generated",
             project=project_name,
@@ -357,9 +357,9 @@ resource "random_password" "db_password" {
             rds=enable_rds,
             files=len(files),
         )
-        
+
         return files
-    
+
     def generate_azure_basic(
         self,
         project_name: str,
@@ -367,26 +367,26 @@ resource "random_password" "db_password" {
     ) -> Dict[str, str]:
         """
         Generate basic Azure Terraform configuration.
-        
+
         Args:
             project_name: Project name
             location: Azure location
-            
+
         Returns:
             Dictionary mapping filenames to content
         """
         files = {}
-        
+
         files["main.tf"] = f'''terraform {{
   required_version = ">= 1.0"
-  
+
   required_providers {{
     azurerm = {{
       source  = "hashicorp/azurerm"
       version = "~> 3.0"
     }}
   }}
-  
+
   backend "azurerm" {{
     resource_group_name  = "{project_name}-terraform"
     storage_account_name = "{project_name}tfstate"
@@ -403,7 +403,7 @@ provider "azurerm" {{
 resource "azurerm_resource_group" "main" {{
   name     = "${{var.project_name}}-${{var.environment}}"
   location = var.location
-  
+
   tags = {{
     Environment = var.environment
     Project     = var.project_name
@@ -434,7 +434,7 @@ resource "azurerm_subnet" "db" {{
   service_endpoints    = ["Microsoft.Sql"]
 }}
 '''
-        
+
         files["variables.tf"] = f'''variable "project_name" {{
   description = "Project name"
   type        = string
@@ -453,7 +453,7 @@ variable "location" {{
   default     = "{location}"
 }}
 '''
-        
+
         files["outputs.tf"] = '''output "resource_group_name" {
   description = "Resource group name"
   value       = azurerm_resource_group.main.name
@@ -464,15 +464,15 @@ output "virtual_network_id" {
   value       = azurerm_virtual_network.main.id
 }
 '''
-        
+
         self._logger.info(
             "Azure Terraform configuration generated",
             project=project_name,
             location=location,
         )
-        
+
         return files
-    
+
     def generate_gcp_basic(
         self,
         project_name: str,
@@ -480,26 +480,26 @@ output "virtual_network_id" {
     ) -> Dict[str, str]:
         """
         Generate basic GCP Terraform configuration.
-        
+
         Args:
             project_name: Project name
             region: GCP region
-            
+
         Returns:
             Dictionary mapping filenames to content
         """
         files = {}
-        
+
         files["main.tf"] = f'''terraform {{
   required_version = ">= 1.0"
-  
+
   required_providers {{
     google = {{
       source  = "hashicorp/google"
       version = "~> 5.0"
     }}
   }}
-  
+
   backend "gcs" {{
     bucket = "{project_name}-terraform-state"
     prefix = "terraform/state"
@@ -529,16 +529,16 @@ resource "google_compute_subnetwork" "main" {{
 resource "google_cloud_run_service" "app" {{
   name     = "${{var.project_name}}-${{var.environment}}"
   location = var.region
-  
+
   template {{
     spec {{
       containers {{
         image = "gcr.io/${{var.gcp_project_id}}/${{var.project_name}}:latest"
-        
+
         ports {{
           container_port = 8000
         }}
-        
+
         resources {{
           limits = {{
             cpu    = "1"
@@ -548,7 +548,7 @@ resource "google_cloud_run_service" "app" {{
       }}
     }}
   }}
-  
+
   traffic {{
     percent         = 100
     latest_revision = true
@@ -563,7 +563,7 @@ resource "google_cloud_run_service_iam_member" "public" {{
   member   = "allUsers"
 }}
 '''
-        
+
         files["variables.tf"] = f'''variable "project_name" {{
   description = "Project name"
   type        = string
@@ -587,7 +587,7 @@ variable "region" {{
   default     = "{region}"
 }}
 '''
-        
+
         files["outputs.tf"] = '''output "cloud_run_url" {
   description = "Cloud Run service URL"
   value       = google_cloud_run_service.app.status[0].url
@@ -598,11 +598,11 @@ output "network_id" {
   value       = google_compute_network.main.id
 }
 '''
-        
+
         self._logger.info(
             "GCP Terraform configuration generated",
             project=project_name,
             region=region,
         )
-        
+
         return files

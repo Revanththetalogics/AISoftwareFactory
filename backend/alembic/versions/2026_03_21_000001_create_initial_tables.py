@@ -1,7 +1,7 @@
 """create initial tables
 
 Revision ID: 2026_03_21_000001
-Revises: 
+Revises:
 Create Date: 2026-03-21
 
 This migration creates all initial tables for the AI Software Factory:
@@ -14,9 +14,9 @@ This migration creates all initial tables for the AI Software Factory:
 - audit_logs: System audit trail
 """
 
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '2026_03_21_000001'
@@ -27,10 +27,10 @@ depends_on = None
 
 def upgrade() -> None:
     """Create all initial tables with proper indexes and constraints."""
-    
+
     # Enable required PostgreSQL extensions
     op.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
-    
+
     # ========== Users Table ==========
     op.create_table(
         'users',
@@ -47,7 +47,7 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
         sa.Column('last_login', sa.DateTime(timezone=True), nullable=True),
     )
-    
+
     # Users indexes
     op.create_index('ix_users_id', 'users', ['id'])
     op.create_index('ix_users_username', 'users', ['username'], unique=True)
@@ -55,7 +55,7 @@ def upgrade() -> None:
     op.create_index('idx_users_username', 'users', ['username'])
     op.create_index('idx_users_email', 'users', ['email'])
     op.create_index('idx_users_active', 'users', ['is_active'])
-    
+
     # ========== Projects Table ==========
     op.create_table(
         'projects',
@@ -73,7 +73,7 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
         sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
     )
-    
+
     # Projects indexes
     op.create_index('ix_projects_id', 'projects', ['id'])
     op.create_index('idx_projects_owner', 'projects', ['owner_id'])
@@ -83,7 +83,7 @@ def upgrade() -> None:
     op.execute(
         "CREATE INDEX idx_projects_name_trgm ON projects USING gin (name gin_trgm_ops)"
     )
-    
+
     # ========== Workflows Table ==========
     op.create_table(
         'workflows',
@@ -106,14 +106,14 @@ def upgrade() -> None:
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
     )
-    
+
     # Workflows indexes
     op.create_index('ix_workflows_id', 'workflows', ['id'])
     op.create_index('idx_workflows_project', 'workflows', ['project_id'])
     op.create_index('idx_workflows_status', 'workflows', ['status'])
     op.create_index('idx_workflows_created_by', 'workflows', ['created_by'])
     op.create_index('idx_workflows_created', 'workflows', ['created_at'])
-    
+
     # ========== Tasks Table ==========
     op.create_table(
         'tasks',
@@ -141,7 +141,7 @@ def upgrade() -> None:
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
     )
-    
+
     # Tasks indexes
     op.create_index('ix_tasks_id', 'tasks', ['id'])
     op.create_index('idx_tasks_project', 'tasks', ['project_id'])
@@ -151,7 +151,7 @@ def upgrade() -> None:
     op.create_index('idx_tasks_created_by', 'tasks', ['created_by'])
     op.create_index('idx_tasks_scheduled', 'tasks', ['scheduled_at'])
     op.create_index('idx_tasks_created', 'tasks', ['created_at'])
-    
+
     # ========== Agents Table ==========
     op.create_table(
         'agents',
@@ -168,13 +168,13 @@ def upgrade() -> None:
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
     )
-    
+
     # Agents indexes
     op.create_index('ix_agents_id', 'agents', ['id'])
     op.create_index('idx_agents_role', 'agents', ['role'])
     op.create_index('idx_agents_status', 'agents', ['status'])
     op.create_index('idx_agents_current_task', 'agents', ['current_task_id'])
-    
+
     # ========== Deployments Table ==========
     op.create_table(
         'deployments',
@@ -193,7 +193,7 @@ def upgrade() -> None:
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
     )
-    
+
     # Deployments indexes and constraints
     op.create_index('ix_deployments_id', 'deployments', ['id'])
     op.create_index('idx_deployments_project', 'deployments', ['project_id'])
@@ -201,11 +201,11 @@ def upgrade() -> None:
     op.create_index('idx_deployments_status', 'deployments', ['status'])
     op.create_index('idx_deployments_created', 'deployments', ['created_at'])
     op.create_unique_constraint(
-        'uq_project_env_version', 
-        'deployments', 
+        'uq_project_env_version',
+        'deployments',
         ['project_id', 'environment', 'version']
     )
-    
+
     # ========== Audit Logs Table ==========
     op.create_table(
         'audit_logs',
@@ -219,7 +219,7 @@ def upgrade() -> None:
         sa.Column('user_agent', sa.Text, nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
     )
-    
+
     # Audit logs indexes
     op.create_index('ix_audit_logs_id', 'audit_logs', ['id'])
     op.create_index('idx_auditlogs_user', 'audit_logs', ['user_id'])
@@ -230,7 +230,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Drop all tables in reverse order of creation."""
-    
+
     # Drop audit_logs
     op.drop_index('idx_auditlogs_created', table_name='audit_logs')
     op.drop_index('idx_auditlogs_action', table_name='audit_logs')
@@ -238,7 +238,7 @@ def downgrade() -> None:
     op.drop_index('idx_auditlogs_user', table_name='audit_logs')
     op.drop_index('ix_audit_logs_id', table_name='audit_logs')
     op.drop_table('audit_logs')
-    
+
     # Drop deployments
     op.drop_constraint('uq_project_env_version', 'deployments', type_='unique')
     op.drop_index('idx_deployments_created', table_name='deployments')
@@ -247,14 +247,14 @@ def downgrade() -> None:
     op.drop_index('idx_deployments_project', table_name='deployments')
     op.drop_index('ix_deployments_id', table_name='deployments')
     op.drop_table('deployments')
-    
+
     # Drop agents
     op.drop_index('idx_agents_current_task', table_name='agents')
     op.drop_index('idx_agents_status', table_name='agents')
     op.drop_index('idx_agents_role', table_name='agents')
     op.drop_index('ix_agents_id', table_name='agents')
     op.drop_table('agents')
-    
+
     # Drop tasks
     op.drop_index('idx_tasks_created', table_name='tasks')
     op.drop_index('idx_tasks_scheduled', table_name='tasks')
@@ -265,7 +265,7 @@ def downgrade() -> None:
     op.drop_index('idx_tasks_project', table_name='tasks')
     op.drop_index('ix_tasks_id', table_name='tasks')
     op.drop_table('tasks')
-    
+
     # Drop workflows
     op.drop_index('idx_workflows_created', table_name='workflows')
     op.drop_index('idx_workflows_created_by', table_name='workflows')
@@ -273,7 +273,7 @@ def downgrade() -> None:
     op.drop_index('idx_workflows_project', table_name='workflows')
     op.drop_index('ix_workflows_id', table_name='workflows')
     op.drop_table('workflows')
-    
+
     # Drop projects
     op.execute("DROP INDEX IF EXISTS idx_projects_name_trgm")
     op.drop_index('idx_projects_created', table_name='projects')
@@ -281,7 +281,7 @@ def downgrade() -> None:
     op.drop_index('idx_projects_owner', table_name='projects')
     op.drop_index('ix_projects_id', table_name='projects')
     op.drop_table('projects')
-    
+
     # Drop users
     op.drop_index('idx_users_active', table_name='users')
     op.drop_index('idx_users_email', table_name='users')
@@ -290,6 +290,6 @@ def downgrade() -> None:
     op.drop_index('ix_users_username', table_name='users')
     op.drop_index('ix_users_id', table_name='users')
     op.drop_table('users')
-    
+
     # Drop extension (optional - usually kept)
     # op.execute("DROP EXTENSION IF EXISTS pg_trgm")

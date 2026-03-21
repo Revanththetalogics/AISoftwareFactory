@@ -6,17 +6,16 @@ Uses DatabaseAgentService for database-backed agent persistence.
 """
 
 from typing import List
-from datetime import datetime
 from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.api.dependencies import get_agent_service, get_current_user
 from backend.api.models import AgentResponse, AgentTaskRequest, TaskAssignmentResponse
-from backend.api.dependencies import get_current_user, require_permissions, get_agent_service
-from backend.services.database_services import DatabaseAgentService
-from backend.db.session import get_db
 from backend.core.logging import get_logger
+from backend.db.session import get_db
+from backend.services.database_services import DatabaseAgentService
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/agents", tags=["agents"])
@@ -56,13 +55,13 @@ async def list_agents(
         status=agent_status,
         db=db
     )
-    
+
     logger.info(
         "Agents listed",
         count=len(agents),
         user=user.user_id if user else "anonymous",
     )
-    
+
     return [_db_agent_to_response(agent) for agent in agents]
 
 
@@ -81,13 +80,13 @@ async def get_agent(
     Get detailed information about a specific agent.
     """
     agent = await agent_service.get_agent(agent_id, db=db)
-    
+
     if not agent:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Agent {agent_id} not found",
         )
-    
+
     return _db_agent_to_response(agent)
 
 
@@ -114,7 +113,7 @@ async def register_agent(
         capabilities=capabilities or [],
         db=db
     )
-    
+
     logger.info(
         "Agent registered",
         agent_id=agent.id,
@@ -122,7 +121,7 @@ async def register_agent(
         role=role,
         user=user.user_id if user else "anonymous",
     )
-    
+
     return _db_agent_to_response(agent)
 
 
@@ -141,29 +140,29 @@ async def assign_task(
 ) -> TaskAssignmentResponse:
     """
     Assign a task to a specific agent.
-    
+
     The agent will process the task asynchronously.
     """
     agent = await agent_service.get_agent(agent_id, db=db)
-    
+
     if not agent:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Agent {agent_id} not found",
         )
-    
+
     # Check if agent is busy
     if agent.status == "busy":
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Agent {agent_id} is currently busy",
         )
-    
+
     task_id = f"task-{uuid4().hex[:12]}"
-    
+
     # TODO: Update agent status to busy and assign task
     # This would require adding an update method to DatabaseAgentService
-    
+
     logger.info(
         "Task assigned to agent",
         task_id=task_id,
@@ -171,7 +170,7 @@ async def assign_task(
         task_type=request.task_type,
         user=user.user_id if user else "anonymous",
     )
-    
+
     return TaskAssignmentResponse(
         task_id=task_id,
         agent_id=agent_id,

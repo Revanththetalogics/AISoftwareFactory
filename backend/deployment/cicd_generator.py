@@ -6,8 +6,8 @@ including GitHub Actions, GitLab CI, and Azure DevOps.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
 from enum import Enum
+from typing import Dict, List, Optional
 
 from backend.core.logging import get_logger
 
@@ -33,7 +33,7 @@ class TriggerEvent(str, Enum):
 class PipelineStep:
     """
     CI/CD pipeline step.
-    
+
     Attributes:
         name: Step name
         command: Command to execute
@@ -52,7 +52,7 @@ class PipelineStep:
 class PipelineJob:
     """
     CI/CD pipeline job.
-    
+
     Attributes:
         name: Job name
         runs_on: Runner type
@@ -72,23 +72,23 @@ class PipelineJob:
 class CICDGenerator:
     """
     CI/CD pipeline generator.
-    
+
     This class provides:
     - GitHub Actions workflow generation
     - GitLab CI configuration generation
     - Azure DevOps pipeline generation
-    
+
     Example:
         >>> generator = CICDGenerator()
         >>> workflow = generator.generate_github_actions_python(
         ...     project_name="myproject"
         ... )
     """
-    
+
     def __init__(self):
         """Initialize the CI/CD generator."""
         self._logger = get_logger(__name__)
-    
+
     def generate_github_actions_python(
         self,
         project_name: str,
@@ -100,7 +100,7 @@ class CICDGenerator:
     ) -> str:
         """
         Generate GitHub Actions workflow for Python projects.
-        
+
         Args:
             project_name: Project name
             python_versions: Python versions to test
@@ -108,13 +108,13 @@ class CICDGenerator:
             enable_docker: Whether to include Docker build
             enable_deploy: Whether to include deployment
             deploy_platform: Deployment platform
-            
+
         Returns:
             GitHub Actions workflow YAML
         """
         python_versions = python_versions or ["3.10", "3.11", "3.12"]
         branches = branches or ["main", "master"]
-        
+
         workflow = f'''name: CI/CD Pipeline
 
 on:
@@ -129,71 +129,71 @@ jobs:
     strategy:
       matrix:
         python-version: {python_versions}
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python ${{"{{"}} matrix.python-version {{"}}"}}
       uses: actions/setup-python@v5
       with:
         python-version: ${{"{{"}} matrix.python-version {{"}}"}}
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
-    
+
     - name: Lint with flake8
       run: |
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    
+
     - name: Type check with mypy
       run: mypy . --ignore-missing-imports
-    
+
     - name: Test with pytest
       run: |
         pytest tests/ -v --cov=. --cov-report=xml
-    
+
     - name: Upload coverage
       uses: codecov/codecov-action@v3
       with:
         file: ./coverage.xml
         fail_ci_if_error: false
 '''
-        
+
         if enable_docker:
-            workflow += f'''
+            workflow += '''
   build:
     needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-    
+
     - name: Login to Docker Hub
       uses: docker/login-action@v3
       with:
-        username: ${{"{{"}} secrets.DOCKERHUB_USERNAME {{"}}"}}
-        password: ${{"{{"}} secrets.DOCKERHUB_TOKEN {{"}}"}}
-    
+        username: ${"{"} secrets.DOCKERHUB_USERNAME {"}"}
+        password: ${"{"} secrets.DOCKERHUB_TOKEN {"}"}
+
     - name: Build and push
       uses: docker/build-push-action@v5
       with:
         context: .
         push: true
         tags: |
-          ${{"{{"}} secrets.DOCKERHUB_USERNAME {{"}}"}}/{{"{{"}} github.event.repository.name {{"}}"}}:latest
-          ${{"{{"}} secrets.DOCKERHUB_USERNAME {{"}}"}}/{{"{{"}} github.event.repository.name {{"}}"}}:${{"{{"}} github.sha {{"}}"}}
+          ${"{"} secrets.DOCKERHUB_USERNAME {"}"}/{"{"} github.event.repository.name {"}"}:latest
+          ${"{"} secrets.DOCKERHUB_USERNAME {"}"}/{"{"} github.event.repository.name {"}"}:${"{"} github.sha {"}"}
         cache-from: type=gha
         cache-to: type=gha,mode=max
 '''
-        
+
         if enable_deploy:
             workflow += f'''
   deploy:
@@ -201,16 +201,16 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     environment: production
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Deploy to {deploy_platform.upper()}
       run: |
         echo "Deploying to {deploy_platform}..."
         # Add deployment commands here
 '''
-        
+
         self._logger.info(
             "GitHub Actions workflow generated",
             project=project_name,
@@ -218,9 +218,9 @@ jobs:
             docker=enable_docker,
             deploy=enable_deploy,
         )
-        
+
         return workflow
-    
+
     def generate_github_actions_node(
         self,
         project_name: str,
@@ -230,25 +230,25 @@ jobs:
     ) -> str:
         """
         Generate GitHub Actions workflow for Node.js projects.
-        
+
         Args:
             project_name: Project name
             node_versions: Node.js versions to test
             branches: Branches to trigger on
             package_manager: Package manager (npm, yarn, pnpm)
-            
+
         Returns:
             GitHub Actions workflow YAML
         """
         node_versions = node_versions or ["18", "20"]
         branches = branches or ["main", "master"]
-        
+
         install_cmd = {
             "npm": "npm ci",
             "yarn": "yarn install --frozen-lockfile",
             "pnpm": "pnpm install --frozen-lockfile",
         }.get(package_manager, "npm ci")
-        
+
         workflow = f'''name: CI/CD Pipeline
 
 on:
@@ -263,34 +263,34 @@ jobs:
     strategy:
       matrix:
         node-version: {node_versions}
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Node.js ${{"{{"}} matrix.node-version {{"}}"}}
       uses: actions/setup-node@v4
       with:
         node-version: ${{"{{"}} matrix.node-version {{"}}"}}
         cache: '{package_manager}'
-    
+
     - name: Install dependencies
       run: {install_cmd}
-    
+
     - name: Lint
       run: {package_manager} run lint
-    
+
     - name: Type check
       run: {package_manager} run type-check
-    
+
     - name: Test
       run: {package_manager} run test:ci
-    
+
     - name: Build
       run: {package_manager} run build
 '''
-        
+
         return workflow
-    
+
     def generate_gitlab_ci_python(
         self,
         project_name: str,
@@ -298,11 +298,11 @@ jobs:
     ) -> str:
         """
         Generate GitLab CI configuration for Python projects.
-        
+
         Args:
             project_name: Project name
             python_version: Python version
-            
+
         Returns:
             GitLab CI YAML
         """
@@ -360,7 +360,7 @@ deploy:
     - master
   when: manual
 '''
-    
+
     def generate_azure_pipelines(
         self,
         project_name: str,
@@ -368,11 +368,11 @@ deploy:
     ) -> str:
         """
         Generate Azure DevOps pipeline.
-        
+
         Args:
             project_name: Project name
             language: Programming language
-            
+
         Returns:
             Azure DevOps pipeline YAML
         """
@@ -382,10 +382,10 @@ deploy:
             return self._generate_azure_node(project_name)
         else:
             return f"# Unsupported language: {language}"
-    
+
     def _generate_azure_python(self, project_name: str) -> str:
         """Generate Azure pipeline for Python."""
-        return f'''trigger:
+        return '''trigger:
   branches:
     include:
       - main
@@ -434,10 +434,10 @@ steps:
     codeCoverageTool: Cobertura
     summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
 '''
-    
+
     def _generate_azure_node(self, project_name: str) -> str:
         """Generate Azure pipeline for Node.js."""
-        return f'''trigger:
+        return '''trigger:
   branches:
     include:
       - main

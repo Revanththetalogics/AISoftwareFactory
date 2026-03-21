@@ -17,20 +17,20 @@ logger = get_logger(__name__)
 class ProductManagerAgent(BaseAgent):
     """
     Product Manager Agent for requirements and product definition.
-    
+
     This agent is responsible for:
     - Requirements gathering and documentation
     - User story creation
     - Feature prioritization
     - Product specification
     - User experience design
-    
+
     Example:
         >>> agent = ProductManagerAgent()
         >>> task = Task(task_type="requirements", description="Define user login flow")
         >>> result = await agent.execute_task(task)
     """
-    
+
     def __init__(
         self,
         agent_id: str = None,
@@ -39,7 +39,7 @@ class ProductManagerAgent(BaseAgent):
     ):
         """
         Initialize the Product Manager Agent.
-        
+
         Args:
             agent_id: Unique identifier
             name: Agent name
@@ -60,30 +60,30 @@ class ProductManagerAgent(BaseAgent):
             description="Product expert responsible for translating ideas into actionable requirements",
             **kwargs,
         )
-    
+
     async def execute_task(self, task: Task) -> TaskResult:
         """
         Execute a Product Manager-level task.
-        
+
         Args:
             task: Task to execute
-            
+
         Returns:
             TaskResult: Result of task execution
         """
         start_time = time.time()
-        
+
         self._logger.info(
             "Product Manager Agent executing task",
             task_id=task.task_id,
             task_type=task.task_type,
         )
-        
+
         try:
             output = await self._process_pm_task(task)
-            
+
             execution_time = (time.time() - start_time) * 1000
-            
+
             return TaskResult(
                 task_id=task.task_id,
                 status=TaskStatus.COMPLETED,
@@ -94,7 +94,7 @@ class ProductManagerAgent(BaseAgent):
                     "capabilities_used": self._get_relevant_capabilities(task),
                 },
             )
-            
+
         except Exception as exc:
             execution_time = (time.time() - start_time) * 1000
             self._logger.error(
@@ -102,14 +102,14 @@ class ProductManagerAgent(BaseAgent):
                 task_id=task.task_id,
                 error=str(exc),
             )
-            
+
             return TaskResult(
                 task_id=task.task_id,
                 status=TaskStatus.FAILED,
                 error=str(exc),
                 execution_time_ms=execution_time,
             )
-    
+
     async def _process_pm_task(self, task: Task) -> Dict[str, Any]:
         """Process Product Manager-specific tasks."""
         task_handlers = {
@@ -119,10 +119,10 @@ class ProductManagerAgent(BaseAgent):
             "product_spec": self._handle_product_spec,
             "ux_design": self._handle_ux_design,
         }
-        
+
         handler = task_handlers.get(task.task_type, self._handle_generic_task)
         return await handler(task)
-    
+
     async def _handle_requirements(self, task: Task) -> Dict[str, Any]:
         """Handle requirements gathering tasks."""
         return {
@@ -142,7 +142,7 @@ class ProductManagerAgent(BaseAgent):
                 "GDPR compliant",
             ],
         }
-    
+
     async def _handle_user_stories(self, task: Task) -> Dict[str, Any]:
         """Handle user story creation tasks."""
         return {
@@ -169,7 +169,7 @@ class ProductManagerAgent(BaseAgent):
                 },
             ],
         }
-    
+
     async def _handle_feature_prioritization(self, task: Task) -> Dict[str, Any]:
         """Handle feature prioritization tasks."""
         return {
@@ -184,7 +184,7 @@ class ProductManagerAgent(BaseAgent):
                 "w": ["Future enhancements"],
             },
         }
-    
+
     async def _handle_product_spec(self, task: Task) -> Dict[str, Any]:
         """Handle product specification tasks."""
         return {
@@ -194,7 +194,7 @@ class ProductManagerAgent(BaseAgent):
             "key_features": ["Feature A", "Feature B", "Feature C"],
             "success_metrics": ["User adoption", "Retention rate", "NPS score"],
         }
-    
+
     async def _handle_ux_design(self, task: Task) -> Dict[str, Any]:
         """Handle UX design tasks."""
         return {
@@ -203,14 +203,14 @@ class ProductManagerAgent(BaseAgent):
             "wireframes": ["Homepage", "Dashboard", "Settings"],
             "design_principles": ["Simplicity", "Consistency", "Accessibility"],
         }
-    
+
     async def _handle_generic_task(self, task: Task) -> Dict[str, Any]:
         """Handle generic tasks."""
         return {
             "result": f"Processed: {task.description}",
             "task_type": task.task_type,
         }
-    
+
     def _get_relevant_capabilities(self, task: Task) -> list:
         """Get capabilities relevant to the task."""
         capability_map = {

@@ -4,17 +4,17 @@ Formatting utilities for AI Software Factory.
 This module provides formatting functions for dates, durations, and other data types.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional, Union
 
 
 def format_datetime(dt: Optional[datetime]) -> Optional[str]:
     """
     Format a datetime to ISO string.
-    
+
     Args:
         dt: Datetime to format
-        
+
     Returns:
         ISO formatted string or None
     """
@@ -26,10 +26,10 @@ def format_datetime(dt: Optional[datetime]) -> Optional[str]:
 def format_duration(seconds: Union[int, float]) -> str:
     """
     Format duration in seconds to human readable string.
-    
+
     Args:
         seconds: Duration in seconds
-        
+
     Returns:
         Human readable duration string
     """
@@ -49,10 +49,10 @@ def format_duration(seconds: Union[int, float]) -> str:
 def format_bytes(bytes_value: int) -> str:
     """
     Format bytes to human readable string.
-    
+
     Args:
         bytes_value: Size in bytes
-        
+
     Returns:
         Human readable size string
     """
@@ -66,12 +66,12 @@ def format_bytes(bytes_value: int) -> str:
 def truncate_string(text: str, max_length: int = 100, suffix: str = "...") -> str:
     """
     Truncate a string to maximum length.
-    
+
     Args:
         text: Text to truncate
         max_length: Maximum length
         suffix: Suffix to add if truncated
-        
+
     Returns:
         Truncated string
     """

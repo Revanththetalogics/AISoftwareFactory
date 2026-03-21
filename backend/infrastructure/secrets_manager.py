@@ -9,14 +9,13 @@ This module provides secure secrets management using:
 - Local encrypted file storage
 """
 
-import os
-import json
 import base64
-from typing import Optional, Dict, Any
+import json
+import os
 from pathlib import Path
+from typing import Dict, Optional
+
 from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 from backend.core.config import get_settings
 from backend.core.logging import get_logger
@@ -27,18 +26,18 @@ logger = get_logger(__name__)
 class SecretsManager:
     """
     Unified secrets management interface.
-    
+
     Supports multiple backends:
     - Environment variables (development)
     - Encrypted local files (staging)
     - HashiCorp Vault (production)
     - Cloud provider services (AWS/Azure/GCP)
     """
-    
+
     def __init__(self, backend: str = "auto"):
         """
         Initialize secrets manager.
-        
+
         Args:
             backend: Secret storage backend ('auto', 'env', 'vault', 'aws', 'azure', 'local')
         """
@@ -48,13 +47,13 @@ class SecretsManager:
         self._aws_client = None
         self._azure_client = None
         self._local_cipher = None
-        
+
         # Auto-detect backend based on environment
         if backend == "auto":
             self.backend = self._detect_backend()
-        
+
         self._initialize_backend()
-    
+
     def _detect_backend(self) -> str:
         """Auto-detect the appropriate secrets backend."""
         if self.settings.is_production:
@@ -69,7 +68,7 @@ class SecretsManager:
                 return "local"  # Fallback to encrypted local storage
         else:
             return "env"  # Use environment variables for development
-    
+
     def _initialize_backend(self):
         """Initialize the selected backend."""
         try:
@@ -85,70 +84,70 @@ class SecretsManager:
         except Exception as exc:
             logger.error("Failed to initialize secrets backend", backend=self.backend, error=str(exc))
             raise
-    
+
     def _init_vault(self):
         """Initialize HashiCorp Vault client."""
         try:
             import hvac
-            
+
             vault_url = os.getenv("VAULT_ADDR")
             vault_token = os.getenv("VAULT_TOKEN")
-            
+
             if not vault_url or not vault_token:
                 raise ValueError("VAULT_ADDR and VAULT_TOKEN environment variables required")
-            
+
             self._vault_client = hvac.Client(url=vault_url, token=vault_token)
-            
+
             # Test connection
             self._vault_client.is_authenticated()
             logger.info("Vault client initialized successfully")
-            
+
         except ImportError:
             raise ImportError("hvac package required for Vault integration. Install with: pip install hvac")
         except Exception as exc:
             logger.error("Vault initialization failed", error=str(exc))
             raise
-    
+
     def _init_aws_secrets_manager(self):
         """Initialize AWS Secrets Manager client."""
         try:
             import boto3
-            
+
             self._aws_client = boto3.client('secretsmanager')
             logger.info("AWS Secrets Manager client initialized")
-            
+
         except ImportError:
             raise ImportError("boto3 package required for AWS integration. Install with: pip install boto3")
         except Exception as exc:
             logger.error("AWS Secrets Manager initialization failed", error=str(exc))
             raise
-    
+
     def _init_azure_key_vault(self):
         """Initialize Azure Key Vault client."""
         try:
             from azure.identity import DefaultAzureCredential
             from azure.keyvault.secrets import SecretClient
-            
+
             vault_url = os.getenv("AZURE_KEY_VAULT_URL")
             if not vault_url:
                 raise ValueError("AZURE_KEY_VAULT_URL environment variable required")
-            
+
             credential = DefaultAzureCredential()
             self._azure_client = SecretClient(vault_url=vault_url, credential=credential)
             logger.info("Azure Key Vault client initialized")
-            
+
         except ImportError:
             raise ImportError("azure-identity and azure-keyvault-secrets packages required. Install with: pip install azure-identity azure-keyvault-secrets")
         except Exception as exc:
             logger.error("Azure Key Vault initialization failed", error=str(exc))
             raise
-    
+
     def _init_local_encryption(self):
         """Initialize local file encryption."""
         try:
             # Generate or load encryption key
             key_file = Path(".secrets_key")
-            
+
             if key_file.exists():
                 with open(key_file, "rb") as f:
                     key = f.read()
@@ -158,22 +157,22 @@ class SecretsManager:
                 with open(key_file, "wb") as f:
                     f.write(key)
                 key_file.chmod(0o600)  # Restrict permissions
-            
+
             self._local_cipher = Fernet(key)
             logger.info("Local encryption initialized")
-            
+
         except Exception as exc:
             logger.error("Local encryption initialization failed", error=str(exc))
             raise
-    
+
     def get_secret(self, key: str, default: Optional[str] = None, required: bool = False) -> Optional[str]:
         """
         Get a secret value.
-        
+
         Args:
             key: Secret key/name
             default: Default value if secret not found
-            
+
         Returns:
             Secret value or default
         """
@@ -190,25 +189,25 @@ class SecretsManager:
                 value = self._get_local_secret(key, default)
             else:
                 value = default
-            
+
             if required and value is None:
                 raise ValueError(f"Required secret '{key}' not found")
-                
+
             return value
         except Exception as exc:
             logger.error("Failed to get secret", key=key, error=str(exc))
             if required:
                 raise ValueError(f"Required secret '{key}' not found") from exc
             return default
-    
+
     def set_secret(self, key: str, value: str) -> bool:
         """
         Set a secret value.
-        
+
         Args:
             key: Secret key/name
             value: Secret value
-            
+
         Returns:
             True if successful
         """
@@ -229,7 +228,7 @@ class SecretsManager:
         except Exception as exc:
             logger.error("Failed to set secret", key=key, error=str(exc))
             return False
-    
+
     def _get_vault_secret(self, key: str, default: Optional[str] = None) -> Optional[str]:
         """Get secret from HashiCorp Vault."""
         try:
@@ -238,7 +237,7 @@ class SecretsManager:
             return response['data']['data'].get('value', default)
         except Exception:
             return default
-    
+
     def _set_vault_secret(self, key: str, value: str) -> bool:
         """Set secret in HashiCorp Vault."""
         try:
@@ -249,7 +248,7 @@ class SecretsManager:
             return True
         except Exception:
             return False
-    
+
     def _get_aws_secret(self, key: str, default: Optional[str] = None) -> Optional[str]:
         """Get secret from AWS Secrets Manager."""
         try:
@@ -261,7 +260,7 @@ class SecretsManager:
                 return base64.b64decode(response['SecretBinary']).decode('utf-8')
         except Exception:
             return default
-    
+
     def _set_aws_secret(self, key: str, value: str) -> bool:
         """Set secret in AWS Secrets Manager."""
         try:
@@ -272,7 +271,7 @@ class SecretsManager:
             return True
         except Exception:
             return False
-    
+
     def _get_azure_secret(self, key: str, default: Optional[str] = None) -> Optional[str]:
         """Get secret from Azure Key Vault."""
         try:
@@ -280,7 +279,7 @@ class SecretsManager:
             return secret.value
         except Exception:
             return default
-    
+
     def _set_azure_secret(self, key: str, value: str) -> bool:
         """Set secret in Azure Key Vault."""
         try:
@@ -288,28 +287,28 @@ class SecretsManager:
             return True
         except Exception:
             return False
-    
+
     def _get_local_secret(self, key: str, default: Optional[str] = None) -> Optional[str]:
         """Get secret from local encrypted storage."""
         try:
             secrets_file = Path(".secrets_encrypted")
             if not secrets_file.exists():
                 return default
-            
+
             with open(secrets_file, "rb") as f:
                 encrypted_data = f.read()
-            
+
             decrypted_data = self._local_cipher.decrypt(encrypted_data)
             secrets = json.loads(decrypted_data.decode('utf-8'))
             return secrets.get(key, default)
         except Exception:
             return default
-    
+
     def _set_local_secret(self, key: str, value: str) -> bool:
         """Set secret in local encrypted storage."""
         try:
             secrets_file = Path(".secrets_encrypted")
-            
+
             # Load existing secrets
             if secrets_file.exists():
                 with open(secrets_file, "rb") as f:
@@ -318,40 +317,40 @@ class SecretsManager:
                 secrets = json.loads(decrypted_data.decode('utf-8'))
             else:
                 secrets = {}
-            
+
             # Update secret
             secrets[key] = value
-            
+
             # Save encrypted secrets
             encrypted_data = self._local_cipher.encrypt(json.dumps(secrets).encode('utf-8'))
             with open(secrets_file, "wb") as f:
                 f.write(encrypted_data)
-            
+
             secrets_file.chmod(0o600)  # Restrict permissions
             return True
         except Exception:
             return False
-    
+
     def bulk_get_secrets(self, keys: list[str]) -> Dict[str, Optional[str]]:
         """
         Get multiple secrets at once.
-        
+
         Args:
             keys: List of secret keys
-            
+
         Returns:
             Dictionary of key-value pairs
         """
         return {key: self.get_secret(key) for key in keys}
-    
+
     def rotate_secret(self, key: str, new_value: str) -> bool:
         """
         Rotate a secret value.
-        
+
         Args:
             key: Secret key
             new_value: New secret value
-            
+
         Returns:
             True if successful
         """
@@ -370,11 +369,11 @@ def get_secrets_manager() -> SecretsManager:
 def get_secret(key: str, default: Optional[str] = None) -> Optional[str]:
     """
     Convenience function to get a secret.
-    
+
     Args:
         key: Secret key
         default: Default value
-        
+
     Returns:
         Secret value or default
     """
@@ -384,11 +383,11 @@ def get_secret(key: str, default: Optional[str] = None) -> Optional[str]:
 def set_secret(key: str, value: str) -> bool:
     """
     Convenience function to set a secret.
-    
+
     Args:
         key: Secret key
         value: Secret value
-        
+
     Returns:
         True if successful
     """
@@ -399,19 +398,19 @@ def set_secret(key: str, value: str) -> bool:
 def load_environment_secrets(environment: str = "development"):
     """
     Load environment-specific secrets.
-    
+
     Args:
         environment: Environment name (development, staging, production)
     """
-    settings = get_settings()
-    
+    get_settings()
+
     # Common secrets that should always be loaded
     required_secrets = [
         "SECRET_KEY",
         "DATABASE_URL",
         "REDIS_URL"
     ]
-    
+
     # Environment-specific secrets
     if environment == "production":
         required_secrets.extend([
@@ -424,30 +423,30 @@ def load_environment_secrets(environment: str = "development"):
             "STAGING_DATABASE_URL",
             "STAGING_REDIS_URL"
         ])
-    
+
     # Load secrets
     loaded_secrets = {}
     missing_secrets = []
-    
+
     for secret_key in required_secrets:
         value = get_secret(secret_key)
         if value:
             loaded_secrets[secret_key] = value
         else:
             missing_secrets.append(secret_key)
-    
+
     if missing_secrets:
         logger.warning(
             "Missing required secrets",
             environment=environment,
             missing_secrets=missing_secrets
         )
-    
+
     logger.info(
         "Environment secrets loaded",
         environment=environment,
         loaded_count=len(loaded_secrets),
         missing_count=len(missing_secrets)
     )
-    
+
     return loaded_secrets

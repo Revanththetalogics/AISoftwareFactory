@@ -5,12 +5,11 @@ This module provides intelligent routing of LLM requests to appropriate
 providers with fallback logic and model selection.
 """
 
-from typing import Dict, List, Optional
 from dataclasses import dataclass, field
+from typing import Dict, List, Optional
 
-from backend.llm.providers.base import BaseLLMProvider, LLMRequest, LLMResponse
-from backend.llm.providers.ollama import OllamaProvider
 from backend.core.logging import get_logger
+from backend.llm.providers.base import BaseLLMProvider, LLMRequest, LLMResponse
 
 logger = get_logger(__name__)
 
@@ -19,7 +18,7 @@ logger = get_logger(__name__)
 class ModelConfig:
     """
     Configuration for a model.
-    
+
     Attributes:
         name: Model name/identifier
         provider: Provider name
@@ -39,16 +38,16 @@ class ModelConfig:
 class ModelRouter:
     """
     Router for LLM requests with provider selection and fallback logic.
-    
+
     The Model Router manages multiple LLM providers and routes requests
 to the best available provider based on model requirements, availability,
     and fallback chains.
-    
+
     Attributes:
         providers: Dictionary of registered providers
         model_configs: Dictionary of model configurations
         default_model: Default model to use
-        
+
     Example:
         >>> router = ModelRouter()
         >>> router.register_provider(OllamaProvider())
@@ -57,11 +56,11 @@ to the best available provider based on model requirements, availability,
         ...     model="llama2"
         ... )
     """
-    
+
     def __init__(self, default_model: str = "llama3.2"):
         """
         Initialize the model router.
-        
+
         Args:
             default_model: Default model to use
         """
@@ -69,10 +68,10 @@ to the best available provider based on model requirements, availability,
         self.model_configs: Dict[str, ModelConfig] = {}
         self.default_model = default_model
         self._logger = get_logger(__name__)
-        
+
         # Initialize with default model configs
         self._init_default_configs()
-    
+
     def _init_default_configs(self) -> None:
         """Initialize default model configurations."""
         default_configs = [
@@ -160,43 +159,43 @@ to the best available provider based on model requirements, availability,
                 context_window=128000,
             ),
         ]
-        
+
         for config in default_configs:
             self.model_configs[config.name] = config
-    
+
     def register_provider(self, provider: BaseLLMProvider) -> None:
         """
         Register an LLM provider.
-        
+
         Args:
             provider: Provider instance to register
-            
+
         Example:
             >>> router = ModelRouter()
             >>> router.register_provider(OllamaProvider())
         """
         self.providers[provider.name] = provider
         self._logger.info("Provider registered", provider=provider.name)
-    
+
     def get_provider(self, name: str) -> Optional[BaseLLMProvider]:
         """
         Get a provider by name.
-        
+
         Args:
             name: Provider name
-            
+
         Returns:
             Provider instance or None
         """
         return self.providers.get(name)
-    
+
     async def is_provider_available(self, name: str) -> bool:
         """
         Check if a provider is available.
-        
+
         Args:
             name: Provider name
-            
+
         Returns:
             True if provider is available
         """
@@ -204,26 +203,26 @@ to the best available provider based on model requirements, availability,
         if not provider:
             return False
         return await provider.is_available()
-    
+
     def get_available_providers(self) -> List[str]:
         """
         Get list of registered provider names.
-        
+
         Returns:
             List of provider names
         """
         return list(self.providers.keys())
-    
+
     def select_model(self, task_type: str = "general") -> str:
         """
         Select the best model for a task type.
-        
+
         Args:
             task_type: Type of task (general, coding, chat, reasoning)
-            
+
         Returns:
             Selected model name
-            
+
         Example:
             >>> model = router.select_model("coding")
             >>> print(model)  # "deepseek-coder"
@@ -237,17 +236,17 @@ to the best available provider based on model requirements, availability,
             "reasoning": "mixtral:8x7b",
             "general": "llama3.2",
         }
-        
+
         preferred_model = task_model_map.get(task_type, self.default_model)
-        
+
         # Check if model is available
         config = self.model_configs.get(preferred_model)
         if config:
             return preferred_model
-        
+
         # Fallback to default
         return self.default_model
-    
+
     async def generate(
         self,
         request: LLMRequest,
@@ -255,17 +254,17 @@ to the best available provider based on model requirements, availability,
     ) -> LLMResponse:
         """
         Generate text using the appropriate provider.
-        
+
         This method selects the best provider for the requested model
         and handles fallback to other providers if the primary fails.
-        
+
         Args:
             request: LLM request
             model: Model to use (optional, defaults to request.model or default_model)
-            
+
         Returns:
             LLM response
-            
+
         Example:
             >>> request = LLMRequest(prompt="Hello!")
             >>> response = await router.generate(request, model="llama2")
@@ -274,16 +273,16 @@ to the best available provider based on model requirements, availability,
         # Determine model to use
         target_model = model or request.model or self.default_model
         request.model = target_model
-        
+
         self._logger.info(
             "Routing generation request",
             model=target_model,
             prompt_length=len(request.prompt),
         )
-        
+
         # Get model config
         config = self.model_configs.get(target_model)
-        
+
         if config:
             # Try primary provider
             primary_provider = self.providers.get(config.provider)
@@ -310,22 +309,22 @@ to the best available provider based on model requirements, availability,
                         provider=config.provider,
                         error=str(exc),
                     )
-        
+
         # Try fallback providers
         return await self._try_fallbacks(request)
-    
+
     async def _try_fallbacks(self, request: LLMRequest) -> LLMResponse:
         """
         Try fallback providers.
-        
+
         Args:
             request: LLM request
-            
+
         Returns:
             LLM response (may be error response)
         """
         self._logger.info("Trying fallback providers")
-        
+
         # Sort providers by priority of their default models
         sorted_providers = sorted(
             self.providers.items(),
@@ -334,7 +333,7 @@ to the best available provider based on model requirements, availability,
             ).priority,
             reverse=True,
         )
-        
+
         for provider_name, provider in sorted_providers:
             try:
                 if await provider.is_available():
@@ -348,7 +347,7 @@ to the best available provider based on model requirements, availability,
                         stop_sequences=request.stop_sequences,
                         context=request.context,
                     )
-                    
+
                     response = await provider.generate(fallback_request)
                     if response.success:
                         self._logger.info(
@@ -369,7 +368,7 @@ to the best available provider based on model requirements, availability,
                     provider=provider_name,
                     error=str(exc),
                 )
-        
+
         # All providers failed
         self._logger.error("All providers failed")
         return LLMResponse(
@@ -377,32 +376,32 @@ to the best available provider based on model requirements, availability,
             model="",
             error="All LLM providers are unavailable",
         )
-    
+
     def get_model_info(self, model: str) -> Optional[ModelConfig]:
         """
         Get information about a model.
-        
+
         Args:
             model: Model name
-            
+
         Returns:
             Model configuration or None
         """
         return self.model_configs.get(model)
-    
+
     def list_models(self) -> List[str]:
         """
         List all configured models.
-        
+
         Returns:
             List of model names
         """
         return list(self.model_configs.keys())
-    
+
     async def health_check(self) -> Dict[str, bool]:
         """
         Check health of all providers.
-        
+
         Returns:
             Dictionary mapping provider names to availability
         """

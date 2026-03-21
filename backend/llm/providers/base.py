@@ -7,9 +7,9 @@ and common data structures for LLM requests and responses.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
 from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class ModelCapability(str, Enum):
@@ -27,7 +27,7 @@ class ModelCapability(str, Enum):
 class LLMRequest:
     """
     Request to an LLM provider.
-    
+
     Attributes:
         prompt: The input prompt/text
         model: Specific model to use (optional)
@@ -44,7 +44,7 @@ class LLMRequest:
     top_p: float = 0.9
     stop_sequences: List[str] = field(default_factory=list)
     context: Dict[str, Any] = field(default_factory=dict)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert request to dictionary."""
         return {
@@ -62,7 +62,7 @@ class LLMRequest:
 class LLMResponse:
     """
     Response from an LLM provider.
-    
+
     Attributes:
         text: Generated text
         model: Model used for generation
@@ -83,17 +83,17 @@ class LLMResponse:
     metadata: Dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
     error: Optional[str] = None
-    
+
     def __post_init__(self):
         """Calculate total_tokens if not provided."""
         if self.total_tokens == 0 and (self.prompt_tokens > 0 or self.completion_tokens > 0):
             self.total_tokens = self.prompt_tokens + self.completion_tokens
-    
+
     @property
     def success(self) -> bool:
         """Check if response was successful."""
         return self.error is None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert response to dictionary."""
         return {
@@ -113,21 +113,21 @@ class LLMResponse:
 class BaseLLMProvider(ABC):
     """
     Abstract base class for LLM providers.
-    
+
     All LLM providers (Ollama, OpenAI, etc.) must implement this interface
     to be compatible with the Model Router.
-    
+
     Example:
         >>> class MyProvider(BaseLLMProvider):
         ...     async def generate(self, request: LLMRequest) -> LLMResponse:
         ...         # Implementation
         ...         pass
     """
-    
+
     def __init__(self, name: str, default_model: str = ""):
         """
         Initialize the provider.
-        
+
         Args:
             name: Provider name (e.g., "ollama", "openai")
             default_model: Default model to use
@@ -135,70 +135,70 @@ class BaseLLMProvider(ABC):
         self.name = name
         self.default_model = default_model
         self._available = False
-    
+
     @abstractmethod
     async def generate(self, request: LLMRequest) -> LLMResponse:
         """
         Generate text from the LLM.
-        
+
         Args:
             request: LLM request with prompt and parameters
-            
+
         Returns:
             LLM response with generated text and metadata
-            
+
         Example:
             >>> request = LLMRequest(prompt="Hello, world!")
             >>> response = await provider.generate(request)
             >>> print(response.text)
         """
         pass
-    
+
     @abstractmethod
     async def is_available(self) -> bool:
         """
         Check if the provider is available.
-        
+
         Returns:
             True if the provider can serve requests
         """
         pass
-    
+
     @abstractmethod
     def get_available_models(self) -> List[str]:
         """
         Get list of available models.
-        
+
         Returns:
             List of model names/identifiers
         """
         pass
-    
+
     def get_capabilities(self) -> List[ModelCapability]:
         """
         Get provider capabilities.
-        
+
         Returns:
             List of supported capabilities
         """
         return [ModelCapability.TEXT_GENERATION, ModelCapability.CHAT]
-    
+
     def estimate_tokens(self, text: str) -> int:
         """
         Estimate token count for text.
-        
+
         This is a rough estimate (1 token ≈ 4 characters for English).
         Override for more accurate estimates.
-        
+
         Args:
             text: Text to estimate
-            
+
         Returns:
             Estimated token count
         """
         # Rough estimate: 1 token ≈ 4 characters
         return len(text) // 4
-    
+
     def _create_error_response(self, error: str) -> LLMResponse:
         """Create an error response."""
         return LLMResponse(

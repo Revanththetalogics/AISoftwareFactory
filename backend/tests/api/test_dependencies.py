@@ -2,19 +2,19 @@
 Tests for API Dependencies.
 """
 
+
 import pytest
 from fastapi import HTTPException
-from unittest.mock import AsyncMock, MagicMock
 
 from backend.api.dependencies import (
-    require_permissions,
     User,
+    require_permissions,
 )
 
 
 class TestRequirePermissions:
     """Test cases for require_permissions."""
-    
+
     @pytest.mark.asyncio
     async def test_sufficient_permissions(self):
         """Test user with sufficient permissions."""
@@ -24,11 +24,11 @@ class TestRequirePermissions:
             email="test@example.com",
             permissions=["read", "write"],
         )
-        
+
         result = await require_permissions(["read"], user)
-        
+
         assert result.user_id == "user-123"
-    
+
     @pytest.mark.asyncio
     async def test_insufficient_permissions(self):
         """Test user with insufficient permissions."""
@@ -38,12 +38,12 @@ class TestRequirePermissions:
             email="test@example.com",
             permissions=["read"],
         )
-        
+
         with pytest.raises(HTTPException) as exc_info:
             await require_permissions(["write"], user)
-        
+
         assert exc_info.value.status_code == 403
-    
+
     @pytest.mark.asyncio
     async def test_admin_override(self):
         """Test admin can access anything."""
@@ -53,11 +53,11 @@ class TestRequirePermissions:
             email="admin@example.com",
             permissions=["admin"],
         )
-        
+
         result = await require_permissions(["write", "execute"], user)
-        
+
         assert result.user_id == "admin-123"
-    
+
     @pytest.mark.asyncio
     async def test_no_user(self):
         """Test no user provided."""

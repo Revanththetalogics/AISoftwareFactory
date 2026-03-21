@@ -14,7 +14,7 @@ from fastapi import APIRouter, status
 from pydantic import BaseModel, Field
 
 from backend.core.config import get_settings
-from backend.core.logging import get_logger, get_correlation_id
+from backend.core.logging import get_correlation_id, get_logger
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -39,10 +39,10 @@ class ComponentHealth(BaseModel):
 class HealthResponse(BaseModel):
     """
     Health check response model.
-    
+
     This model provides comprehensive health information about the application
     and its dependencies.
-    
+
     Attributes:
         status: Overall health status
         version: Application version
@@ -60,7 +60,7 @@ class HealthResponse(BaseModel):
         default_factory=list,
         description="Component health statuses"
     )
-    
+
     model_config = {
         "json_schema_extra": {
             "example": {
@@ -117,17 +117,17 @@ _app_start_time: float = time.time()
 async def health_check() -> HealthResponse:
     """
     Perform comprehensive health check.
-    
+
     This endpoint checks:
     - Application status
     - Configuration validity
     - Future: Database connectivity (Phase 5)
     - Future: Redis connectivity (Phase 4)
     - Future: External service health
-    
+
     Returns:
         HealthResponse: Comprehensive health status
-        
+
     Example:
         >>> curl http://localhost:8000/api/v1/health
         {
@@ -142,17 +142,17 @@ async def health_check() -> HealthResponse:
     start_time = time.time()
     settings = get_settings()
     components: List[ComponentHealth] = []
-    
+
     # Check application health
     try:
         app_check_start = time.time()
-        
+
         # Verify configuration is loaded
         _ = settings.APP_NAME
         _ = settings.APP_VERSION
-        
+
         app_response_time = (time.time() - app_check_start) * 1000
-        
+
         components.append(
             ComponentHealth(
                 name="application",
@@ -165,7 +165,7 @@ async def health_check() -> HealthResponse:
                 }
             )
         )
-        
+
     except Exception as exc:
         components.append(
             ComponentHealth(
@@ -177,18 +177,18 @@ async def health_check() -> HealthResponse:
             )
         )
         logger.error("Health check failed for application", error=str(exc))
-    
+
     # Check configuration health
     try:
         config_check_start = time.time()
-        
+
         # Validate critical configuration
         if not settings.SECRET_KEY or settings.SECRET_KEY == "your-secret-key-change-in-production":
             if settings.is_production:
                 raise ValueError("SECRET_KEY not properly configured for production")
-        
+
         config_response_time = (time.time() - config_check_start) * 1000
-        
+
         components.append(
             ComponentHealth(
                 name="configuration",
@@ -201,7 +201,7 @@ async def health_check() -> HealthResponse:
                 }
             )
         )
-        
+
     except Exception as exc:
         components.append(
             ComponentHealth(
@@ -213,7 +213,7 @@ async def health_check() -> HealthResponse:
             )
         )
         logger.error("Health check failed for configuration", error=str(exc))
-    
+
     # Calculate overall status
     unhealthy_count = sum(
         1 for c in components if c.status == HealthStatus.UNHEALTHY
@@ -221,16 +221,16 @@ async def health_check() -> HealthResponse:
     degraded_count = sum(
         1 for c in components if c.status == HealthStatus.DEGRADED
     )
-    
+
     if unhealthy_count > 0:
         overall_status = HealthStatus.UNHEALTHY
     elif degraded_count > 0:
         overall_status = HealthStatus.DEGRADED
     else:
         overall_status = HealthStatus.HEALTHY
-    
+
     response_time = (time.time() - start_time) * 1000
-    
+
     logger.info(
         "Health check completed",
         status=overall_status.value,
@@ -238,7 +238,7 @@ async def health_check() -> HealthResponse:
         components_checked=len(components),
         correlation_id=get_correlation_id(),
     )
-    
+
     return HealthResponse(
         status=overall_status,
         version=settings.APP_VERSION,
@@ -259,13 +259,13 @@ async def health_check() -> HealthResponse:
 async def readiness_check() -> ReadinessResponse:
     """
     Check if application is ready to serve traffic.
-    
+
     This endpoint is used by orchestrators (Kubernetes, etc.) to determine
     if the application should receive traffic.
-    
+
     Returns:
         ReadinessResponse: Readiness status
-        
+
     Example:
         >>> curl http://localhost:8000/api/v1/ready
         {
@@ -276,22 +276,22 @@ async def readiness_check() -> ReadinessResponse:
     """
     settings = get_settings()
     checks: Dict[str, bool] = {}
-    
+
     # Check application is configured
     try:
         _ = settings.APP_NAME
         checks["application"] = True
     except Exception:
         checks["application"] = False
-    
+
     # Future: Check database connectivity (Phase 5)
     checks["database"] = True  # Stub for now
-    
+
     # Future: Check Redis connectivity (Phase 4)
     checks["redis"] = True  # Stub for now
-    
+
     all_ready = all(checks.values())
-    
+
     return ReadinessResponse(
         ready=all_ready,
         timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
@@ -309,13 +309,13 @@ async def readiness_check() -> ReadinessResponse:
 async def liveness_check() -> LivenessResponse:
     """
     Check if application is alive.
-    
+
     This endpoint is used by orchestrators (Kubernetes, etc.) to determine
     if the application should be restarted.
-    
+
     Returns:
         LivenessResponse: Liveness status
-        
+
     Example:
         >>> curl http://localhost:8000/api/v1/live
         {
@@ -338,13 +338,13 @@ async def liveness_check() -> LivenessResponse:
 async def simple_health_check() -> Dict[str, str]:
     """
     Simple health check endpoint.
-    
+
     This is a lightweight endpoint for basic health checks that don't
     need detailed component status.
-    
+
     Returns:
         dict: Simple status message
-        
+
     Example:
         >>> curl http://localhost:8000/api/v1/health/simple
         {"status": "ok", "version": "1.0.0"}

@@ -12,7 +12,7 @@ from typing import Optional
 def generate_uuid() -> str:
     """
     Generate a UUID4 string.
-    
+
     Returns:
         UUID string
     """
@@ -22,10 +22,10 @@ def generate_uuid() -> str:
 def generate_id(prefix: Optional[str] = None) -> str:
     """
     Generate a unique ID with optional prefix.
-    
+
     Args:
         prefix: Optional prefix for the ID
-        
+
     Returns:
         Unique ID string
     """
@@ -38,10 +38,10 @@ def generate_id(prefix: Optional[str] = None) -> str:
 def generate_timestamp_id(prefix: Optional[str] = None) -> str:
     """
     Generate an ID with timestamp for sorting.
-    
+
     Args:
         prefix: Optional prefix for the ID
-        
+
     Returns:
         Timestamp-based ID string
     """

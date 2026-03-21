@@ -12,13 +12,13 @@ from typing import Any, AsyncIterator, Dict, List, Optional
 
 from backend.core.config import get_settings
 from backend.core.logging import get_logger
+from backend.infrastructure.metrics import get_metrics_collector
 from backend.llm.base_provider import BaseLLMProvider
 from backend.utils.resilience import (
-    llm_circuit_breaker,
     CircuitBreakerOpenError,
+    llm_circuit_breaker,
     with_timeout,
 )
-from backend.infrastructure.metrics import get_metrics_collector
 
 logger = get_logger(__name__)
 metrics = get_metrics_collector()
@@ -28,11 +28,11 @@ class OpenAIProvider(BaseLLMProvider):
     """
     OpenAI LLM provider for cloud model execution.
     """
-    
+
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """
         Initialize OpenAI provider.
-        
+
         Args:
             config: Provider configuration with optional 'api_key' and 'model'
         """
@@ -41,7 +41,7 @@ class OpenAIProvider(BaseLLMProvider):
         self.model = self.config.get("model", os.getenv("OPENAI_MODEL", "gpt-4"))
         self.base_url = self.config.get("base_url", "https://api.openai.com/v1")
         self._client = None
-    
+
     def _get_client(self):
         """Get or create OpenAI client."""
         if self._client is None:
@@ -57,7 +57,7 @@ class OpenAIProvider(BaseLLMProvider):
                     "Install with: pip install openai"
                 )
         return self._client
-    
+
     async def generate(
         self,
         prompt: str,
@@ -67,19 +67,19 @@ class OpenAIProvider(BaseLLMProvider):
     ) -> str:
         """
         Generate text using OpenAI with circuit breaker and timeout.
-        
+
         Args:
             prompt: Input prompt
             temperature: Sampling temperature
             max_tokens: Maximum tokens to generate
             **kwargs: Additional parameters
-            
+
         Returns:
             Generated text
         """
         settings = get_settings()
         start_time = time.time()
-        
+
         async def _do_generate():
             client = self._get_client()
             messages = [{"role": "user", "content": prompt}]
@@ -91,7 +91,7 @@ class OpenAIProvider(BaseLLMProvider):
                 **kwargs
             )
             return response.choices[0].message.content or ""
-        
+
         try:
             # Apply circuit breaker and timeout
             result = await llm_circuit_breaker.call(
@@ -101,7 +101,7 @@ class OpenAIProvider(BaseLLMProvider):
                     f"OpenAI generate ({self.model})"
                 )
             )
-            
+
             # Record success metrics
             duration = time.time() - start_time
             metrics.record_llm_call(
@@ -115,9 +115,9 @@ class OpenAIProvider(BaseLLMProvider):
                 llm_circuit_breaker.name,
                 llm_circuit_breaker.get_state_value()
             )
-            
+
             return result
-            
+
         except CircuitBreakerOpenError:
             metrics.record_circuit_breaker_rejection(llm_circuit_breaker.name)
             logger.error("OpenAI circuit breaker is open")
@@ -142,7 +142,7 @@ class OpenAIProvider(BaseLLMProvider):
             metrics.record_circuit_breaker_failure(llm_circuit_breaker.name)
             logger.error(f"OpenAI generation error: {e}")
             raise
-    
+
     async def generate_stream(
         self,
         prompt: str,
@@ -152,20 +152,20 @@ class OpenAIProvider(BaseLLMProvider):
     ) -> AsyncIterator[str]:
         """
         Generate text with streaming.
-        
+
         Args:
             prompt: Input prompt
             temperature: Sampling temperature
             max_tokens: Maximum tokens to generate
             **kwargs: Additional parameters
-            
+
         Yields:
             Text chunks
         """
         client = self._get_client()
-        
+
         messages = [{"role": "user", "content": prompt}]
-        
+
         try:
             stream = await client.chat.completions.create(
                 model=self.model,
@@ -182,7 +182,7 @@ class OpenAIProvider(BaseLLMProvider):
         except Exception as e:
             logger.error(f"OpenAI streaming error: {e}")
             raise
-    
+
     async def chat(
         self,
         messages: List[Dict[str, str]],
@@ -192,19 +192,19 @@ class OpenAIProvider(BaseLLMProvider):
     ) -> str:
         """
         Generate chat response with circuit breaker and timeout.
-        
+
         Args:
             messages: List of messages with 'role' and 'content'
             temperature: Sampling temperature
             max_tokens: Maximum tokens to generate
             **kwargs: Additional parameters
-            
+
         Returns:
             Generated response
         """
         settings = get_settings()
         start_time = time.time()
-        
+
         async def _do_chat():
             client = self._get_client()
             response = await client.chat.completions.create(
@@ -215,7 +215,7 @@ class OpenAIProvider(BaseLLMProvider):
                 **kwargs
             )
             return response.choices[0].message.content or ""
-        
+
         try:
             result = await llm_circuit_breaker.call(
                 lambda: with_timeout(
@@ -224,7 +224,7 @@ class OpenAIProvider(BaseLLMProvider):
                     f"OpenAI chat ({self.model})"
                 )
             )
-            
+
             duration = time.time() - start_time
             metrics.record_llm_call(
                 provider="openai",
@@ -233,9 +233,9 @@ class OpenAIProvider(BaseLLMProvider):
                 status="success"
             )
             metrics.record_circuit_breaker_success(llm_circuit_breaker.name)
-            
+
             return result
-            
+
         except CircuitBreakerOpenError:
             metrics.record_circuit_breaker_rejection(llm_circuit_breaker.name)
             logger.error("OpenAI circuit breaker is open")
@@ -259,7 +259,7 @@ class OpenAIProvider(BaseLLMProvider):
             metrics.record_circuit_breaker_failure(llm_circuit_breaker.name)
             logger.error(f"OpenAI chat error: {e}")
             raise
-    
+
     async def chat_stream(
         self,
         messages: List[Dict[str, str]],
@@ -269,18 +269,18 @@ class OpenAIProvider(BaseLLMProvider):
     ) -> AsyncIterator[str]:
         """
         Generate chat response with streaming.
-        
+
         Args:
             messages: List of messages with 'role' and 'content'
             temperature: Sampling temperature
             max_tokens: Maximum tokens to generate
             **kwargs: Additional parameters
-            
+
         Yields:
             Response chunks
         """
         client = self._get_client()
-        
+
         try:
             stream = await client.chat.completions.create(
                 model=self.model,
@@ -297,19 +297,19 @@ class OpenAIProvider(BaseLLMProvider):
         except Exception as e:
             logger.error(f"OpenAI chat streaming error: {e}")
             raise
-    
+
     async def embed(self, text: str) -> List[float]:
         """
         Generate embeddings using OpenAI.
-        
+
         Args:
             text: Input text
-            
+
         Returns:
             Embedding vector
         """
         client = self._get_client()
-        
+
         try:
             response = await client.embeddings.create(
                 model="text-embedding-3-small",
@@ -319,17 +319,17 @@ class OpenAIProvider(BaseLLMProvider):
         except Exception as e:
             logger.error(f"OpenAI embedding error: {e}")
             raise
-    
+
     async def health_check(self) -> bool:
         """
         Check if OpenAI API is available.
-        
+
         Returns:
             True if available
         """
         if not self.api_key:
             return False
-        
+
         try:
             client = self._get_client()
             # Try a simple models list call
@@ -337,17 +337,17 @@ class OpenAIProvider(BaseLLMProvider):
             return True
         except Exception:
             return False
-    
+
     @property
     def name(self) -> str:
         """Get provider name."""
         return f"openai:{self.model}"
-    
+
     @property
     def supports_streaming(self) -> bool:
         """Check if streaming is supported."""
         return True
-    
+
     @property
     def supports_embeddings(self) -> bool:
         """Check if embeddings are supported."""

@@ -6,10 +6,10 @@ error handling, request logging, correlation ID management, authentication, CORS
 """
 
 from backend.middleware.auth_middleware import AuthenticationMiddleware
-from backend.middleware.error_handler import ErrorHandlerMiddleware
-from backend.middleware.request_logging import RequestLoggingMiddleware
 from backend.middleware.correlation_id import CorrelationIdMiddleware
 from backend.middleware.csrf_middleware import CSRFMiddleware
+from backend.middleware.error_handler import ErrorHandlerMiddleware
+from backend.middleware.request_logging import RequestLoggingMiddleware
 
 __all__ = [
     "AuthenticationMiddleware",

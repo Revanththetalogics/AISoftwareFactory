@@ -6,10 +6,10 @@ multi-step processes with dependencies and parallel execution.
 """
 
 import asyncio
-from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
 
 from backend.core.logging import get_logger
 
@@ -41,22 +41,22 @@ class PipelineStep:
 class Pipeline:
     """
     Workflow pipeline for multi-step orchestration.
-    
+
     Provides dependency management, parallel execution, and
     comprehensive pipeline state tracking.
     """
-    
+
     def __init__(self, name: str):
         """
         Initialize the pipeline.
-        
+
         Args:
             name: Pipeline name
         """
         self._name = name
         self._steps: Dict[str, PipelineStep] = {}
         self._logger = get_logger(__name__)
-    
+
     def add_step(
         self,
         name: str,
@@ -65,12 +65,12 @@ class Pipeline:
     ) -> 'Pipeline':
         """
         Add a step to the pipeline.
-        
+
         Args:
             name: Step name
             action: Step action function
             dependencies: List of step names this step depends on
-            
+
         Returns:
             Self for chaining
         """
@@ -79,26 +79,26 @@ class Pipeline:
             action=action,
             dependencies=dependencies or []
         )
-        
+
         self._logger.info("Step added", pipeline=self._name, step=name)
         return self
-    
+
     async def execute(self, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Execute the pipeline.
-        
+
         Args:
             context: Shared context for all steps
-            
+
         Returns:
             Execution results
         """
         context = context or {}
         completed = set()
         failed = set()
-        
+
         self._logger.info("Pipeline started", pipeline=self._name)
-        
+
         while len(completed) + len(failed) < len(self._steps):
             # Find ready steps (all dependencies completed)
             ready_steps = [
@@ -107,14 +107,14 @@ class Pipeline:
                 and all(dep in completed for dep in step.dependencies)
                 and not any(dep in failed for dep in step.dependencies)
             ]
-            
+
             if not ready_steps:
                 # Check if we're stuck due to failed dependencies
                 pending_steps = [
                     name for name, step in self._steps.items()
                     if step.status == StepStatus.PENDING
                 ]
-                
+
                 if pending_steps:
                     for name in pending_steps:
                         step = self._steps[name]
@@ -128,15 +128,15 @@ class Pipeline:
                                 failed_deps=failed_deps
                             )
                 break
-            
+
             # Execute ready steps in parallel
             tasks = [
                 self._execute_step(name, context)
                 for name in ready_steps
             ]
-            
+
             results = await asyncio.gather(*tasks, return_exceptions=True)
-            
+
             # Process results
             for name, result in zip(ready_steps, results):
                 if isinstance(result, Exception):
@@ -145,14 +145,14 @@ class Pipeline:
                     self._steps[name].error = str(result)
                 else:
                     completed.add(name)
-        
+
         self._logger.info(
             "Pipeline completed",
             pipeline=self._name,
             completed=len(completed),
             failed=len(failed)
         )
-        
+
         return {
             "pipeline": self._name,
             "completed": list(completed),
@@ -166,7 +166,7 @@ class Pipeline:
                 for name, step in self._steps.items()
             }
         }
-    
+
     async def _execute_step(
         self,
         name: str,
@@ -176,29 +176,29 @@ class Pipeline:
         step = self._steps[name]
         step.status = StepStatus.RUNNING
         step.started_at = datetime.utcnow()
-        
+
         try:
             self._logger.info("Executing step", step=name)
-            
+
             if asyncio.iscoroutinefunction(step.action):
                 result = await step.action(context)
             else:
                 result = step.action(context)
-            
+
             step.result = result
             step.status = StepStatus.COMPLETED
             step.completed_at = datetime.utcnow()
-            
+
             self._logger.info("Step completed", step=name)
-            
+
         except Exception as e:
             step.status = StepStatus.FAILED
             step.error = str(e)
             step.completed_at = datetime.utcnow()
-            
+
             self._logger.error("Step failed", step=name, error=str(e))
             raise
-    
+
     def get_status(self) -> Dict[str, Any]:
         """Get current pipeline status."""
         return {

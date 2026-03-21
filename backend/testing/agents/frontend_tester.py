@@ -9,17 +9,16 @@ This agent handles:
 - Cross-browser testing
 """
 
-import asyncio
-from typing import Dict, List, Optional, Any, Callable
+import json
 from dataclasses import dataclass, field
 from datetime import datetime
-from pathlib import Path
 from enum import Enum
-import json
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from backend.agents.base_agent import BaseAgent, Task, TaskResult, TaskStatus
-from backend.llm.factory import LLMFactory
 from backend.core.logging import get_logger
+from backend.llm.factory import LLMFactory
 
 logger = get_logger(__name__)
 
@@ -49,7 +48,7 @@ class VisualDiff:
     pixel_diff_count: int
     diff_percentage: float
     is_significant: bool
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "baseline_path": self.baseline_path,
@@ -77,7 +76,7 @@ class E2ETestResult:
     console_errors: List[str] = field(default_factory=list)
     network_errors: List[str] = field(default_factory=list)
     executed_at: datetime = field(default_factory=datetime.utcnow)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "test_name": self.test_name,
@@ -108,7 +107,7 @@ class GeneratedE2ETest:
     assertions: List[str]
     selectors: Dict[str, str]
     generated_at: datetime = field(default_factory=datetime.utcnow)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "id": self.id,
@@ -125,7 +124,7 @@ class GeneratedE2ETest:
 class FrontendTesterAgent(BaseAgent):
     """
     Agent for frontend E2E and visual testing.
-    
+
     This agent provides:
     - Playwright test generation from user flows
     - Cross-browser test execution
@@ -133,7 +132,7 @@ class FrontendTesterAgent(BaseAgent):
     - Accessibility testing
     - Self-healing selectors
     - Component-level testing
-    
+
     Example:
         >>> agent = FrontendTesterAgent()
         >>> task = Task(
@@ -143,11 +142,11 @@ class FrontendTesterAgent(BaseAgent):
         ... )
         >>> result = await agent.execute_task(task)
     """
-    
+
     def __init__(self, base_url: str = "http://localhost:3000"):
         """
         Initialize the frontend tester agent.
-        
+
         Args:
             base_url: Base URL for the frontend application
         """
@@ -169,19 +168,19 @@ class FrontendTesterAgent(BaseAgent):
         self._playwright_available = self._check_playwright()
         self._test_history: List[E2ETestResult] = []
         self._selector_healing_cache: Dict[str, str] = {}
-    
+
     async def execute_task(self, task: Task) -> TaskResult:
         """
         Execute a frontend testing task.
-        
+
         Args:
             task: Task containing testing parameters
-            
+
         Returns:
             TaskResult with test results
         """
         start_time = datetime.utcnow()
-        
+
         try:
             if task.task_type == "generate_e2e_tests":
                 result = await self._generate_e2e_tests_task(task)
@@ -199,16 +198,16 @@ class FrontendTesterAgent(BaseAgent):
                     status=TaskStatus.FAILED,
                     error=f"Unknown task type: {task.task_type}",
                 )
-            
+
             execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
-            
+
             return TaskResult(
                 task_id=task.task_id,
                 status=TaskStatus.COMPLETED,
                 output=result,
                 execution_time_ms=execution_time,
             )
-            
+
         except Exception as e:
             self._logger.error("Frontend testing failed", error=str(e))
             return TaskResult(
@@ -216,7 +215,7 @@ class FrontendTesterAgent(BaseAgent):
                 status=TaskStatus.FAILED,
                 error=str(e),
             )
-    
+
     async def generate_e2e_tests_from_flow(
         self,
         page_path: str,
@@ -226,18 +225,18 @@ class FrontendTesterAgent(BaseAgent):
     ) -> List[GeneratedE2ETest]:
         """
         Generate E2E tests from a user flow description.
-        
+
         Args:
             page_path: Path to the page (e.g., "/login")
             user_flow: List of user actions (e.g., ["click login button", "enter email"])
             page_description: Description of the page
             generate_assertions: Whether to generate assertions
-            
+
         Returns:
             List of generated E2E tests
         """
         self._logger.info("Generating E2E tests", page_path=page_path)
-        
+
         prompt = f"""Generate Playwright E2E tests for this user flow:
 
 Page: {page_path}
@@ -255,13 +254,13 @@ Generate Playwright test code that:
 6. Handles async operations properly
 
 Return the complete test file code with imports and test cases."""
-        
+
         try:
             test_code = await self._llm.generate(prompt)
-            
+
             # Parse selectors from the generated code
             selectors = self._extract_selectors(test_code)
-            
+
             test = GeneratedE2ETest(
                 id=f"e2e_{page_path.replace('/', '_')}_{datetime.utcnow().timestamp()}",
                 name=f"test_{page_path.replace('/', '_')}_flow",
@@ -272,19 +271,19 @@ Return the complete test file code with imports and test cases."""
                 assertions=["page loaded", "flow completed"] if generate_assertions else [],
                 selectors=selectors,
             )
-            
+
             self._logger.info(
                 "E2E test generated",
                 page_path=page_path,
                 selectors_count=len(selectors),
             )
-            
+
             return [test]
-            
+
         except Exception as e:
             self._logger.error("Failed to generate E2E tests", error=str(e))
             return []
-    
+
     async def generate_tests_from_component(
         self,
         component_name: str,
@@ -293,12 +292,12 @@ Return the complete test file code with imports and test cases."""
     ) -> List[GeneratedE2ETest]:
         """
         Generate tests for a React component.
-        
+
         Args:
             component_name: Name of the component
             component_props: Component props definition
             component_usage_examples: Examples of component usage
-            
+
         Returns:
             List of generated tests
         """
@@ -318,10 +317,10 @@ Generate:
 5. Snapshot tests
 
 Return the complete test file code."""
-        
+
         try:
             test_code = await self._llm.generate(prompt)
-            
+
             test = GeneratedE2ETest(
                 id=f"component_{component_name}_{datetime.utcnow().timestamp()}",
                 name=f"test_{component_name}",
@@ -332,13 +331,13 @@ Return the complete test file code."""
                 assertions=["component renders", "props work correctly"],
                 selectors={},
             )
-            
+
             return [test]
-            
+
         except Exception as e:
             self._logger.error("Failed to generate component tests", error=str(e))
             return []
-    
+
     async def run_visual_regression_test(
         self,
         page_path: str,
@@ -347,60 +346,60 @@ Return the complete test file code."""
     ) -> List[E2ETestResult]:
         """
         Run visual regression tests.
-        
+
         Args:
             page_path: Path to test
             viewport_sizes: List of viewport sizes to test
             threshold: Difference threshold (0-1)
-            
+
         Returns:
             List of test results
         """
         if not self._playwright_available:
             self._logger.warning("Playwright not available, skipping visual test")
             return []
-        
+
         if viewport_sizes is None:
             viewport_sizes = [
                 {"width": 1920, "height": 1080},  # Desktop
                 {"width": 768, "height": 1024},   # Tablet
                 {"width": 375, "height": 667},    # Mobile
             ]
-        
+
         results = []
-        
+
         try:
             from playwright.async_api import async_playwright
-            
+
             async with async_playwright() as p:
                 browser = await p.chromium.launch()
-                
+
                 for viewport in viewport_sizes:
                     context = await browser.new_context(viewport=viewport)
                     page = await context.new_page()
-                    
+
                     start_time = datetime.utcnow()
-                    
+
                     try:
                         await page.goto(f"{self._base_url}{page_path}")
                         await page.wait_for_load_state("networkidle")
-                        
+
                         # Take screenshot
                         screenshot_path = f"screenshots/{page_path.replace('/', '_')}_{viewport['width']}x{viewport['height']}.png"
                         Path("screenshots").mkdir(exist_ok=True)
                         await page.screenshot(path=screenshot_path, full_page=True)
-                        
+
                         # Compare with baseline
                         baseline_path = f"baselines/{page_path.replace('/', '_')}_{viewport['width']}x{viewport['height']}.png"
-                        
+
                         visual_diff = None
                         if Path(baseline_path).exists():
                             visual_diff = await self._compare_screenshots(
                                 baseline_path, screenshot_path, threshold
                             )
-                        
+
                         duration = (datetime.utcnow() - start_time).total_seconds() * 1000
-                        
+
                         result = E2ETestResult(
                             test_name=f"visual_{page_path}_{viewport['width']}x{viewport['height']}",
                             status=TestStatus.PASSED if not visual_diff or not visual_diff.is_significant else TestStatus.FAILED,
@@ -411,7 +410,7 @@ Return the complete test file code."""
                             visual_diff=visual_diff,
                         )
                         results.append(result)
-                        
+
                     except Exception as e:
                         duration = (datetime.utcnow() - start_time).total_seconds() * 1000
                         result = E2ETestResult(
@@ -423,46 +422,46 @@ Return the complete test file code."""
                             error_message=str(e),
                         )
                         results.append(result)
-                    
+
                     await context.close()
-                
+
                 await browser.close()
-        
+
         except ImportError:
             self._logger.error("Playwright not installed")
-        
+
         return results
-    
+
     async def run_accessibility_audit(
         self,
         page_path: str
     ) -> Dict[str, Any]:
         """
         Run accessibility audit using axe-core.
-        
+
         Args:
             page_path: Path to test
-            
+
         Returns:
             Accessibility audit results
         """
         if not self._playwright_available:
             return {"error": "Playwright not available"}
-        
+
         try:
             from playwright.async_api import async_playwright
-            
+
             async with async_playwright() as p:
                 browser = await p.chromium.launch()
                 context = await browser.new_context()
                 page = await context.new_page()
-                
+
                 await page.goto(f"{self._base_url}{page_path}")
                 await page.wait_for_load_state("networkidle")
-                
+
                 # Inject axe-core
                 await page.add_script_tag(path="node_modules/axe-core/axe.min.js")
-                
+
                 # Run accessibility check
                 violations = await page.evaluate("""
                     async () => {
@@ -470,20 +469,20 @@ Return the complete test file code."""
                         return results.violations;
                     }
                 """)
-                
+
                 await browser.close()
-                
+
                 return {
                     "page_path": page_path,
                     "violations_count": len(violations),
                     "violations": violations,
                     "passed": len(violations) == 0,
                 }
-                
+
         except Exception as e:
             self._logger.error("Accessibility audit failed", error=str(e))
             return {"error": str(e)}
-    
+
     async def heal_selector(
         self,
         broken_selector: str,
@@ -492,19 +491,19 @@ Return the complete test file code."""
     ) -> Optional[str]:
         """
         Heal a broken selector using AI.
-        
+
         Args:
             broken_selector: The selector that no longer works
             page_content: Current page HTML/content
             element_description: Description of the element
-            
+
         Returns:
             New selector or None
         """
         # Check cache first
         if broken_selector in self._selector_healing_cache:
             return self._selector_healing_cache[broken_selector]
-        
+
         prompt = f"""Find a new selector for this element:
 
 Broken Selector: {broken_selector}
@@ -520,30 +519,30 @@ Provide a new, resilient Playwright selector that:
 4. Works with Playwright's locator API
 
 Return only the selector string."""
-        
+
         try:
             new_selector = await self._llm.generate(prompt)
             new_selector = new_selector.strip().strip('"').strip("'")
-            
+
             # Cache the result
             self._selector_healing_cache[broken_selector] = new_selector
-            
+
             self._logger.info(
                 "Selector healed",
                 old=broken_selector,
                 new=new_selector,
             )
-            
+
             return new_selector
-            
+
         except Exception as e:
             self._logger.error("Failed to heal selector", error=str(e))
             return None
-    
+
     def get_test_statistics(self) -> Dict[str, Any]:
         """
         Get statistics about frontend tests.
-        
+
         Returns:
             Test statistics
         """
@@ -551,12 +550,12 @@ Return only the selector string."""
         passed = sum(1 for t in self._test_history if t.status == TestStatus.PASSED)
         failed = sum(1 for t in self._test_history if t.status == TestStatus.FAILED)
         flaky = sum(1 for t in self._test_history if t.status == TestStatus.FLAKY)
-        
+
         avg_duration = (
             sum(t.duration_ms for t in self._test_history) / total
             if total > 0 else 0
         )
-        
+
         return {
             "total_tests": total,
             "passed": passed,
@@ -567,36 +566,36 @@ Return only the selector string."""
             "by_browser": self._group_by_browser(),
             "recent_results": [r.to_dict() for r in self._test_history[-10:]],
         }
-    
+
     # Private methods
-    
+
     def _check_playwright(self) -> bool:
         """Check if Playwright is available."""
         try:
-            import playwright
+            import playwright  # noqa: F401
             return True
         except ImportError:
             return False
-    
+
     def _extract_selectors(self, test_code: str) -> Dict[str, str]:
         """Extract selectors from generated test code."""
         selectors = {}
-        
+
         # Pattern for common selector types
         import re
-        
+
         # data-testid selectors
         testid_pattern = r'\[data-testid=["\']([^"\']+)["\']\]'
         for match in re.finditer(testid_pattern, test_code):
             selectors[f"testid_{match.group(1)}"] = match.group(0)
-        
+
         # Role selectors
         role_pattern = r'getByRole\(["\']([^"\']+)["\'][^)]*\)'
         for match in re.finditer(role_pattern, test_code):
             selectors[f"role_{match.group(1)}"] = match.group(0)
-        
+
         return selectors
-    
+
     async def _compare_screenshots(
         self,
         baseline_path: str,
@@ -606,9 +605,9 @@ Return only the selector string."""
         """Compare two screenshots and return diff information."""
         # This would use a library like pixelmatch or PIL
         # For now, return a placeholder
-        
+
         diff_path = current_path.replace(".png", "_diff.png")
-        
+
         return VisualDiff(
             baseline_path=baseline_path,
             current_path=current_path,
@@ -617,7 +616,7 @@ Return only the selector string."""
             diff_percentage=0.0,
             is_significant=False,
         )
-    
+
     def _group_by_browser(self) -> Dict[str, int]:
         """Group test results by browser."""
         by_browser = {}
@@ -625,7 +624,7 @@ Return only the selector string."""
             browser = result.browser
             by_browser[browser] = by_browser.get(browser, 0) + 1
         return by_browser
-    
+
     async def _generate_e2e_tests_task(self, task: Task) -> Dict[str, Any]:
         """Handle generate_e2e_tests task type."""
         tests = await self.generate_e2e_tests_from_flow(
@@ -634,17 +633,17 @@ Return only the selector string."""
             page_description=task.context.get("page_description", ""),
             generate_assertions=task.context.get("generate_assertions", True),
         )
-        
+
         return {
             "tests_generated": len(tests),
             "tests": [t.to_dict() for t in tests],
         }
-    
+
     async def _run_e2e_tests_task(self, task: Task) -> Dict[str, Any]:
         """Handle run_e2e_tests task type."""
         # This would execute the actual Playwright tests
         return {"status": "not_implemented_in_simulation"}
-    
+
     async def _visual_regression_task(self, task: Task) -> Dict[str, Any]:
         """Handle visual_regression task type."""
         results = await self.run_visual_regression_test(
@@ -652,28 +651,28 @@ Return only the selector string."""
             viewport_sizes=task.context.get("viewport_sizes"),
             threshold=task.context.get("threshold", 0.1),
         )
-        
+
         self._test_history.extend(results)
-        
+
         return {
             "tests_run": len(results),
             "passed": sum(1 for r in results if r.status == TestStatus.PASSED),
             "failed": sum(1 for r in results if r.status == TestStatus.FAILED),
             "results": [r.to_dict() for r in results],
         }
-    
+
     async def _accessibility_audit_task(self, task: Task) -> Dict[str, Any]:
         """Handle accessibility_audit task type."""
         result = await self.run_accessibility_audit(
             page_path=task.context["page_path"],
         )
-        
+
         return result
-    
+
     async def _cross_browser_test_task(self, task: Task) -> Dict[str, Any]:
         """Handle cross_browser_test task type."""
         browsers = task.context.get("browsers", ["chromium", "firefox", "webkit"])
-        
+
         return {
             "browsers": browsers,
             "status": "not_implemented_in_simulation",

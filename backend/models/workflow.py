@@ -33,7 +33,7 @@ class WorkflowTrigger(str, Enum):
 class WorkflowStep(BaseModel):
     """
     A single step in a workflow.
-    
+
     Attributes:
         step_id: Unique identifier for the step
         name: Human-readable name
@@ -59,7 +59,7 @@ class WorkflowStep(BaseModel):
 class Workflow(BaseModel):
     """
     Workflow definition and execution state.
-    
+
     Attributes:
         workflow_id: Unique identifier
         name: Workflow name

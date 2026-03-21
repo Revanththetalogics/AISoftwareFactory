@@ -5,9 +5,9 @@ This module provides prompt template management, variable substitution,
 and prompt optimization for different tasks.
 """
 
-from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 from string import Template
+from typing import Any, Dict, List, Optional
 
 from backend.core.logging import get_logger
 
@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 class PromptTemplate:
     """
     Template for LLM prompts.
-    
+
     Attributes:
         name: Template name/identifier
         template: Template string with $variable placeholders
@@ -31,17 +31,17 @@ class PromptTemplate:
     description: str = ""
     variables: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def render(self, **kwargs) -> str:
         """
         Render the template with variables.
-        
+
         Args:
             **kwargs: Variable values
-            
+
         Returns:
             Rendered prompt string
-            
+
         Example:
             >>> template = PromptTemplate(
             ...     name="greeting",
@@ -64,14 +64,14 @@ class PromptTemplate:
             raise ValueError(
                 f"Missing required variable '{missing_var}' in template '{self.name}'"
             )
-    
+
     def validate_variables(self, **kwargs) -> List[str]:
         """
         Validate that all required variables are provided.
-        
+
         Args:
             **kwargs: Variable values to check
-            
+
         Returns:
             List of missing variable names
         """
@@ -85,13 +85,13 @@ class PromptTemplate:
 class PromptManager:
     """
     Manager for prompt templates.
-    
+
     This class provides:
     - Template registration and retrieval
     - Variable substitution
     - Template categorization by task type
     - Prompt optimization
-    
+
     Example:
         >>> manager = PromptManager()
         >>> manager.register_template(
@@ -101,15 +101,15 @@ class PromptManager:
         ... )
         >>> prompt = manager.render("code_review", code="def foo(): pass")
     """
-    
+
     def __init__(self):
         """Initialize the prompt manager."""
         self._templates: Dict[str, PromptTemplate] = {}
         self._logger = get_logger(__name__)
-        
+
         # Initialize default templates
         self._init_default_templates()
-    
+
     def _init_default_templates(self) -> None:
         """Initialize default prompt templates."""
         default_templates = [
@@ -133,7 +133,7 @@ Code:""",
                 description="Generate code from requirements",
                 variables=["requirements", "context"],
             ),
-            
+
             # Code review templates
             PromptTemplate(
                 name="code_review",
@@ -154,7 +154,7 @@ Review:""",
                 description="Review code for quality and issues",
                 variables=["code", "language"],
             ),
-            
+
             # Architecture design templates
             PromptTemplate(
                 name="architecture_design",
@@ -177,7 +177,7 @@ Architecture Design:""",
                 description="Design system architecture",
                 variables=["requirements", "constraints"],
             ),
-            
+
             # Requirements analysis templates
             PromptTemplate(
                 name="requirements_analysis",
@@ -197,7 +197,7 @@ Requirements Analysis:""",
                 description="Analyze product requirements",
                 variables=["idea"],
             ),
-            
+
             # Testing templates
             PromptTemplate(
                 name="test_generation",
@@ -218,7 +218,7 @@ Tests:""",
                 description="Generate test cases",
                 variables=["code", "language"],
             ),
-            
+
             # Documentation templates
             PromptTemplate(
                 name="documentation",
@@ -240,7 +240,7 @@ Documentation:""",
                 description="Generate documentation",
                 variables=["topic", "details"],
             ),
-            
+
             # Debugging templates
             PromptTemplate(
                 name="debugging",
@@ -263,7 +263,7 @@ Debug Analysis:""",
                 description="Debug errors and issues",
                 variables=["error", "code", "language"],
             ),
-            
+
             # Refactoring templates
             PromptTemplate(
                 name="refactoring",
@@ -286,7 +286,7 @@ Refactored Code:""",
                 description="Refactor code for improvement",
                 variables=["code", "language", "goals"],
             ),
-            
+
             # AI Testing templates
             PromptTemplate(
                 name="test_case_generation",
@@ -317,7 +317,7 @@ Return only the test code:""",
                 description="Generate comprehensive test cases",
                 variables=["code", "language", "component_name", "component_type"],
             ),
-            
+
             PromptTemplate(
                 name="bug_detection",
                 template="""You are a security and code quality expert. Analyze this code for bugs:
@@ -348,7 +348,7 @@ Return findings as JSON array.""",
                 description="Detect bugs and security issues",
                 variables=["code", "language", "file_path"],
             ),
-            
+
             PromptTemplate(
                 name="auto_fix",
                 template="""You are an expert code repair system. Fix this bug:
@@ -374,7 +374,7 @@ Return only the fixed code section:""",
                 description="Generate code fixes",
                 variables=["bug_description", "root_cause", "suggested_fix", "code", "language", "line_number"],
             ),
-            
+
             PromptTemplate(
                 name="e2e_test_generation",
                 template="""You are an expert in Playwright E2E testing. Generate tests for this user flow:
@@ -398,7 +398,7 @@ Return the complete test file code:""",
                 description="Generate E2E tests from user flows",
                 variables=["page_path", "page_description", "user_flow"],
             ),
-            
+
             PromptTemplate(
                 name="coverage_recommendation",
                 template="""You are a test coverage expert. Analyze uncovered code and recommend tests:
@@ -419,7 +419,7 @@ Provide actionable recommendations:""",
                 description="Recommend tests for coverage gaps",
                 variables=["file_path", "coverage_percentage", "uncovered_code"],
             ),
-            
+
             PromptTemplate(
                 name="regression_test_from_failure",
                 template="""You are a QA engineer specializing in regression tests. Create a test from this failure:
@@ -446,15 +446,15 @@ Return the complete test code:""",
                 variables=["error_message", "stack_trace", "code", "language"],
             ),
         ]
-        
+
         for template in default_templates:
             self._templates[template.name] = template
-        
+
         self._logger.info(
             "Default templates initialized",
             count=len(default_templates),
         )
-    
+
     def register_template(
         self,
         name: str,
@@ -465,17 +465,17 @@ Return the complete test code:""",
     ) -> PromptTemplate:
         """
         Register a new prompt template.
-        
+
         Args:
             name: Template name
             template: Template string with $variable placeholders
             description: Template description
             variables: List of required variables
             metadata: Additional metadata
-            
+
         Returns:
             Created template
-            
+
         Example:
             >>> manager.register_template(
             ...     name="custom",
@@ -490,70 +490,70 @@ Return the complete test code:""",
             variables=variables or [],
             metadata=metadata or {},
         )
-        
+
         self._templates[name] = prompt_template
         self._logger.info("Template registered", template=name)
-        
+
         return prompt_template
-    
+
     def get_template(self, name: str) -> Optional[PromptTemplate]:
         """
         Get a template by name.
-        
+
         Args:
             name: Template name
-            
+
         Returns:
             Template or None if not found
         """
         return self._templates.get(name)
-    
+
     def render(self, template_name: str, **kwargs) -> str:
         """
         Render a template with variables.
-        
+
         Args:
             template_name: Name of the template
             **kwargs: Variable values
-            
+
         Returns:
             Rendered prompt
-            
+
         Raises:
             ValueError: If template not found or missing variables
-            
+
         Example:
             >>> prompt = manager.render("code_review", code="def foo(): pass", language="python")
         """
         template = self._templates.get(template_name)
         if not template:
             raise ValueError(f"Template '{template_name}' not found")
-        
+
         # Check for missing variables
         missing = template.validate_variables(**kwargs)
         if missing:
             raise ValueError(
                 f"Missing required variables for template '{template_name}': {missing}"
             )
-        
+
         return template.render(**kwargs)
-    
+
     def list_templates(self) -> List[str]:
         """
         List all registered template names.
-        
+
         Returns:
             List of template names
         """
         return list(self._templates.keys())
-    
+
     def get_templates_by_category(self, category: str) -> List[PromptTemplate]:
         """
         Get templates by category.
-        
+
         Args:
             category: Category name (e.g., "code", "documentation")
-            
+
         Returns:
             List of templates in the category
         """
@@ -565,39 +565,39 @@ Return the complete test code:""",
             "debugging": ["debug", "error", "fix"],
             "architecture": ["architecture", "design", "system"],
         }
-        
+
         keywords = category_keywords.get(category, [category])
-        
+
         matching = []
         for template in self._templates.values():
             template_text = (template.name + " " + template.description).lower()
             if any(kw in template_text for kw in keywords):
                 matching.append(template)
-        
+
         return matching
-    
+
     def optimize_prompt(self, prompt: str, max_length: int = 4000) -> str:
         """
         Optimize a prompt for better results.
-        
+
         This is a placeholder for future optimization logic.
         Currently just truncates if too long.
-        
+
         Args:
             prompt: Original prompt
             max_length: Maximum length
-            
+
         Returns:
             Optimized prompt
         """
         if len(prompt) <= max_length:
             return prompt
-        
+
         # Simple truncation with warning
         self._logger.warning(
             "Prompt truncated",
             original_length=len(prompt),
             max_length=max_length,
         )
-        
+
         return prompt[:max_length] + "\n... [truncated]"

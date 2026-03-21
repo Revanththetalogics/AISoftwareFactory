@@ -5,16 +5,16 @@ This module defines the workflow states, phases, and state transitions
 for the project lifecycle.
 """
 
-from enum import Enum
-from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class ProjectPhase(str, Enum):
     """
     Project lifecycle phases.
-    
+
     These phases represent the complete software development lifecycle
     from idea to deployment.
     """
@@ -41,7 +41,7 @@ class PhaseStatus(str, Enum):
 class PhaseState:
     """
     State of a single phase in the workflow.
-    
+
     Attributes:
         phase: The phase identifier
         status: Current status of the phase
@@ -58,7 +58,7 @@ class PhaseState:
     output: Dict[str, Any] = field(default_factory=dict)
     error: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert phase state to dictionary."""
         return {
@@ -76,10 +76,10 @@ class PhaseState:
 class WorkflowState:
     """
     Complete state of a workflow execution.
-    
+
     This class tracks the entire state of a project as it moves through
     the software development lifecycle.
-    
+
     Attributes:
         project_id: Unique project identifier
         current_phase: Currently active phase
@@ -94,18 +94,18 @@ class WorkflowState:
     context: Dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
-    
+
     def __post_init__(self):
         """Initialize phase states if not provided."""
         if not self.phases:
             for phase in ProjectPhase:
                 if phase not in (ProjectPhase.COMPLETE, ProjectPhase.FAILED):
                     self.phases[phase] = PhaseState(phase=phase)
-    
+
     def get_phase_state(self, phase: ProjectPhase) -> Optional[PhaseState]:
         """Get the state of a specific phase."""
         return self.phases.get(phase)
-    
+
     def update_phase_status(
         self,
         phase: ProjectPhase,
@@ -116,50 +116,50 @@ class WorkflowState:
         """Update the status of a phase."""
         if phase not in self.phases:
             self.phases[phase] = PhaseState(phase=phase)
-        
+
         phase_state = self.phases[phase]
         phase_state.status = status
-        
+
         if status == PhaseStatus.IN_PROGRESS and not phase_state.started_at:
             phase_state.started_at = datetime.now()
-        
+
         if status in (PhaseStatus.COMPLETED, PhaseStatus.FAILED, PhaseStatus.SKIPPED):
             phase_state.completed_at = datetime.now()
-        
+
         if output:
             phase_state.output.update(output)
-        
+
         if error:
             phase_state.error = error
-        
+
         self.updated_at = datetime.now()
-    
+
     def set_current_phase(self, phase: ProjectPhase) -> None:
         """Set the current active phase."""
         self.current_phase = phase
         self.updated_at = datetime.now()
-    
+
     def add_to_context(self, key: str, value: Any) -> None:
         """Add data to the shared context."""
         self.context[key] = value
         self.updated_at = datetime.now()
-    
+
     def get_from_context(self, key: str, default: Any = None) -> Any:
         """Get data from the shared context."""
         return self.context.get(key, default)
-    
+
     def is_phase_completed(self, phase: ProjectPhase) -> bool:
         """Check if a phase is completed."""
         phase_state = self.phases.get(phase)
         return phase_state is not None and phase_state.status == PhaseStatus.COMPLETED
-    
+
     def get_completed_phases(self) -> List[ProjectPhase]:
         """Get list of completed phases."""
         return [
             phase for phase, state in self.phases.items()
             if state.status == PhaseStatus.COMPLETED
         ]
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert workflow state to dictionary."""
         return {
@@ -191,11 +191,11 @@ VALID_TRANSITIONS: Dict[ProjectPhase, List[ProjectPhase]] = {
 def can_transition(from_phase: ProjectPhase, to_phase: ProjectPhase) -> bool:
     """
     Check if a phase transition is valid.
-    
+
     Args:
         from_phase: Current phase
         to_phase: Target phase
-        
+
     Returns:
         True if the transition is valid
     """
@@ -205,10 +205,10 @@ def can_transition(from_phase: ProjectPhase, to_phase: ProjectPhase) -> bool:
 def get_next_phases(phase: ProjectPhase) -> List[ProjectPhase]:
     """
     Get valid next phases from the current phase.
-    
+
     Args:
         phase: Current phase
-        
+
     Returns:
         List of valid next phases
     """

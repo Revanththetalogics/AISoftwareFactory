@@ -5,7 +5,7 @@ This crew handles the deployment phase including infrastructure setup,
 CI/CD configuration, and production deployment.
 """
 
-from typing import Optional, Any
+from typing import Any
 
 from crewai import Crew, Task
 
@@ -18,18 +18,18 @@ logger = get_logger(__name__)
 def create_deployment_crew(llm: Any = None) -> Crew:
     """
     Create the deployment crew for infrastructure and deployment.
-    
+
     The deployment crew consists of:
     - DevOps Engineer: Infrastructure and deployment automation
     - Architect: Technical oversight
     - Backend Engineer: Application deployment support
-    
+
     Args:
         llm: Language model to use for all agents
-        
+
     Returns:
         Crew: Configured deployment crew
-        
+
     Example:
         >>> from backend.agents.crews import create_deployment_crew
         >>> crew = create_deployment_crew()
@@ -39,36 +39,36 @@ def create_deployment_crew(llm: Any = None) -> Crew:
     devops = get_devops_engineer_role(llm=llm)
     architect = get_architect_role(llm=llm)
     backend = get_backend_engineer_role(llm=llm)
-    
+
     # Create crew
     crew = Crew(
         agents=[devops, architect, backend],
         tasks=[],
         verbose=True,
     )
-    
+
     logger.info("Deployment crew created with DevOps, Architect, and Backend Engineer")
-    
+
     return crew
 
 
 def create_infrastructure_task(architecture: str) -> Task:
     """
     Create a task for infrastructure setup.
-    
+
     Args:
         architecture: Architecture document
-        
+
     Returns:
         Task: Infrastructure setup task
     """
     return Task(
         description=f"""
         Set up the infrastructure based on the architecture:
-        
+
         ARCHITECTURE:
         {architecture}
-        
+
         Your task:
         1. Design infrastructure architecture
         2. Create Docker configurations
@@ -79,7 +79,7 @@ def create_infrastructure_task(architecture: str) -> Task:
         7. Set up SSL/TLS certificates
         8. Configure monitoring and logging
         9. Document infrastructure setup
-        
+
         Output:
         - Infrastructure-as-code (Terraform/CloudFormation)
         - Docker configurations
@@ -94,20 +94,20 @@ def create_infrastructure_task(architecture: str) -> Task:
 def create_cicd_task(infrastructure: str) -> Task:
     """
     Create a task for CI/CD pipeline setup.
-    
+
     Args:
         infrastructure: Infrastructure documentation
-        
+
     Returns:
         Task: CI/CD setup task
     """
     return Task(
         description=f"""
         Set up CI/CD pipelines based on the infrastructure:
-        
+
         INFRASTRUCTURE:
         {infrastructure}
-        
+
         Your task:
         1. Design CI/CD workflow
         2. Set up build pipelines
@@ -117,7 +117,7 @@ def create_cicd_task(infrastructure: str) -> Task:
         6. Set up rollback procedures
         7. Configure notifications
         8. Document CI/CD processes
-        
+
         Output:
         - CI/CD configuration files
         - Pipeline documentation

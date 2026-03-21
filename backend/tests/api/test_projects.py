@@ -2,13 +2,14 @@
 Tests for Projects API Routes.
 """
 
+from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, patch, Mock
-from datetime import datetime
 
-from backend.main import app
 from backend.db.session import get_db
+from backend.main import app
 
 
 # Create mock db session
@@ -66,14 +67,14 @@ class TestCreateProject:
             assert data["name"] == "Test Project"
             assert data["status"] == "draft"
             assert "id" in data
-    
+
     def test_create_project_validation_error(self, authenticated_client):
         """Test validation error."""
         response = authenticated_client.post(
             "/api/v1/projects",
             json={"name": "", "description": "Test"},
         )
-        
+
         assert response.status_code == 422
 
 

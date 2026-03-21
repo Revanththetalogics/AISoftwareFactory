@@ -47,31 +47,31 @@ AsyncSessionLocal = sessionmaker(
 async def init_db() -> None:
     """
     Initialize database tables and extensions.
-    
+
     For production environments, use Alembic migrations instead.
     This function is for development/local setup only.
     """
     from backend.db.base import Base
-    
+
     async with engine.begin() as conn:
         # Enable required PostgreSQL extensions
         await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
         logger.info("pg_trgm extension enabled")
-        
+
         # Create all tables (development only - use alembic for production)
         await conn.run_sync(Base.metadata.create_all)
         logger.info("Database tables created")
-    
+
     logger.info("Database initialization complete")
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     Get database session as an async generator (for FastAPI Depends).
-    
+
     Yields:
         AsyncSession: Database session
-        
+
     Example:
         >>> async for db in get_db():
         ...     result = await db.execute(query)
@@ -91,12 +91,12 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 async def get_db_context() -> AsyncGenerator[AsyncSession, None]:
     """
     Get database session as an async context manager.
-    
+
     Use this for standalone operations outside of FastAPI Depends.
-    
+
     Yields:
         AsyncSession: Database session
-        
+
     Example:
         >>> async with get_db_context() as db:
         ...     result = await db.execute(query)

@@ -1,13 +1,10 @@
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
-from alembic import context
-
 # Import your models
 from backend.db.base import Base
-from backend.models.database import DBUser, DBProject, DBWorkflow, DBTask, DBAgent, DBDeployment, DBAuditLog
+from sqlalchemy import engine_from_config, pool
+
+from alembic import context
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -62,11 +59,11 @@ def run_migrations_online() -> None:
     # Override the sqlalchemy.url with the DATABASE_URL from settings
     from backend.core.config import get_settings
     settings = get_settings()
-    
+
     # Convert async URL to sync URL for alembic
     database_url = settings.DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
     config.set_main_option("sqlalchemy.url", database_url)
-    
+
     connectable = engine_from_config(
         config.get_section(config.config_ini_section),
         prefix="sqlalchemy.",

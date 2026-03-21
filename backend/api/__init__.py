@@ -10,16 +10,17 @@ from fastapi import APIRouter
 from backend.api import health
 from backend.api.dependencies import get_current_user, require_permissions
 from backend.api.models import (
+    AgentResponse,
+    DeploymentRequest,
+    DeploymentResponse,
     ProjectCreate,
     ProjectResponse,
     WorkflowExecuteRequest,
     WorkflowStatusResponse,
-    AgentResponse,
-    DeploymentRequest,
-    DeploymentResponse,
 )
+
 # Import route modules directly
-from backend.api.routes import projects, workflows, agents, deployments, websocket, auth, testing
+from backend.api.routes import agents, auth, deployments, projects, testing, websocket, workflows
 
 # Main API router
 api_router = APIRouter(prefix="/api/v1")

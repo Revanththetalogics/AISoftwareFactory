@@ -13,16 +13,16 @@ from crewai import Agent
 def get_product_manager_role(llm: Any = None) -> Agent:
     """
     Get the Product Manager agent role configuration.
-    
+
     The Product Manager agent translates founder ideas into detailed product
     requirements, user stories, and feature specifications.
-    
+
     Args:
         llm: Language model to use (optional, for Phase 3 integration)
-        
+
     Returns:
         Agent: Configured Product Manager agent
-        
+
     Example:
         >>> from backend.agents.roles import get_product_manager_role
         >>> pm = get_product_manager_role()

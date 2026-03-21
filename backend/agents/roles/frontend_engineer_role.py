@@ -13,16 +13,16 @@ from crewai import Agent
 def get_frontend_engineer_role(llm: Any = None) -> Agent:
     """
     Get the Frontend Engineer agent role configuration.
-    
+
     The Frontend Engineer agent designs and implements responsive,
     accessible, and performant user interfaces.
-    
+
     Args:
         llm: Language model to use (optional, for Phase 3 integration)
-        
+
     Returns:
         Agent: Configured Frontend Engineer agent
-        
+
     Example:
         >>> from backend.agents.roles import get_frontend_engineer_role
         >>> engineer = get_frontend_engineer_role()

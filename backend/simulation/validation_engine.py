@@ -5,9 +5,9 @@ This module provides pass/fail criteria and quality gates for
 code validation.
 """
 
-from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
 
 from backend.core.logging import get_logger
 
@@ -42,19 +42,19 @@ class ValidationResult:
 class ValidationEngine:
     """
     Validation engine for quality gates.
-    
+
     Provides configurable validation rules and scoring
     for code quality assessment.
     """
-    
+
     def __init__(self):
         """Initialize the validation engine."""
         self._rules: List[ValidationRule] = []
         self._logger = get_logger(__name__)
-        
+
         # Default rules
         self._add_default_rules()
-    
+
     def _add_default_rules(self):
         """Add default validation rules."""
         self.add_rule(ValidationRule(
@@ -63,24 +63,24 @@ class ValidationEngine:
             required=True,
             weight=2.0
         ))
-        
+
         self.add_rule(ValidationRule(
             name="no_critical_vulnerabilities",
             check=self._check_vulnerabilities,
             required=True,
             weight=3.0
         ))
-    
+
     def add_rule(self, rule: ValidationRule):
         """
         Add a validation rule.
-        
+
         Args:
             rule: Rule to add
         """
         self._rules.append(rule)
         self._logger.info("Validation rule added", rule_name=rule.name)
-    
+
     async def validate(
         self,
         code: str,
@@ -88,11 +88,11 @@ class ValidationEngine:
     ) -> Dict[str, Any]:
         """
         Run all validation rules.
-        
+
         Args:
             code: Code to validate
             context: Additional validation context
-            
+
         Returns:
             Validation results
         """
@@ -101,20 +101,20 @@ class ValidationEngine:
         max_score = 0.0
         passed = 0
         failed = 0
-        
+
         for rule in self._rules:
             try:
                 result = await rule.check(code, context or {})
                 results.append(result)
-                
+
                 max_score += rule.weight
-                
+
                 if result.status == ValidationStatus.PASS:
                     total_score += rule.weight
                     passed += 1
                 elif result.status == ValidationStatus.FAIL and rule.required:
                     failed += 1
-                
+
             except Exception as e:
                 self._logger.error(
                     "Validation rule failed",
@@ -128,9 +128,9 @@ class ValidationEngine:
                     score=0.0
                 ))
                 failed += 1
-        
+
         score_percentage = (total_score / max_score * 100) if max_score > 0 else 0
-        
+
         return {
             "overall_status": "pass" if failed == 0 else "fail",
             "score": score_percentage,
@@ -147,7 +147,7 @@ class ValidationEngine:
                 for r in results
             ]
         }
-    
+
     async def _check_syntax(
         self,
         code: str,
@@ -170,7 +170,7 @@ class ValidationEngine:
                 message=f"Syntax error: {e}",
                 score=0.0
             )
-    
+
     async def _check_vulnerabilities(
         self,
         code: str,
@@ -178,12 +178,12 @@ class ValidationEngine:
     ) -> ValidationResult:
         """Check for critical vulnerabilities."""
         from backend.simulation.security_scanner import SecurityScanner
-        
+
         scanner = SecurityScanner()
         issues = await scanner.scan_code(code)
-        
+
         critical_count = len([i for i in issues if i.severity == "critical"])
-        
+
         if critical_count == 0:
             return ValidationResult(
                 rule_name="no_critical_vulnerabilities",

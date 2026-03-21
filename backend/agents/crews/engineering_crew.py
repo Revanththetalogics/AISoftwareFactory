@@ -5,11 +5,12 @@ This crew handles software development, code review, and technical
 implementation tasks.
 """
 
-from crewai import Crew, Agent, Task
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, Optional
 
-from backend.core.logging import get_logger
+from crewai import Agent, Crew, Task
+
 from backend.agents.base_agent import BaseAgent
+from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -17,16 +18,16 @@ logger = get_logger(__name__)
 class EngineeringCrew(BaseAgent):
     """
     Engineering Crew for software development.
-    
+
     Provides software engineering capabilities including
     coding, review, and technical implementation.
     """
-    
+
     def __init__(self):
         """Initialize the engineering crew."""
         super().__init__(name="Engineering Crew")
         self._logger = get_logger(__name__)
-    
+
     def create_crew(self) -> Crew:
         """Create the engineering crew with agents."""
         # Senior Developer Agent
@@ -38,7 +39,7 @@ class EngineeringCrew(BaseAgent):
             efficient, and well-documented code following best practices.""",
             verbose=True
         )
-        
+
         # Code Reviewer Agent
         reviewer = Agent(
             role="Code Reviewer",
@@ -48,7 +49,7 @@ class EngineeringCrew(BaseAgent):
             and security vulnerabilities.""",
             verbose=True
         )
-        
+
         # QA Engineer Agent
         qa_engineer = Agent(
             role="QA Engineer",
@@ -58,39 +59,39 @@ class EngineeringCrew(BaseAgent):
             testing and validation.""",
             verbose=True
         )
-        
+
         # Create crew
         crew = Crew(
             agents=[senior_dev, reviewer, qa_engineer],
             tasks=[],
             verbose=True
         )
-        
+
         return crew
-    
+
     async def implement_feature(
         self,
         feature_spec: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         Implement a feature based on specification.
-        
+
         Args:
             feature_spec: Feature specification
-            
+
         Returns:
             Implementation results
         """
         crew = self.create_crew()
-        
+
         implementation_task = Task(
             description=f"""Implement the following feature:
-            
+
             Feature: {feature_spec.get('name', 'Unknown')}
             Description: {feature_spec.get('description', 'No description')}
             Requirements: {feature_spec.get('requirements', [])}
             Acceptance Criteria: {feature_spec.get('acceptance_criteria', [])}
-            
+
             Provide:
             1. Implementation plan
             2. Code structure
@@ -100,16 +101,16 @@ class EngineeringCrew(BaseAgent):
             expected_output="Complete feature implementation",
             agent=crew.agents[0]  # Senior dev
         )
-        
+
         crew.tasks = [implementation_task]
         result = crew.kickoff()
-        
+
         return {
             "implementation": result,
             "crew": "Engineering Crew",
             "feature": feature_spec.get('name')
         }
-    
+
     async def review_code(
         self,
         code: str,
@@ -117,25 +118,25 @@ class EngineeringCrew(BaseAgent):
     ) -> Dict[str, Any]:
         """
         Review code for quality and issues.
-        
+
         Args:
             code: Code to review
             context: Review context
-            
+
         Returns:
             Review results
         """
         crew = self.create_crew()
-        
+
         review_task = Task(
             description=f"""Review the following code:
-            
+
             ```
             {code[:2000]}  # Limit code length
             ```
-            
+
             Context: {context or 'No additional context'}
-            
+
             Provide:
             1. Code quality assessment
             2. Issues found (bugs, security, performance)
@@ -146,16 +147,16 @@ class EngineeringCrew(BaseAgent):
             expected_output="Code review report",
             agent=crew.agents[1]  # Reviewer
         )
-        
+
         crew.tasks = [review_task]
         result = crew.kickoff()
-        
+
         return {
             "review": result,
             "crew": "Engineering Crew",
             "lines_reviewed": len(code.splitlines())
         }
-    
+
     async def create_tests(
         self,
         code: str,
@@ -163,23 +164,23 @@ class EngineeringCrew(BaseAgent):
     ) -> Dict[str, Any]:
         """
         Create tests for code.
-        
+
         Args:
             code: Code to test
             test_type: Type of tests (unit, integration, e2e)
-            
+
         Returns:
             Test code and plan
         """
         crew = self.create_crew()
-        
+
         test_task = Task(
             description=f"""Create {test_type} tests for the following code:
-            
+
             ```
             {code[:1500]}
             ```
-            
+
             Provide:
             1. Test cases covering all functionality
             2. Edge cases and error conditions
@@ -189,10 +190,10 @@ class EngineeringCrew(BaseAgent):
             expected_output="Complete test suite",
             agent=crew.agents[2]  # QA Engineer
         )
-        
+
         crew.tasks = [test_task]
         result = crew.kickoff()
-        
+
         return {
             "tests": result,
             "crew": "Engineering Crew",

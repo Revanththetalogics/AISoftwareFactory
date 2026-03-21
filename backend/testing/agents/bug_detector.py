@@ -10,15 +10,15 @@ This agent uses multiple strategies to detect bugs:
 
 import ast
 import re
-from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
-from pathlib import Path
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from backend.agents.base_agent import BaseAgent, Task, TaskResult, TaskStatus
-from backend.llm.factory import LLMFactory
 from backend.core.logging import get_logger
+from backend.llm.factory import LLMFactory
 
 logger = get_logger(__name__)
 
@@ -52,7 +52,7 @@ class BugLocation:
     column: Optional[int] = None
     function_name: Optional[str] = None
     class_name: Optional[str] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "file_path": self.file_path,
@@ -81,7 +81,7 @@ class DetectedBug:
     estimated_effort_minutes: int
     related_bugs: List[str] = field(default_factory=list)
     detected_at: datetime = field(default_factory=datetime.utcnow)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "id": self.id,
@@ -117,14 +117,14 @@ class BugPattern:
 class BugDetectorAgent(BaseAgent):
     """
     Agent for detecting bugs using multiple strategies.
-    
+
     This agent combines:
     - Static analysis (AST parsing, regex patterns)
     - LLM-based intelligent code review
     - Test failure analysis
     - Security vulnerability scanning
     - Performance anti-pattern detection
-    
+
     Example:
         >>> agent = BugDetectorAgent()
         >>> task = Task(
@@ -134,7 +134,7 @@ class BugDetectorAgent(BaseAgent):
         ... )
         >>> result = await agent.execute_task(task)
     """
-    
+
     def __init__(self):
         """Initialize the bug detector agent."""
         super().__init__(
@@ -151,19 +151,19 @@ class BugDetectorAgent(BaseAgent):
         )
         self._llm = LLMFactory.create_llm()
         self._patterns = self._load_bug_patterns()
-    
+
     async def execute_task(self, task: Task) -> TaskResult:
         """
         Execute a bug detection task.
-        
+
         Args:
             task: Task containing detection parameters
-            
+
         Returns:
             TaskResult with detected bugs
         """
         start_time = datetime.utcnow()
-        
+
         try:
             if task.task_type == "detect_bugs":
                 result = await self._detect_bugs_task(task)
@@ -179,16 +179,16 @@ class BugDetectorAgent(BaseAgent):
                     status=TaskStatus.FAILED,
                     error=f"Unknown task type: {task.task_type}",
                 )
-            
+
             execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
-            
+
             return TaskResult(
                 task_id=task.task_id,
                 status=TaskStatus.COMPLETED,
                 output=result,
                 execution_time_ms=execution_time,
             )
-            
+
         except Exception as e:
             self._logger.error("Bug detection failed", error=str(e))
             return TaskResult(
@@ -196,7 +196,7 @@ class BugDetectorAgent(BaseAgent):
                 status=TaskStatus.FAILED,
                 error=str(e),
             )
-    
+
     async def detect_bugs_in_file(
         self,
         file_path: str,
@@ -206,44 +206,44 @@ class BugDetectorAgent(BaseAgent):
     ) -> List[DetectedBug]:
         """
         Detect bugs in a single file.
-        
+
         Args:
             file_path: Path to the file
             use_static_analysis: Enable static analysis
             use_llm_review: Enable LLM review
             min_confidence: Minimum confidence threshold
-            
+
         Returns:
             List of detected bugs
         """
         self._logger.info("Detecting bugs", file_path=file_path)
-        
+
         all_bugs = []
-        
+
         try:
             with open(file_path, 'r') as f:
                 code = f.read()
         except Exception as e:
             self._logger.error("Failed to read file", file_path=file_path, error=str(e))
             return []
-        
+
         # Static analysis
         if use_static_analysis:
             static_bugs = await self._run_static_analysis(file_path, code)
             all_bugs.extend(static_bugs)
-        
+
         # Pattern matching
         pattern_bugs = await self._run_pattern_matching(file_path, code)
         all_bugs.extend(pattern_bugs)
-        
+
         # LLM review
         if use_llm_review:
             llm_bugs = await self._run_llm_review(file_path, code)
             all_bugs.extend(llm_bugs)
-        
+
         # Filter by confidence
         filtered_bugs = [b for b in all_bugs if b.confidence >= min_confidence]
-        
+
         # Sort by severity
         severity_order = {
             BugSeverity.CRITICAL: 0,
@@ -253,16 +253,16 @@ class BugDetectorAgent(BaseAgent):
             BugSeverity.INFO: 4,
         }
         filtered_bugs.sort(key=lambda b: severity_order[b.severity])
-        
+
         self._logger.info(
             "Bug detection complete",
             file_path=file_path,
             bugs_found=len(filtered_bugs),
             critical=len([b for b in filtered_bugs if b.severity == BugSeverity.CRITICAL]),
         )
-        
+
         return filtered_bugs
-    
+
     async def detect_bugs_in_directory(
         self,
         directory: str,
@@ -271,21 +271,21 @@ class BugDetectorAgent(BaseAgent):
     ) -> Dict[str, List[DetectedBug]]:
         """
         Detect bugs in all files in a directory.
-        
+
         Args:
             directory: Directory to scan
             file_patterns: File patterns to include
             **kwargs: Additional arguments for detect_bugs_in_file
-            
+
         Returns:
             Dictionary mapping file paths to bugs
         """
         if file_patterns is None:
             file_patterns = ["*.py"]
-        
+
         results = {}
         path = Path(directory)
-        
+
         for pattern in file_patterns:
             for file_path in path.rglob(pattern):
                 if file_path.is_file():
@@ -295,9 +295,9 @@ class BugDetectorAgent(BaseAgent):
                     )
                     if bugs:
                         results[str(file_path)] = bugs
-        
+
         return results
-    
+
     async def analyze_test_failure(
         self,
         test_name: str,
@@ -308,14 +308,14 @@ class BugDetectorAgent(BaseAgent):
     ) -> Optional[DetectedBug]:
         """
         Analyze a test failure to identify the root cause bug.
-        
+
         Args:
             test_name: Name of the failing test
             error_message: Error message
             stack_trace: Stack trace
             code_context: Code where failure occurred
             file_path: File path
-            
+
         Returns:
             Detected bug or None
         """
@@ -343,17 +343,17 @@ Provide analysis as JSON:
     "line_number": number,
     "confidence": 0.0-1.0
 }}"""
-        
+
         try:
             response = await self._llm.generate(prompt)
             import json
             analysis = json.loads(response)
-            
+
             location = BugLocation(
                 file_path=file_path,
                 line_number=analysis.get("line_number", 1),
             )
-            
+
             return DetectedBug(
                 id=f"failure_{datetime.utcnow().timestamp()}",
                 severity=BugSeverity(analysis["severity"]),
@@ -369,18 +369,18 @@ Provide analysis as JSON:
                 fix_complexity="moderate",
                 estimated_effort_minutes=30,
             )
-            
+
         except Exception as e:
             self._logger.error("Failed to analyze test failure", error=str(e))
             return None
-    
+
     async def get_bug_statistics(self, bugs: List[DetectedBug]) -> Dict[str, Any]:
         """
         Get statistics about detected bugs.
-        
+
         Args:
             bugs: List of bugs
-            
+
         Returns:
             Statistics dictionary
         """
@@ -392,31 +392,31 @@ Provide analysis as JSON:
             "total_estimated_effort_minutes": 0,
             "high_confidence_bugs": 0,
         }
-        
+
         for bug in bugs:
             # By severity
             sev = bug.severity.value
             stats["by_severity"][sev] = stats["by_severity"].get(sev, 0) + 1
-            
+
             # By category
             cat = bug.category.value
             stats["by_category"][cat] = stats["by_category"].get(cat, 0) + 1
-            
+
             # By detection method
             method = bug.detection_method
             stats["by_detection_method"][method] = stats["by_detection_method"].get(method, 0) + 1
-            
+
             # Effort
             stats["total_estimated_effort_minutes"] += bug.estimated_effort_minutes
-            
+
             # High confidence
             if bug.confidence >= 0.9:
                 stats["high_confidence_bugs"] += 1
-        
+
         return stats
-    
+
     # Private methods
-    
+
     def _load_bug_patterns(self) -> List[BugPattern]:
         """Load bug detection patterns."""
         return [
@@ -448,7 +448,7 @@ Provide analysis as JSON:
                 suggestion="Use ast.literal_eval for safe evaluation",
                 confidence_boost=0.95,
             ),
-            
+
             # Logic patterns
             BugPattern(
                 name="bare_except",
@@ -468,7 +468,7 @@ Provide analysis as JSON:
                 suggestion="Use None as default and initialize inside function",
                 confidence_boost=0.9,
             ),
-            
+
             # Performance patterns
             BugPattern(
                 name="list_in_for_loop",
@@ -479,7 +479,7 @@ Provide analysis as JSON:
                 suggestion="Use enumerate() for cleaner code",
                 confidence_boost=0.7,
             ),
-            
+
             # Resource leak patterns
             BugPattern(
                 name="unclosed_file",
@@ -491,11 +491,11 @@ Provide analysis as JSON:
                 confidence_boost=0.8,
             ),
         ]
-    
+
     async def _run_static_analysis(self, file_path: str, code: str) -> List[DetectedBug]:
         """Run static analysis using AST."""
         bugs = []
-        
+
         try:
             tree = ast.parse(code)
         except SyntaxError as e:
@@ -505,7 +505,7 @@ Provide analysis as JSON:
                 line_number=e.lineno or 1,
                 column=e.offset,
             )
-            
+
             bug = DetectedBug(
                 id=f"syntax_{file_path}_{e.lineno}",
                 severity=BugSeverity.CRITICAL,
@@ -523,14 +523,14 @@ Provide analysis as JSON:
             )
             bugs.append(bug)
             return bugs
-        
+
         # Check for common issues using AST
         for node in ast.walk(tree):
             # Check for unused variables
             if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
                 # This is a simplified check - full implementation would track usage
                 pass
-            
+
             # Check for dangerous built-ins
             if isinstance(node, ast.Call):
                 if isinstance(node.func, ast.Name):
@@ -539,7 +539,7 @@ Provide analysis as JSON:
                             file_path=file_path,
                             line_number=getattr(node, 'lineno', 1),
                         )
-                        
+
                         bug = DetectedBug(
                             id=f"dangerous_{node.func.id}_{file_path}_{location.line_number}",
                             severity=BugSeverity.CRITICAL,
@@ -556,25 +556,25 @@ Provide analysis as JSON:
                             estimated_effort_minutes=60,
                         )
                         bugs.append(bug)
-        
+
         return bugs
-    
+
     async def _run_pattern_matching(self, file_path: str, code: str) -> List[DetectedBug]:
         """Run regex pattern matching for bug detection."""
         bugs = []
         lines = code.splitlines()
-        
+
         for pattern in self._patterns:
             for match in re.finditer(pattern.pattern, code, re.IGNORECASE):
                 # Find line number
                 line_number = code[:match.start()].count('\n') + 1
                 code_snippet = lines[line_number - 1] if line_number <= len(lines) else ""
-                
+
                 location = BugLocation(
                     file_path=file_path,
                     line_number=line_number,
                 )
-                
+
                 bug = DetectedBug(
                     id=f"{pattern.name}_{file_path}_{line_number}",
                     severity=pattern.severity,
@@ -591,9 +591,9 @@ Provide analysis as JSON:
                     estimated_effort_minutes=15,
                 )
                 bugs.append(bug)
-        
+
         return bugs
-    
+
     async def _run_llm_review(self, file_path: str, code: str) -> List[DetectedBug]:
         """Run LLM-based code review."""
         prompt = f"""Review this Python code for bugs, security issues, and code smells:
@@ -619,19 +619,19 @@ Identify issues and return as JSON array:
 ]
 
 If no issues found, return empty array []. Be thorough but only report real issues."""
-        
+
         try:
             response = await self._llm.generate(prompt)
             import json
             findings = json.loads(response)
-            
+
             bugs = []
             for finding in findings:
                 location = BugLocation(
                     file_path=file_path,
                     line_number=finding.get("line_number", 1),
                 )
-                
+
                 bug = DetectedBug(
                     id=f"llm_{file_path}_{finding.get('line_number', 0)}_{datetime.utcnow().timestamp()}",
                     severity=BugSeverity(finding["severity"]),
@@ -648,18 +648,18 @@ If no issues found, return empty array []. Be thorough but only report real issu
                     estimated_effort_minutes=30,
                 )
                 bugs.append(bug)
-            
+
             return bugs
-            
+
         except Exception as e:
             self._logger.error("LLM review failed", error=str(e))
             return []
-    
+
     async def _detect_bugs_task(self, task: Task) -> Dict[str, Any]:
         """Handle detect_bugs task type."""
         file_path = task.context.get("file_path")
         directory = task.context.get("directory")
-        
+
         if directory:
             results = await self.detect_bugs_in_directory(
                 directory,
@@ -669,7 +669,7 @@ If no issues found, return empty array []. Be thorough but only report real issu
                 min_confidence=task.context.get("min_confidence", 0.7),
             )
             all_bugs = [bug for bugs in results.values() for bug in bugs]
-            
+
             return {
                 "directory": directory,
                 "files_scanned": len(results),
@@ -678,7 +678,7 @@ If no issues found, return empty array []. Be thorough but only report real issu
                 "statistics": await self.get_bug_statistics(all_bugs),
                 "bugs": [b.to_dict() for b in all_bugs[:50]],  # Limit output
             }
-        
+
         elif file_path:
             bugs = await self.detect_bugs_in_file(
                 file_path,
@@ -686,17 +686,17 @@ If no issues found, return empty array []. Be thorough but only report real issu
                 use_llm_review=task.context.get("use_llm_review", True),
                 min_confidence=task.context.get("min_confidence", 0.7),
             )
-            
+
             return {
                 "file_path": file_path,
                 "bugs_found": len(bugs),
                 "statistics": await self.get_bug_statistics(bugs),
                 "bugs": [b.to_dict() for b in bugs],
             }
-        
+
         else:
             raise ValueError("Either file_path or directory required")
-    
+
     async def _security_scan_task(self, task: Task) -> Dict[str, Any]:
         """Handle security_scan task type."""
         file_path = task.context.get("file_path")
@@ -705,17 +705,17 @@ If no issues found, return empty array []. Be thorough but only report real issu
             use_static_analysis=True,
             use_llm_review=True,
         )
-        
+
         # Filter only security bugs
         security_bugs = [b for b in bugs if b.category == BugCategory.SECURITY]
-        
+
         return {
             "file_path": file_path,
             "security_issues_found": len(security_bugs),
             "critical": len([b for b in security_bugs if b.severity == BugSeverity.CRITICAL]),
             "bugs": [b.to_dict() for b in security_bugs],
         }
-    
+
     async def _analyze_failure_task(self, task: Task) -> Dict[str, Any]:
         """Handle analyze_test_failure task type."""
         bug = await self.analyze_test_failure(
@@ -725,19 +725,19 @@ If no issues found, return empty array []. Be thorough but only report real issu
             code_context=task.context["code_context"],
             file_path=task.context["file_path"],
         )
-        
+
         return {
             "bug": bug.to_dict() if bug else None,
         }
-    
+
     async def _performance_audit_task(self, task: Task) -> Dict[str, Any]:
         """Handle performance_audit task type."""
         file_path = task.context.get("file_path")
         bugs = await self.detect_bugs_in_file(file_path)
-        
+
         # Filter performance bugs
         perf_bugs = [b for b in bugs if b.category == BugCategory.PERFORMANCE]
-        
+
         return {
             "file_path": file_path,
             "performance_issues": len(perf_bugs),

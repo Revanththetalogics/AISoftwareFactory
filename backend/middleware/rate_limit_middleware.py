@@ -5,8 +5,8 @@ This middleware provides rate limiting functionality to protect API endpoints
 from excessive requests. It supports different rate limits for different user types.
 """
 
-import time
 import logging
+import time
 from collections import defaultdict
 from typing import Dict, Tuple
 
@@ -23,16 +23,16 @@ logger = logging.getLogger(__name__)
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """
     Rate limiting per user with token bucket algorithm.
-    
+
     This middleware tracks request counts per user within a time window
     and returns 429 Too Many Requests when limits are exceeded.
-    
+
     Attributes:
         default_rate: Default requests per window for regular users
         admin_rate: Requests per window for admin users
         window_seconds: Time window duration in seconds
         buckets: Dictionary storing request counts per user
-    
+
     Example:
         >>> app.add_middleware(
         ...     RateLimitMiddleware,
@@ -41,7 +41,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         ...     window_seconds=60
         ... )
     """
-    
+
     def __init__(
         self,
         app,
@@ -51,7 +51,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     ):
         """
         Initialize the rate limit middleware.
-        
+
         Args:
             app: ASGI application
             default_rate: Requests per window for regular users (default from config)
@@ -60,14 +60,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         """
         super().__init__(app)
         settings = get_settings()
-        
+
         self.default_rate = default_rate or getattr(settings, 'RATE_LIMIT_DEFAULT', 100)
         self.admin_rate = admin_rate or getattr(settings, 'RATE_LIMIT_ADMIN', 500)
         self.window_seconds = window_seconds or getattr(settings, 'RATE_LIMIT_WINDOW_SECONDS', 60)
-        
+
         # Format: {user_key: (request_count, window_start)}
         self.buckets: Dict[str, Tuple[int, float]] = defaultdict(lambda: (0, 0.0))
-        
+
         logger.info(
             "Rate limit middleware initialized",
             extra={
@@ -76,18 +76,18 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 "window_seconds": self.window_seconds,
             }
         )
-    
+
     def _get_user_key(self, request: Request) -> str:
         """
         Extract user identifier from request.
-        
+
         Priority:
         1. JWT token hash (if Authorization header present)
         2. Client IP address (fallback)
-        
+
         Args:
             request: The incoming request
-            
+
         Returns:
             str: Unique identifier for rate limiting
         """
@@ -97,58 +97,58 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             # Use token hash as key (lightweight)
             token_prefix = auth_header[7:27]  # First 20 chars of token
             return f"token:{hash(token_prefix)}"
-        
+
         # Fallback to IP
         client = request.client
         ip = client.host if client else "unknown"
-        
+
         # Handle X-Forwarded-For for proxied requests
         forwarded_for = request.headers.get("X-Forwarded-For", "")
         if forwarded_for:
             # Take the first IP in the chain (original client)
             ip = forwarded_for.split(",")[0].strip()
-        
+
         return f"ip:{ip}"
-    
+
     def _get_rate_limit(self, request: Request) -> int:
         """
         Get rate limit for this request based on user role.
-        
+
         Args:
             request: The incoming request
-            
+
         Returns:
             int: Rate limit for this request
         """
         # Check if user has admin role (could be enhanced with JWT claim check)
         # For now, use default rate
         return self.default_rate
-    
+
     def _is_rate_limited(self, user_key: str, rate_limit: int) -> Tuple[bool, int]:
         """
         Check if user is rate limited using sliding window algorithm.
-        
+
         Args:
             user_key: User identifier
             rate_limit: Maximum requests allowed per window
-            
+
         Returns:
             Tuple[bool, int]: (is_limited, remaining_requests)
         """
         now = time.time()
         count, window_start = self.buckets[user_key]
-        
+
         if now - window_start > self.window_seconds:
             # New window - reset counter
             self.buckets[user_key] = (1, now)
             return False, rate_limit - 1
-        
+
         if count >= rate_limit:
             return True, 0
-        
+
         self.buckets[user_key] = (count + 1, window_start)
         return False, rate_limit - count - 1
-    
+
     def _cleanup_old_buckets(self) -> None:
         """Remove expired bucket entries to prevent memory growth."""
         now = time.time()
@@ -158,15 +158,15 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         ]
         for key in expired_keys:
             del self.buckets[key]
-    
+
     async def dispatch(self, request: Request, call_next):
         """
         Process request with rate limiting.
-        
+
         Args:
             request: Incoming request
             call_next: Next middleware/handler in chain
-            
+
         Returns:
             Response from handler or 429 error response
         """
@@ -178,19 +178,19 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         )
         if path in excluded_paths:
             return await call_next(request)
-        
+
         user_key = self._get_user_key(request)
         rate_limit = self._get_rate_limit(request)
         is_limited, remaining = self._is_rate_limited(user_key, rate_limit)
-        
+
         # Periodic cleanup of old buckets
         if len(self.buckets) > 10000:
             self._cleanup_old_buckets()
-        
+
         if is_limited:
             request_id = get_correlation_id()
             retry_after = self.window_seconds
-            
+
             logger.warning(
                 "Rate limit exceeded",
                 extra={
@@ -200,7 +200,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     "request_id": request_id,
                 }
             )
-            
+
             return JSONResponse(
                 status_code=429,
                 content={
@@ -220,14 +220,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     "X-RateLimit-Reset": str(int(time.time()) + retry_after),
                 }
             )
-        
+
         response = await call_next(request)
-        
+
         # Add rate limit headers to successful responses
         response.headers["X-RateLimit-Limit"] = str(rate_limit)
         response.headers["X-RateLimit-Remaining"] = str(remaining)
         response.headers["X-RateLimit-Reset"] = str(
             int(time.time()) + self.window_seconds
         )
-        
+
         return response

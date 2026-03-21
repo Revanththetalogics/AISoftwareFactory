@@ -8,10 +8,10 @@ This module provides advanced logging capabilities including:
 - Error context enrichment
 """
 
-import time
+import asyncio
 import functools
+import time
 from typing import Any, Callable, Dict, Optional
-from contextlib import contextmanager
 
 from backend.core.logging import get_logger
 
@@ -21,21 +21,21 @@ logger = get_logger(__name__)
 class PerformanceTimer:
     """
     Context manager for timing operations and logging performance metrics.
-    
+
     Usage:
         with PerformanceTimer("database_query", project_id="123") as timer:
             # Some operation
             result = expensive_operation()
             timer.set_result_metadata(rows_affected=len(result))
     """
-    
+
     def __init__(self, operation_name: str, **context):
         self.operation_name = operation_name
         self.context = context
         self.start_time = None
         self.end_time = None
         self.result_metadata = {}
-    
+
     def __enter__(self):
         self.start_time = time.perf_counter()
         logger.info(
@@ -44,11 +44,11 @@ class PerformanceTimer:
             **self.context
         )
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.end_time = time.perf_counter()
         duration_ms = (self.end_time - self.start_time) * 1000
-        
+
         if exc_type is not None:
             logger.error(
                 f"Operation {self.operation_name} failed",
@@ -66,7 +66,7 @@ class PerformanceTimer:
                 **self.result_metadata,
                 **self.context
             )
-    
+
     def set_result_metadata(self, **metadata):
         """Add metadata about the operation result."""
         self.result_metadata.update(metadata)
@@ -75,7 +75,7 @@ class PerformanceTimer:
 def timed_operation(operation_name: str):
     """
     Decorator for timing function execution.
-    
+
     Usage:
         @timed_operation("user_authentication")
         async def authenticate_user(username: str, password: str):
@@ -90,7 +90,7 @@ def timed_operation(operation_name: str):
                 if hasattr(result, '__len__'):
                     timer.set_result_metadata(result_count=len(result))
                 return result
-        
+
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs):
             with PerformanceTimer(operation_name, function=func.__name__) as timer:
@@ -98,15 +98,15 @@ def timed_operation(operation_name: str):
                 if hasattr(result, '__len__'):
                     timer.set_result_metadata(result_count=len(result))
                 return result
-        
+
         return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
-    
+
     return decorator
 
 
 class BusinessEventLogger:
     """Logger for business events and user actions."""
-    
+
     @staticmethod
     def project_created(project_id: str, project_name: str, user_id: str):
         """Log project creation event."""
@@ -118,7 +118,7 @@ class BusinessEventLogger:
             user_id=user_id,
             action="CREATE"
         )
-    
+
     @staticmethod
     def project_updated(project_id: str, user_id: str, changes: Dict[str, Any]):
         """Log project update event."""
@@ -130,7 +130,7 @@ class BusinessEventLogger:
             changes=list(changes.keys()),
             action="UPDATE"
         )
-    
+
     @staticmethod
     def workflow_started(workflow_id: str, project_id: str, user_id: str):
         """Log workflow start event."""
@@ -142,7 +142,7 @@ class BusinessEventLogger:
             user_id=user_id,
             action="EXECUTE"
         )
-    
+
     @staticmethod
     def agent_assigned(task_id: str, agent_id: str, user_id: str):
         """Log agent assignment event."""
@@ -154,7 +154,7 @@ class BusinessEventLogger:
             user_id=user_id,
             action="ASSIGN"
         )
-    
+
     @staticmethod
     def deployment_initiated(deployment_id: str, project_id: str, environment: str, user_id: str):
         """Log deployment initiation event."""
@@ -171,7 +171,7 @@ class BusinessEventLogger:
 
 class AuditTrailLogger:
     """Logger for security and compliance audit events."""
-    
+
     @staticmethod
     def user_login_attempt(username: str, success: bool, ip_address: Optional[str] = None):
         """Log user login attempt."""
@@ -183,7 +183,7 @@ class AuditTrailLogger:
             ip_address=ip_address,
             security_event=True
         )
-    
+
     @staticmethod
     def permission_check(user_id: str, resource: str, action: str, granted: bool):
         """Log permission check result."""
@@ -196,7 +196,7 @@ class AuditTrailLogger:
             granted=granted,
             security_event=True
         )
-    
+
     @staticmethod
     def data_access(user_id: str, resource_type: str, resource_id: str, action: str):
         """Log data access events."""
@@ -213,7 +213,7 @@ class AuditTrailLogger:
 
 class ErrorContextLogger:
     """Logger for enriching error context with operational data."""
-    
+
     @staticmethod
     def log_with_context(error: Exception, context: Dict[str, Any]):
         """Log error with additional context."""
@@ -223,7 +223,7 @@ class ErrorContextLogger:
             error_message=str(error),
             **context
         )
-    
+
     @staticmethod
     def database_error(operation: str, query: str, error: Exception, **context):
         """Log database-related errors."""
@@ -242,7 +242,3 @@ class ErrorContextLogger:
 business_events = BusinessEventLogger()
 audit_trail = AuditTrailLogger()
 error_context = ErrorContextLogger()
-
-
-# Import asyncio at module level
-import asyncio

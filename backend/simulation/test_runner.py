@@ -5,16 +5,15 @@ This module provides unified test execution and result aggregation
 for all simulation tests.
 """
 
-import asyncio
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from backend.core.logging import get_logger
+from backend.simulation.integration_tester import IntegrationTester
+from backend.simulation.performance_tester import PerformanceTester
 from backend.simulation.sandbox import Sandbox
 from backend.simulation.security_scanner import SecurityScanner
-from backend.simulation.performance_tester import PerformanceTester
-from backend.simulation.integration_tester import IntegrationTester
 
 logger = get_logger(__name__)
 
@@ -34,11 +33,11 @@ class TestSuiteResult:
 class TestRunner:
     """
     Unified test runner for all simulation tests.
-    
+
     Orchestrates sandbox, security, performance, and integration tests
     with comprehensive reporting.
     """
-    
+
     def __init__(self):
         """Initialize the test runner."""
         self._sandbox = Sandbox()
@@ -46,7 +45,7 @@ class TestRunner:
         self._performance = PerformanceTester()
         self._integration = IntegrationTester()
         self._logger = get_logger(__name__)
-    
+
     async def run_full_suite(
         self,
         code: str,
@@ -55,12 +54,12 @@ class TestRunner:
     ) -> TestSuiteResult:
         """
         Run complete test suite on code.
-        
+
         Args:
             code: Code to test
             language: Programming language
             requirements: Package requirements
-            
+
         Returns:
             Complete test suite results
         """
@@ -68,7 +67,7 @@ class TestRunner:
         results = []
         passed = 0
         failed = 0
-        
+
         # 1. Sandbox execution test
         self._logger.info("Running sandbox tests")
         sandbox_result = await self._sandbox.execute(code, language)
@@ -84,7 +83,7 @@ class TestRunner:
             passed += 1
         else:
             failed += 1
-        
+
         # 2. Security scan
         self._logger.info("Running security scan")
         security_issues = await self._security.scan_code(code, language)
@@ -101,7 +100,7 @@ class TestRunner:
             passed += 1
         else:
             failed += 1
-        
+
         # 3. Dependency security scan
         if requirements:
             self._logger.info("Running dependency security scan")
@@ -115,9 +114,9 @@ class TestRunner:
                 passed += 1
             else:
                 failed += 1
-        
+
         end_time = datetime.utcnow()
-        
+
         return TestSuiteResult(
             suite_name="full_simulation_suite",
             start_time=start_time,
@@ -127,12 +126,12 @@ class TestRunner:
             skipped=0,
             results=results
         )
-    
+
     def generate_report(self, result: TestSuiteResult) -> Dict[str, Any]:
         """Generate comprehensive test report."""
         total = result.passed + result.failed + result.skipped
         duration = (result.end_time - result.start_time).total_seconds()
-        
+
         return {
             "summary": {
                 "suite_name": result.suite_name,

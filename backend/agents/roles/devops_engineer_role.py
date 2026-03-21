@@ -13,16 +13,16 @@ from crewai import Agent
 def get_devops_engineer_role(llm: Any = None) -> Agent:
     """
     Get the DevOps Engineer agent role configuration.
-    
+
     The DevOps Engineer agent manages infrastructure, deployments,
     and ensures smooth operations of the SaaS platform.
-    
+
     Args:
         llm: Language model to use (optional, for Phase 3 integration)
-        
+
     Returns:
         Agent: Configured DevOps Engineer agent
-        
+
     Example:
         >>> from backend.agents.roles import get_devops_engineer_role
         >>> devops = get_devops_engineer_role()

@@ -5,11 +5,10 @@ This module provides the code generation engine with templates for
 various programming languages and frameworks.
 """
 
-import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
 from enum import Enum
 from string import Template
+from typing import Any, Dict, List, Optional
 
 from backend.core.logging import get_logger
 
@@ -44,7 +43,7 @@ class CodeFramework(str, Enum):
 class GeneratedCode:
     """
     Result of code generation.
-    
+
     Attributes:
         content: Generated code content
         language: Programming language
@@ -59,7 +58,7 @@ class GeneratedCode:
     file_path: str = ""
     metadata: Dict[str, Any] = field(default_factory=dict)
     error: Optional[str] = None
-    
+
     @property
     def success(self) -> bool:
         """Check if generation was successful."""
@@ -70,7 +69,7 @@ class GeneratedCode:
 class CodeTemplate:
     """
     Template for code generation.
-    
+
     Attributes:
         name: Template name
         template: Template string
@@ -85,7 +84,7 @@ class CodeTemplate:
     framework: Optional[CodeFramework] = None
     description: str = ""
     variables: List[str] = field(default_factory=list)
-    
+
     def render(self, **kwargs) -> str:
         """Render the template with variables."""
         try:
@@ -99,13 +98,13 @@ class CodeTemplate:
 class CodeGenerator:
     """
     Code generation engine for AI Software Factory.
-    
+
     This class provides:
     - Multi-language code generation
     - Framework-specific templates
     - Code validation and formatting
     - Template management
-    
+
     Example:
         >>> generator = CodeGenerator()
         >>> code = generator.generate(
@@ -113,15 +112,15 @@ class CodeGenerator:
         ...     variables={"endpoint_name": "users", "model": "User"}
         ... )
     """
-    
+
     def __init__(self):
         """Initialize the code generator."""
         self._templates: Dict[str, CodeTemplate] = {}
         self._logger = get_logger(__name__)
-        
+
         # Initialize default templates
         self._init_default_templates()
-    
+
     def _init_default_templates(self) -> None:
         """Initialize default code templates."""
         templates = [
@@ -143,10 +142,10 @@ async def $endpoint_name($parameters):
                 language=CodeLanguage.PYTHON,
                 framework=CodeFramework.FASTAPI,
                 description="FastAPI endpoint handler",
-                variables=["method", "path", "endpoint_name", "parameters", 
+                variables=["method", "path", "endpoint_name", "parameters",
                           "description", "implementation", "return_value"],
             ),
-            
+
             CodeTemplate(
                 name="fastapi_model",
                 template='''from pydantic import BaseModel, Field
@@ -157,7 +156,7 @@ class $model_name(BaseModel):
     $description
     """
     $fields
-    
+
     class Config:
         json_schema_extra = {
             "example": $example
@@ -168,7 +167,7 @@ class $model_name(BaseModel):
                 description="Pydantic model for FastAPI",
                 variables=["model_name", "description", "fields", "example"],
             ),
-            
+
             # React component templates
             CodeTemplate(
                 name="react_component",
@@ -187,10 +186,10 @@ export const $component_name: React.FC<$component_name$props_interface> = ({ $pr
                 language=CodeLanguage.TYPESCRIPT,
                 framework=CodeFramework.REACT,
                 description="React functional component",
-                variables=["component_name", "props_interface", "props", 
+                variables=["component_name", "props_interface", "props",
                           "prop_names", "jsx_content"],
             ),
-            
+
             # Database templates
             CodeTemplate(
                 name="sql_table",
@@ -207,7 +206,7 @@ $indexes
                 description="SQL table creation",
                 variables=["table_name", "columns", "indexes"],
             ),
-            
+
             # Docker templates
             CodeTemplate(
                 name="dockerfile_python",
@@ -228,7 +227,7 @@ CMD ["$command"]
                 description="Dockerfile for Python app",
                 variables=["python_version", "port", "command"],
             ),
-            
+
             # Test templates
             CodeTemplate(
                 name="pytest_test",
@@ -236,24 +235,24 @@ CMD ["$command"]
 
 class Test$class_name:
     """Test cases for $class_name."""
-    
+
     def test_$test_name(self):
         """Test $test_description."""
         # Arrange
         $arrange
-        
+
         # Act
         $act
-        
+
         # Assert
         $assert
 ''',
                 language=CodeLanguage.PYTHON,
                 description="Pytest test class",
-                variables=["class_name", "test_name", "test_description", 
+                variables=["class_name", "test_name", "test_description",
                           "arrange", "act", "assert"],
             ),
-            
+
             # Configuration templates
             CodeTemplate(
                 name="docker_compose",
@@ -287,32 +286,32 @@ volumes:
 ''',
                 language=CodeLanguage.YAML,
                 description="Docker Compose configuration",
-                variables=["service_name", "host_port", "container_port", 
+                variables=["service_name", "host_port", "container_port",
                           "environment_vars", "dependencies", "volumes",
-                          "db_service", "postgres_version", "db_name", 
+                          "db_service", "postgres_version", "db_name",
                           "db_user", "db_password", "db_port"],
             ),
         ]
-        
+
         for template in templates:
             self._templates[template.name] = template
-        
+
         self._logger.info("Default templates initialized", count=len(templates))
-    
+
     def register_template(self, template: CodeTemplate) -> None:
         """
         Register a code template.
-        
+
         Args:
             template: Template to register
         """
         self._templates[template.name] = template
         self._logger.info("Template registered", template=template.name)
-    
+
     def get_template(self, name: str) -> Optional[CodeTemplate]:
         """Get a template by name."""
         return self._templates.get(name)
-    
+
     def generate(
         self,
         template_name: str,
@@ -321,15 +320,15 @@ volumes:
     ) -> GeneratedCode:
         """
         Generate code from a template.
-        
+
         Args:
             template_name: Name of the template
             variables: Variables for template substitution
             file_path: Suggested file path
-            
+
         Returns:
             GeneratedCode with content or error
-            
+
         Example:
             >>> generator = CodeGenerator()
             >>> result = generator.generate(
@@ -350,23 +349,23 @@ volumes:
             return GeneratedCode(
                 error=f"Template '{template_name}' not found"
             )
-        
+
         try:
             content = template.render(**variables)
-            
+
             self._logger.info(
                 "Code generated",
                 template=template_name,
                 language=template.language.value,
             )
-            
+
             return GeneratedCode(
                 content=content,
                 language=template.language,
                 framework=template.framework,
                 file_path=file_path,
             )
-            
+
         except ValueError as exc:
             self._logger.error(
                 "Template rendering failed",
@@ -381,7 +380,7 @@ volumes:
                 error=str(exc),
             )
             return GeneratedCode(error=str(exc))
-    
+
     def generate_from_description(
         self,
         description: str,
@@ -390,15 +389,15 @@ volumes:
     ) -> GeneratedCode:
         """
         Generate code from a natural language description.
-        
+
         This is a stub for future LLM integration. Currently returns
         a placeholder.
-        
+
         Args:
             description: Natural language description
             language: Target language
             framework: Target framework (optional)
-            
+
         Returns:
             GeneratedCode
         """
@@ -408,14 +407,14 @@ volumes:
             language=language.value,
             description_length=len(description),
         )
-        
+
         return GeneratedCode(
             content=f"# TODO: Implement based on description\n# {description[:100]}...",
             language=language,
             framework=framework,
             metadata={"source": "description", "description": description},
         )
-    
+
     def list_templates(
         self,
         language: Optional[CodeLanguage] = None,
@@ -423,11 +422,11 @@ volumes:
     ) -> List[str]:
         """
         List available templates.
-        
+
         Args:
             language: Filter by language
             framework: Filter by framework
-            
+
         Returns:
             List of template names
         """
@@ -439,20 +438,20 @@ volumes:
                 continue
             templates.append(name)
         return templates
-    
+
     def validate_code(self, code: str, language: CodeLanguage) -> Dict[str, Any]:
         """
         Validate code syntax (basic checks).
-        
+
         Args:
             code: Code to validate
             language: Programming language
-            
+
         Returns:
             Validation results
         """
         issues = []
-        
+
         if language == CodeLanguage.PYTHON:
             # Basic Python syntax check
             try:
@@ -463,7 +462,7 @@ volumes:
                     "message": str(exc),
                     "line": exc.lineno,
                 })
-        
+
         elif language == CodeLanguage.JSON:
             import json
             try:
@@ -473,14 +472,14 @@ volumes:
                     "type": "json_error",
                     "message": str(exc),
                 })
-        
+
         # Check for common issues
         if not code.strip():
             issues.append({"type": "empty", "message": "Code is empty"})
-        
+
         if len(code) > 100000:
             issues.append({"type": "size", "message": "Code exceeds 100KB"})
-        
+
         return {
             "valid": len(issues) == 0,
             "issues": issues,

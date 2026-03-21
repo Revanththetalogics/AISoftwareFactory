@@ -8,19 +8,20 @@ Provides endpoints for:
 - Test health monitoring
 """
 
-from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends, Query
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from backend.api.dependencies import User, get_current_user
 from backend.core.logging import get_logger
-from backend.api.dependencies import get_current_user, User
-from backend.testing.intelligence_engine import TestIntelligenceEngine
-from backend.testing.agents.test_generator import TestGeneratorAgent
-from backend.testing.agents.bug_detector import BugDetectorAgent
 from backend.testing.agents.auto_fixer import AutoFixerAgent
+from backend.testing.agents.bug_detector import BugDetectorAgent
 from backend.testing.agents.frontend_tester import FrontendTesterAgent
-from backend.testing.self_healing_runner import SelfHealingTestRunner
+from backend.testing.agents.test_generator import TestGeneratorAgent
 from backend.testing.coverage_analyzer import CoverageAnalyzer
+from backend.testing.intelligence_engine import TestIntelligenceEngine
+from backend.testing.self_healing_runner import SelfHealingTestRunner
 
 logger = get_logger(__name__)
 
@@ -162,7 +163,7 @@ async def generate_tests(
 ):
     """
     Generate AI-powered tests for a source file.
-    
+
     This endpoint analyzes the code and generates comprehensive tests including:
     - Unit tests for functions and methods
     - Edge case tests
@@ -170,7 +171,7 @@ async def generate_tests(
     """
     import time
     start_time = time.time()
-    
+
     try:
         tests = await agent.generate_tests_for_file(
             file_path=request.file_path,
@@ -178,16 +179,16 @@ async def generate_tests(
             include_error_cases=request.include_error_cases,
             include_property_tests=request.include_property_tests,
         )
-        
+
         generation_time = (time.time() - start_time) * 1000
-        
+
         return GenerateTestsResponse(
             file_path=request.file_path,
             tests_generated=len(tests),
             tests=[t.to_dict() for t in tests],
             generation_time_ms=generation_time,
         )
-        
+
     except Exception as e:
         logger.error("Test generation failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
@@ -201,7 +202,7 @@ async def detect_bugs(
 ):
     """
     Detect bugs using AI and static analysis.
-    
+
     Scans code for:
     - Security vulnerabilities
     - Logic errors
@@ -217,9 +218,9 @@ async def detect_bugs(
                 min_confidence=request.min_confidence,
             )
             all_bugs = [bug for bugs in results.values() for bug in bugs]
-            
+
             stats = await agent.get_bug_statistics(all_bugs)
-            
+
             return DetectBugsResponse(
                 directory=request.directory,
                 file_path=None,
@@ -228,7 +229,7 @@ async def detect_bugs(
                 by_category=stats.get("by_category", {}),
                 bugs=[b.to_dict() for b in all_bugs[:50]],  # Limit output
             )
-        
+
         elif request.file_path:
             bugs = await agent.detect_bugs_in_file(
                 file_path=request.file_path,
@@ -236,9 +237,9 @@ async def detect_bugs(
                 use_llm_review=request.use_llm_review,
                 min_confidence=request.min_confidence,
             )
-            
+
             stats = await agent.get_bug_statistics(bugs)
-            
+
             return DetectBugsResponse(
                 file_path=request.file_path,
                 directory=None,
@@ -247,13 +248,13 @@ async def detect_bugs(
                 by_category=stats.get("by_category", {}),
                 bugs=[b.to_dict() for b in bugs],
             )
-        
+
         else:
             raise HTTPException(
                 status_code=400,
                 detail="Either file_path or directory must be provided"
             )
-            
+
     except Exception as e:
         logger.error("Bug detection failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
@@ -267,7 +268,7 @@ async def fix_bug(
 ):
     """
     Automatically fix a detected bug.
-    
+
     Applies AI-generated or pattern-based fixes with:
     - Validation before applying
     - Automatic rollback on failure
@@ -283,7 +284,7 @@ async def fix_bug(
             auto_apply=request.auto_apply,
             validate=True,
         )
-        
+
         return FixBugResponse(
             fix_id=fix_attempt.id,
             bug_id=fix_attempt.bug_id,
@@ -293,7 +294,7 @@ async def fix_bug(
             diff=fix_attempt.diff,
             validation_passed=fix_attempt.validation_results.get("passed", False),
         )
-        
+
     except Exception as e:
         logger.error("Bug fix failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
@@ -308,7 +309,7 @@ async def batch_fix(
 ):
     """
     Fix multiple bugs in batch.
-    
+
     Args:
         bug_ids: List of bug IDs to fix
         auto_apply: Whether to apply fixes automatically
@@ -325,7 +326,7 @@ async def preview_fix(
 ):
     """
     Preview a fix without applying it.
-    
+
     Returns the diff and validation estimate.
     """
     try:
@@ -336,9 +337,9 @@ async def preview_fix(
             suggested_fix=request.suggested_fix,
             line_number=request.line_number,
         )
-        
+
         return preview
-        
+
     except Exception as e:
         logger.error("Fix preview failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
@@ -352,17 +353,17 @@ async def rollback_fix(
 ):
     """
     Rollback a previously applied fix.
-    
+
     Restores the original code from backup.
     """
     try:
         success = await agent.rollback_fix(fix_id)
-        
+
         if not success:
             raise HTTPException(status_code=404, detail="Fix not found or rollback failed")
-        
+
         return {"fix_id": fix_id, "rolled_back": True}
-        
+
     except Exception as e:
         logger.error("Rollback failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
@@ -376,7 +377,7 @@ async def run_tests(
 ):
     """
     Run tests with self-healing capabilities.
-    
+
     Features:
     - Automatic retry for flaky tests
     - Self-healing selectors
@@ -386,7 +387,7 @@ async def run_tests(
     try:
         # This would load test cases and run them
         # For now, return a placeholder response
-        
+
         return RunTestsResponse(
             suite_name=request.test_suite or "default",
             total_tests=0,
@@ -398,7 +399,7 @@ async def run_tests(
             duration_seconds=0.0,
             results=[],
         )
-        
+
     except Exception as e:
         logger.error("Test execution failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
@@ -412,7 +413,7 @@ async def analyze_coverage(
 ):
     """
     Analyze test coverage.
-    
+
     Provides:
     - Line and branch coverage
     - Coverage gaps identification
@@ -423,9 +424,9 @@ async def analyze_coverage(
             source_path=request.source_path,
             test_path=request.test_path,
         )
-        
+
         gaps = await analyzer.identify_coverage_gaps(report)
-        
+
         mutation_score = None
         if request.run_mutation_testing and report.files:
             # Run mutation testing on first file as example
@@ -435,7 +436,7 @@ async def analyze_coverage(
             )
             killed = sum(1 for r in mutation_results if r.killed)
             mutation_score = (killed / len(mutation_results) * 100) if mutation_results else 0
-        
+
         return CoverageResponse(
             timestamp=report.timestamp.isoformat(),
             overall_coverage=report.overall_coverage,
@@ -445,7 +446,7 @@ async def analyze_coverage(
             files_by_coverage_level=report.files_by_coverage_level,
             gaps=gaps[:10],  # Limit gaps
         )
-        
+
     except Exception as e:
         logger.error("Coverage analysis failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
@@ -460,7 +461,7 @@ async def get_test_health(
 ):
     """
     Get comprehensive test health report.
-    
+
     Returns:
     - Overall test health metrics
     - Flaky tests
@@ -472,7 +473,7 @@ async def get_test_health(
         coverage_stats = analyzer.get_coverage_statistics()
         runner_stats = runner.get_execution_statistics()
         coverage_trend = await analyzer.get_coverage_trend(days=30)
-        
+
         return TestHealthResponse(
             summary={
                 **health_report.get("summary", {}),
@@ -484,7 +485,7 @@ async def get_test_health(
             recent_fixes=health_report.get("recent_fixes", []),
             coverage_trend=coverage_trend,
         )
-        
+
     except Exception as e:
         logger.error("Health report failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
@@ -497,7 +498,7 @@ async def get_flaky_tests(
 ):
     """Get list of detected flaky tests."""
     flaky_tests = runner.get_flaky_tests()
-    
+
     return {
         "flaky_tests": [ft.to_dict() for ft in flaky_tests],
         "count": len(flaky_tests),
@@ -513,10 +514,10 @@ async def quarantine_test(
 ):
     """Quarantine a flaky test."""
     success = runner.quarantine_test(test_id, reason)
-    
+
     if not success:
         raise HTTPException(status_code=404, detail="Test not found")
-    
+
     return {"test_id": test_id, "quarantined": True, "reason": reason}
 
 
@@ -528,10 +529,10 @@ async def unquarantine_test(
 ):
     """Remove a test from quarantine."""
     success = runner.unquarantine_test(test_id)
-    
+
     if not success:
         raise HTTPException(status_code=404, detail="Test not found")
-    
+
     return {"test_id": test_id, "unquarantined": True}
 
 
@@ -547,7 +548,7 @@ async def generate_e2e_tests(
 ):
     """
     Generate E2E tests from user flow.
-    
+
     Args:
         page_path: Path to the page (e.g., "/login")
         user_flow: List of user actions
@@ -559,13 +560,13 @@ async def generate_e2e_tests(
             user_flow=user_flow,
             page_description=page_description,
         )
-        
+
         return {
             "page_path": page_path,
             "tests_generated": len(tests),
             "tests": [t.to_dict() for t in tests],
         }
-        
+
     except Exception as e:
         logger.error("E2E test generation failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
@@ -581,7 +582,7 @@ async def run_visual_regression(
 ):
     """
     Run visual regression tests.
-    
+
     Args:
         page_path: Path to test
         viewports: List of viewport sizes
@@ -593,7 +594,7 @@ async def run_visual_regression(
             viewport_sizes=viewports,
             threshold=threshold,
         )
-        
+
         return {
             "page_path": page_path,
             "tests_run": len(results),
@@ -601,7 +602,7 @@ async def run_visual_regression(
             "failed": sum(1 for r in results if r.status.value == "failed"),
             "results": [r.to_dict() for r in results],
         }
-        
+
     except Exception as e:
         logger.error("Visual regression failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
@@ -616,9 +617,9 @@ async def run_accessibility_audit(
     """Run accessibility audit on a page."""
     try:
         result = await agent.run_accessibility_audit(page_path=page_path)
-        
+
         return result
-        
+
     except Exception as e:
         logger.error("Accessibility audit failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
@@ -643,7 +644,7 @@ async def run_full_test_suite(
 ):
     """
     Run full test suite in background.
-    
+
     This is a long-running operation that:
     1. Generates missing tests
     2. Detects bugs
@@ -655,7 +656,7 @@ async def run_full_test_suite(
         logger.info("Starting full test suite execution")
         # Implementation would go here
         pass
-    
+
     background_tasks.add_task(run_suite)
-    
+
     return {"status": "started", "message": "Full test suite running in background"}

@@ -5,8 +5,8 @@ This module provides Docker Compose configuration generation
 for local development and production deployment.
 """
 
-from typing import Dict, List, Optional, Any
-from pathlib import Path
+from typing import Any, Dict
+
 import yaml
 
 from backend.core.logging import get_logger
@@ -17,20 +17,20 @@ logger = get_logger(__name__)
 class DockerComposeGenerator:
     """
     Docker Compose configuration generator.
-    
+
     Generates docker-compose.yml files for various deployment scenarios.
     """
-    
+
     def __init__(self, project_name: str = "ai-software-factory"):
         """
         Initialize the generator.
-        
+
         Args:
             project_name: Project name for container naming
         """
         self._project_name = project_name
         self._logger = get_logger(__name__)
-    
+
     def generate_development_config(self) -> Dict[str, Any]:
         """Generate development Docker Compose configuration."""
         config = {
@@ -94,9 +94,9 @@ class DockerComposeGenerator:
                 "redis_data": {}
             }
         }
-        
+
         return config
-    
+
     def generate_production_config(self) -> Dict[str, Any]:
         """Generate production Docker Compose configuration."""
         config = {
@@ -169,9 +169,9 @@ class DockerComposeGenerator:
                 "redis_data": {}
             }
         }
-        
+
         return config
-    
+
     def save_config(
         self,
         config: Dict[str, Any],
@@ -179,16 +179,16 @@ class DockerComposeGenerator:
     ) -> str:
         """
         Save configuration to file.
-        
+
         Args:
             config: Docker Compose configuration
             output_path: Output file path
-            
+
         Returns:
             Path to saved file
         """
         with open(output_path, 'w') as f:
             yaml.dump(config, f, default_flow_style=False, sort_keys=False)
-        
+
         self._logger.info("Docker Compose config saved", path=output_path)
         return output_path

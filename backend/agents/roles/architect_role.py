@@ -13,16 +13,16 @@ from crewai import Agent
 def get_architect_role(llm: Any = None) -> Agent:
     """
     Get the System Architect agent role configuration.
-    
+
     The Architect agent designs scalable, maintainable system architectures
     and makes critical technology decisions.
-    
+
     Args:
         llm: Language model to use (optional, for Phase 3 integration)
-        
+
     Returns:
         Agent: Configured Architect agent
-        
+
     Example:
         >>> from backend.agents.roles import get_architect_role
         >>> architect = get_architect_role()

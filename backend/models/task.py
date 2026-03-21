@@ -36,7 +36,7 @@ class TaskPriority(int, Enum):
 class TaskResult(BaseModel):
     """
     Result of a task execution.
-    
+
     Attributes:
         success: Whether the task succeeded
         output: Task output data
@@ -65,7 +65,7 @@ class TaskResult(BaseModel):
 class Task(BaseModel):
     """
     Task definition and execution state.
-    
+
     Attributes:
         task_id: Unique identifier
         name: Task name

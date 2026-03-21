@@ -6,23 +6,21 @@ Uses DatabaseWorkflowService for database-backed workflow persistence.
 """
 
 from typing import List, Optional
-from datetime import datetime
-from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.api.dependencies import get_current_user, get_workflow_service
 from backend.api.models import (
     WorkflowExecuteRequest,
     WorkflowStatusResponse,
 )
-from backend.api.dependencies import get_current_user, require_permissions, get_workflow_service
-from backend.services.database_services import DatabaseWorkflowService
+from backend.core.logging import get_logger
 from backend.db.session import get_db
+from backend.models.workflow import WorkflowStatus
+from backend.services.database_services import DatabaseWorkflowService
 from backend.workflows.state_machine import ProjectPhase
 from backend.workflows.workflow_engine import WorkflowEngine
-from backend.models.workflow import WorkflowStatus
-from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/workflows", tags=["workflows"])
@@ -33,7 +31,7 @@ def _db_workflow_to_response(workflow) -> WorkflowStatusResponse:
     # Calculate steps completed and total from workflow data
     steps = workflow.steps or []
     completed_steps = workflow.completed_steps or []
-    
+
     return WorkflowStatusResponse(
         workflow_id=workflow.id,
         project_id=workflow.project_id,
@@ -52,11 +50,11 @@ def _db_workflow_to_response(workflow) -> WorkflowStatusResponse:
 async def _execute_workflow_real(workflow_id: str, project_id: str, phase: Optional[str]):
     """
     Execute workflow using the real LangGraph engine.
-    
+
     This function runs as a background task and manages its own database session.
     """
     workflow_service = DatabaseWorkflowService()
-    
+
     try:
         # Update workflow to running status
         workflow = await workflow_service.update_workflow_status(
@@ -64,31 +62,31 @@ async def _execute_workflow_real(workflow_id: str, project_id: str, phase: Optio
             status=WorkflowStatus.RUNNING,
             current_step_id=phase or "requirements"
         )
-        
+
         if not workflow:
             logger.error("Workflow not found for execution", workflow_id=workflow_id)
             return
-        
+
         logger.info(
             "Starting workflow execution",
             workflow_id=workflow_id,
             project_id=project_id,
             phase=phase,
         )
-        
+
         # Initialize and run the real workflow engine
         engine = WorkflowEngine()
-        
+
         # Create initial state
         from backend.workflows.state_machine import WorkflowState
         initial_state = WorkflowState(
             project_id=project_id,
             current_phase=ProjectPhase(phase) if phase else ProjectPhase.IDEA,
         )
-        
+
         # Run the workflow (this will execute all phases via LangGraph)
         final_state = await engine.run(initial_state)
-        
+
         # Update workflow with final status
         if final_state.current_phase == ProjectPhase.FAILED:
             await workflow_service.update_workflow_status(
@@ -102,14 +100,14 @@ async def _execute_workflow_real(workflow_id: str, project_id: str, phase: Optio
                 status=WorkflowStatus.COMPLETED,
                 current_step_id=final_state.current_phase.value
             )
-        
+
         logger.info(
             "Workflow execution completed",
             workflow_id=workflow_id,
             project_id=project_id,
             final_phase=final_state.current_phase.value,
         )
-        
+
     except Exception as exc:
         logger.error(
             "Workflow execution failed",
@@ -139,7 +137,7 @@ async def execute_workflow(
 ) -> WorkflowStatusResponse:
     """
     Execute a workflow for a project.
-    
+
     The workflow will run asynchronously. Use the returned workflow_id
     to check status via GET /workflows/{workflow_id}.
     """
@@ -151,7 +149,7 @@ async def execute_workflow(
         {"id": "testing", "name": "Testing"},
         {"id": "deployment", "name": "Deployment"},
     ]
-    
+
     # Create workflow in database
     workflow = await workflow_service.create_workflow(
         name=f"Workflow for {request.project_id}",
@@ -160,7 +158,7 @@ async def execute_workflow(
         created_by=user.user_id if user else None,
         db=db
     )
-    
+
     logger.info(
         "Workflow created",
         workflow_id=workflow.id,
@@ -168,7 +166,7 @@ async def execute_workflow(
         phase=request.phase,
         user=user.user_id if user else "anonymous",
     )
-    
+
     # Start execution in background
     if request.async_execution:
         background_tasks.add_task(
@@ -179,7 +177,7 @@ async def execute_workflow(
         )
     else:
         await _execute_workflow_real(workflow.id, request.project_id, request.phase)
-    
+
     return _db_workflow_to_response(workflow)
 
 
@@ -198,13 +196,13 @@ async def get_workflow_status(
     Get the current status of a workflow execution.
     """
     workflow = await workflow_service.get_workflow(workflow_id, db=db)
-    
+
     if not workflow:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Workflow {workflow_id} not found",
         )
-    
+
     return _db_workflow_to_response(workflow)
 
 
@@ -224,25 +222,26 @@ async def list_workflows(
     """
     # Use direct database query for listing with filters
     from sqlalchemy import select
+
     from backend.models.database import DBWorkflow
-    
+
     stmt = select(DBWorkflow)
-    
+
     if project_id:
         stmt = stmt.where(DBWorkflow.project_id == project_id)
-    
+
     if workflow_status:
         try:
             status_enum = WorkflowStatus(workflow_status)
             stmt = stmt.where(DBWorkflow.status == status_enum)
         except ValueError:
             pass  # Invalid status, ignore filter
-    
+
     stmt = stmt.order_by(DBWorkflow.created_at.desc())
-    
+
     result = await db.execute(stmt)
     workflows = list(result.scalars().all())
-    
+
     return [_db_workflow_to_response(w) for w in workflows]
 
 
@@ -261,33 +260,33 @@ async def cancel_workflow(
     Cancel a running workflow.
     """
     workflow = await workflow_service.get_workflow(workflow_id, db=db)
-    
+
     if not workflow:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Workflow {workflow_id} not found",
         )
-    
+
     # Check if workflow can be cancelled
     if workflow.status not in [WorkflowStatus.PENDING, WorkflowStatus.RUNNING]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Cannot cancel workflow with status {workflow.status.value}",
         )
-    
+
     # Update to cancelled status
     updated_workflow = await workflow_service.update_workflow_status(
         workflow_id=workflow_id,
         status=WorkflowStatus.CANCELLED,
         db=db
     )
-    
+
     logger.info(
         "Workflow cancelled",
         workflow_id=workflow_id,
         user=user.user_id if user else "anonymous",
     )
-    
+
     return _db_workflow_to_response(updated_workflow)
 
 

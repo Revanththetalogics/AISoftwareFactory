@@ -2,11 +2,12 @@
 Pytest configuration and fixtures for AI Software Factory tests.
 """
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
 import asyncio
-from datetime import datetime
 import uuid
+from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 
 @pytest.fixture
@@ -85,7 +86,7 @@ def mock_auth_service(mock_db_user):
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
         mock_session_local.return_value = mock_session
-        
+
         # Mock the execute method to return our mock user
         mock_result = Mock()
         mock_result.scalar_one_or_none = Mock(return_value=mock_db_user)
@@ -93,7 +94,7 @@ def mock_auth_service(mock_db_user):
         mock_session.get = AsyncMock(return_value=mock_db_user)
         mock_session.commit = AsyncMock()
         mock_session.refresh = AsyncMock()
-        
+
         yield mock_session
 
 
@@ -101,6 +102,7 @@ def mock_auth_service(mock_db_user):
 def test_client():
     """Fixture for FastAPI test client."""
     from fastapi.testclient import TestClient
+
     from backend.main import app
     return TestClient(app)
 
@@ -109,7 +111,7 @@ def test_client():
 def auth_headers(mock_db_user):
     """Fixture for authentication headers with mocked DB user."""
     from backend.services.auth_service import AuthService
-    
+
     # Create a valid token for testing using the mock user ID
     auth_service = AuthService()
     test_user_data = {
@@ -118,7 +120,7 @@ def auth_headers(mock_db_user):
         "permissions": mock_db_user.permissions
     }
     token = auth_service.create_access_token(test_user_data)
-    
+
     return {"Authorization": f"Bearer {token}"}
 
 
@@ -126,17 +128,18 @@ def auth_headers(mock_db_user):
 def authenticated_client(auth_headers, mock_auth_service, mock_db_user):
     """Fixture for authenticated test client with mocked DB."""
     from fastapi.testclient import TestClient
+
     from backend.main import app
-    
+
     # Patch the auth service methods to use our mock
     with patch('backend.api.dependencies.get_auth_service') as mock_get_auth:
         from backend.services.auth_service import AuthService
         auth_service = AuthService()
-        
+
         # Mock the get_user_by_id method
         auth_service.get_user_by_id = AsyncMock(return_value=mock_db_user)
         mock_get_auth.return_value = auth_service
-        
+
         client = TestClient(app)
         client.headers.update(auth_headers)
         yield client
@@ -160,7 +163,7 @@ def mock_db_session():
 @pytest.fixture
 def mock_project_service(mock_db_session):
     """Fixture for mocked project service."""
-    
+
     # Create mock project
     mock_project = Mock()
     mock_project.id = "proj-test-123"
@@ -174,7 +177,7 @@ def mock_project_service(mock_db_session):
     mock_project.extra_metadata = {}
     mock_project.created_at = datetime.utcnow()
     mock_project.updated_at = datetime.utcnow()
-    
+
     # Mock the service
     with patch('backend.services.database_services.get_project_service') as mock_get_service:
         service = AsyncMock()
@@ -183,6 +186,6 @@ def mock_project_service(mock_db_session):
         service.list_projects = AsyncMock(return_value=[mock_project])
         service.update_project = AsyncMock(return_value=mock_project)
         service.delete_project = AsyncMock(return_value=True)
-        
+
         mock_get_service.return_value = service
         yield service

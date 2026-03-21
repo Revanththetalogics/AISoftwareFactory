@@ -5,22 +5,20 @@ This module provides REST endpoints for project CRUD operations.
 """
 
 from typing import List, Optional
-from datetime import datetime
-from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException, Depends, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.api.dependencies import get_current_user
 from backend.api.models import (
     ProjectCreate,
-    ProjectUpdate,
     ProjectResponse,
     ProjectStatus,
+    ProjectUpdate,
 )
-from backend.api.dependencies import get_current_user, require_permissions
-from backend.services.database_services import get_project_service
-from backend.db.session import get_db
 from backend.core.logging import get_logger
+from backend.db.session import get_db
+from backend.services.database_services import get_project_service
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -42,7 +40,7 @@ async def create_project(
 ) -> ProjectResponse:
     """
     Create a new software factory project.
-    
+
     The project will be initialized in DRAFT status and can then be
     activated to start the AI-driven development workflow.
     """
@@ -54,14 +52,14 @@ async def create_project(
         owner_id=user.user_id if user else "anonymous",
         db=db
     )
-    
+
     logger.info(
         "Project created",
         project_id=project.id,
         name=request.name,
         user=user.user_id if user else "anonymous",
     )
-    
+
     return ProjectResponse(
         id=project.id,
         name=project.name,
@@ -91,7 +89,7 @@ async def list_projects(
 ) -> List[ProjectResponse]:
     """
     List all projects with optional filtering.
-    
+
     Supports pagination and status filtering.
     """
     projects = await project_service.list_projects(
@@ -101,14 +99,14 @@ async def list_projects(
         limit=limit,
         db=db
     )
-    
+
     logger.info(
         "Projects listed",
         count=len(projects),
         filter_status=status,
         user=user.user_id if user else "anonymous",
     )
-    
+
     return [
         ProjectResponse(
             id=p.id,
@@ -141,19 +139,19 @@ async def get_project(
     Get detailed information about a specific project.
     """
     project = await project_service.get_project(project_id, db=db)
-    
+
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Project {project_id} not found",
         )
-    
+
     # Check ownership/permissions
     # Allow access if user owns the project or has admin permissions
     user_id = user.user_id if user else "anonymous"
     is_owner = project.owner_id == user_id
     is_admin = hasattr(user, 'permissions') and "admin" in user.permissions
-    
+
     if not is_owner and not is_admin:
         logger.warning(
             "Access denied: user does not own project",
@@ -165,13 +163,13 @@ async def get_project(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to access this project"
         )
-    
+
     logger.info(
         "Project retrieved",
         project_id=project_id,
         user=user.user_id if user else "anonymous",
     )
-    
+
     return ProjectResponse(
         id=project.id,
         name=project.name,
@@ -200,42 +198,42 @@ async def update_project(
 ) -> ProjectResponse:
     """
     Update project information.
-    
+
     Only provided fields will be updated.
     """
     project = await project_service.get_project(project_id, db=db)
-    
+
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Project {project_id} not found",
         )
-    
+
     # Check ownership/permissions
     if project.owner_id != (user.user_id if user else "anonymous"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to update this project"
         )
-    
+
     # Prepare updates
     update_data = request.model_dump(exclude_unset=True)
     if "status" in update_data:
         update_data["status"] = update_data["status"].value
-    
+
     updated_project = await project_service.update_project(
         project_id=project_id,
         updates=update_data,
         db=db
     )
-    
+
     logger.info(
         "Project updated",
         project_id=project_id,
         updated_fields=list(update_data.keys()),
         user=user.user_id if user else "anonymous",
     )
-    
+
     return ProjectResponse(
         id=updated_project.id,
         name=updated_project.name,
@@ -263,32 +261,32 @@ async def delete_project(
 ) -> None:
     """
     Delete a project and all associated data.
-    
+
     This action cannot be undone.
     """
     project = await project_service.get_project(project_id, db=db)
-    
+
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Project {project_id} not found",
         )
-    
+
     # Check ownership/permissions
     if project.owner_id != (user.user_id if user else "anonymous"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to delete this project"
         )
-    
+
     success = await project_service.delete_project(project_id, db=db)
-    
+
     if not success:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete project"
         )
-    
+
     logger.info(
         "Project deleted",
         project_id=project_id,
@@ -308,30 +306,30 @@ async def activate_project(
 ) -> ProjectResponse:
     """
     Activate a project to start the AI development workflow.
-    
+
     Changes status from DRAFT to ACTIVE and begins the first phase.
     """
     project = await project_service.get_project(project_id, db=db)
-    
+
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Project {project_id} not found",
         )
-    
+
     # Check ownership/permissions
     if project.owner_id != (user.user_id if user else "anonymous"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to activate this project"
         )
-    
+
     if project.status != "draft":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Cannot activate project with status {project.status}"
         )
-    
+
     updated_project = await project_service.update_project(
         project_id=project_id,
         updates={
@@ -340,13 +338,13 @@ async def activate_project(
         },
         db=db
     )
-    
+
     logger.info(
         "Project activated",
         project_id=project_id,
         user=user.user_id if user else "anonymous",
     )
-    
+
     return ProjectResponse(
         id=updated_project.id,
         name=updated_project.name,

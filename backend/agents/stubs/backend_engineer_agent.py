@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 class BackendEngineerAgent(BaseAgent):
     """
     Backend Engineer Agent for server-side development.
-    
+
     This agent is responsible for:
     - API design and implementation
     - Database schema design
@@ -25,13 +25,13 @@ class BackendEngineerAgent(BaseAgent):
     - Security implementation
     - Performance optimization
     - Testing and documentation
-    
+
     Example:
         >>> agent = BackendEngineerAgent()
         >>> task = Task(task_type="api_design", description="Design user API")
         >>> result = await agent.execute_task(task)
     """
-    
+
     def __init__(
         self,
         agent_id: str = None,
@@ -40,7 +40,7 @@ class BackendEngineerAgent(BaseAgent):
     ):
         """
         Initialize the Backend Engineer Agent.
-        
+
         Args:
             agent_id: Unique identifier
             name: Agent name
@@ -62,30 +62,30 @@ class BackendEngineerAgent(BaseAgent):
             description="Backend expert responsible for server-side development and APIs",
             **kwargs,
         )
-    
+
     async def execute_task(self, task: Task) -> TaskResult:
         """
         Execute a Backend Engineer-level task.
-        
+
         Args:
             task: Task to execute
-            
+
         Returns:
             TaskResult: Result of task execution
         """
         start_time = time.time()
-        
+
         self._logger.info(
             "Backend Engineer Agent executing task",
             task_id=task.task_id,
             task_type=task.task_type,
         )
-        
+
         try:
             output = await self._process_backend_task(task)
-            
+
             execution_time = (time.time() - start_time) * 1000
-            
+
             return TaskResult(
                 task_id=task.task_id,
                 status=TaskStatus.COMPLETED,
@@ -96,7 +96,7 @@ class BackendEngineerAgent(BaseAgent):
                     "capabilities_used": self._get_relevant_capabilities(task),
                 },
             )
-            
+
         except Exception as exc:
             execution_time = (time.time() - start_time) * 1000
             self._logger.error(
@@ -104,14 +104,14 @@ class BackendEngineerAgent(BaseAgent):
                 task_id=task.task_id,
                 error=str(exc),
             )
-            
+
             return TaskResult(
                 task_id=task.task_id,
                 status=TaskStatus.FAILED,
                 error=str(exc),
                 execution_time_ms=execution_time,
             )
-    
+
     async def _process_backend_task(self, task: Task) -> Dict[str, Any]:
         """Process Backend Engineer-specific tasks."""
         task_handlers = {
@@ -122,10 +122,10 @@ class BackendEngineerAgent(BaseAgent):
             "performance": self._handle_performance,
             "testing": self._handle_testing,
         }
-        
+
         handler = task_handlers.get(task.task_type, self._handle_generic_task)
         return await handler(task)
-    
+
     async def _handle_api_design(self, task: Task) -> Dict[str, Any]:
         """Handle API design tasks."""
         return {
@@ -154,7 +154,7 @@ class BackendEngineerAgent(BaseAgent):
             "rate_limiting": "100 requests per minute",
             "versioning": "URL path versioning (v1, v2)",
         }
-    
+
     async def _handle_database_design(self, task: Task) -> Dict[str, Any]:
         """Handle database design tasks."""
         return {
@@ -181,7 +181,7 @@ class BackendEngineerAgent(BaseAgent):
             "indexes": ["User.email", "Project.owner_id"],
             "constraints": ["Foreign key constraints", "Unique constraints"],
         }
-    
+
     async def _handle_business_logic(self, task: Task) -> Dict[str, Any]:
         """Handle business logic implementation tasks."""
         return {
@@ -202,7 +202,7 @@ class BackendEngineerAgent(BaseAgent):
                 "User must be 18+ years old",
             ],
         }
-    
+
     async def _handle_security(self, task: Task) -> Dict[str, Any]:
         """Handle security implementation tasks."""
         return {
@@ -227,7 +227,7 @@ class BackendEngineerAgent(BaseAgent):
                 "CSRF (tokens)",
             ],
         }
-    
+
     async def _handle_performance(self, task: Task) -> Dict[str, Any]:
         """Handle performance optimization tasks."""
         return {
@@ -249,7 +249,7 @@ class BackendEngineerAgent(BaseAgent):
                 "cache_hit_rate": "> 80%",
             },
         }
-    
+
     async def _handle_testing(self, task: Task) -> Dict[str, Any]:
         """Handle testing tasks."""
         return {
@@ -267,14 +267,14 @@ class BackendEngineerAgent(BaseAgent):
                 "scope": ["User flows", "Critical paths"],
             },
         }
-    
+
     async def _handle_generic_task(self, task: Task) -> Dict[str, Any]:
         """Handle generic tasks."""
         return {
             "result": f"Processed: {task.description}",
             "task_type": task.task_type,
         }
-    
+
     def _get_relevant_capabilities(self, task: Task) -> list:
         """Get capabilities relevant to the task."""
         capability_map = {

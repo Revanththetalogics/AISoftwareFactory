@@ -5,7 +5,8 @@ This module provides resource allocation and management for agent execution.
 """
 
 from dataclasses import dataclass
-from typing import Dict, Any, Optional
+from typing import Any, Dict
+
 from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -23,10 +24,10 @@ class ResourceAllocation:
 class ResourceManager:
     """
     Resource manager for agent execution.
-    
+
     Provides resource allocation, monitoring, and limits enforcement.
     """
-    
+
     def __init__(self):
         """Initialize the resource manager."""
         self._total_resources = ResourceAllocation(
@@ -37,7 +38,7 @@ class ResourceManager:
         )
         self._allocated: Dict[str, ResourceAllocation] = {}
         self._logger = get_logger(__name__)
-    
+
     def allocate(
         self,
         task_id: str,
@@ -48,19 +49,19 @@ class ResourceManager:
     ) -> bool:
         """
         Allocate resources for a task.
-        
+
         Args:
             task_id: Task ID
             cpu_cores: CPU cores needed
             memory_mb: Memory needed in MB
             gpu_count: GPUs needed
             storage_mb: Storage needed in MB
-            
+
         Returns:
             True if allocated, False if insufficient resources
         """
         available = self.get_available_resources()
-        
+
         if (cpu_cores > available.cpu_cores or
             memory_mb > available.memory_mb or
             gpu_count > available.gpu_count or
@@ -71,24 +72,24 @@ class ResourceManager:
                 requested={"cpu": cpu_cores, "memory": memory_mb}
             )
             return False
-        
+
         self._allocated[task_id] = ResourceAllocation(
             cpu_cores=cpu_cores,
             memory_mb=memory_mb,
             gpu_count=gpu_count,
             storage_mb=storage_mb
         )
-        
+
         self._logger.info("Resources allocated", task_id=task_id)
         return True
-    
+
     def release(self, task_id: str) -> bool:
         """
         Release resources for a task.
-        
+
         Args:
             task_id: Task ID
-            
+
         Returns:
             True if released, False if not found
         """
@@ -97,11 +98,11 @@ class ResourceManager:
             self._logger.info("Resources released", task_id=task_id)
             return True
         return False
-    
+
     def get_available_resources(self) -> ResourceAllocation:
         """
         Get available resources.
-        
+
         Returns:
             Available resource allocation
         """
@@ -109,18 +110,18 @@ class ResourceManager:
         used_memory = sum(r.memory_mb for r in self._allocated.values())
         used_gpu = sum(r.gpu_count for r in self._allocated.values())
         used_storage = sum(r.storage_mb for r in self._allocated.values())
-        
+
         return ResourceAllocation(
             cpu_cores=self._total_resources.cpu_cores - used_cpu,
             memory_mb=self._total_resources.memory_mb - used_memory,
             gpu_count=self._total_resources.gpu_count - used_gpu,
             storage_mb=self._total_resources.storage_mb - used_storage
         )
-    
+
     def get_status(self) -> Dict[str, Any]:
         """
         Get resource status.
-        
+
         Returns:
             Resource status dictionary
         """

@@ -8,12 +8,12 @@ This module provides the agent framework including:
 - Model routing for LLM integration
 """
 
-from backend.agents.base_agent import BaseAgent, AgentIdentity, Task, TaskResult
 from backend.agents.agent_registry import AgentRegistry, get_agent_registry
+from backend.agents.base_agent import AgentIdentity, BaseAgent, Task, TaskResult
 
 __all__ = [
     "BaseAgent",
-    "AgentIdentity", 
+    "AgentIdentity",
     "Task",
     "TaskResult",
     "AgentRegistry",

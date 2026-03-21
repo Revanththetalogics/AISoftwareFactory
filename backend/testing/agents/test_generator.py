@@ -6,15 +6,14 @@ for Python backend code and TypeScript/React frontend code.
 """
 
 import ast
-from typing import Dict, List, Optional, Any
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
-from pathlib import Path
-import re
+from typing import Any, Dict, List, Optional
 
 from backend.agents.base_agent import BaseAgent, Task, TaskResult, TaskStatus
-from backend.llm.factory import LLMFactory
 from backend.core.logging import get_logger
+from backend.llm.factory import LLMFactory
 
 logger = get_logger(__name__)
 
@@ -48,7 +47,7 @@ class GeneratedTest:
     mocks: List[str] = field(default_factory=list)
     assertions_count: int = 0
     generated_at: datetime = field(default_factory=datetime.utcnow)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "id": self.id,
@@ -66,14 +65,14 @@ class GeneratedTest:
 class TestGeneratorAgent(BaseAgent):
     """
     Agent for generating test cases using AI.
-    
+
     This agent analyzes code structure and generates comprehensive tests:
     - Unit tests for functions and methods
     - Edge case tests
     - Error handling tests
     - Integration test scenarios
     - Property-based tests (Hypothesis)
-    
+
     Example:
         >>> agent = TestGeneratorAgent()
         >>> task = Task(
@@ -83,7 +82,7 @@ class TestGeneratorAgent(BaseAgent):
         ... )
         >>> result = await agent.execute_task(task)
     """
-    
+
     def __init__(self):
         """Initialize the test generator agent."""
         super().__init__(
@@ -100,19 +99,19 @@ class TestGeneratorAgent(BaseAgent):
         )
         self._llm = LLMFactory.create_llm()
         self._prompts = self._load_prompts()
-    
+
     async def execute_task(self, task: Task) -> TaskResult:
         """
         Execute a test generation task.
-        
+
         Args:
             task: Task containing generation parameters
-            
+
         Returns:
             TaskResult with generated tests
         """
         start_time = datetime.utcnow()
-        
+
         try:
             if task.task_type == "generate_tests":
                 result = await self._generate_tests_task(task)
@@ -126,16 +125,16 @@ class TestGeneratorAgent(BaseAgent):
                     status=TaskStatus.FAILED,
                     error=f"Unknown task type: {task.task_type}",
                 )
-            
+
             execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
-            
+
             return TaskResult(
                 task_id=task.task_id,
                 status=TaskStatus.COMPLETED,
                 output=result,
                 execution_time_ms=execution_time,
             )
-            
+
         except Exception as e:
             self._logger.error("Test generation failed", error=str(e))
             return TaskResult(
@@ -143,7 +142,7 @@ class TestGeneratorAgent(BaseAgent):
                 status=TaskStatus.FAILED,
                 error=str(e),
             )
-    
+
     async def generate_tests_for_file(
         self,
         file_path: str,
@@ -153,50 +152,50 @@ class TestGeneratorAgent(BaseAgent):
     ) -> List[GeneratedTest]:
         """
         Generate comprehensive tests for a file.
-        
+
         Args:
             file_path: Path to the source file
             include_edge_cases: Include edge case tests
             include_error_cases: Include error handling tests
             include_property_tests: Include property-based tests
-            
+
         Returns:
             List of generated tests
         """
         self._logger.info("Generating tests", file_path=file_path)
-        
+
         # Parse code to find components
         components = await self._analyze_file(file_path)
-        
+
         all_tests = []
-        
+
         for component in components:
             # Skip private methods (usually)
             if component.is_private and not component.name.startswith("__"):
                 continue
-            
+
             # Generate unit tests
             unit_tests = await self._generate_unit_tests(component, file_path)
             all_tests.extend(unit_tests)
-            
+
             # Generate edge case tests
             if include_edge_cases:
                 edge_tests = await self._generate_edge_case_tests(component, file_path)
                 all_tests.extend(edge_tests)
-            
+
             # Generate error case tests
             if include_error_cases:
                 error_tests = await self._generate_error_tests(component, file_path)
                 all_tests.extend(error_tests)
-        
+
         self._logger.info(
             "Test generation complete",
             file_path=file_path,
             test_count=len(all_tests),
         )
-        
+
         return all_tests
-    
+
     async def generate_test_from_error(
         self,
         error_message: str,
@@ -206,13 +205,13 @@ class TestGeneratorAgent(BaseAgent):
     ) -> Optional[GeneratedTest]:
         """
         Generate a regression test from an error.
-        
+
         Args:
             error_message: The error that occurred
             stack_trace: Stack trace
             code_snippet: Code where error occurred
             file_path: File path
-            
+
         Returns:
             Generated regression test
         """
@@ -235,10 +234,10 @@ Create a pytest test that:
 3. Includes proper setup and teardown
 
 Return only the test code."""
-        
+
         try:
             test_code = await self._llm.generate(prompt)
-            
+
             return GeneratedTest(
                 id=f"regression_{datetime.utcnow().timestamp()}",
                 name=f"test_regression_{self._sanitize_name(error_message[:30])}",
@@ -247,11 +246,11 @@ Return only the test code."""
                 test_type="regression",
                 description=f"Regression test for: {error_message[:100]}",
             )
-            
+
         except Exception as e:
             self._logger.error("Failed to generate regression test", error=str(e))
             return None
-    
+
     async def suggest_test_improvements(
         self,
         existing_test_code: str,
@@ -259,11 +258,11 @@ Return only the test code."""
     ) -> List[Dict[str, Any]]:
         """
         Suggest improvements for existing tests.
-        
+
         Args:
             existing_test_code: Current test code
             source_code: Source code being tested
-            
+
         Returns:
             List of improvement suggestions
         """
@@ -287,7 +286,7 @@ Identify:
 5. Missing error handling tests
 
 Return as JSON array of suggestions."""
-        
+
         try:
             response = await self._llm.generate(prompt)
             import json
@@ -296,9 +295,9 @@ Return as JSON array of suggestions."""
         except Exception as e:
             self._logger.error("Failed to analyze tests", error=str(e))
             return []
-    
+
     # Private methods
-    
+
     def _load_prompts(self) -> Dict[str, str]:
         """Load prompt templates."""
         return {
@@ -321,7 +320,7 @@ Requirements:
 5. Include type hints in tests
 
 Generate the complete test code:""",
-            
+
             "edge_case": """Generate edge case tests for this {component_type}:
 
 Name: {name}
@@ -336,7 +335,7 @@ Consider:
 - Very large inputs
 
 Generate pytest tests for these edge cases:""",
-            
+
             "error_case": """Generate error handling tests for this {component_type}:
 
 Name: {name}
@@ -355,25 +354,25 @@ Identify potential exceptions and error conditions:
 
 Generate pytest tests using pytest.raises():""",
         }
-    
+
     async def _analyze_file(self, file_path: str) -> List[CodeComponent]:
         """Analyze a file to extract testable components."""
         try:
             with open(file_path, 'r') as f:
                 code = f.read()
-            
+
             tree = ast.parse(code)
             components = []
-            lines = code.splitlines()
-            
+            code.splitlines()
+
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
                     # Calculate complexity
                     complexity = self._calculate_complexity(node)
-                    
+
                     # Get dependencies
                     dependencies = self._extract_dependencies(node)
-                    
+
                     component = CodeComponent(
                         name=node.name,
                         component_type="function",
@@ -388,13 +387,13 @@ Generate pytest tests using pytest.raises():""",
                         is_private=node.name.startswith("_"),
                     )
                     components.append(component)
-                    
+
                 elif isinstance(node, ast.ClassDef):
                     for item in node.body:
                         if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
                             complexity = self._calculate_complexity(item)
                             dependencies = self._extract_dependencies(item)
-                            
+
                             component = CodeComponent(
                                 name=f"{node.name}.{item.name}",
                                 component_type="method",
@@ -409,13 +408,13 @@ Generate pytest tests using pytest.raises():""",
                                 is_private=item.name.startswith("_"),
                             )
                             components.append(component)
-            
+
             return components
-            
+
         except Exception as e:
             self._logger.error("Failed to analyze file", file_path=file_path, error=str(e))
             return []
-    
+
     def _calculate_complexity(self, node: ast.AST) -> int:
         """Calculate cyclomatic complexity of a function."""
         complexity = 1
@@ -425,7 +424,7 @@ Generate pytest tests using pytest.raises():""",
             elif isinstance(child, ast.BoolOp):
                 complexity += len(child.values) - 1
         return complexity
-    
+
     def _extract_dependencies(self, node: ast.AST) -> List[str]:
         """Extract external dependencies from a function."""
         dependencies = []
@@ -436,7 +435,7 @@ Generate pytest tests using pytest.raises():""",
                 elif isinstance(child.func, ast.Attribute):
                     dependencies.append(child.func.attr)
         return dependencies
-    
+
     def _get_signature(self, node: ast.FunctionDef) -> str:
         """Get function signature as string."""
         args = []
@@ -445,13 +444,13 @@ Generate pytest tests using pytest.raises():""",
             if arg.annotation:
                 arg_str += f": {ast.unparse(arg.annotation)}"
             args.append(arg_str)
-        
+
         returns = ""
         if node.returns:
             returns = f" -> {ast.unparse(node.returns)}"
-        
+
         return f"({', '.join(args)}){returns}"
-    
+
     async def _generate_unit_tests(
         self,
         component: CodeComponent,
@@ -461,7 +460,7 @@ Generate pytest tests using pytest.raises():""",
         # Read the full code
         with open(file_path, 'r') as f:
             code = f.read()
-        
+
         prompt = self._prompts["unit_test"].format(
             component_type=component.component_type,
             name=component.name,
@@ -469,10 +468,10 @@ Generate pytest tests using pytest.raises():""",
             file_path=file_path,
             code=code,
         )
-        
+
         try:
             test_code = await self._llm.generate(prompt)
-            
+
             test = GeneratedTest(
                 id=f"unit_{component.name}_{datetime.utcnow().timestamp()}",
                 name=f"test_{self._sanitize_name(component.name)}",
@@ -482,9 +481,9 @@ Generate pytest tests using pytest.raises():""",
                 description=f"Unit tests for {component.name}",
                 assertions_count=test_code.count("assert"),
             )
-            
+
             return [test]
-            
+
         except Exception as e:
             self._logger.error(
                 "Failed to generate unit tests",
@@ -492,7 +491,7 @@ Generate pytest tests using pytest.raises():""",
                 error=str(e),
             )
             return []
-    
+
     async def _generate_edge_case_tests(
         self,
         component: CodeComponent,
@@ -504,10 +503,10 @@ Generate pytest tests using pytest.raises():""",
             name=component.name,
             signature=component.signature,
         )
-        
+
         try:
             test_code = await self._llm.generate(prompt)
-            
+
             test = GeneratedTest(
                 id=f"edge_{component.name}_{datetime.utcnow().timestamp()}",
                 name=f"test_{self._sanitize_name(component.name)}_edge_cases",
@@ -516,9 +515,9 @@ Generate pytest tests using pytest.raises():""",
                 test_type="edge_case",
                 description=f"Edge case tests for {component.name}",
             )
-            
+
             return [test]
-            
+
         except Exception as e:
             self._logger.error(
                 "Failed to generate edge case tests",
@@ -526,7 +525,7 @@ Generate pytest tests using pytest.raises():""",
                 error=str(e),
             )
             return []
-    
+
     async def _generate_error_tests(
         self,
         component: CodeComponent,
@@ -535,17 +534,17 @@ Generate pytest tests using pytest.raises():""",
         """Generate error handling tests."""
         with open(file_path, 'r') as f:
             code = f.read()
-        
+
         prompt = self._prompts["error_case"].format(
             component_type=component.component_type,
             name=component.name,
             signature=component.signature,
             code=code,
         )
-        
+
         try:
             test_code = await self._llm.generate(prompt)
-            
+
             test = GeneratedTest(
                 id=f"error_{component.name}_{datetime.utcnow().timestamp()}",
                 name=f"test_{self._sanitize_name(component.name)}_errors",
@@ -554,9 +553,9 @@ Generate pytest tests using pytest.raises():""",
                 test_type="error",
                 description=f"Error handling tests for {component.name}",
             )
-            
+
             return [test]
-            
+
         except Exception as e:
             self._logger.error(
                 "Failed to generate error tests",
@@ -564,29 +563,29 @@ Generate pytest tests using pytest.raises():""",
                 error=str(e),
             )
             return []
-    
+
     def _sanitize_name(self, name: str) -> str:
         """Sanitize a name for use in test function names."""
         return re.sub(r'[^a-zA-Z0-9_]', '_', name).lower()
-    
+
     async def _generate_tests_task(self, task: Task) -> Dict[str, Any]:
         """Handle generate_tests task type."""
         file_path = task.context.get("file_path")
         if not file_path:
             raise ValueError("file_path required in context")
-        
+
         tests = await self.generate_tests_for_file(
             file_path,
             include_edge_cases=task.context.get("include_edge_cases", True),
             include_error_cases=task.context.get("include_error_cases", True),
         )
-        
+
         return {
             "file_path": file_path,
             "tests_generated": len(tests),
             "tests": [t.to_dict() for t in tests],
         }
-    
+
     async def _generate_regression_test_task(self, task: Task) -> Dict[str, Any]:
         """Handle generate_regression_test task type."""
         test = await self.generate_test_from_error(
@@ -595,11 +594,11 @@ Generate pytest tests using pytest.raises():""",
             code_snippet=task.context["code_snippet"],
             file_path=task.context["file_path"],
         )
-        
+
         return {
             "test": test.to_dict() if test else None,
         }
-    
+
     async def _generate_integration_tests_task(self, task: Task) -> Dict[str, Any]:
         """Handle generate_integration_tests task type."""
         # Integration test generation logic

@@ -2,31 +2,32 @@
 Tests for Workflows API Routes.
 """
 
+from contextlib import asynccontextmanager
+from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, patch, Mock, MagicMock
-from datetime import datetime
-from contextlib import asynccontextmanager
 
-from backend.main import app
-from backend.db.session import get_db
 from backend.api.dependencies import get_current_user, get_workflow_service
-from backend.services.auth_service import AuthService
+from backend.db.session import get_db
+from backend.main import app
 from backend.models.workflow import WorkflowStatus
+from backend.services.auth_service import AuthService
 
 
 # Create mock db session
 async def mock_get_db():
     """Mock database dependency."""
     mock_session = AsyncMock()
-    
+
     # Create proper mock result for db.execute()
     mock_scalars = Mock()
     mock_scalars.all.return_value = []  # Return empty list
-    
+
     mock_result = Mock()
     mock_result.scalars.return_value = mock_scalars
-    
+
     mock_session.execute = AsyncMock(return_value=mock_result)
     mock_session.commit = AsyncMock()
     mock_session.rollback = AsyncMock()
@@ -80,15 +81,15 @@ def create_mock_workflow(workflow_id="wf-test-123", project_id="proj-test-123", 
 def mock_get_workflow_service():
     """Mock workflow service dependency."""
     mock_service = AsyncMock()
-    
+
     # Create workflow returns a mock workflow
     async def mock_create_workflow(name, project_id, steps, created_by=None, db=None):
         return create_mock_workflow(project_id=project_id)
-    
+
     mock_service.create_workflow = mock_create_workflow
     mock_service.get_workflow = AsyncMock(return_value=None)  # Default to not found
     mock_service.update_workflow_status = AsyncMock()
-    
+
     return mock_service
 
 
@@ -96,14 +97,14 @@ def mock_get_workflow_service():
 async def mock_get_db_context():
     """Mock database context manager for background tasks."""
     mock_session = AsyncMock()
-    
+
     # Create proper mock result for db.execute()
     mock_scalars = Mock()
     mock_scalars.all.return_value = []  # Return empty list
-    
+
     mock_result = Mock()
     mock_result.scalars.return_value = mock_scalars
-    
+
     mock_session.execute = AsyncMock(return_value=mock_result)
     mock_session.commit = AsyncMock()
     mock_session.rollback = AsyncMock()
@@ -130,7 +131,7 @@ def mock_workflow():
 
 class TestExecuteWorkflow:
     """Test cases for POST /workflows/execute."""
-    
+
     @patch("backend.db.session.get_db_context", new=mock_get_db_context)
     @patch("backend.services.database_services.get_db_context", new=mock_get_db_context)
     def test_execute_workflow(self):
@@ -144,7 +145,7 @@ class TestExecuteWorkflow:
             },
             headers=_auth_headers,
         )
-        
+
         assert response.status_code == 202
         data = response.json()
         assert data["status"] == "pending"
@@ -153,21 +154,21 @@ class TestExecuteWorkflow:
 
 class TestGetWorkflowStatus:
     """Test cases for GET /workflows/{id}."""
-    
+
     def test_get_workflow_not_found(self):
         """Test 404 for nonexistent workflow."""
         response = client.get("/api/v1/workflows/nonexistent", headers=_auth_headers)
-        
+
         assert response.status_code == 404
 
 
 class TestListWorkflows:
     """Test cases for GET /workflows."""
-    
+
     def test_list_workflows(self):
         """Test listing workflows."""
         response = client.get("/api/v1/workflows", headers=_auth_headers)
-        
+
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
@@ -175,21 +176,21 @@ class TestListWorkflows:
 
 class TestCancelWorkflow:
     """Test cases for POST /workflows/{id}/cancel."""
-    
+
     def test_cancel_workflow_not_found(self):
         """Test 404 for nonexistent workflow."""
         response = client.post("/api/v1/workflows/nonexistent/cancel", headers=_auth_headers)
-        
+
         assert response.status_code == 404
 
 
 class TestGetAvailablePhases:
     """Test cases for GET /workflows/phases/available."""
-    
+
     def test_get_phases(self):
         """Test getting available phases."""
         response = client.get("/api/v1/workflows/phases/available", headers=_auth_headers)
-        
+
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)

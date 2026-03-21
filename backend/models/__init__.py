@@ -7,29 +7,28 @@ operations and Alembic migration discovery.
 """
 
 # Pydantic models for API/validation
+# SQLAlchemy ORM models for database operations
+# These are imported to ensure Alembic can discover all models
+from backend.models.database import (
+    DBAgent,
+    DBAuditLog,
+    DBDeployment,
+    DBProject,
+    DBTask,
+    DBUser,
+    DBWorkflow,
+)
+from backend.models.task import (
+    Task,
+    TaskPriority,
+    TaskResult,
+    TaskStatus,
+)
 from backend.models.workflow import (
     Workflow,
     WorkflowStatus,
     WorkflowStep,
     WorkflowTrigger,
-)
-from backend.models.task import (
-    Task,
-    TaskStatus,
-    TaskPriority,
-    TaskResult,
-)
-
-# SQLAlchemy ORM models for database operations
-# These are imported to ensure Alembic can discover all models
-from backend.models.database import (
-    DBUser,
-    DBProject,
-    DBWorkflow,
-    DBTask,
-    DBAgent,
-    DBDeployment,
-    DBAuditLog,
 )
 
 __all__ = [

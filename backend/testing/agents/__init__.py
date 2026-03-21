@@ -8,10 +8,10 @@ Each agent specializes in a specific aspect of testing:
 - FrontendTesterAgent: Handles E2E and visual testing
 """
 
-from backend.testing.agents.test_generator import TestGeneratorAgent
-from backend.testing.agents.bug_detector import BugDetectorAgent
 from backend.testing.agents.auto_fixer import AutoFixerAgent
+from backend.testing.agents.bug_detector import BugDetectorAgent
 from backend.testing.agents.frontend_tester import FrontendTesterAgent
+from backend.testing.agents.test_generator import TestGeneratorAgent
 
 __all__ = [
     "TestGeneratorAgent",

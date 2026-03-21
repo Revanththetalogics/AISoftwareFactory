@@ -9,24 +9,19 @@ This module defines SQLAlchemy models for core entities including:
 - Agents
 """
 
-from datetime import datetime
-from typing import Dict, List, Optional
-from sqlalchemy import (
-    Column, String, Text, Integer, DateTime, Boolean, ForeignKey, 
-    JSON, Enum, Float, UniqueConstraint, Index
-)
+from sqlalchemy import JSON, Boolean, Column, DateTime, Enum, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from backend.db.base import Base
-from backend.models.task import TaskStatus, TaskPriority
+from backend.models.task import TaskPriority, TaskStatus
 from backend.models.workflow import WorkflowStatus, WorkflowTrigger
 
 
 class DBUser(Base):
     """User model for authentication and authorization."""
     __tablename__ = "users"
-    
+
     id = Column(String(50), primary_key=True, index=True)
     username = Column(String(50), unique=True, index=True, nullable=False)
     email = Column(String(100), unique=True, index=True, nullable=False)
@@ -39,12 +34,12 @@ class DBUser(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     last_login = Column(DateTime(timezone=True))
-    
+
     # Relationships
     projects = relationship("DBProject", back_populates="owner")
     workflows = relationship("DBWorkflow", back_populates="created_by_user")
     tasks = relationship("DBTask", back_populates="created_by_user")
-    
+
     __table_args__ = (
         Index('idx_users_username', 'username'),
         Index('idx_users_email', 'email'),
@@ -55,7 +50,7 @@ class DBUser(Base):
 class DBProject(Base):
     """Project model representing a software development project."""
     __tablename__ = "projects"
-    
+
     id = Column(String(50), primary_key=True, index=True)
     name = Column(String(100), nullable=False)
     description = Column(Text)
@@ -69,12 +64,12 @@ class DBProject(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     deleted_at = Column(DateTime(timezone=True))
-    
+
     # Relationships
     owner = relationship("DBUser", back_populates="projects")
     workflows = relationship("DBWorkflow", back_populates="project")
     tasks = relationship("DBTask", back_populates="project")
-    
+
     __table_args__ = (
         Index('idx_projects_owner', 'owner_id'),
         Index('idx_projects_status', 'status'),
@@ -86,7 +81,7 @@ class DBProject(Base):
 class DBWorkflow(Base):
     """Workflow model representing an automated process."""
     __tablename__ = "workflows"
-    
+
     id = Column(String(50), primary_key=True, index=True)
     name = Column(String(100), nullable=False)
     description = Column(Text)
@@ -105,12 +100,12 @@ class DBWorkflow(Base):
     extra_metadata = Column(JSON, default=dict)  # Renamed from 'metadata'
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    
+
     # Relationships
     project = relationship("DBProject", back_populates="workflows")
     created_by_user = relationship("DBUser", back_populates="workflows")
     tasks = relationship("DBTask", back_populates="workflow")
-    
+
     __table_args__ = (
         Index('idx_workflows_project', 'project_id'),
         Index('idx_workflows_status', 'status'),
@@ -122,7 +117,7 @@ class DBWorkflow(Base):
 class DBTask(Base):
     """Task model representing a unit of work."""
     __tablename__ = "tasks"
-    
+
     id = Column(String(50), primary_key=True, index=True)
     name = Column(String(100), nullable=False)
     description = Column(Text)
@@ -146,12 +141,12 @@ class DBTask(Base):
     extra_metadata = Column(JSON, default=dict)  # Renamed from 'metadata'
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    
+
     # Relationships
     project = relationship("DBProject", back_populates="tasks")
     workflow = relationship("DBWorkflow", back_populates="tasks")
     created_by_user = relationship("DBUser", back_populates="tasks")
-    
+
     __table_args__ = (
         Index('idx_tasks_project', 'project_id'),
         Index('idx_tasks_workflow', 'workflow_id'),
@@ -166,7 +161,7 @@ class DBTask(Base):
 class DBAgent(Base):
     """Agent model representing an AI agent."""
     __tablename__ = "agents"
-    
+
     id = Column(String(50), primary_key=True, index=True)
     name = Column(String(100), nullable=False)
     role = Column(String(50), nullable=False)
@@ -179,7 +174,7 @@ class DBAgent(Base):
     extra_metadata = Column(JSON, default=dict)  # Renamed from 'metadata'
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    
+
     __table_args__ = (
         Index('idx_agents_role', 'role'),
         Index('idx_agents_status', 'status'),
@@ -190,7 +185,7 @@ class DBAgent(Base):
 class DBDeployment(Base):
     """Deployment model representing application deployments."""
     __tablename__ = "deployments"
-    
+
     id = Column(String(50), primary_key=True, index=True)
     project_id = Column(String(50), ForeignKey("projects.id"), nullable=False)
     environment = Column(String(20), nullable=False)  # dev, staging, production
@@ -205,7 +200,7 @@ class DBDeployment(Base):
     created_by = Column(String(50), ForeignKey("users.id"))
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    
+
     __table_args__ = (
         Index('idx_deployments_project', 'project_id'),
         Index('idx_deployments_environment', 'environment'),
@@ -219,7 +214,7 @@ class DBDeployment(Base):
 class DBAuditLog(Base):
     """Audit log model for tracking system changes."""
     __tablename__ = "audit_logs"
-    
+
     id = Column(String(50), primary_key=True, index=True)
     user_id = Column(String(50), ForeignKey("users.id"))
     action = Column(String(50), nullable=False)  # CREATE, UPDATE, DELETE, LOGIN, etc.
@@ -229,7 +224,7 @@ class DBAuditLog(Base):
     ip_address = Column(String(45))  # IPv6 compatible
     user_agent = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    
+
     __table_args__ = (
         Index('idx_auditlogs_user', 'user_id'),
         Index('idx_auditlogs_resource', 'resource_type', 'resource_id'),
@@ -241,7 +236,7 @@ class DBAuditLog(Base):
 # Model imports for alembic
 __all__ = [
     "DBUser",
-    "DBProject", 
+    "DBProject",
     "DBWorkflow",
     "DBTask",
     "DBAgent",

@@ -5,9 +5,9 @@ This module provides comprehensive test report generation in multiple formats.
 """
 
 import json
-from typing import Dict, List, Any, Optional
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 from backend.core.logging import get_logger
 
@@ -17,21 +17,21 @@ logger = get_logger(__name__)
 class ReportGenerator:
     """
     Report generator for simulation results.
-    
+
     Generates reports in JSON, HTML, and Markdown formats.
     """
-    
+
     def __init__(self, output_dir: str = "./reports"):
         """
         Initialize the report generator.
-        
+
         Args:
             output_dir: Directory for report output
         """
         self._output_dir = Path(output_dir)
         self._output_dir.mkdir(parents=True, exist_ok=True)
         self._logger = get_logger(__name__)
-    
+
     def generate_json(
         self,
         results: Dict[str, Any],
@@ -39,23 +39,23 @@ class ReportGenerator:
     ) -> str:
         """
         Generate JSON report.
-        
+
         Args:
             results: Test results
             filename: Output filename
-            
+
         Returns:
             Path to generated report
         """
         filename = filename or f"report_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
         filepath = self._output_dir / filename
-        
+
         with open(filepath, 'w') as f:
             json.dump(results, f, indent=2, default=str)
-        
+
         self._logger.info("JSON report generated", path=str(filepath))
         return str(filepath)
-    
+
     def generate_markdown(
         self,
         results: Dict[str, Any],
@@ -63,17 +63,17 @@ class ReportGenerator:
     ) -> str:
         """
         Generate Markdown report.
-        
+
         Args:
             results: Test results
             filename: Output filename
-            
+
         Returns:
             Path to generated report
         """
         filename = filename or f"report_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.md"
         filepath = self._output_dir / filename
-        
+
         lines = [
             "# Simulation Test Report",
             "",
@@ -82,7 +82,7 @@ class ReportGenerator:
             "## Summary",
             ""
         ]
-        
+
         if "summary" in results:
             summary = results["summary"]
             lines.extend([
@@ -93,7 +93,7 @@ class ReportGenerator:
                 f"- **Duration:** {summary.get('duration_seconds', 0):.2f}s",
                 ""
             ])
-        
+
         if "results" in results:
             lines.extend(["## Detailed Results", ""])
             for result in results["results"]:
@@ -104,13 +104,13 @@ class ReportGenerator:
                     for key, value in result["details"].items():
                         lines.append(f"- **{key}:** {value}")
                     lines.append("")
-        
+
         with open(filepath, 'w') as f:
             f.write("\n".join(lines))
-        
+
         self._logger.info("Markdown report generated", path=str(filepath))
         return str(filepath)
-    
+
     def generate_html(
         self,
         results: Dict[str, Any],
@@ -118,20 +118,20 @@ class ReportGenerator:
     ) -> str:
         """
         Generate HTML report.
-        
+
         Args:
             results: Test results
             filename: Output filename
-            
+
         Returns:
             Path to generated report
         """
         filename = filename or f"report_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.html"
         filepath = self._output_dir / filename
-        
+
         summary = results.get("summary", {})
         success_rate = summary.get("success_rate", 0) * 100
-        
+
         html = f"""
 <!DOCTYPE html>
 <html>
@@ -148,7 +148,7 @@ class ReportGenerator:
 <body>
     <h1>Simulation Test Report</h1>
     <p><strong>Generated:</strong> {datetime.utcnow().isoformat()}</p>
-    
+
     <div class="summary">
         <h2>Summary</h2>
         <p>Total Tests: {summary.get('total_tests', 'N/A')}</p>
@@ -157,10 +157,10 @@ class ReportGenerator:
         <p>Success Rate: {success_rate:.1f}%</p>
         <p>Duration: {summary.get('duration_seconds', 0):.2f}s</p>
     </div>
-    
+
     <h2>Detailed Results</h2>
 """
-        
+
         for result in results.get("results", []):
             status_class = "passed" if result.get("success") else "failed"
             html += f"""
@@ -169,14 +169,14 @@ class ReportGenerator:
         <p>Status: {'PASS' if result.get('success') else 'FAIL'}</p>
     </div>
 """
-        
+
         html += """
 </body>
 </html>
 """
-        
+
         with open(filepath, 'w') as f:
             f.write(html)
-        
+
         self._logger.info("HTML report generated", path=str(filepath))
         return str(filepath)

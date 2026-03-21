@@ -8,15 +8,13 @@ Currently using DeploymentOrchestrator which uses in-memory storage.
 """
 
 from typing import List
-from datetime import datetime
-from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
+from backend.api.dependencies import get_current_user
 from backend.api.models import DeploymentRequest, DeploymentResponse
-from backend.api.dependencies import get_current_user, require_permissions
-from backend.deployment.orchestrator import DeploymentOrchestrator, DeploymentEnvironment
 from backend.core.logging import get_logger
+from backend.deployment.orchestrator import DeploymentEnvironment, DeploymentOrchestrator
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/deployments", tags=["deployments"])
@@ -37,7 +35,7 @@ async def create_deployment(
 ) -> DeploymentResponse:
     """
     Create a new deployment for a project.
-    
+
     The deployment will be queued and executed asynchronously.
     """
     try:
@@ -47,14 +45,14 @@ async def create_deployment(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid environment: {request.environment}",
         )
-    
+
     result = _orchestrator.create_deployment(
         project_id=request.project_id,
         environment=env,
         version=request.version,
         config=request.config or {},
     )
-    
+
     logger.info(
         "Deployment created",
         deployment_id=result.deployment_id,
@@ -62,7 +60,7 @@ async def create_deployment(
         environment=request.environment,
         user=user.user_id if user else "anonymous",
     )
-    
+
     return DeploymentResponse(
         deployment_id=result.deployment_id,
         project_id=result.project_name,
@@ -96,12 +94,12 @@ async def list_deployments(
             env = DeploymentEnvironment(environment)
         except ValueError:
             pass
-    
+
     deployments = _orchestrator.list_deployments(
         project_name=project_id,
         environment=env,
     )
-    
+
     return [
         DeploymentResponse(
             deployment_id=d.deployment_id,
@@ -132,13 +130,13 @@ async def get_deployment(
     Get detailed information about a deployment.
     """
     deployment = _orchestrator.get_deployment(deployment_id)
-    
+
     if not deployment:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Deployment {deployment_id} not found",
         )
-    
+
     return DeploymentResponse(
         deployment_id=deployment.deployment_id,
         project_id=deployment.project_name,
@@ -166,21 +164,21 @@ async def cancel_deployment(
     Cancel a pending or in-progress deployment.
     """
     success = _orchestrator.cancel_deployment(deployment_id)
-    
+
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Deployment {deployment_id} not found",
         )
-    
+
     deployment = _orchestrator.get_deployment(deployment_id)
-    
+
     logger.info(
         "Deployment cancelled",
         deployment_id=deployment_id,
         user=user.user_id if user else "anonymous",
     )
-    
+
     return DeploymentResponse(
         deployment_id=deployment.deployment_id,
         project_id=deployment.project_name,

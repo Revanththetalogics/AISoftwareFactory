@@ -8,7 +8,7 @@ and resilience wrappers for external service calls.
 import asyncio
 import functools
 import time
-from typing import TypeVar, Callable, Any, Optional
+from typing import Any, Callable, Optional, TypeVar
 
 from backend.core.logging import get_logger
 
@@ -25,25 +25,25 @@ class CircuitBreakerOpenError(Exception):
 class CircuitBreaker:
     """
     Circuit breaker for external service calls.
-    
+
     Implements the circuit breaker pattern to prevent cascading failures
     when external services are unavailable.
-    
+
     States:
         - closed: Normal operation, requests pass through
         - open: Service is failing, requests are rejected immediately
         - half-open: Testing if service recovered, limited requests allowed
-    
+
     Attributes:
         name: Identifier for this circuit breaker
         failure_threshold: Number of failures before opening circuit
         recovery_timeout: Seconds to wait before attempting recovery
-        
+
     Example:
         >>> cb = CircuitBreaker("llm_provider", failure_threshold=3, recovery_timeout=60.0)
         >>> result = await cb.call(some_async_func, arg1, arg2)
     """
-    
+
     def __init__(
         self,
         name: str,
@@ -52,7 +52,7 @@ class CircuitBreaker:
     ):
         """
         Initialize circuit breaker.
-        
+
         Args:
             name: Identifier for logging and metrics
             failure_threshold: Failures before opening (default: 5)
@@ -65,19 +65,19 @@ class CircuitBreaker:
         self.last_failure_time: float = 0
         self.state = "closed"  # closed, open, half-open
         self._lock = asyncio.Lock()
-    
+
     async def call(self, func: Callable, *args, **kwargs) -> Any:
         """
         Execute a function through the circuit breaker.
-        
+
         Args:
             func: Async function to execute
             *args: Positional arguments for the function
             **kwargs: Keyword arguments for the function
-            
+
         Returns:
             Result from the function
-            
+
         Raises:
             CircuitBreakerOpenError: If circuit is open
             Exception: Any exception from the wrapped function
@@ -94,10 +94,10 @@ class CircuitBreaker:
                     raise CircuitBreakerOpenError(
                         f"Circuit breaker '{self.name}' is open"
                     )
-        
+
         try:
             result = await func(*args, **kwargs)
-            
+
             async with self._lock:
                 if self.state == "half-open":
                     self.state = "closed"
@@ -106,14 +106,14 @@ class CircuitBreaker:
                         "Circuit breaker closed (recovered)",
                         circuit_name=self.name
                     )
-            
+
             return result
-            
+
         except Exception as e:
             async with self._lock:
                 self.failure_count += 1
                 self.last_failure_time = time.time()
-                
+
                 if self.failure_count >= self.failure_threshold:
                     self.state = "open"
                     logger.warning(
@@ -123,17 +123,17 @@ class CircuitBreaker:
                         error=str(e)
                     )
             raise
-    
+
     def get_state_value(self) -> int:
         """
         Get numeric state for metrics.
-        
+
         Returns:
             0 for closed, 1 for half-open, 2 for open
         """
         state_map = {"closed": 0, "half-open": 1, "open": 2}
         return state_map.get(self.state, 0)
-    
+
     def reset(self) -> None:
         """Reset circuit breaker to closed state."""
         self.state = "closed"
@@ -169,18 +169,18 @@ async def with_timeout(
 ) -> Any:
     """
     Execute a coroutine with timeout.
-    
+
     Args:
         coro: Coroutine to execute
         timeout_seconds: Maximum execution time in seconds
         operation_name: Name for logging (default: "operation")
-        
+
     Returns:
         Result from the coroutine
-        
+
     Raises:
         TimeoutError: If operation exceeds timeout
-        
+
     Example:
         >>> result = await with_timeout(
         ...     some_async_func(),
@@ -209,10 +209,10 @@ async def with_resilience(
 ) -> Any:
     """
     Execute a function with circuit breaker and optional timeout.
-    
+
     Combines circuit breaker protection with timeout for comprehensive
     resilience against external service failures.
-    
+
     Args:
         func: Async function to execute
         circuit_breaker: Circuit breaker instance to use
@@ -220,15 +220,15 @@ async def with_resilience(
         operation_name: Name for logging
         *args: Positional arguments for the function
         **kwargs: Keyword arguments for the function
-        
+
     Returns:
         Result from the function
-        
+
     Raises:
         CircuitBreakerOpenError: If circuit is open
         TimeoutError: If operation times out
         Exception: Any exception from the wrapped function
-        
+
     Example:
         >>> result = await with_resilience(
         ...     llm_client.generate,
@@ -240,11 +240,11 @@ async def with_resilience(
     """
     async def wrapped():
         return await func(*args, **kwargs)
-    
+
     # Apply circuit breaker
     async def cb_wrapped():
         return await circuit_breaker.call(wrapped)
-    
+
     # Apply timeout if specified
     if timeout_seconds is not None:
         return await with_timeout(
@@ -263,15 +263,15 @@ def resilient(
 ):
     """
     Decorator to add resilience to async functions.
-    
+
     Args:
         circuit_breaker: Circuit breaker to use
         timeout_seconds: Optional timeout in seconds
         operation_name: Name for logging (defaults to function name)
-        
+
     Returns:
         Decorated function
-        
+
     Example:
         >>> @resilient(llm_circuit_breaker, timeout_seconds=30.0)
         ... async def call_llm(prompt: str) -> str:

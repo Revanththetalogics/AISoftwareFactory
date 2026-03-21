@@ -5,10 +5,10 @@ This module defines Pydantic models for API validation and serialization.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProjectStatus(str, Enum):
@@ -29,7 +29,7 @@ class ProjectCreate(BaseModel):
             "requirements": "User authentication, dashboard, API",
         }
     })
-    
+
     name: str = Field(..., min_length=1, max_length=100, description="Project name")
     description: str = Field(..., min_length=1, description="Project description")
     requirements: Optional[str] = Field(None, description="Project requirements")
@@ -48,7 +48,7 @@ class ProjectUpdate(BaseModel):
 class ProjectResponse(BaseModel):
     """Response model for project data."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: str
     name: str
     description: str
@@ -71,7 +71,7 @@ class WorkflowExecuteRequest(BaseModel):
             "context": {"priority": "high"},
         }
     })
-    
+
     project_id: str = Field(..., description="Project ID")
     phase: Optional[str] = Field(None, description="Specific phase to execute")
     context: Optional[Dict[str, Any]] = Field(None, description="Execution context")
@@ -81,7 +81,7 @@ class WorkflowExecuteRequest(BaseModel):
 class WorkflowStatusResponse(BaseModel):
     """Response model for workflow status."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     workflow_id: str
     project_id: str
     status: str
@@ -98,7 +98,7 @@ class WorkflowStatusResponse(BaseModel):
 class AgentResponse(BaseModel):
     """Response model for agent data."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     agent_id: str
     name: str
     role: str
@@ -120,7 +120,7 @@ class AgentTaskRequest(BaseModel):
 class TaskAssignmentResponse(BaseModel):
     """Response model for task assignment to an agent."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     task_id: str
     agent_id: str
     status: str
@@ -136,7 +136,7 @@ class DeploymentRequest(BaseModel):
             "version": "1.0.0",
         }
     })
-    
+
     project_id: str
     environment: str = Field(..., pattern="^(dev|staging|production)$")
     version: str
@@ -146,7 +146,7 @@ class DeploymentRequest(BaseModel):
 class DeploymentResponse(BaseModel):
     """Response model for deployment data."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     deployment_id: str
     project_id: str
     environment: str

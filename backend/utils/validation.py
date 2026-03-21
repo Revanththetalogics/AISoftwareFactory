@@ -16,7 +16,6 @@ from pydantic.networks import EmailStr
 
 from backend.core.exceptions import ValidationError
 
-
 # SSRF Protection - Blocked IP ranges
 BLOCKED_IP_RANGES = [
     ipaddress.ip_network('10.0.0.0/8'),       # Private Class A
@@ -41,41 +40,41 @@ class SanitizedString(str):
 def sanitize_input(value: str, max_length: int = 1000) -> str:
     """
     Sanitize input string to prevent injection attacks.
-    
+
     Args:
         value: Input string to sanitize
         max_length: Maximum allowed length
-        
+
     Returns:
         str: Sanitized string
-        
+
     Raises:
         ValidationError: If input is invalid
     """
     if not isinstance(value, str):
         raise ValidationError("Input must be a string")
-    
+
     if len(value) > max_length:
         raise ValidationError(f"Input exceeds maximum length of {max_length}")
-    
+
     # Remove potentially dangerous characters
     # Allow alphanumeric, spaces, and common punctuation
     sanitized = re.sub(r'[<>"\'`;]', '', value)
-    
+
     # Prevent directory traversal
     sanitized = re.sub(r'\.\./', '', sanitized)
     sanitized = re.sub(r'\\\.', '', sanitized)
-    
+
     return sanitized.strip()
 
 
 def validate_email_format(email: str) -> bool:
     """
     Validate email format.
-    
+
     Args:
         email: Email address to validate
-        
+
     Returns:
         bool: True if valid
     """
@@ -83,58 +82,58 @@ def validate_email_format(email: str) -> bool:
         # This will raise if invalid
         EmailStr.validate(email)
         return True
-    except:
+    except Exception:
         return False
 
 
 def validate_url_format(url: str) -> bool:
     """
     Validate URL format and check for malicious patterns.
-    
+
     Args:
         url: URL to validate
-        
+
     Returns:
         bool: True if valid and safe
     """
     try:
         parsed = urlparse(url)
-        
+
         # Check for valid scheme
         if parsed.scheme not in ['http', 'https']:
             return False
-            
+
         # Check for localhost/loopback addresses
         if parsed.hostname in ['localhost', '127.0.0.1', '::1']:
             return False
-            
+
         # Check for private IP ranges
         if parsed.hostname and re.match(r'^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)', parsed.hostname):
             return False
-            
+
         return True
-    except:
+    except Exception:
         return False
 
 
 def validate_url_safe(url: str) -> bool:
     """
     Validate URL is safe from SSRF attacks.
-    
+
     This function performs comprehensive SSRF protection by:
     1. Validating URL scheme (only http/https)
     2. Resolving the hostname to IP
     3. Checking if the resolved IP is in blocked private ranges
-    
+
     Args:
         url: URL to validate
-        
+
     Returns:
         bool: True if URL is safe from SSRF attacks
-        
+
     Raises:
         ValidationError: If URL is potentially dangerous
-        
+
     Example:
         >>> validate_url_safe("https://example.com")
         True
@@ -143,38 +142,38 @@ def validate_url_safe(url: str) -> bool:
     """
     try:
         parsed = urlparse(url)
-        
+
         # Check for valid scheme
         if parsed.scheme not in ['http', 'https']:
             return False
-        
+
         hostname = parsed.hostname
         if not hostname:
             return False
-        
+
         # Block localhost variants
         if hostname.lower() in ['localhost', 'localhost.localdomain']:
             return False
-        
+
         # Resolve hostname to IP for comprehensive check
         try:
             # Get all IP addresses for the hostname
             addr_info = socket.getaddrinfo(hostname, None)
-            
+
             for info in addr_info:
                 ip_str = info[4][0]
                 try:
                     ip = ipaddress.ip_address(ip_str)
-                    
+
                     # Check against all blocked ranges
                     for blocked in BLOCKED_IP_RANGES:
                         if ip in blocked:
                             return False
-                            
+
                 except ValueError:
                     # Invalid IP format, skip
                     continue
-                    
+
         except socket.gaierror:
             # DNS resolution failed - could be malicious or just unreachable
             # Be cautious and allow (validation will fail at connection time)
@@ -182,9 +181,9 @@ def validate_url_safe(url: str) -> bool:
         except socket.timeout:
             # DNS timeout - allow to proceed
             pass
-            
+
         return True
-        
+
     except Exception:
         return False
 
@@ -192,10 +191,10 @@ def validate_url_safe(url: str) -> bool:
 def is_ip_in_blocked_range(ip_str: str) -> bool:
     """
     Check if an IP address is in a blocked private range.
-    
+
     Args:
         ip_str: IP address string
-        
+
     Returns:
         bool: True if IP is in a blocked range
     """
@@ -214,23 +213,23 @@ class SecureProjectCreate(BaseModel):
     Enhanced project creation model with security validation.
     """
     name: str = Field(
-        ..., 
-        min_length=1, 
+        ...,
+        min_length=1,
         max_length=100,
         description="Project name"
     )
     description: str = Field(
-        ..., 
-        min_length=1, 
+        ...,
+        min_length=1,
         max_length=2000,
         description="Project description"
     )
     requirements: Optional[str] = Field(
-        None, 
+        None,
         max_length=5000,
         description="Project requirements"
     )
-    
+
     @field_validator('name')
     def validate_name(cls, v):
         """Validate and sanitize project name."""
@@ -238,12 +237,12 @@ class SecureProjectCreate(BaseModel):
         if not re.match(r'^[a-zA-Z0-9 _\-\.]+$', sanitized):
             raise ValidationError("Project name contains invalid characters")
         return sanitized
-    
+
     @field_validator('description')
     def validate_description(cls, v):
         """Validate and sanitize project description."""
         return sanitize_input(v, max_length=2000)
-    
+
     @field_validator('requirements')
     def validate_requirements(cls, v):
         """Validate and sanitize requirements."""
@@ -260,14 +259,14 @@ class SecureDeploymentRequest(BaseModel):
     environment: str = Field(..., pattern="^(dev|staging|production)$")
     version: str = Field(..., pattern=r'^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$')
     config: Optional[Dict[str, Any]] = None
-    
+
     @field_validator('project_id')
     def validate_project_id(cls, v):
         """Validate project ID format."""
         if not re.match(r'^[a-zA-Z0-9\-_]+$', v):
             raise ValidationError("Invalid project ID format")
         return v
-    
+
     @model_validator(mode='after')
     def validate_config_security(self):
         """Validate configuration doesn't contain sensitive data."""
@@ -303,11 +302,11 @@ VALIDATION_PATTERNS = {
 def validate_pattern(value: str, pattern_name: str) -> bool:
     """
     Validate value against predefined pattern.
-    
+
     Args:
         value: Value to validate
         pattern_name: Name of validation pattern
-        
+
     Returns:
         bool: True if valid
     """
@@ -320,20 +319,20 @@ def validate_pattern(value: str, pattern_name: str) -> bool:
 def batch_validate_fields(data: Dict[str, Any], validations: Dict[str, str]) -> List[str]:
     """
     Batch validate multiple fields against patterns.
-    
+
     Args:
         data: Data dictionary to validate
         validations: Field name to pattern name mapping
-        
+
     Returns:
         List[str]: List of validation error messages
     """
     errors = []
-    
+
     for field_name, pattern_name in validations.items():
         if field_name in data:
             value = data[field_name]
             if isinstance(value, str) and not validate_pattern(value, pattern_name):
                 errors.append(f"Invalid {field_name}: {value}")
-    
+
     return errors

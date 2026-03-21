@@ -7,9 +7,9 @@ for generated applications.
 
 import asyncio
 import time
-from typing import Dict, List, Optional, Any, Callable
-from dataclasses import dataclass, field
-from statistics import mean, median, stdev
+from dataclasses import dataclass
+from statistics import mean, median
+from typing import Any, Callable, Dict, List
 
 from backend.core.logging import get_logger
 
@@ -35,15 +35,15 @@ class PerformanceResult:
 class PerformanceTester:
     """
     Performance tester for load testing.
-    
+
     Provides concurrent request generation and latency measurement
     for performance validation.
     """
-    
+
     def __init__(self):
         """Initialize the performance tester."""
         self._logger = get_logger(__name__)
-    
+
     async def load_test(
         self,
         operation: Callable,
@@ -54,25 +54,25 @@ class PerformanceTester:
     ) -> PerformanceResult:
         """
         Run a load test.
-        
+
         Args:
             operation: Async function to test
             requests: Total number of requests
             concurrency: Concurrent requests
             *args: Arguments for operation
             **kwargs: Keyword arguments for operation
-            
+
         Returns:
             Performance test results
         """
         latencies = []
         errors = 0
-        
+
         start_time = time.time()
-        
+
         # Create semaphore for concurrency control
         semaphore = asyncio.Semaphore(concurrency)
-        
+
         async def make_request():
             nonlocal errors
             async with semaphore:
@@ -84,13 +84,13 @@ class PerformanceTester:
                 except Exception as e:
                     errors += 1
                     self._logger.warning("Request failed", error=str(e))
-        
+
         # Run all requests
         tasks = [make_request() for _ in range(requests)]
         await asyncio.gather(*tasks)
-        
+
         total_time = time.time() - start_time
-        
+
         if not latencies:
             return PerformanceResult(
                 operation=operation.__name__,
@@ -105,11 +105,11 @@ class PerformanceTester:
                 errors=errors,
                 throughput=0
             )
-        
+
         # Calculate statistics
         sorted_latencies = sorted(latencies)
         n = len(sorted_latencies)
-        
+
         return PerformanceResult(
             operation=operation.__name__,
             requests=requests,
@@ -123,7 +123,7 @@ class PerformanceTester:
             errors=errors,
             throughput=requests / total_time
         )
-    
+
     async def benchmark_api(
         self,
         base_url: str,
@@ -132,22 +132,22 @@ class PerformanceTester:
     ) -> Dict[str, PerformanceResult]:
         """
         Benchmark API endpoints.
-        
+
         Args:
             base_url: Base URL for API
             endpoints: List of endpoint configurations
             duration: Test duration in seconds
-            
+
         Returns:
             Results per endpoint
         """
         results = {}
-        
+
         for endpoint in endpoints:
             name = endpoint["name"]
             method = endpoint.get("method", "GET")
             path = endpoint["path"]
-            
+
             # Create test function
             async def test_fn():
                 import aiohttp
@@ -155,18 +155,18 @@ class PerformanceTester:
                     url = f"{base_url}{path}"
                     async with session.request(method, url) as resp:
                         await resp.text()
-            
+
             # Run load test
             result = await self.load_test(
                 test_fn,
                 requests=100,
                 concurrency=10
             )
-            
+
             results[name] = result
-        
+
         return results
-    
+
     def generate_report(self, results: Dict[str, PerformanceResult]) -> Dict[str, Any]:
         """Generate performance test report."""
         report = {
@@ -178,7 +178,7 @@ class PerformanceTester:
             },
             "details": {}
         }
-        
+
         for name, result in results.items():
             report["details"][name] = {
                 "requests": result.requests,
@@ -187,5 +187,5 @@ class PerformanceTester:
                 "throughput_rps": round(result.throughput, 2),
                 "errors": result.errors
             }
-        
+
         return report

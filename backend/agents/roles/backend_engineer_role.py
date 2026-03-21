@@ -13,16 +13,16 @@ from crewai import Agent
 def get_backend_engineer_role(llm: Any = None) -> Agent:
     """
     Get the Backend Engineer agent role configuration.
-    
+
     The Backend Engineer agent designs and implements robust, scalable
     backend services, APIs, and data models.
-    
+
     Args:
         llm: Language model to use (optional, for Phase 3 integration)
-        
+
     Returns:
         Agent: Configured Backend Engineer agent
-        
+
     Example:
         >>> from backend.agents.roles import get_backend_engineer_role
         >>> engineer = get_backend_engineer_role()

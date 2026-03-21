@@ -10,17 +10,16 @@ Features:
 - CSRF protection via SameSite cookie attribute
 """
 
-from datetime import timedelta
-from typing import Dict, Any
+from typing import Any, Dict
 
-from fastapi import APIRouter, HTTPException, Depends, status, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from backend.api.dependencies import get_auth_service
-from backend.services.auth_service import AuthService
 from backend.core.config import get_settings
 from backend.core.logging import get_logger
+from backend.services.auth_service import AuthService
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -36,7 +35,7 @@ def set_auth_cookies(
 ) -> None:
     """
     Set httpOnly authentication cookies on response.
-    
+
     Args:
         response: FastAPI Response object
         access_token: JWT access token
@@ -45,7 +44,7 @@ def set_auth_cookies(
     """
     # Determine if we should set Secure flag (HTTPS only)
     is_secure = request.url.scheme == "https"
-    
+
     # Set access token cookie
     response.set_cookie(
         key="auth_token",
@@ -56,7 +55,7 @@ def set_auth_cookies(
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         path="/"
     )
-    
+
     # Set refresh token cookie (longer lived)
     response.set_cookie(
         key="refresh_token",
@@ -72,7 +71,7 @@ def set_auth_cookies(
 def clear_auth_cookies(response: Response) -> None:
     """
     Clear authentication cookies from response.
-    
+
     Args:
         response: FastAPI Response object
     """
@@ -123,23 +122,23 @@ async def login(
 ) -> JSONResponse:
     """
     Authenticate user and generate JWT tokens.
-    
+
     Sets httpOnly cookies for secure token storage and returns
     user data in JSON response body.
-    
+
     Args:
         request_data: Login credentials
         request: FastAPI Request object
         auth_service: Authentication service instance
-        
+
     Returns:
         JSONResponse: User info with httpOnly auth cookies set
-        
+
     Raises:
         HTTPException: If authentication fails
     """
     logger.info("Login attempt", username=request_data.username)
-    
+
     # Authenticate user
     user_data = await auth_service.authenticate_user(request_data.username, request_data.password)
     if not user_data:
@@ -149,16 +148,16 @@ async def login(
             detail="Invalid username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Create user session
     tokens = auth_service.create_user_session(user_data)
-    
+
     logger.info(
-        "Login successful", 
-        user_id=user_data["user_id"], 
+        "Login successful",
+        user_id=user_data["user_id"],
         username=user_data["username"]
     )
-    
+
     # Create JSON response with user data
     response_data = {
         "access_token": tokens["access_token"],
@@ -170,9 +169,9 @@ async def login(
         "permissions": user_data["permissions"],
         "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     }
-    
+
     response = JSONResponse(content=response_data)
-    
+
     # Set httpOnly cookies
     set_auth_cookies(
         response=response,
@@ -180,7 +179,7 @@ async def login(
         refresh_token=tokens["refresh_token"],
         request=request
     )
-    
+
     return response
 
 
@@ -197,18 +196,18 @@ async def refresh_token(
 ) -> JSONResponse:
     """
     Refresh access token using refresh token.
-    
+
     Accepts refresh token from httpOnly cookie (preferred) or request body.
     Sets new httpOnly cookies on successful refresh.
-    
+
     Args:
         request: FastAPI Request object
         request_data: Optional refresh token in body
         auth_service: Authentication service instance
-        
+
     Returns:
         JSONResponse: New access token with updated cookies
-        
+
     Raises:
         HTTPException: If refresh token is invalid
     """
@@ -216,33 +215,33 @@ async def refresh_token(
     token = request.cookies.get("refresh_token")
     if not token and request_data:
         token = request_data.refresh_token
-    
+
     if not token:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Refresh token not provided"
         )
-    
+
     try:
         # Decode refresh token
         payload = auth_service.decode_token(token)
-        
+
         # Verify it's a refresh token
         if payload.get("type") != "refresh":
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid refresh token"
             )
-        
+
         user_id = payload.get("sub")
         username = payload.get("username")
-        
+
         if not user_id or not username:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid token payload"
             )
-        
+
         # Get user from database to verify they still exist and are active
         user = await auth_service.get_user_by_id(user_id)
         if not user:
@@ -251,7 +250,7 @@ async def refresh_token(
                 detail="User not found or inactive",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        
+
         # Create new tokens
         user_data = {
             "user_id": user.id,
@@ -260,17 +259,17 @@ async def refresh_token(
             "permissions": user.permissions or []
         }
         tokens = auth_service.create_user_session(user_data)
-        
+
         logger.info("Token refreshed", user_id=user_id)
-        
+
         response_data = {
             "access_token": tokens["access_token"],
             "token_type": "bearer",
             "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
         }
-        
+
         response = JSONResponse(content=response_data)
-        
+
         # Set new httpOnly cookies
         set_auth_cookies(
             response=response,
@@ -278,9 +277,9 @@ async def refresh_token(
             refresh_token=tokens["refresh_token"],
             request=request
         )
-        
+
         return response
-        
+
     except Exception as exc:
         logger.warning("Token refresh failed", error=str(exc))
         raise HTTPException(
@@ -303,13 +302,13 @@ async def validate_token(
 ) -> TokenValidationResponse:
     """
     Validate JWT token and return user information.
-    
+
     This endpoint is protected and will only be reached if token is valid.
-    
+
     Args:
         auth_service: Authentication service instance
         current_user: Current authenticated user
-        
+
     Returns:
         TokenValidationResponse: Token validity and user info
     """
@@ -333,23 +332,23 @@ async def logout(
 ) -> JSONResponse:
     """
     Logout user and clear authentication cookies.
-    
+
     Clears httpOnly authentication cookies to invalidate the session.
-    
+
     Args:
         current_user: Current authenticated user
-        
+
     Returns:
         JSONResponse: Logout confirmation with cookies cleared
     """
     if current_user and current_user.user_id != "anonymous":
         logger.info("User logged out", user_id=current_user.user_id)
-    
+
     response = JSONResponse(content={"message": "Logged out successfully"})
-    
+
     # Clear httpOnly cookies
     clear_auth_cookies(response)
-    
+
     return response
 
 
@@ -363,13 +362,13 @@ async def logout(
 async def get_test_credentials() -> Dict[str, Any]:
     """
     Get test credentials for development environment.
-    
+
     SECURITY: This endpoint is only available when:
     - ENVIRONMENT == "development" AND
     - DEBUG == True
-    
+
     In any other configuration, returns 404 Not Found.
-    
+
     Returns:
         Dict: Test user credentials
     """
@@ -380,9 +379,9 @@ async def get_test_credentials() -> Dict[str, Any]:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Not Found"
         )
-    
+
     logger.info("Test credentials requested (development mode)")
-    
+
     return {
         "message": "Test credentials for development",
         "users": [
@@ -392,7 +391,7 @@ async def get_test_credentials() -> Dict[str, Any]:
                 "permissions": ["read", "write", "execute", "admin"]
             },
             {
-                "username": "developer", 
+                "username": "developer",
                 "password": "dev123",
                 "permissions": ["read", "write", "execute"]
             }
