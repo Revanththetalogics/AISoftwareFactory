@@ -65,7 +65,7 @@ class TestOllamaLLM:
     def test_init_defaults(self):
         """Test default initialization."""
         llm = OllamaLLM()
-        
+
         # Use model_dump() to get actual values from Pydantic v2
         config = llm.model_dump()
         assert config["model"] == "qwen2.5-coder"
@@ -79,7 +79,7 @@ class TestOllamaLLM:
             base_url="http://custom:1234",
             temperature=0.5
         )
-        
+
         # Use model_dump() to get actual values from Pydantic v2
         config = llm.model_dump()
         assert config["model"] == "deepseek-coder"

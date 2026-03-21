@@ -153,10 +153,10 @@ class TestCheckDatabase:
         # Mock SQLAlchemy inspector
         mock_inspector = Mock()
         mock_inspector.get_table_names.return_value = ['users', 'projects', 'workflows', 'tasks', 'other_table']
-        
+
         async def mock_run_sync(fn):
             return fn(mock_session)
-        
+
         mock_session.run_sync = mock_run_sync
 
         mock_pool = Mock()
@@ -192,10 +192,10 @@ class TestCheckDatabase:
         # Mock SQLAlchemy inspector - simulate missing tables
         mock_inspector = Mock()
         mock_inspector.get_table_names.return_value = ['workflows', 'tasks']  # Missing 'users' and 'projects'
-        
+
         async def mock_run_sync(fn):
             return fn(mock_session)
-        
+
         mock_session.run_sync = mock_run_sync
 
         mock_pool = Mock()
@@ -234,10 +234,10 @@ class TestCheckDatabase:
         # Mock SQLAlchemy inspector
         mock_inspector = Mock()
         mock_inspector.get_table_names.return_value = ['users', 'projects', 'workflows', 'tasks']
-        
+
         async def mock_run_sync(fn):
             return fn(mock_session)
-        
+
         mock_session.run_sync = mock_run_sync
 
         mock_pool = Mock()
