@@ -3,7 +3,7 @@ Comprehensive tests for agents/model_router.py to achieve 100% coverage.
 
 Covers:
 - ModelProvider enum
-- OllamaLLM class
+- OllamaLLM class  
 - ModelRouter class
 - get_model_router() singleton function
 """
@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 from pydantic import BaseModel
 
-# Mock langchain imports before importing model_router
+# Setup langchain mocks BEFORE importing model_router
 mock_callback_manager = MagicMock()
 mock_llm_base = MagicMock()
 
@@ -25,12 +25,12 @@ sys.modules['langchain.llms.base'] = mock_llm_base
 class MockLLM(BaseModel):
     """Mock LLM base class that supports Pydantic Field initialization."""
     model_config = {'arbitrary_types_allowed': True, 'extra': 'allow'}
-
+    
     # Define default field values as class attributes
     model: str = "qwen2.5-coder"
     base_url: str = "http://localhost:11434"
     temperature: float = 0.7
-
+    
 mock_llm_base.LLM = MockLLM
 mock_callback_manager.CallbackManagerForLLMRun = MagicMock()
 
@@ -68,7 +68,7 @@ class TestOllamaLLM:
     def test_init_defaults(self):
         """Test default initialization."""
         llm = OllamaLLM()
-
+        
         # Access field values - they should be actual values, not FieldInfo
         assert str(llm.model) == "qwen2.5-coder"
         assert str(llm.base_url) == "http://localhost:11434"
@@ -81,7 +81,7 @@ class TestOllamaLLM:
             base_url="http://custom:1234",
             temperature=0.5
         )
-
+        
         # Access field values directly
         assert str(llm.model) == "deepseek-coder"
         assert str(llm.base_url) == "http://custom:1234"
