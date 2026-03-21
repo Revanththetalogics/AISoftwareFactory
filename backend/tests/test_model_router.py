@@ -64,7 +64,12 @@ class TestOllamaLLM:
         # Access field values - handle both direct values and FieldInfo objects
         model_val = str(llm.model)
         base_url_val = str(llm.base_url)
-        temp_val = float(llm.temperature)
+
+        # Handle temperature - extract numeric value from FieldInfo if needed
+        temp_val = llm.temperature
+        if hasattr(temp_val, 'default'):
+            temp_val = temp_val.default
+        temp_val = float(temp_val)
 
         # Check that values contain the expected defaults (handle FieldInfo string representation)
         assert "qwen2.5-coder" in model_val or model_val == "qwen2.5-coder"
