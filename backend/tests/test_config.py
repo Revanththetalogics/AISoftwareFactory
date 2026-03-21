@@ -23,7 +23,7 @@ class TestSettings:
 
         assert settings.APP_NAME == "AI Software Factory"
         assert settings.APP_VERSION == "1.0.0"
-        assert settings.HOST == "0.0.0.0"
+        assert settings.HOST == "127.0.0.1"
         assert settings.PORT == 8000
         assert settings.WORKERS == 1
 

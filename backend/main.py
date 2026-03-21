@@ -220,9 +220,13 @@ async def validate_database_schema() -> None:
     async with AsyncSessionLocal() as session:
         for table in critical_tables:
             try:
-                # Try to query the table to verify it exists
-                await session.execute(text(f"SELECT 1 FROM {table} LIMIT 0"))
-            except Exception:
+                # Use SQLAlchemy inspector to safely check table existence
+                from sqlalchemy import inspect
+                inspector = await session.run_sync(lambda sync_session: inspect(sync_session.connection()))
+                if table not in inspector.get_table_names():
+                    missing_tables.append(table)
+            except Exception as e:
+                logger.debug(f"Error checking table {table}: {e}")
                 missing_tables.append(table)
 
         if missing_tables:
@@ -390,17 +394,11 @@ async def startup_event() -> None:
     ollama_status = "disconnected"
 
     async def _init_ollama():
-        import urllib.request
-        req = urllib.request.Request(
-            f"{settings.OLLAMA_URL}/api/tags",
-            method='GET'
-        )
-        # Run in thread pool to avoid blocking
-        loop = asyncio.get_event_loop()
-        await loop.run_in_executor(
-            None,
-            lambda: urllib.request.urlopen(req, timeout=5)
-        )
+        import httpx
+        # Use httpx for safe HTTP requests with proper validation
+        async with httpx.AsyncClient(verify=True) as client:
+            response = await client.get(f"{settings.OLLAMA_URL}/api/tags", timeout=5.0)
+            response.raise_for_status()
 
     ollama_connected = await _connect_with_retry(
         name="Ollama",

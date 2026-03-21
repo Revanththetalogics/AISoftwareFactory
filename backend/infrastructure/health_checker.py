@@ -174,9 +174,15 @@ class HealthChecker:
             async with AsyncSessionLocal() as session:
                 for table in critical_tables:
                     try:
-                        await session.execute(text(f"SELECT 1 FROM {table} LIMIT 0"))
-                        tables_ok.append(table)
-                    except Exception:
+                        # Use parameterized query to avoid SQL injection
+                        from sqlalchemy import inspect
+                        inspector = await session.run_sync(lambda sync_session: inspect(sync_session.connection()))
+                        if table in inspector.get_table_names():
+                            tables_ok.append(table)
+                        else:
+                            tables_missing.append(table)
+                    except Exception as e:
+                        logger.debug(f"Error checking table {table}: {e}")
                         tables_missing.append(table)
 
             details["schema"] = {

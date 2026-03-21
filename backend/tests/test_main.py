@@ -879,7 +879,7 @@ class TestMainModule:
         with patch('uvicorn.run'):
             with patch('backend.main.get_settings') as mock_settings:
                 mock_settings.return_value = Mock(
-                    HOST="0.0.0.0",
+                    HOST="127.0.0.1",
                     PORT=8000,
                     is_development=True,
                     WORKERS=4,
@@ -892,5 +892,5 @@ class TestMainModule:
                 settings = mock_settings.return_value
 
                 # Verify the settings would be used correctly
-                assert settings.HOST == "0.0.0.0"
+                assert settings.HOST == "127.0.0.1"
                 assert settings.PORT == 8000

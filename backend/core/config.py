@@ -64,7 +64,10 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = Field(default="INFO", description="Logging level")
 
     # Server Configuration
-    HOST: str = Field(default="0.0.0.0", description="Server host address")
+    HOST: str = Field(
+        default="127.0.0.1",
+        description="Server host address. Use 0.0.0.0 for Docker/containerized deployments"
+    )
     PORT: int = Field(default=8000, description="Server port")
     WORKERS: int = Field(default=1, description="Number of worker processes")
 
