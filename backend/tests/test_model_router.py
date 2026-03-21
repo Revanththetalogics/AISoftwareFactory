@@ -61,10 +61,10 @@ class TestOllamaLLM:
         """Test default OllamaLLM initialization."""
         llm = OllamaLLM()
 
-        # Access field values directly from Pydantic model
-        assert llm.model == "qwen2.5-coder"
-        assert llm.base_url == "http://localhost:11434"
-        assert llm.temperature == 0.7
+        # Access field values - use str()/float() to handle FieldInfo objects
+        assert str(llm.model) == "qwen2.5-coder"
+        assert str(llm.base_url) == "http://localhost:11434"
+        assert float(llm.temperature) == 0.7
 
     def test_custom_initialization(self):
         """Test OllamaLLM with custom values."""

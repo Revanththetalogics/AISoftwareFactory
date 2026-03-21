@@ -30,8 +30,9 @@ class TestWorkflowEngine:
             engine = WorkflowEngine()
             state = WorkflowState(project_id="test-123")
 
-            # Mock LangGraph 0.0.40 invoke() method (sync, run in executor)
-            with patch.object(engine._graph, 'invoke', return_value=state):
+            # Mock the crew integration methods that the graph nodes call
+            # This is more reliable than mocking the graph itself
+            with patch.object(engine.crew_integration, 'execute_crew', return_value=state):
                 result = await engine.run(state)
 
             assert result.project_id == "test-123"
@@ -43,8 +44,8 @@ class TestWorkflowEngine:
             engine = WorkflowEngine()
             state = WorkflowState(project_id="test-123")
 
-            # Mock LangGraph 0.0.40 invoke() method to raise exception
-            with patch.object(engine._graph, 'invoke', side_effect=RuntimeError("Workflow failed")):
+            # Mock the crew integration to raise exception
+            with patch.object(engine.crew_integration, 'execute_crew', side_effect=RuntimeError("Workflow failed")):
                 result = await engine.run(state)
 
             assert result.current_phase == ProjectPhase.FAILED
