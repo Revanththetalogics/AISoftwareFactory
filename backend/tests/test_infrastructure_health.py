@@ -153,7 +153,7 @@ class TestCheckDatabase:
         # Mock SQLAlchemy inspector
         mock_inspector = Mock()
         mock_inspector.get_table_names.return_value = ['users', 'projects', 'workflows', 'tasks', 'other_table']
-        
+
         async def mock_run_sync(fn):
             # Create a mock sync session with connection
             mock_sync_session = Mock()
@@ -161,9 +161,9 @@ class TestCheckDatabase:
             mock_sync_session.connection = Mock(return_value=mock_connection)
             result = fn(mock_sync_session)
             return result
-        
+
         mock_session.run_sync = mock_run_sync
-        
+
         # Patch the inspect function to return our mock inspector
         with patch('sqlalchemy.inspect', return_value=mock_inspector):
             mock_pool = Mock()
@@ -199,7 +199,7 @@ class TestCheckDatabase:
         # Mock SQLAlchemy inspector - simulate missing tables
         mock_inspector = Mock()
         mock_inspector.get_table_names.return_value = ['workflows', 'tasks']  # Missing 'users' and 'projects'
-        
+
         async def mock_run_sync(fn):
             # Create a mock sync session with connection
             mock_sync_session = Mock()
@@ -207,9 +207,9 @@ class TestCheckDatabase:
             mock_sync_session.connection = Mock(return_value=mock_connection)
             result = fn(mock_sync_session)
             return result
-        
+
         mock_session.run_sync = mock_run_sync
-        
+
         # Patch the inspect function to return our mock inspector
         with patch('sqlalchemy.inspect', return_value=mock_inspector):
             mock_pool = Mock()
@@ -248,7 +248,7 @@ class TestCheckDatabase:
         # Mock SQLAlchemy inspector
         mock_inspector = Mock()
         mock_inspector.get_table_names.return_value = ['users', 'projects', 'workflows', 'tasks']
-        
+
         async def mock_run_sync(fn):
             # Create a mock sync session with connection
             mock_sync_session = Mock()
@@ -256,9 +256,9 @@ class TestCheckDatabase:
             mock_sync_session.connection = Mock(return_value=mock_connection)
             result = fn(mock_sync_session)
             return result
-        
+
         mock_session.run_sync = mock_run_sync
-        
+
         # Patch the inspect function to return our mock inspector
         with patch('sqlalchemy.inspect', return_value=mock_inspector):
             mock_pool = Mock()

@@ -25,7 +25,7 @@ sys.modules['langchain.llms.base'] = mock_llm_base
 class MockLLM(BaseModel):
     """Mock LLM base class that supports Pydantic Field initialization."""
     model_config = {'arbitrary_types_allowed': True}
-    
+
 mock_llm_base.LLM = MockLLM
 mock_callback_manager.CallbackManagerForLLMRun = MagicMock()
 
@@ -63,7 +63,7 @@ class TestOllamaLLM:
     def test_init_defaults(self):
         """Test default initialization."""
         llm = OllamaLLM()
-            
+
         # Access field values directly from Pydantic model
         assert llm.model == "qwen2.5-coder"
         assert llm.base_url == "http://localhost:11434"
@@ -76,7 +76,7 @@ class TestOllamaLLM:
             base_url="http://custom:1234",
             temperature=0.5
         )
-            
+
         # Access field values directly from Pydantic model
         assert llm.model == "deepseek-coder"
         assert llm.base_url == "http://custom:1234"

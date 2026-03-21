@@ -5,7 +5,7 @@ Covers all uncovered lines in workflow_engine.py:
 - Lines 164-170, 222, 262-284, 288-322, 326-360, 364-381, 385-419, 459-461, 465-467, 471-473, 477-479, 483-485
 """
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
@@ -35,7 +35,7 @@ class TestWorkflowEngine:
                 mock_method = "ainvoke"
             else:
                 mock_method = "invoke"
-            
+
             with patch.object(
                 engine._graph,
                 mock_method,
@@ -58,7 +58,7 @@ class TestWorkflowEngine:
                 mock_method = "ainvoke"
             else:
                 mock_method = "invoke"
-            
+
             with patch.object(
                 engine._graph,
                 mock_method,
