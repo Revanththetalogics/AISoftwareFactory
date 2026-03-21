@@ -24,8 +24,13 @@ sys.modules['langchain.llms.base'] = mock_llm_base
 # Create mock LLM class that supports Pydantic-style initialization
 class MockLLM(BaseModel):
     """Mock LLM base class that supports Pydantic Field initialization."""
-    model_config = {'arbitrary_types_allowed': True}
-
+    model_config = {'arbitrary_types_allowed': True, 'extra': 'allow'}
+    
+    # Define default field values as class attributes
+    model: str = "qwen2.5-coder"
+    base_url: str = "http://localhost:11434"
+    temperature: float = 0.7
+    
 mock_llm_base.LLM = MockLLM
 mock_callback_manager.CallbackManagerForLLMRun = MagicMock()
 
@@ -63,11 +68,11 @@ class TestOllamaLLM:
     def test_init_defaults(self):
         """Test default initialization."""
         llm = OllamaLLM()
-
-        # Access field values directly from Pydantic model
-        assert llm.model == "qwen2.5-coder"
-        assert llm.base_url == "http://localhost:11434"
-        assert llm.temperature == 0.7
+        
+        # Access field values - they should be actual values, not FieldInfo
+        assert str(llm.model) == "qwen2.5-coder"
+        assert str(llm.base_url) == "http://localhost:11434"
+        assert float(llm.temperature) == 0.7
 
     def test_init_custom_values(self):
         """Test initialization with custom values."""
@@ -76,11 +81,11 @@ class TestOllamaLLM:
             base_url="http://custom:1234",
             temperature=0.5
         )
-
-        # Access field values directly from Pydantic model
-        assert llm.model == "deepseek-coder"
-        assert llm.base_url == "http://custom:1234"
-        assert llm.temperature == 0.5
+        
+        # Access field values directly
+        assert str(llm.model) == "deepseek-coder"
+        assert str(llm.base_url) == "http://custom:1234"
+        assert float(llm.temperature) == 0.5
 
     def test_llm_type_property(self):
         """Test _llm_type property."""

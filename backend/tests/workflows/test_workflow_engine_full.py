@@ -29,21 +29,13 @@ class TestWorkflowEngine:
         with patch("backend.workflows.workflow_engine.CrewIntegration"):
             engine = WorkflowEngine()
             state = WorkflowState(project_id="test-123")
-
-            # Mock graph execution - use invoke for sync, ainvoke for async
-            if hasattr(engine._graph, 'ainvoke'):
-                mock_method = "ainvoke"
-            else:
-                mock_method = "invoke"
-
-            with patch.object(
-                engine._graph,
-                mock_method,
-                new_callable=AsyncMock if mock_method == "ainvoke" else Mock,
-                return_value=state,
-            ):
+    
+            # Mock graph execution methods that LangGraph might have
+            # Patch both ainvoke (async) and invoke (sync) to handle version differences
+            with patch.object(engine._graph, 'ainvoke', AsyncMock(return_value=state)), \
+                 patch.object(engine._graph, 'invoke', Mock(return_value=state)):
                 result = await engine.run(state)
-
+    
             assert result.project_id == "test-123"
 
     @pytest.mark.asyncio
@@ -52,21 +44,12 @@ class TestWorkflowEngine:
         with patch("backend.workflows.workflow_engine.CrewIntegration"):
             engine = WorkflowEngine()
             state = WorkflowState(project_id="test-123")
-
-            # Mock graph execution to raise an exception
-            if hasattr(engine._graph, 'ainvoke'):
-                mock_method = "ainvoke"
-            else:
-                mock_method = "invoke"
-
-            with patch.object(
-                engine._graph,
-                mock_method,
-                new_callable=AsyncMock if mock_method == "ainvoke" else Mock,
-                side_effect=RuntimeError("Workflow failed"),
-            ):
+    
+            # Mock graph execution methods to raise exception
+            with patch.object(engine._graph, 'ainvoke', AsyncMock(side_effect=RuntimeError("Workflow failed"))), \
+                 patch.object(engine._graph, 'invoke', Mock(side_effect=RuntimeError("Workflow failed"))):
                 result = await engine.run(state)
-
+    
             assert result.current_phase == ProjectPhase.FAILED
             assert (
                 result.phases[ProjectPhase.FAILED].status == PhaseStatus.FAILED

@@ -155,15 +155,19 @@ class WorkflowEngine:
         )
 
         try:
-            # Execute the graph
-            # LangGraph compiled graphs can be called directly or via invoke()
+            # Execute the graph using LangGraph's standard invoke pattern
+            # Compiled StateGraph supports both sync and async invocation
+            import inspect
+            
+            # Check if graph has ainvoke (async) or just invoke (sync)
             if hasattr(self._graph, 'ainvoke'):
+                # Async version available (newer LangGraph)
                 result = await self._graph.ainvoke(
                     state,
                     {"recursion_limit": max_iterations}
                 )
-            else:
-                # Fallback for older LangGraph versions
+            elif hasattr(self._graph, 'invoke'):
+                # Sync version only (older LangGraph) - run in executor
                 import asyncio
                 loop = asyncio.get_event_loop()
                 result = await loop.run_in_executor(
@@ -172,6 +176,12 @@ class WorkflowEngine:
                         state,
                         {"recursion_limit": max_iterations}
                     )
+                )
+            else:
+                # Fallback: call graph as callable (most basic interface)
+                result = await self._graph(
+                    state,
+                    {"recursion_limit": max_iterations}
                 )
 
             self._logger.info(
