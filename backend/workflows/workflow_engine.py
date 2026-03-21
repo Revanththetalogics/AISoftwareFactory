@@ -158,7 +158,7 @@ class WorkflowEngine:
             # Execute the graph using LangGraph's standard invoke pattern
             # LangGraph 0.0.40 uses sync invoke() method
             import asyncio
-                    
+
             # Run sync invoke() in async executor since we're in async context
             loop = asyncio.get_event_loop()
             result = await loop.run_in_executor(
