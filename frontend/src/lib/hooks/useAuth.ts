@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { useAuth as useAuthContext } from '@/lib/auth';
-import type { LoginRequest, RegisterRequest } from '@/lib/types';
+import type { LoginRequest, RegisterRequest, User } from '@/lib/types';
 
 const AUTH_KEY = 'auth';
 
@@ -15,7 +15,15 @@ export function useLogin() {
     mutationFn: (data: LoginRequest) => api.login(data),
     onSuccess: (response) => {
       login(response);
-      queryClient.setQueryData([AUTH_KEY], response.user);
+      // Build User from flat login response fields for the query cache
+      const cachedUser: User = {
+        user_id: response.user_id,
+        username: response.username,
+        email: response.email,
+        permissions: response.permissions,
+        is_active: true,
+      };
+      queryClient.setQueryData([AUTH_KEY], cachedUser);
     },
   });
 }

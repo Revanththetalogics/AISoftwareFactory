@@ -39,7 +39,6 @@ def mock_project():
     project.progress_percent = 0
     project.owner_id = "user-dev-001"
     project.extra_metadata = {}
-    project.metadata = {}
     project.created_at = datetime.utcnow()
     project.updated_at = datetime.utcnow()
     return project

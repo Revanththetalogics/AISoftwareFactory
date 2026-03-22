@@ -165,3 +165,25 @@ class DeploymentService:
             self._logger.info("Deployment deleted", deployment_id=deployment_id)
             return True
         return False
+
+    async def cancel_deployment(self, deployment_id: str) -> bool:
+        """
+        Cancel a pending or in-progress deployment.
+
+        Args:
+            deployment_id: Deployment ID
+
+        Returns:
+            True if cancelled, False if not found
+        """
+        deployment = self._deployments.get(deployment_id)
+        if not deployment:
+            return False
+
+        if deployment["status"] in ("success", "failed", "rolled_back", "cancelled"):
+            return False
+
+        deployment["status"] = "cancelled"
+        deployment["completed_at"] = datetime.utcnow().isoformat()
+        self._logger.info("Deployment cancelled", deployment_id=deployment_id)
+        return True

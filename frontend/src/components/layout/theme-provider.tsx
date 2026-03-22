@@ -11,8 +11,8 @@ interface ThemeProviderProps {
 export function ThemeProvider({ children, forcedTheme }: ThemeProviderProps) {
   return (
     <NextThemesProvider
-      attribute="data-theme"
-      defaultTheme="dark"
+      attribute="class"
+      defaultTheme="light"
       enableSystem={false}
       disableTransitionOnChange
       forcedTheme={forcedTheme}

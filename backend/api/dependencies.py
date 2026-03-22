@@ -210,12 +210,23 @@ async def get_websocket_user(
             username=username,
         )
 
-        # Return authenticated user
+        # Fetch real user from database
+        user_record = await auth_service.get_user_by_id(user_id)
+        if not user_record or not user_record.is_active:
+            logger.warning(
+                "WebSocket connection rejected: user not found or inactive",
+                user_id=user_id,
+                client=websocket.client.host if websocket.client else "unknown",
+            )
+            return None
+
         return User(
-            user_id=user_id,
-            username=username,
-            email=f"{username}@example.com",
-            permissions=["read", "write", "execute"],
+            user_id=user_record.id,
+            username=user_record.username,
+            email=user_record.email,
+            permissions=user_record.permissions or [],
+            is_active=user_record.is_active,
+            is_superuser=user_record.is_superuser,
         )
 
     except AuthenticationError as exc:

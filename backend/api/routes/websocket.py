@@ -11,9 +11,15 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from backend.api.dependencies import get_websocket_user
 from backend.core.logging import get_logger
+from backend.db.session import get_db_context
+from backend.services.database_services import DatabaseProjectService, DatabaseWorkflowService
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/ws", tags=["websocket"])
+
+# Service instances for real DB queries
+_project_svc = DatabaseProjectService()
+_workflow_svc = DatabaseWorkflowService()
 
 # Connection managers for different channels
 _project_connections: dict[str, set[WebSocket]] = {}
@@ -200,16 +206,24 @@ async def project_websocket(websocket: WebSocket, project_id: str):
                     })
 
                 elif message_type == "get_status":
-                    # Stub: Return project status
-                    await websocket.send_json({
-                        "type": "status",
-                        "payload": {
-                            "project_id": project_id,
-                            "status": "active",
-                            "current_phase": "implementation",
-                            "progress_percent": 45,
-                        },
-                    })
+                    # Query real project status from database
+                    async with get_db_context() as db:
+                        project = await _project_svc.get_project(project_id, db=db)
+                    if project:
+                        await websocket.send_json({
+                            "type": "status",
+                            "payload": {
+                                "project_id": project_id,
+                                "status": project.status,
+                                "current_phase": project.current_phase,
+                                "progress_percent": project.progress_percent,
+                            },
+                        })
+                    else:
+                        await websocket.send_json({
+                            "type": "error",
+                            "payload": {"message": f"Project {project_id} not found"},
+                        })
 
                 else:
                     await websocket.send_json({
@@ -299,16 +313,17 @@ async def workflow_websocket(websocket: WebSocket, workflow_id: str):
                     })
 
                 elif message_type == "get_logs":
-                    # Stub: Return recent logs
+                    # Query real workflow logs from database
+                    async with get_db_context() as db:
+                        workflow = await _workflow_svc.get_workflow(workflow_id, db=db)
+                    payload_logs: list = []
+                    if workflow and workflow.context:
+                        payload_logs = workflow.context.get("logs", [])
                     await websocket.send_json({
                         "type": "logs",
                         "payload": {
                             "workflow_id": workflow_id,
-                            "logs": [
-                                "Workflow started",
-                                "Phase: requirements - completed",
-                                "Phase: architecture - in progress",
-                            ],
+                            "logs": payload_logs,
                         },
                     })
 

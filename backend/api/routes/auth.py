@@ -16,7 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from backend.api.dependencies import get_auth_service
+from backend.api.dependencies import User, get_auth_service, get_current_user
 from backend.core.config import get_settings
 from backend.core.logging import get_logger
 from backend.services.auth_service import AuthService
@@ -298,7 +298,7 @@ async def refresh_token(
 )
 async def validate_token(
     auth_service: AuthService = Depends(get_auth_service),
-    current_user = Depends(lambda: None),  # Will be set by middleware
+    current_user: User = Depends(get_current_user),
 ) -> TokenValidationResponse:
     """
     Validate JWT token and return user information.
@@ -312,11 +312,10 @@ async def validate_token(
     Returns:
         TokenValidationResponse: Token validity and user info
     """
-    # If we reach here, token is valid
     return TokenValidationResponse(
         valid=True,
-        user_id=current_user.user_id if current_user else None,
-        username=current_user.username if current_user else None,
+        user_id=current_user.user_id,
+        username=current_user.username,
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
 
@@ -328,7 +327,7 @@ async def validate_token(
     description="Invalidate user session and clear httpOnly cookies"
 )
 async def logout(
-    current_user = Depends(lambda: None),  # Will be set by auth middleware
+    current_user: User = Depends(get_current_user),
 ) -> JSONResponse:
     """
     Logout user and clear authentication cookies.
@@ -341,8 +340,7 @@ async def logout(
     Returns:
         JSONResponse: Logout confirmation with cookies cleared
     """
-    if current_user and current_user.user_id != "anonymous":
-        logger.info("User logged out", user_id=current_user.user_id)
+    logger.info("User logged out", user_id=current_user.user_id)
 
     response = JSONResponse(content={"message": "Logged out successfully"})
 
@@ -350,6 +348,88 @@ async def logout(
     clear_auth_cookies(response)
 
     return response
+
+
+class RegisterRequest(BaseModel):
+    """Registration request model."""
+    username: str
+    email: str
+    password: str
+    first_name: str | None = None
+    last_name: str | None = None
+
+
+@router.post(
+    "/register",
+    status_code=status.HTTP_201_CREATED,
+    summary="Register new user",
+    description="Create a new user account"
+)
+async def register(
+    request_data: RegisterRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+) -> dict[str, Any]:
+    """
+    Register a new user.
+
+    Args:
+        request_data: Registration details
+        auth_service: Authentication service instance
+
+    Returns:
+        Dict: Created user info
+
+    Raises:
+        HTTPException: If username or email already exists
+    """
+    try:
+        user = await auth_service.create_user(
+            username=request_data.username,
+            email=request_data.email,
+            password=request_data.password,
+            first_name=request_data.first_name,
+            last_name=request_data.last_name,
+        )
+        logger.info("User registered", user_id=user.id, username=user.username)
+        return {
+            "user_id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "permissions": user.permissions or [],
+            "is_active": user.is_active,
+        }
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
+
+
+@router.get(
+    "/me",
+    status_code=status.HTTP_200_OK,
+    summary="Get current user",
+    description="Get information about the currently authenticated user"
+)
+async def get_me(
+    current_user: User = Depends(get_current_user),
+) -> dict[str, Any]:
+    """
+    Get current authenticated user info.
+
+    Args:
+        current_user: Current authenticated user
+
+    Returns:
+        Dict: Current user info
+    """
+    return {
+        "user_id": current_user.user_id,
+        "username": current_user.username,
+        "email": current_user.email,
+        "permissions": current_user.permissions,
+        "is_active": current_user.is_active,
+    }
 
 
 # Test credentials for development

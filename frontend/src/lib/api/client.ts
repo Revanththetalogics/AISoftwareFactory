@@ -101,8 +101,11 @@ class ApiClient {
         // Handle authentication errors
         if (response.status === 401) {
           this.token = null;
-          localStorage.removeItem('aifactory_token');
-          window.location.href = '/login';
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('aifactory_token');
+            window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+            window.location.href = '/login';
+          }
           throw new ApiError('Authentication required', 401, 'UNAUTHORIZED');
         }
 

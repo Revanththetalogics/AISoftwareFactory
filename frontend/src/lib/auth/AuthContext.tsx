@@ -80,9 +80,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const expiryDate = new Date();
     expiryDate.setSeconds(expiryDate.getSeconds() + response.expires_in);
 
+    // Build the User object from the flat login response fields
+    const user: User = {
+      user_id: response.user_id,
+      username: response.username,
+      email: response.email,
+      permissions: response.permissions,
+      is_active: true,
+    };
+
     // Store in localStorage for client-side state
     localStorage.setItem(TOKEN_KEY, response.access_token);
-    localStorage.setItem(USER_KEY, JSON.stringify(response.user));
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
     localStorage.setItem(TOKEN_EXPIRY_KEY, expiryDate.toISOString());
 
     // Sync token with API client for Authorization header fallback
@@ -91,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Note: httpOnly cookies are set by the backend response
     // The frontend cannot and should not try to set auth cookies
 
-    setUser(response.user);
+    setUser(user);
   }, []);
 
   const logout = useCallback(async () => {

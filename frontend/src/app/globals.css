@@ -20,6 +20,7 @@
   --state-warning: oklch(0.75 0.18 65);     /* amber - attention needed */
   --state-error: oklch(0.65 0.2 35);        /* red - failure */
   --state-queued: oklch(0.65 0.2 290);      /* purple - waiting */
+  --state-running-emphasis: oklch(0.6 0.18 250); /* blue - stronger accent */
   
   /* State color with opacity variants */
   --state-idle-dim: oklch(0.6 0.05 260 / 0.5);
@@ -30,38 +31,38 @@
   --state-queued-dim: oklch(0.65 0.2 290 / 0.15);
 
   /* =========================================
-     BACKGROUND LAYERS (Dark Mode Primary)
-     Hierarchical elevation system
+     BACKGROUND LAYERS
+     Points to CSS variables for theme switching
      ========================================= */
-  --bg-base: oklch(0.12 0.02 260);          /* main background */
-  --bg-panel: oklch(0.15 0.02 260);         /* elevated panels */
-  --bg-elevated: oklch(0.18 0.02 260);      /* cards, modals */
-  --bg-overlay: oklch(0.2 0.02 260);        /* overlays, dropdowns */
-  
+  --bg-base: var(--token-bg-base);
+  --bg-panel: var(--token-bg-panel);
+  --bg-elevated: var(--token-bg-elevated);
+  --bg-overlay: var(--token-bg-overlay);
+
   /* Semantic backgrounds */
-  --bg-code: oklch(0.1 0.02 260);           /* terminal/code blocks */
-  --bg-input: oklch(0.16 0.02 260);         /* input fields */
-  --bg-selected: oklch(0.22 0.02 260);      /* selected items */
-  --bg-hover: oklch(0.18 0.02 260 / 0.5);   /* hover states */
+  --bg-code: var(--token-bg-code);
+  --bg-input: var(--token-bg-input);
+  --bg-selected: var(--token-bg-selected);
+  --bg-hover: var(--token-bg-hover);
 
   /* =========================================
      TEXT HIERARCHY
-     Information density optimized
+     Points to CSS variables for theme switching
      ========================================= */
-  --text-primary: oklch(0.98 0 0);          /* primary content */
-  --text-secondary: oklch(0.7 0 0);         /* secondary content */
-  --text-tertiary: oklch(0.5 0 0);          /* hints, placeholders */
-  --text-code: oklch(0.85 0 0);             /* code, logs */
-  --text-link: oklch(0.7 0.15 250);         /* interactive links */
+  --text-primary: var(--token-text-primary);
+  --text-secondary: var(--token-text-secondary);
+  --text-tertiary: var(--token-text-tertiary);
+  --text-code: var(--token-text-code);
+  --text-link: oklch(0.7 0.15 250);
 
   /* =========================================
      BORDER HIERARCHY
-     Subtle visual separation
+     Points to CSS variables for theme switching
      ========================================= */
-  --border-subtle: oklch(1 0 0 / 0.08);     /* minimal separation */
-  --border-default: oklch(1 0 0 / 0.12);    /* standard borders */
-  --border-emphasis: oklch(1 0 0 / 0.2);    /* important dividers */
-  --border-state: oklch(1 0 0 / 0.3);       /* state-driven borders */
+  --border-subtle: var(--token-border-subtle);
+  --border-default: var(--token-border-default);
+  --border-emphasis: var(--token-border-emphasis);
+  --border-state: var(--token-border-state);
 
   /* =========================================
      TYPOGRAPHY SYSTEM
@@ -185,8 +186,34 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* =========================================
+     LIGHT THEME TOKENS
+     ========================================= */
+  /* Background layers - light */
+  --token-bg-base: oklch(0.97 0.005 260);       /* main background */
+  --token-bg-panel: oklch(1 0 0);               /* elevated panels */
+  --token-bg-elevated: oklch(0.98 0.005 260);   /* cards, modals */
+  --token-bg-overlay: oklch(0.96 0.005 260);    /* overlays, dropdowns */
+  --token-bg-code: oklch(0.94 0.005 260);       /* terminal/code blocks */
+  --token-bg-input: oklch(1 0 0);               /* input fields */
+  --token-bg-selected: oklch(0.93 0.01 260);    /* selected items */
+  --token-bg-hover: oklch(0.94 0.005 260 / 0.5); /* hover states */
+
+  /* Text hierarchy - light */
+  --token-text-primary: oklch(0.12 0.02 260);   /* primary content */
+  --token-text-secondary: oklch(0.35 0.02 260); /* secondary content */
+  --token-text-tertiary: oklch(0.5 0.01 260);   /* hints, placeholders */
+  --token-text-code: oklch(0.2 0.02 260);       /* code, logs */
+
+  /* Border hierarchy - light */
+  --token-border-subtle: oklch(0 0 0 / 0.06);   /* minimal separation */
+  --token-border-default: oklch(0 0 0 / 0.1);   /* standard borders */
+  --token-border-emphasis: oklch(0 0 0 / 0.18); /* important dividers */
+  --token-border-state: oklch(0 0 0 / 0.25);    /* state-driven borders */
+
+  /* shadcn tokens */
+  --background: var(--token-bg-base);
+  --foreground: var(--token-text-primary);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -220,6 +247,31 @@
 }
 
 .dark {
+  /* =========================================
+     DARK THEME TOKENS
+     ========================================= */
+  /* Background layers - dark */
+  --token-bg-base: oklch(0.12 0.02 260);        /* main background */
+  --token-bg-panel: oklch(0.15 0.02 260);       /* elevated panels */
+  --token-bg-elevated: oklch(0.18 0.02 260);    /* cards, modals */
+  --token-bg-overlay: oklch(0.2 0.02 260);      /* overlays, dropdowns */
+  --token-bg-code: oklch(0.1 0.02 260);         /* terminal/code blocks */
+  --token-bg-input: oklch(0.16 0.02 260);       /* input fields */
+  --token-bg-selected: oklch(0.22 0.02 260);    /* selected items */
+  --token-bg-hover: oklch(0.18 0.02 260 / 0.5); /* hover states */
+
+  /* Text hierarchy - dark */
+  --token-text-primary: oklch(0.98 0 0);        /* primary content */
+  --token-text-secondary: oklch(0.7 0 0);       /* secondary content */
+  --token-text-tertiary: oklch(0.5 0 0);        /* hints, placeholders */
+  --token-text-code: oklch(0.85 0 0);           /* code, logs */
+
+  /* Border hierarchy - dark */
+  --token-border-subtle: oklch(1 0 0 / 0.08);   /* minimal separation */
+  --token-border-default: oklch(1 0 0 / 0.12);  /* standard borders */
+  --token-border-emphasis: oklch(1 0 0 / 0.2);  /* important dividers */
+  --token-border-state: oklch(1 0 0 / 0.3);     /* state-driven borders */
+
   /* Map to new state-driven system */
   --background: var(--bg-base);
   --foreground: var(--text-primary);

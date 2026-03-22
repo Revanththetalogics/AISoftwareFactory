@@ -349,9 +349,21 @@ class TestGetWebsocketUser:
         """Create mock auth service."""
         return Mock()
 
+    @pytest.fixture
+    def mock_db_user(self):
+        """Create mock database user for websocket auth."""
+        user = Mock()
+        user.id = "user-123"
+        user.username = "testuser"
+        user.email = "testuser@example.com"
+        user.permissions = ["read", "write", "execute"]
+        user.is_active = True
+        user.is_superuser = False
+        return user
+
     @pytest.mark.asyncio
     async def test_websocket_user_with_query_token(
-        self, mock_websocket, mock_auth_service
+        self, mock_websocket, mock_auth_service, mock_db_user
     ):
         """Test WebSocket authentication with query parameter token."""
         mock_websocket.query_params = {"token": "valid-token"}
@@ -359,6 +371,7 @@ class TestGetWebsocketUser:
             "sub": "user-123",
             "username": "testuser"
         })
+        mock_auth_service.get_user_by_id = AsyncMock(return_value=mock_db_user)
 
         user = await get_websocket_user(
             websocket=mock_websocket,
@@ -368,10 +381,12 @@ class TestGetWebsocketUser:
         assert user is not None
         assert user.user_id == "user-123"
         assert user.username == "testuser"
+        assert user.email == "testuser@example.com"
+        assert user.permissions == ["read", "write", "execute"]
 
     @pytest.mark.asyncio
     async def test_websocket_user_with_header_token(
-        self, mock_websocket, mock_auth_service
+        self, mock_websocket, mock_auth_service, mock_db_user
     ):
         """Test WebSocket authentication with Authorization header."""
         mock_websocket.headers = {"Authorization": "Bearer valid-token"}
@@ -379,6 +394,7 @@ class TestGetWebsocketUser:
             "sub": "user-123",
             "username": "testuser"
         })
+        mock_auth_service.get_user_by_id = AsyncMock(return_value=mock_db_user)
 
         user = await get_websocket_user(
             websocket=mock_websocket,

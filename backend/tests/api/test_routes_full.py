@@ -34,6 +34,7 @@ class TestAgentRoutes:
         service.list_agents = AsyncMock(return_value=[])
         service.get_agent = AsyncMock(return_value=None)
         service.register_agent = AsyncMock()
+        service.update_agent_status = AsyncMock(return_value=None)
         return service
 
     @pytest.fixture
@@ -136,14 +137,18 @@ class TestAgentRoutes:
     @pytest.mark.asyncio
     async def test_register_agent(self, mock_db, mock_agent_service, mock_user, sample_agent):
         """Test registering a new agent."""
-        from backend.api.routes.agents import register_agent
+        from backend.api.routes.agents import AgentRegisterRequest, register_agent
 
         mock_agent_service.register_agent.return_value = sample_agent
 
-        result = await register_agent(
+        request = AgentRegisterRequest(
             name="Test Agent",
             role="backend_engineer",
             capabilities=["python"],
+        )
+
+        result = await register_agent(
+            request=request,
             user=mock_user,
             db=mock_db,
             agent_service=mock_agent_service
@@ -248,18 +253,18 @@ class TestDeploymentRoutes:
 
     @pytest.fixture
     def sample_deployment(self):
-        """Create sample deployment."""
-        from backend.deployment.orchestrator import DeploymentEnvironment, DeploymentStatus
-
-        deployment = MagicMock()
-        deployment.deployment_id = "deploy-123"
-        deployment.project_name = "test-project"
-        deployment.environment = DeploymentEnvironment.DEVELOPMENT
-        deployment.status = DeploymentStatus.PENDING
-        deployment.steps = []
-        deployment.started_at = datetime.now()
-        deployment.completed_at = None
-        return deployment
+        """Create sample deployment as dict (DeploymentService returns dicts)."""
+        return {
+            "deployment_id": "deploy-123",
+            "project_id": "test-project",
+            "environment": "dev",
+            "status": "pending",
+            "version": "1.0.0",
+            "config": {},
+            "steps": [],
+            "started_at": datetime.now().isoformat(),
+            "completed_at": None,
+        }
 
     @pytest.mark.asyncio
     async def test_create_deployment_invalid_environment(self, mock_user):
@@ -287,16 +292,20 @@ class TestDeploymentRoutes:
             config={"debug": True}
         )
 
-        with patch('backend.api.routes.deployments._orchestrator') as mock_orch:
-            mock_result = MagicMock()
-            mock_result.deployment_id = "deploy-123"
-            mock_result.project_name = "test-project"
-            mock_result.environment.value = "development"
-            mock_result.status.value = "pending"
-            mock_result.steps = []
-            mock_result.started_at = datetime.now()
-            mock_result.completed_at = None
-            mock_orch.create_deployment.return_value = mock_result
+        mock_result = {
+            "deployment_id": "deploy-123",
+            "project_id": "test-project",
+            "environment": "development",
+            "status": "pending",
+            "version": "1.0.0",
+            "config": {"debug": True},
+            "steps": [],
+            "started_at": datetime.now().isoformat(),
+            "completed_at": None,
+        }
+
+        with patch('backend.api.routes.deployments._service') as mock_svc:
+            mock_svc.create_deployment = AsyncMock(return_value=mock_result)
 
             result = await create_deployment(request=request, user=mock_user)
 
@@ -308,8 +317,8 @@ class TestDeploymentRoutes:
         """Test listing deployments when none exist."""
         from backend.api.routes.deployments import list_deployments
 
-        with patch('backend.api.routes.deployments._orchestrator') as mock_orch:
-            mock_orch.list_deployments.return_value = []
+        with patch('backend.api.routes.deployments._service') as mock_svc:
+            mock_svc.list_deployments = AsyncMock(return_value=[])
 
             result = await list_deployments(
                 project_id=None,
@@ -324,8 +333,8 @@ class TestDeploymentRoutes:
         """Test listing deployments with invalid environment filter."""
         from backend.api.routes.deployments import list_deployments
 
-        with patch('backend.api.routes.deployments._orchestrator') as mock_orch:
-            mock_orch.list_deployments.return_value = []
+        with patch('backend.api.routes.deployments._service') as mock_svc:
+            mock_svc.list_deployments = AsyncMock(return_value=[])
 
             # Invalid environment should be ignored, not raise error
             result = await list_deployments(
@@ -341,8 +350,8 @@ class TestDeploymentRoutes:
         """Test getting non-existent deployment."""
         from backend.api.routes.deployments import get_deployment
 
-        with patch('backend.api.routes.deployments._orchestrator') as mock_orch:
-            mock_orch.get_deployment.return_value = None
+        with patch('backend.api.routes.deployments._service') as mock_svc:
+            mock_svc.get_deployment = AsyncMock(return_value=None)
 
             with pytest.raises(HTTPException) as exc_info:
                 await get_deployment(deployment_id="nonexistent", user=mock_user)
@@ -354,8 +363,8 @@ class TestDeploymentRoutes:
         """Test cancelling non-existent deployment."""
         from backend.api.routes.deployments import cancel_deployment
 
-        with patch('backend.api.routes.deployments._orchestrator') as mock_orch:
-            mock_orch.cancel_deployment.return_value = False
+        with patch('backend.api.routes.deployments._service') as mock_svc:
+            mock_svc.cancel_deployment = AsyncMock(return_value=False)
 
             with pytest.raises(HTTPException) as exc_info:
                 await cancel_deployment(deployment_id="nonexistent", user=mock_user)
@@ -398,41 +407,39 @@ class TestDeploymentRoutes:
         """Test getting existing deployment (covers line 140)."""
         from backend.api.routes.deployments import get_deployment
 
-        with patch('backend.api.routes.deployments._orchestrator') as mock_orch:
-            mock_orch.get_deployment.return_value = sample_deployment
+        with patch('backend.api.routes.deployments._service') as mock_svc:
+            mock_svc.get_deployment = AsyncMock(return_value=sample_deployment)
 
             result = await get_deployment(deployment_id="deploy-123", user=mock_user)
 
         assert result.deployment_id == "deploy-123"
-        assert result.environment == "dev"  # DeploymentEnvironment.DEVELOPMENT.value
-        mock_orch.get_deployment.assert_called_once_with("deploy-123")
+        assert result.environment == "dev"
+        mock_svc.get_deployment.assert_called_once_with("deploy-123")
 
     @pytest.mark.asyncio
     async def test_cancel_deployment_success(self, mock_user, sample_deployment):
         """Test successful deployment cancellation (covers lines 174-182)."""
         from backend.api.routes.deployments import cancel_deployment
-        from backend.deployment.orchestrator import DeploymentStatus
 
-        # After cancellation, deployment keeps its status but is no longer active
-        sample_deployment.status = DeploymentStatus.PENDING
+        cancelled_deployment = {**sample_deployment, "status": "cancelled"}
 
-        with patch('backend.api.routes.deployments._orchestrator') as mock_orch:
-            mock_orch.cancel_deployment.return_value = True
-            mock_orch.get_deployment.return_value = sample_deployment
+        with patch('backend.api.routes.deployments._service') as mock_svc:
+            mock_svc.cancel_deployment = AsyncMock(return_value=True)
+            mock_svc.get_deployment = AsyncMock(return_value=cancelled_deployment)
 
             result = await cancel_deployment(deployment_id="deploy-123", user=mock_user)
 
         assert result.deployment_id == "deploy-123"
-        assert result.status == "pending"  # Status from mock
-        mock_orch.cancel_deployment.assert_called_once_with("deploy-123")
+        assert result.status == "cancelled"
+        mock_svc.cancel_deployment.assert_called_once_with("deploy-123")
 
     @pytest.mark.asyncio
     async def test_list_deployments_with_filters(self, mock_user, sample_deployment):
         """Test listing deployments with valid filters."""
         from backend.api.routes.deployments import list_deployments
 
-        with patch('backend.api.routes.deployments._orchestrator') as mock_orch:
-            mock_orch.list_deployments.return_value = [sample_deployment]
+        with patch('backend.api.routes.deployments._service') as mock_svc:
+            mock_svc.list_deployments = AsyncMock(return_value=[sample_deployment])
 
             result = await list_deployments(
                 project_id="test-project",
@@ -488,7 +495,6 @@ class TestProjectRoutes:
         project.created_at = datetime.now()
         project.updated_at = datetime.now()
         project.extra_metadata = {}
-        project.metadata = {}
         return project
 
     @pytest.mark.asyncio
@@ -717,7 +723,7 @@ class TestProjectRoutes:
         updated_project.progress_percent = 25
         updated_project.created_at = sample_project.created_at
         updated_project.updated_at = datetime.now()
-        updated_project.metadata = {}
+        updated_project.extra_metadata = {}
 
         with patch('backend.api.routes.projects.project_service') as mock_service:
             mock_service.get_project = AsyncMock(return_value=sample_project)
@@ -776,7 +782,7 @@ class TestProjectRoutes:
         activated_project.progress_percent = 0
         activated_project.created_at = sample_project.created_at
         activated_project.updated_at = datetime.now()
-        activated_project.metadata = {}
+        activated_project.extra_metadata = {}
 
         with patch('backend.api.routes.projects.project_service') as mock_service:
             mock_service.get_project = AsyncMock(return_value=sample_project)

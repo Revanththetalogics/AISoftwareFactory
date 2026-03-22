@@ -46,9 +46,13 @@ const mockUserData: User = {
 
 const mockLoginResponse: LoginResponse = {
   access_token: 'test-token-123',
+  refresh_token: 'test-refresh-token',
   token_type: 'bearer',
   expires_in: 3600,
-  user: mockUserData,
+  user_id: mockUserData.user_id,
+  username: mockUserData.username,
+  email: mockUserData.email,
+  permissions: mockUserData.permissions,
 };
 
 function createTestQueryClient() {

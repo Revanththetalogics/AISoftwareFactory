@@ -39,9 +39,13 @@ const mockUser: User = {
 
 const mockLoginResponse: LoginResponse = {
   access_token: 'mock-jwt-token',
+  refresh_token: 'mock-refresh-token',
   token_type: 'bearer',
   expires_in: 3600,
-  user: mockUser,
+  user_id: mockUser.user_id,
+  username: mockUser.username,
+  email: mockUser.email,
+  permissions: mockUser.permissions,
 };
 
 describe('AuthContext', () => {

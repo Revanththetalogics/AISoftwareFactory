@@ -48,7 +48,7 @@ async def create_project(
         description=request.description,
         requirements=request.requirements,
         tech_stack=request.tech_stack,
-        owner_id=user.user_id if user else "anonymous",
+        owner_id=user.user_id,
         db=db
     )
 
@@ -118,7 +118,7 @@ async def list_projects(
             progress_percent=p.progress_percent,
             created_at=p.created_at,
             updated_at=p.updated_at,
-            metadata=p.metadata
+            metadata=p.extra_metadata
         )
         for p in projects
     ]
@@ -244,7 +244,7 @@ async def update_project(
         progress_percent=updated_project.progress_percent,
         created_at=updated_project.created_at,
         updated_at=updated_project.updated_at,
-        metadata=updated_project.metadata
+        metadata=updated_project.extra_metadata
     )
 
 
@@ -355,5 +355,5 @@ async def activate_project(
         progress_percent=updated_project.progress_percent,
         created_at=updated_project.created_at,
         updated_at=updated_project.updated_at,
-        metadata=updated_project.metadata
+        metadata=updated_project.extra_metadata
     )

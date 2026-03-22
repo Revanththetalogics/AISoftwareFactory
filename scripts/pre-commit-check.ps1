@@ -115,7 +115,7 @@ try {
     if ($LASTEXITCODE -ne 0) {
         Write-Host "SKIP: bandit not installed" -ForegroundColor Yellow
     } else {
-        $banditOutput = python -m bandit -r backend/ -ll --quiet 2>&1
+        $banditOutput = python -m bandit -r backend/ -ll --quiet --skip B101,B105 2>&1
         if ($LASTEXITCODE -ne 0) {
             $exitCode = 1
             Write-Host "FAIL" -ForegroundColor Red

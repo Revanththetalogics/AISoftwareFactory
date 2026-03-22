@@ -145,17 +145,24 @@ export function useWebSocket({
   }, []);
 
   useEffect(() => {
-    // Store connect function in ref for use in callbacks
+    // Store connect function in ref so reconnect callbacks always use the latest version
     connectRef.current = connect;
   });
 
   useEffect(() => {
-    connect();
+    // Connect once on mount using the ref to avoid stale closure issues
+    // and prevent reconnection loops caused by changing callback deps
+    connectRef.current?.();
 
     return () => {
-      disconnect();
+      // Cancel any pending reconnect timer and close socket on unmount
+      if (reconnectTimer.current) {
+        clearTimeout(reconnectTimer.current);
+        reconnectTimer.current = null;
+      }
+      ws.current?.close();
     };
-  }, [connect, disconnect]);
+  }, []); // mount-only: connectRef always has the latest connect fn
 
   return {
     isConnected,
