@@ -215,19 +215,21 @@ async def validate_database_schema() -> None:
     from backend.db.session import AsyncSessionLocal
 
     critical_tables = ['users', 'projects', 'workflows', 'tasks', 'agents', 'deployments', 'audit_logs']
-    missing_tables = []
 
     async with AsyncSessionLocal() as session:
-        for table in critical_tables:
-            try:
-                # Use SQLAlchemy inspector to safely check table existence
-                from sqlalchemy import inspect
-                inspector = await session.run_sync(lambda sync_session: inspect(sync_session.connection()))
-                if table not in inspector.get_table_names():
-                    missing_tables.append(table)
-            except Exception as e:
-                logger.debug(f"Error checking table {table}: {e}")
-                missing_tables.append(table)
+        try:
+            # Query information_schema directly — reliable across all transaction states
+            result = await session.execute(text("""
+                SELECT table_name
+                FROM information_schema.tables
+                WHERE table_schema = 'public'
+                  AND table_type = 'BASE TABLE'
+            """))
+            existing_tables = {row[0] for row in result.fetchall()}
+            missing_tables = [t for t in critical_tables if t not in existing_tables]
+        except Exception as e:
+            logger.debug("Error querying information_schema", error=str(e))
+            missing_tables = critical_tables
 
         if missing_tables:
             logger.warning(
