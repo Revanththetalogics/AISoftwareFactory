@@ -161,10 +161,16 @@ jobs:
               docker compose --env-file .env up -d --no-build --remove-orphans \
                 backend frontend nginx ollama postgres redis
 
-              # Start ollama-init separately — it runs in background and exits when done.
-              # The pipeline does not wait for it (model pulls take 15-30 min on first run).
-              COMPOSE_PROJECT_NAME=ai-factory \
-              docker compose --env-file .env up -d ollama-init || true
+              # Trigger ollama-init in a detached nohup process so SSH exits immediately.
+              # It will wait for ollama to become healthy, then pull all 4 models.
+              # Monitor progress: docker logs -f ollama-init
+              nohup bash -c '
+                COMPOSE_PROJECT_NAME=ai-factory \
+                docker compose --env-file /home/ubuntu/ai-factory/.env \
+                  -f /home/ubuntu/ai-factory/docker-compose.yml \
+                  up ollama-init
+              ' > /tmp/ollama-init.log 2>&1 &
+              disown $!
 
               echo "=== Cleaning up old images ==="
               docker image prune -f
