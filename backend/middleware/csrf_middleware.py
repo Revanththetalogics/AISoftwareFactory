@@ -39,6 +39,7 @@ CSRF_EXEMPT_PATHS: set[str] = {
     "/api/v1/live",
     "/api/v1/auth/login",
     "/api/v1/auth/refresh",
+    "/api/v1/auth/register",
 }
 
 # Path prefixes exempt from CSRF protection

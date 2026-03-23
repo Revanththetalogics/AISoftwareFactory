@@ -43,6 +43,9 @@ services:
     environment:
       # 🔥 FIX: use internal nginx routing
       - NEXT_PUBLIC_API_URL=/api
+    volumes:
+      # Copy static assets into shared volume on startup so nginx can serve them directly
+      - frontend_static:/app/static
     networks:
       - ai-factory
     depends_on:
@@ -63,6 +66,8 @@ services:
     volumes:
       # 🔥 FIX: absolute path (Portainer requirement)
       - /home/ubuntu/nginx.conf:/etc/nginx/conf.d/00-ai-factory.conf:ro
+      # Enterprise: serve Next.js static assets directly from disk (bypasses Node.js)
+      - frontend_static:/app/static:ro
     networks:
       - ai-factory
     depends_on:
@@ -127,6 +132,7 @@ services:
 
 volumes:
   backend_data:
+  frontend_static:
   ollama_data:
   postgres_data:
   redis_data:

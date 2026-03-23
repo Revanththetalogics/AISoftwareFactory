@@ -11,6 +11,24 @@ const DEFAULT_TIMEOUT = 30000; // 30 seconds
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second initial delay
 
+// CSRF configuration — matches backend csrf_middleware.py
+const CSRF_COOKIE_NAME = 'csrf_token';
+const CSRF_HEADER_NAME = 'X-CSRF-Token';
+const CSRF_PROTECTED_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+/**
+ * Read the CSRF token from the browser cookie set by the backend on any GET response.
+ * The cookie is NOT httpOnly so JavaScript can read it (Double Submit Cookie pattern).
+ */
+function getCsrfTokenFromCookie(): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie
+    .split(';')
+    .map(c => c.trim())
+    .find(c => c.startsWith(`${CSRF_COOKIE_NAME}=`));
+  return match ? match.split('=')[1] : null;
+}
+
 class ApiError extends Error {
   constructor(
     message: string,
@@ -86,6 +104,16 @@ class ApiClient {
     // Add authorization header if token exists
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
+    }
+
+    // Add CSRF token for state-changing requests (Double Submit Cookie pattern).
+    // The backend bypasses CSRF when a Bearer token is present, but we send it
+    // regardless so cookie-auth sessions also work correctly.
+    if (CSRF_PROTECTED_METHODS.has(options.method?.toUpperCase() ?? '')) {
+      const csrfToken = getCsrfTokenFromCookie();
+      if (csrfToken) {
+        headers[CSRF_HEADER_NAME] = csrfToken;
+      }
     }
 
     try {
