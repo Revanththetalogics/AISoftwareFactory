@@ -62,10 +62,9 @@ class TestOllamaProviderInit:
 
     def test_init_from_env(self):
         """Test initialization from environment variables."""
-        with patch.dict("os.environ", {
-            "OLLAMA_BASE_URL": "http://env-host:9999",
-            "OLLAMA_MODEL": "env-model"
-        }):
+        with patch("backend.llm.ollama_provider.get_settings") as mock_settings:
+            mock_settings.return_value.OLLAMA_URL = "http://env-host:9999"
+            mock_settings.return_value.OLLAMA_MODEL = "env-model"
             provider = OllamaProvider()
 
             assert provider.base_url == "http://env-host:9999"

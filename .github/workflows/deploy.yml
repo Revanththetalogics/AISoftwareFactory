@@ -116,12 +116,26 @@ jobs:
           DEPLOY_BACKEND="${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_TAG }}"
           DEPLOY_FRONTEND="${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_TAG }}"
 
-          # Copy config files to VPS
+          # Ensure target directory exists
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} \
+            "mkdir -p /home/ubuntu/ai-factory"
+
+          # Copy config files + env file to VPS
+          # .env.portainer.vps → .env (runtime secrets, never in git)
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-            nginx.conf docker-compose.yml \
+            nginx.conf docker-compose.yml .env.portainer.vps \
             ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/home/ubuntu/ai-factory/
 
-          # Run deployment remotely, passing image tags as env vars
+          # Rename env file and stamp correct image tags
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
+              cp /home/ubuntu/ai-factory/.env.portainer.vps /home/ubuntu/ai-factory/.env
+              sed -i 's|^BACKEND_IMAGE=.*|BACKEND_IMAGE=${DEPLOY_BACKEND}|' /home/ubuntu/ai-factory/.env
+              sed -i 's|^FRONTEND_IMAGE=.*|FRONTEND_IMAGE=${DEPLOY_FRONTEND}|' /home/ubuntu/ai-factory/.env
+            "
+
+          # Run deployment remotely
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} \
             "BACKEND_IMAGE=${DEPLOY_BACKEND} FRONTEND_IMAGE=${DEPLOY_FRONTEND} bash -s" << 'ENDSSH'
@@ -136,7 +150,10 @@ jobs:
               docker pull "${FRONTEND_IMAGE}"
 
               echo "=== Restarting services ==="
-              docker compose up -d --no-build
+              # --remove-orphans cleans up stale containers from previous deploys
+              # COMPOSE_PROJECT_NAME ensures Docker reconciles existing containers
+              COMPOSE_PROJECT_NAME=ai-factory \
+              docker compose --env-file .env up -d --no-build --remove-orphans
 
               echo "=== Cleaning up old images ==="
               docker image prune -f
