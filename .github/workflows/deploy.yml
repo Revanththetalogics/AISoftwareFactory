@@ -150,8 +150,13 @@ jobs:
               docker pull "${FRONTEND_IMAGE}"
 
               echo "=== Restarting services ==="
+              # Stop and remove any containers with conflicting names from
+              # previous Portainer-managed or manually-created stacks
+              for name in ai-factory-backend ai-factory-frontend nginx ollama ollama-init postgres redis; do
+                docker rm -f "$name" 2>/dev/null || true
+              done
+
               # --remove-orphans cleans up stale containers from previous deploys
-              # COMPOSE_PROJECT_NAME ensures Docker reconciles existing containers
               COMPOSE_PROJECT_NAME=ai-factory \
               docker compose --env-file .env up -d --no-build --remove-orphans
 
