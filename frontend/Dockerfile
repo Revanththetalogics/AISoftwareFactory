@@ -43,13 +43,6 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Pre-populate a staging directory with built assets.
-# At container startup, these are copied into the named volume (/app/static)
-# shared with nginx, which serves /_next/static/ and /public/ directly.
-RUN mkdir -p /app/static-seed /app/static && chown -R nextjs:nodejs /app/static-seed /app/static
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static /app/static-seed/_next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public /app/static-seed/public
-
 USER nextjs
 
 EXPOSE 3000
@@ -60,6 +53,5 @@ ENV HOSTNAME="0.0.0.0"
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
-# Entrypoint: seed the shared volume with static assets, then start the SSR server.
-# The named volume (/app/static) is empty on first mount; cp seeds it from the image.
-CMD sh -c "cp -rn /app/static-seed/. /app/static/ && node server.js"
+# Run standalone SSR server — static assets are served by the nginx container
+CMD ["node", "server.js"]
