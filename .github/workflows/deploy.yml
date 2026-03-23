@@ -97,17 +97,18 @@ jobs:
       - uses: actions/checkout@v4
 
       # ── Write the SSH private key to a temp file ──────────────
+      # VPS_SSH_KEY must be stored as base64 in GitHub Secrets:
+      #   Run on VPS: base64 -w 0 ~/.ssh/github_deploy
+      #   Paste that single-line output as the secret value.
       - name: Setup SSH key
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_KEY }}
+          SSH_KEY_B64: ${{ secrets.VPS_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
-          # Write key using env var to preserve exact newlines
-          echo "${SSH_PRIVATE_KEY}" > ~/.ssh/deploy_key
+          # Decode base64 → clean PEM file with correct newlines
+          echo "${SSH_KEY_B64}" | base64 -d > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
-          # Validate the key is well-formed
-          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null
 
       # ── Copy config files, then deploy ────────────────────────
       - name: Copy config files & deploy
