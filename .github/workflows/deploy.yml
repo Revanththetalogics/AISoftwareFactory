@@ -156,9 +156,15 @@ jobs:
                 docker rm -f "$name" 2>/dev/null || true
               done
 
-              # --remove-orphans cleans up stale containers from previous deploys
+              # Start core services (ollama-init is excluded — it's a background job)
               COMPOSE_PROJECT_NAME=ai-factory \
-              docker compose --env-file .env up -d --no-build --remove-orphans
+              docker compose --env-file .env up -d --no-build --remove-orphans \
+                backend frontend nginx ollama postgres redis
+
+              # Start ollama-init separately — it runs in background and exits when done.
+              # The pipeline does not wait for it (model pulls take 15-30 min on first run).
+              COMPOSE_PROJECT_NAME=ai-factory \
+              docker compose --env-file .env up -d ollama-init || true
 
               echo "=== Cleaning up old images ==="
               docker image prune -f

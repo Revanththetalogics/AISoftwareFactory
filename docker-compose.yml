@@ -92,11 +92,12 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
       interval: 30s
       timeout: 15s
-      retries: 5
-      start_period: 120s
+      retries: 10
+      start_period: 180s
 
   # Pulls the 4 required LLM models into Ollama on first deploy.
   # Runs once and exits — restarts are skipped if models already exist.
+  # Does NOT block other services — backend/frontend start independently.
   ollama-init:
     image: ollama/ollama:latest
     container_name: ollama-init
