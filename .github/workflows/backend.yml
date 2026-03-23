@@ -1,13 +1,13 @@
-name: Backend CI/CD
+name: Backend CI
 
 on:
   push:
-    branches: [main, staging]
+    branches: [staging, main]
     paths:
       - 'backend/**'
       - '.github/workflows/backend.yml'
   pull_request:
-    branches: [main, staging]
+    branches: [staging, main]
     paths:
       - 'backend/**'
 
@@ -15,12 +15,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  DOCKERHUB_REGISTRY: docker.io
-  IMAGE_NAME: revanth2245/aisoftwarefactory-backend
-
 jobs:
   test:
+    name: Test & Lint
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -38,81 +35,21 @@ jobs:
           cache-dependency-path: './backend/requirements.txt'
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
       - name: Lint with ruff
-        run: |
-          ruff check backend/ --select E,F,W,I --ignore E501
+        run: ruff check backend/ --select E,F,W,I --ignore E501
         working-directory: .
 
       - name: Security scan with bandit
-        run: |
-          bandit -r backend/ -ll -q --skip B101,B105
+        run: bandit -r backend/ -ll -q --skip B101,B105
         working-directory: .
 
       - name: Run tests with coverage
-        run: |
-          pytest --cov=backend --cov-report=xml --cov-report=term --cov-fail-under=90
+        run: pytest --cov=backend --cov-report=xml --cov-report=term --cov-fail-under=90
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           files: ./backend/coverage.xml
           fail_ci_if_error: false
-
-  build:
-    needs: test
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: revanth2245
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Extract metadata for Docker Hub
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build and push to Docker Hub
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    if: github.ref == 'refs/heads/main'
-    environment: production
-
-    steps:
-      - name: Trigger Portainer Deployment
-        run: |
-          echo "Docker image pushed to Docker Hub"
-          echo "Portainer will pull the new image on next stack update"
-          echo "Run 'Deploy to Portainer' workflow to update the stack"
