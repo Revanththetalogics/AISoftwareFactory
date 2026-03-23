@@ -18,7 +18,7 @@ ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_WS_URL
 
 # Set as environment variables for build
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://ai-staging.thetalogics.com/api}
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://ai-staging.thetalogics.com/api/v1}
 ENV NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL:-wss://ai-staging.thetalogics.com/ws}
 
 COPY --from=deps /app/node_modules ./node_modules

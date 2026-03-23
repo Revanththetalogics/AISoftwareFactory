@@ -89,7 +89,21 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
   // Content Security Policy
   response.headers.set(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' wss: https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+    [
+      "default-src 'self'",
+      // Allow inline scripts (Next.js requires this) + Cloudflare Insights
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com",
+      // script-src-elem must explicitly allow external script tags (Chrome uses this over script-src)
+      "script-src-elem 'self' 'unsafe-inline' https://static.cloudflareinsights.com",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: https:",
+      "font-src 'self' data:",
+      // Allow API + WebSocket connections + Cloudflare beacon reporting
+      "connect-src 'self' wss: https: https://cloudflareinsights.com",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join('; ')
   );
 
   // HTTP Strict Transport Security

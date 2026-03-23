@@ -41,8 +41,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # 🔥 FIX: use internal nginx routing
-      - NEXT_PUBLIC_API_URL=/api
+      # NEXT_PUBLIC_* vars are baked at build time — this is a local dev fallback only
+      - NEXT_PUBLIC_API_URL=/api/v1
     networks:
       - ai-factory
     depends_on:
