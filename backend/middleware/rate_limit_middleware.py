@@ -119,8 +119,16 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         Returns:
             int: Rate limit for this request
         """
-        # Check if user has admin role (could be enhanced with JWT claim check)
-        # For now, use default rate
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            try:
+                import jwt as pyjwt
+                token = auth_header[7:]
+                payload = pyjwt.decode(token, options={"verify_signature": False})
+                if payload.get("role") == "admin":
+                    return self.admin_rate
+            except Exception:  # noqa: S110
+                pass
         return self.default_rate
 
     def _is_rate_limited(self, user_key: str, rate_limit: int) -> tuple[bool, int]:

@@ -6,6 +6,7 @@ providers with fallback logic and model selection.
 """
 
 from dataclasses import dataclass, field
+from typing import Any
 
 from backend.core.logging import get_logger
 from backend.llm.providers.base import BaseLLMProvider, LLMRequest, LLMResponse
@@ -411,3 +412,58 @@ to the best available provider based on model requirements, availability,
             except Exception:
                 health[name] = False
         return health
+
+    def get_agent_llm(
+        self,
+        task_type: str = "general",
+        model_name: str | None = None,
+    ) -> Any:
+        """
+        Get a synchronous LLM wrapper suitable for use in agent/crew contexts.
+
+        Selects the best model for the given task type and returns an AgentLLM
+        that runs async generation in a background thread — no event-loop
+        conflicts in synchronous CrewAI/agent code.
+
+        Args:
+            task_type: Task category — coding, reasoning, chat, general, etc.
+            model_name: Override the model; uses task mapping if not provided.
+
+        Returns:
+            AgentLLM instance bound to the selected model.
+
+        Example:
+            >>> llm = router.get_agent_llm(task_type="coding")
+            >>> response = llm("Write a FastAPI endpoint")
+        """
+        from backend.llm.agent_llm import AgentLLM  # local import to avoid circular
+        resolved = model_name or self.select_model(task_type)
+        return AgentLLM(model=resolved, router=self)
+
+
+# ---------------------------------------------------------------------------
+# Module-level singleton helpers
+# ---------------------------------------------------------------------------
+
+_router_instance: ModelRouter | None = None
+
+
+def get_llm_router() -> ModelRouter:
+    """
+    Get the singleton ModelRouter, pre-wired with the Ollama provider.
+
+    Returns:
+        ModelRouter singleton with OllamaProvider registered.
+
+    Example:
+        >>> router = get_llm_router()
+        >>> llm = router.get_agent_llm(task_type="coding")
+    """
+    global _router_instance
+    if _router_instance is None:
+        from backend.llm.factory import LLMFactory
+        _router_instance = ModelRouter()
+        provider = LLMFactory.create_llm()
+        _router_instance.register_provider(provider)
+        logger.info("LLM router singleton initialised with Ollama provider")
+    return _router_instance

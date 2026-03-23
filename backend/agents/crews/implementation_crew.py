@@ -5,8 +5,6 @@ This crew handles the development phase including frontend, backend,
 and full-stack implementation.
 """
 
-from typing import Any
-
 from crewai import Crew, Task
 
 from backend.agents.roles import (
@@ -16,11 +14,12 @@ from backend.agents.roles import (
     get_product_manager_role,
 )
 from backend.core.logging import get_logger
+from backend.llm.router import get_llm_router
 
 logger = get_logger(__name__)
 
 
-def create_implementation_crew(llm: Any = None) -> Crew:
+def create_implementation_crew() -> Crew:
     """
     Create the implementation crew for development.
 
@@ -30,8 +29,7 @@ def create_implementation_crew(llm: Any = None) -> Crew:
     - Frontend Engineer: Client-side implementation
     - Product Manager: Requirements validation
 
-    Args:
-        llm: Language model to use for all agents
+    All agents are wired to the enterprise LLM router (Ollama) automatically.
 
     Returns:
         Crew: Configured implementation crew
@@ -41,6 +39,8 @@ def create_implementation_crew(llm: Any = None) -> Crew:
         >>> crew = create_implementation_crew()
         >>> result = crew.kickoff()
     """
+    llm = get_llm_router().get_agent_llm(task_type="coding")
+
     # Create agents
     architect = get_architect_role(llm=llm)
     backend = get_backend_engineer_role(llm=llm)

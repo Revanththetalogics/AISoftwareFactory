@@ -5,6 +5,7 @@ This module tests the health, readiness, and liveness endpoints.
 """
 
 from fastapi.testclient import TestClient
+from unittest.mock import AsyncMock, MagicMock, patch
 
 
 class TestHealthEndpoints:
@@ -70,7 +71,19 @@ class TestHealthEndpoints:
 
     def test_readiness_check(self, test_client: TestClient):
         """Test readiness check endpoint."""
-        response = test_client.get("/api/v1/ready")
+        # Mock DB and Redis so the test doesn't require live infrastructure
+        mock_conn = AsyncMock()
+        mock_conn.execute = AsyncMock()
+        mock_conn_ctx = MagicMock()
+        mock_conn_ctx.__aenter__ = AsyncMock(return_value=mock_conn)
+        mock_conn_ctx.__aexit__ = AsyncMock(return_value=False)
+
+        mock_engine = MagicMock()
+        mock_engine.connect = MagicMock(return_value=mock_conn_ctx)
+
+        with patch('backend.db.session.engine', mock_engine), \
+             patch('backend.api.health._check_redis', new=AsyncMock(return_value=True)):
+            response = test_client.get("/api/v1/ready")
 
         assert response.status_code == 200
 

@@ -193,6 +193,65 @@ class TestIntelligenceEngine:
 
         self._logger.info("TestIntelligenceEngine initialized")
 
+    async def analyze_codebase(
+        self,
+        source_path: str,
+        generate_missing_tests: bool = True,
+    ) -> dict[str, Any]:
+        """
+        Analyze an entire codebase directory (or single file) for testing gaps and bugs.
+
+        Args:
+            source_path: Path to directory or file to analyze
+            generate_missing_tests: Whether to generate missing tests
+
+        Returns:
+            Aggregated analysis report dict with bugs, test_cases, coverage_percentage, summary
+        """
+        from pathlib import Path as _Path
+
+        p = _Path(source_path)
+        files = [p] if p.is_file() else [
+            f for f in p.rglob("*.py")
+            if "test" not in f.parts and "__pycache__" not in f.parts
+        ]
+
+        all_bugs: list[BugReport] = []
+        all_tests: list[TestCase] = []
+        coverage_values: list[float] = []
+
+        for file in files[:20]:  # cap at 20 files to avoid extremely long runs
+            try:
+                suite = await self.analyze_module(str(file), generate_missing_tests)
+                all_tests.extend(suite.test_cases)
+                coverage_values.append(suite.coverage_percentage)
+
+                bugs = await self.detect_bugs(suite, run_tests=False)
+                all_bugs.extend(bugs)
+            except Exception as exc:
+                self._logger.warning(
+                    "Could not analyse file",
+                    file=str(file),
+                    error=str(exc),
+                )
+
+        avg_coverage = (
+            sum(coverage_values) / len(coverage_values) if coverage_values else 0.0
+        )
+
+        return {
+            "bugs": [b.to_dict() for b in all_bugs],
+            "test_cases": [t.to_dict() for t in all_tests],
+            "coverage_percentage": avg_coverage,
+            "files_analysed": len(files),
+            "summary": (
+                f"Analysed {len(files)} file(s). "
+                f"Found {len(all_bugs)} bug(s), "
+                f"generated {len(all_tests)} test(s), "
+                f"average coverage {avg_coverage:.1f}%."
+            ),
+        }
+
     async def analyze_module(
         self,
         file_path: str,
@@ -661,15 +720,29 @@ Return only the test code."""
         return test_cases
 
     async def _calculate_coverage(self, file_path: str) -> float:
-        """Calculate test coverage for a file."""
-        # This would integrate with coverage.py
-        # For now, return a placeholder
-        return 0.0
+        """Calculate test coverage for a file using the CoverageAnalyzer."""
+        try:
+            from backend.testing.coverage_analyzer import CoverageAnalyzer
+            analyzer = CoverageAnalyzer()
+            report = await analyzer.analyze_coverage(source_path=file_path)
+            return report.overall_coverage
+        except Exception as exc:
+            self._logger.warning(
+                "Coverage calculation failed", file_path=file_path, error=str(exc)
+            )
+            return 0.0
 
     async def _static_analysis(self, file_path: str) -> list[BugReport]:
-        """Run static analysis to find bugs."""
-        # This would integrate with tools like pylint, bandit, mypy
-        return []
+        """Run static analysis using the BugDetectorAgent pattern matcher."""
+        try:
+            from backend.testing.agents.bug_detector import BugDetectorAgent
+            detector = BugDetectorAgent()
+            return await detector.detect_bugs(file_path, use_llm_review=False)
+        except Exception as exc:
+            self._logger.warning(
+                "Static analysis failed", file_path=file_path, error=str(exc)
+            )
+            return []
 
     async def _analyze_test_failures(self, test_suite: TestSuite) -> list[BugReport]:
         """Analyze test failures to identify bugs."""
@@ -771,10 +844,24 @@ Provide the fixed code section only."""
         test_case: TestCase,
         max_retries: int
     ) -> dict[str, Any]:
-        """Run a test with self-healing capabilities."""
-        # This would implement the actual test execution with healing
-        # For now, return a placeholder
-        return {"status": "passed"}
+        """Run a test with self-healing capabilities via SelfHealingTestRunner."""
+        try:
+            from backend.testing.self_healing_runner import SelfHealingTestRunner
+            runner = SelfHealingTestRunner(max_retries=max_retries)
+            result = await runner.run_single_test(test_case)
+            return {
+                "status": result.status.value,
+                "duration_ms": result.duration_ms,
+                "healing_applied": result.healing_applied,
+                "error_message": result.error_message,
+            }
+        except Exception as exc:
+            self._logger.warning(
+                "Test execution with healing failed",
+                test_id=test_case.id,
+                error=str(exc),
+            )
+            return {"status": "error", "duration_ms": 0, "error_message": str(exc)}
 
     def register_callback(self, event: str, callback: Callable):
         """Register a callback for an event."""

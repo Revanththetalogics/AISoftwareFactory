@@ -10,7 +10,6 @@ This module provides:
 """
 
 import asyncio
-import random
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -483,19 +482,57 @@ class SelfHealingTestRunner:
         )
 
     async def _execute_test(self, test_case: TestCase) -> dict[str, Any]:
-        """Execute a single test."""
-        # This would integrate with pytest or Playwright
-        # For now, simulate test execution
+        """Execute a single test file via a real pytest subprocess."""
+        import sys
 
-        # Simulate occasional failures for testing
-        if random.random() < 0.1:  # 10% failure rate for demo
+        file_path = test_case.metadata.get("file_path") or test_case.target_file
+
+        if not file_path:
             return {
                 "success": False,
-                "error": "Simulated test failure",
-                "stack_trace": "Traceback (most recent call last):...",
+                "error": "No file_path available for test case",
+                "output": "",
+                "return_code": 1,
             }
 
-        return {"success": True}
+        cmd = [
+            sys.executable, "-m", "pytest",
+            file_path,
+            "-x", "--tb=short", "-q",
+            "--no-header",
+            "--timeout=30",
+        ]
+
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, stderr = await asyncio.wait_for(
+                proc.communicate(), timeout=60.0
+            )
+            success = proc.returncode == 0
+            return {
+                "success": success,
+                "output": stdout.decode(errors="replace"),
+                "error": stderr.decode(errors="replace") if not success else None,
+                "return_code": proc.returncode,
+            }
+        except TimeoutError:
+            return {
+                "success": False,
+                "error": "Test execution timed out after 60 seconds",
+                "output": "",
+                "return_code": -1,
+            }
+        except Exception as exc:
+            return {
+                "success": False,
+                "error": str(exc),
+                "output": "",
+                "return_code": -1,
+            }
 
     async def _attempt_healing(
         self,

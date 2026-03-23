@@ -4,6 +4,7 @@ Agent service for AI Software Factory.
 This module provides business logic for agent management operations.
 """
 
+from datetime import UTC, datetime
 from typing import Any
 
 from backend.agents.agent_registry import AgentRegistry
@@ -151,21 +152,29 @@ class AgentService:
 
     async def get_agent_activity(self) -> list[dict[str, Any]]:
         """
-        Get recent agent activity.
+        Get recent agent activity from the live agent registry.
 
         Returns:
-            List of activity records
+            List of activity records built from real agent state
         """
-        # This would typically query a database
-        # For now, return mock data
+        agents = self._registry.list_all()
         return [
             {
-                "id": "act-001",
-                "agent_name": "CEO Agent",
-                "agent_role": "ceo",
-                "action": "project_initiated",
-                "target": "Project Alpha",
-                "timestamp": "2026-03-17T10:00:00Z",
-                "status": "completed"
+                "id": agent.agent_id,
+                "agent_name": agent.name,
+                "agent_role": agent.role,
+                "action": (
+                    agent.current_task.task_type
+                    if getattr(agent, "current_task", None)
+                    else "idle"
+                ),
+                "target": (
+                    agent.current_task.description[:80]
+                    if getattr(agent, "current_task", None)
+                    else None
+                ),
+                "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                "status": agent.status.value if hasattr(agent, "status") else "unknown",
             }
+            for agent in agents
         ]

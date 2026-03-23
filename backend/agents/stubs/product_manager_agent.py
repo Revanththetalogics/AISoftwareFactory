@@ -10,6 +10,7 @@ from typing import Any
 
 from backend.agents.base_agent import BaseAgent, Task, TaskResult, TaskStatus
 from backend.core.logging import get_logger
+from backend.llm.router import get_llm_router
 
 logger = get_logger(__name__)
 
@@ -111,7 +112,8 @@ class ProductManagerAgent(BaseAgent):
             )
 
     async def _process_pm_task(self, task: Task) -> dict[str, Any]:
-        """Process Product Manager-specific tasks."""
+        """Process Product Manager-specific tasks using the enterprise LLM router."""
+        llm = get_llm_router().get_agent_llm(task_type="chat")
         task_handlers = {
             "requirements": self._handle_requirements,
             "user_stories": self._handle_user_stories,
@@ -119,97 +121,158 @@ class ProductManagerAgent(BaseAgent):
             "product_spec": self._handle_product_spec,
             "ux_design": self._handle_ux_design,
         }
-
         handler = task_handlers.get(task.task_type, self._handle_generic_task)
-        return await handler(task)
+        return await handler(task, llm=llm)
 
-    async def _handle_requirements(self, task: Task) -> dict[str, Any]:
+    async def _handle_requirements(self, task: Task, llm: Any = None) -> dict[str, Any]:
         """Handle requirements gathering tasks."""
+        prompt = (
+            f"You are an experienced Product Manager. Gather and document requirements for:\n"
+            f"{task.description}\n\n"
+            f"Respond as JSON with keys: requirements (string summary), "
+            f"functional (list of functional requirements), "
+            f"non_functional (list of non-functional requirements), "
+            f"constraints (list of constraints), "
+            f"assumptions (list of assumptions), "
+            f"acceptance_criteria (list of strings)."
+        )
+        raw = llm(prompt) if llm else f"Requirements for: {task.description}"
+        try:
+            import json
+            import re
+            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            if match:
+                return json.loads(match.group())
+        except Exception:  # noqa: S110
+            pass
         return {
-            "requirements": f"Requirements for: {task.description}",
-            "functional": [
-                "User can create account",
-                "User can log in",
-                "User can reset password",
-            ],
-            "non_functional": [
-                "Response time < 200ms",
-                "99.9% uptime",
-                "WCAG 2.1 AA compliance",
-            ],
-            "constraints": [
-                "Must use existing auth provider",
-                "GDPR compliant",
-            ],
+            "requirements": raw,
+            "functional": [],
+            "non_functional": [],
+            "constraints": [],
+            "assumptions": [],
+            "acceptance_criteria": [],
         }
 
-    async def _handle_user_stories(self, task: Task) -> dict[str, Any]:
+    async def _handle_user_stories(self, task: Task, llm: Any = None) -> dict[str, Any]:
         """Handle user story creation tasks."""
-        return {
-            "user_stories": [
-                {
-                    "id": "US-001",
-                    "story": "As a user, I want to create an account so that I can access the platform",
-                    "acceptance_criteria": [
-                        "User can enter email and password",
-                        "System validates email format",
-                        "System sends confirmation email",
-                    ],
-                    "priority": "high",
-                },
-                {
-                    "id": "US-002",
-                    "story": "As a user, I want to log in so that I can access my account",
-                    "acceptance_criteria": [
-                        "User can enter credentials",
-                        "System validates credentials",
-                        "User is redirected to dashboard",
-                    ],
-                    "priority": "high",
-                },
-            ],
-        }
+        prompt = (
+            f"You are an experienced Product Manager. Write detailed user stories for:\n"
+            f"{task.description}\n\n"
+            f"Respond as JSON with keys: user_stories (list of objects, each with "
+            f"id, story, acceptance_criteria list, priority, and estimated_points)."
+        )
+        raw = llm(prompt) if llm else f"User stories for: {task.description}"
+        try:
+            import json
+            import re
+            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            if match:
+                return json.loads(match.group())
+        except Exception:  # noqa: S110
+            pass
+        return {"user_stories": [{"id": "US-001", "story": raw, "acceptance_criteria": ["Task completed"], "priority": "medium", "estimated_points": 3}], "raw_output": raw}
 
-    async def _handle_feature_prioritization(self, task: Task) -> dict[str, Any]:
+    async def _handle_feature_prioritization(self, task: Task, llm: Any = None) -> dict[str, Any]:
         """Handle feature prioritization tasks."""
+        prompt = (
+            f"You are an experienced Product Manager. Prioritize features using MoSCoW for:\n"
+            f"{task.description}\n\n"
+            f"Respond as JSON with keys: prioritization (string summary), "
+            f"must_have (list of strings), should_have (list of strings), "
+            f"could_have (list of strings), wont_have (list of strings), "
+            f"moscow (object with m, s, c, w keys as lists), "
+            f"rationale (string)."
+        )
+        raw = llm(prompt) if llm else f"Feature priorities for: {task.description}"
+        try:
+            import json
+            import re
+            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            if match:
+                return json.loads(match.group())
+        except Exception:  # noqa: S110
+            pass
         return {
-            "prioritization": f"Feature priorities for: {task.description}",
-            "must_have": ["User authentication", "Dashboard", "Profile management"],
-            "should_have": ["Notifications", "Search", "Filters"],
-            "nice_to_have": ["Dark mode", "Export data", "API access"],
-            "moscow": {
-                "m": ["Auth", "Core features"],
-                "s": ["Enhanced features"],
-                "c": ["Nice-to-haves"],
-                "w": ["Future enhancements"],
-            },
+            "prioritization": raw,
+            "must_have": [],
+            "should_have": [],
+            "could_have": [],
+            "wont_have": [],
+            "moscow": {"m": [], "s": [], "c": [], "w": []},
+            "rationale": "",
         }
 
-    async def _handle_product_spec(self, task: Task) -> dict[str, Any]:
+    async def _handle_product_spec(self, task: Task, llm: Any = None) -> dict[str, Any]:
         """Handle product specification tasks."""
+        prompt = (
+            f"You are an experienced Product Manager. Write a detailed product specification for:\n"
+            f"{task.description}\n\n"
+            f"Respond as JSON with keys: specification (string full spec), "
+            f"overview (string), target_users (list of strings), "
+            f"key_features (list of strings), "
+            f"success_metrics (list of strings), "
+            f"out_of_scope (list of strings), "
+            f"timeline_estimate (string)."
+        )
+        raw = llm(prompt) if llm else f"Product spec for: {task.description}"
+        try:
+            import json
+            import re
+            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            if match:
+                return json.loads(match.group())
+        except Exception:  # noqa: S110
+            pass
         return {
-            "specification": f"Product spec for: {task.description}",
-            "overview": "Product overview and value proposition",
-            "target_users": ["Small businesses", "Enterprise teams", "Individual users"],
-            "key_features": ["Feature A", "Feature B", "Feature C"],
-            "success_metrics": ["User adoption", "Retention rate", "NPS score"],
+            "specification": raw,
+            "overview": "",
+            "target_users": [],
+            "key_features": [],
+            "success_metrics": [],
+            "out_of_scope": [],
+            "timeline_estimate": "TBD",
         }
 
-    async def _handle_ux_design(self, task: Task) -> dict[str, Any]:
+    async def _handle_ux_design(self, task: Task, llm: Any = None) -> dict[str, Any]:
         """Handle UX design tasks."""
+        prompt = (
+            f"You are an experienced Product Manager with UX expertise. Design the UX for:\n"
+            f"{task.description}\n\n"
+            f"Respond as JSON with keys: ux_design (string description), "
+            f"user_flows (list of strings), wireframes (list of strings), "
+            f"design_principles (list of strings), "
+            f"accessibility_requirements (list of strings), "
+            f"key_screens (list of objects with name, purpose, key_elements)."
+        )
+        raw = llm(prompt) if llm else f"UX design for: {task.description}"
+        try:
+            import json
+            import re
+            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            if match:
+                return json.loads(match.group())
+        except Exception:  # noqa: S110
+            pass
         return {
-            "ux_design": f"UX design for: {task.description}",
-            "user_flows": ["Registration flow", "Login flow", "Onboarding"],
-            "wireframes": ["Homepage", "Dashboard", "Settings"],
-            "design_principles": ["Simplicity", "Consistency", "Accessibility"],
+            "ux_design": raw,
+            "user_flows": [],
+            "wireframes": [],
+            "design_principles": [],
+            "accessibility_requirements": [],
+            "key_screens": [],
         }
 
-    async def _handle_generic_task(self, task: Task) -> dict[str, Any]:
+    async def _handle_generic_task(self, task: Task, llm: Any = None) -> dict[str, Any]:
         """Handle generic tasks."""
-        return {
-            "result": f"Processed: {task.description}",
-            "task_type": task.task_type,
-        }
+        prompt = (
+            f"You are an experienced Product Manager. Complete the following task:\n"
+            f"Task type: {task.task_type}\n"
+            f"Description: {task.description}\n\n"
+            f"Provide a thorough, product-focused response."
+        )
+        result = llm(prompt) if llm else f"Processed: {task.description}"
+        return {"result": result, "task_type": task.task_type}
 
     def _get_relevant_capabilities(self, task: Task) -> list:
         """Get capabilities relevant to the task."""

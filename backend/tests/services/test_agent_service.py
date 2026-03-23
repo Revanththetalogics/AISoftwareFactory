@@ -309,10 +309,8 @@ class TestAgentService:
         activity = await self.service.get_agent_activity()
 
         assert isinstance(activity, list)
-        # Returns mock data
-        assert len(activity) == 1
-        assert activity[0]["id"] == "act-001"
-        assert activity[0]["agent_name"] == "CEO Agent"
+        # Returns real registry data (empty when no agents are registered)
+        assert all("id" in item for item in activity)
 
 
 class TestAgentServiceInit:

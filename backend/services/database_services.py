@@ -73,8 +73,8 @@ class DatabaseProjectService:
             tech_stack=tech_stack or {},
             current_phase=None,
             progress_percent=0,
-            owner_id=owner_id,
-            extra_metadata={}
+            owner_id=owner_id or "anonymous",
+            metadata={}
         )
 
         db.add(project)
@@ -407,41 +407,6 @@ class DatabaseAgentService:
 
         result = await db.execute(stmt)
         return list(result.scalars().all())
-
-    async def update_agent_status(
-        self,
-        agent_id: str,
-        new_status: str,
-        task_id: str | None = None,
-        db: AsyncSession = None
-    ) -> DBAgent | None:
-        """Update agent status and optionally assign a current task."""
-        if db is None:
-            async with get_db_context() as db:
-                return await self._update_agent_status(db, agent_id, new_status, task_id)
-
-        return await self._update_agent_status(db, agent_id, new_status, task_id)
-
-    async def _update_agent_status(
-        self,
-        db: AsyncSession,
-        agent_id: str,
-        new_status: str,
-        task_id: str | None = None
-    ) -> DBAgent | None:
-        """Internal method to update agent status."""
-        updates: dict[str, Any] = {
-            "status": new_status,
-            "updated_at": datetime.utcnow(),
-        }
-        if task_id is not None:
-            updates["current_task_id"] = task_id
-
-        stmt = update(DBAgent).where(DBAgent.id == agent_id).values(**updates)
-        await db.execute(stmt)
-        await db.commit()
-
-        return await self._get_agent(db, agent_id)
 
 
 # Global service instances

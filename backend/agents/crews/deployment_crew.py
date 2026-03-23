@@ -5,17 +5,16 @@ This crew handles the deployment phase including infrastructure setup,
 CI/CD configuration, and production deployment.
 """
 
-from typing import Any
-
 from crewai import Crew, Task
 
 from backend.agents.roles import get_architect_role, get_backend_engineer_role, get_devops_engineer_role
 from backend.core.logging import get_logger
+from backend.llm.router import get_llm_router
 
 logger = get_logger(__name__)
 
 
-def create_deployment_crew(llm: Any = None) -> Crew:
+def create_deployment_crew() -> Crew:
     """
     Create the deployment crew for infrastructure and deployment.
 
@@ -24,8 +23,7 @@ def create_deployment_crew(llm: Any = None) -> Crew:
     - Architect: Technical oversight
     - Backend Engineer: Application deployment support
 
-    Args:
-        llm: Language model to use for all agents
+    All agents are wired to the enterprise LLM router (Ollama) automatically.
 
     Returns:
         Crew: Configured deployment crew
@@ -35,6 +33,8 @@ def create_deployment_crew(llm: Any = None) -> Crew:
         >>> crew = create_deployment_crew()
         >>> result = crew.kickoff()
     """
+    llm = get_llm_router().get_agent_llm(task_type="coding")
+
     # Create agents
     devops = get_devops_engineer_role(llm=llm)
     architect = get_architect_role(llm=llm)

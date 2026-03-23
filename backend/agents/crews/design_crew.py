@@ -5,17 +5,16 @@ This crew handles the architecture and design phase including system design,
 technology selection, and technical planning.
 """
 
-from typing import Any
-
 from crewai import Crew, Task
 
 from backend.agents.roles import get_architect_role, get_ceo_role, get_product_manager_role
 from backend.core.logging import get_logger
+from backend.llm.router import get_llm_router
 
 logger = get_logger(__name__)
 
 
-def create_design_crew(llm: Any = None) -> Crew:
+def create_design_crew() -> Crew:
     """
     Create the design crew for architecture and technical design.
 
@@ -24,8 +23,7 @@ def create_design_crew(llm: Any = None) -> Crew:
     - Architect: System design and technology decisions
     - Product Manager: Requirements alignment
 
-    Args:
-        llm: Language model to use for all agents
+    All agents are wired to the enterprise LLM router (Ollama) automatically.
 
     Returns:
         Crew: Configured design crew
@@ -35,6 +33,8 @@ def create_design_crew(llm: Any = None) -> Crew:
         >>> crew = create_design_crew()
         >>> result = crew.kickoff()
     """
+    llm = get_llm_router().get_agent_llm(task_type="reasoning")
+
     # Create agents
     ceo = get_ceo_role(llm=llm)
     architect = get_architect_role(llm=llm)

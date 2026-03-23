@@ -8,7 +8,6 @@ Uses DatabaseAgentService for database-backed agent persistence.
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api.dependencies import get_agent_service, get_current_user
@@ -19,13 +18,6 @@ from backend.services.database_services import DatabaseAgentService
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/agents", tags=["agents"])
-
-
-class AgentRegisterRequest(BaseModel):
-    """Request model for registering a new agent."""
-    name: str
-    role: str
-    capabilities: list[str] = []
 
 
 def _db_agent_to_response(agent) -> AgentResponse:
@@ -104,7 +96,9 @@ async def get_agent(
     summary="Register a new agent",
 )
 async def register_agent(
-    request: AgentRegisterRequest,
+    name: str,
+    role: str,
+    capabilities: list[str] = None,
     user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     agent_service: DatabaseAgentService = Depends(get_agent_service),
@@ -113,17 +107,17 @@ async def register_agent(
     Register a new agent in the system.
     """
     agent = await agent_service.register_agent(
-        name=request.name,
-        role=request.role,
-        capabilities=request.capabilities,
+        name=name,
+        role=role,
+        capabilities=capabilities or [],
         db=db
     )
 
     logger.info(
         "Agent registered",
         agent_id=agent.id,
-        name=request.name,
-        role=request.role,
+        name=name,
+        role=role,
         user=user.user_id if user else "anonymous",
     )
 
@@ -165,8 +159,8 @@ async def assign_task(
 
     task_id = f"task-{uuid4().hex[:12]}"
 
-    # Update agent status to busy and assign the task
-    await agent_service.update_agent_status(agent_id, "busy", task_id=task_id, db=db)
+    # TODO: Update agent status to busy and assign task
+    # This would require adding an update method to DatabaseAgentService
 
     logger.info(
         "Task assigned to agent",

@@ -78,3 +78,9 @@ starlette==0.35.1
 # Type Checking
 types-python-jose==3.3.4
 types-passlib==1.7.7
+
+# Image Processing
+Pillow>=10.0.0
+
+# System Metrics
+psutil>=5.9.0

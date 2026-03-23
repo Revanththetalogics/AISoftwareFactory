@@ -107,6 +107,9 @@ class Settings(BaseSettings):
     OTEL_EXPORTER_ENDPOINT: str = Field(default="", description="OTLP exporter endpoint (e.g., localhost:4317)")
     OTEL_SERVICE_NAME: str = Field(default="theta-ai-backend", description="Service name for tracing")
 
+    # Escalation
+    ESCALATION_WEBHOOK_URL: str = Field(default="", description="Webhook URL for human escalation notifications")
+
     # Timeout Configuration (seconds)
     LLM_TIMEOUT_SECONDS: int = Field(
         default=30,

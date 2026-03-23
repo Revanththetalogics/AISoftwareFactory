@@ -385,19 +385,70 @@ async def run_tests(
     - Smart test ordering
     """
     try:
-        # This would load test cases and run them
-        # For now, return a placeholder response
+        import uuid
+        from pathlib import Path
+
+        from backend.testing.intelligence_engine import TestCase, TestPriority, TestType
+
+        suite_name = request.test_suite or "default"
+
+        # Discover test cases from the filesystem
+        test_cases: list[TestCase] = []
+        pattern = request.file_pattern or "backend/tests"
+        test_dir = Path(pattern)
+
+        if test_dir.exists():
+            files = list(test_dir.rglob("test_*.py")) if test_dir.is_dir() else [test_dir]
+            for f in files:
+                tc = TestCase(
+                    id=str(uuid.uuid4()),
+                    name=f.stem,
+                    test_type=TestType.UNIT,
+                    target_file=str(f),
+                    code="",
+                    priority=TestPriority.MEDIUM,
+                    description=f"Run test file: {f.name}",
+                    metadata={"file_path": str(f)},
+                )
+                test_cases.append(tc)
+
+        # Execute via the self-healing runner
+        suite_result = await runner.run_suite(
+            test_cases=test_cases,
+            suite_name=suite_name,
+        )
+
+        # Extract fields defensively — suite_result may be a dataclass, object, or mock
+        def _safe_int(obj, attr: str, default: int = 0) -> int:
+            val = getattr(obj, attr, default)
+            return val if isinstance(val, int) else default
+
+        def _safe_float(obj, attr: str, default: float = 0.0) -> float:
+            val = getattr(obj, attr, default)
+            return val if isinstance(val, float) else default
+
+        result_suite_name = getattr(suite_result, "suite_name", None)
+        if not isinstance(result_suite_name, str):
+            result_suite_name = suite_name
+
+        raw_results = getattr(suite_result, "results", []) or []
+        serialized = []
+        for r in (raw_results if isinstance(raw_results, list) else []):
+            try:
+                serialized.append(r.to_dict())
+            except Exception:  # noqa: S110
+                pass
 
         return RunTestsResponse(
-            suite_name=request.test_suite or "default",
-            total_tests=0,
-            passed=0,
-            failed=0,
-            flaky=0,
-            healed=0,
-            pass_rate=0.0,
-            duration_seconds=0.0,
-            results=[],
+            suite_name=result_suite_name,
+            total_tests=_safe_int(suite_result, "total_tests"),
+            passed=_safe_int(suite_result, "passed"),
+            failed=_safe_int(suite_result, "failed"),
+            flaky=_safe_int(suite_result, "flaky"),
+            healed=_safe_int(suite_result, "healed"),
+            pass_rate=_safe_float(suite_result, "pass_rate"),
+            duration_seconds=_safe_float(suite_result, "duration_seconds"),
+            results=serialized,
         )
 
     except Exception as e:

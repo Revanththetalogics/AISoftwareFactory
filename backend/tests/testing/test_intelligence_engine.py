@@ -699,7 +699,8 @@ class TestTestIntelligenceEngine:
         """Test _calculate_coverage method."""
         coverage = await intelligence_engine._calculate_coverage(temp_python_file)
 
-        assert coverage == 0.0  # Returns placeholder in current implementation
+        assert isinstance(coverage, float)
+        assert 0.0 <= coverage <= 100.0  # Real coverage is computed now
 
 
 class TestIntelligenceEngineExtendedCoverage:

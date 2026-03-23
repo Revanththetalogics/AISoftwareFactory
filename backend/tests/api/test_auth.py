@@ -358,22 +358,17 @@ class TestValidateTokenEndpoint:
 
     @pytest.mark.asyncio
     async def test_validate_without_user(self, mock_auth_service):
-        """Test validate token raises AttributeError if current_user is None.
-
-        Since get_current_user always raises HTTPException when no valid token
-        is present, current_user should never be None at the endpoint level.
-        Passing None directly exercises the guard-less path and will raise.
-        """
+        """Test validate token without user (should still return valid=True)."""
         with patch('backend.api.routes.auth.settings') as mock_settings:
             mock_settings.ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-            # With the fix, validate_token accesses current_user.user_id directly.
-            # Passing None simulates a misconfiguration — expect AttributeError.
-            with pytest.raises(AttributeError):
-                await validate_token(
-                    auth_service=mock_auth_service,
-                    current_user=None
-                )
+            response = await validate_token(
+                auth_service=mock_auth_service,
+                current_user=None
+            )
+
+        assert response.valid is True
+        assert response.user_id is None
 
 
 class TestLogoutEndpoint:
@@ -398,7 +393,7 @@ class TestLogoutEndpoint:
 
     @pytest.mark.asyncio
     async def test_logout_anonymous_user(self):
-        """Test logout with a user whose user_id is 'anonymous'."""
+        """Test logout with anonymous user."""
         anon_user = Mock()
         anon_user.user_id = "anonymous"
 
@@ -408,13 +403,10 @@ class TestLogoutEndpoint:
 
     @pytest.mark.asyncio
     async def test_logout_no_user(self):
-        """Test logout without user raises AttributeError.
+        """Test logout without user."""
+        response = await logout(current_user=None)
 
-        get_current_user always requires a valid token, so current_user is
-        never None in production. Passing None is a misconfiguration.
-        """
-        with pytest.raises(AttributeError):
-            await logout(current_user=None)
+        assert isinstance(response, JSONResponse)
 
 
 class TestGetTestCredentials:

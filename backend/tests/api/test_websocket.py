@@ -274,21 +274,20 @@ class TestProjectWebSocket:
             ]
         )
 
-        # Create a mock project with the expected attributes
         mock_project = MagicMock()
         mock_project.status = "active"
         mock_project.current_phase = "implementation"
-        mock_project.progress_percent = 45
+        mock_project.progress_percent = 50
 
-        # Mock the db context manager and project service
         mock_db = AsyncMock()
-        mock_db_cm = AsyncMock()
-        mock_db_cm.__aenter__ = AsyncMock(return_value=mock_db)
-        mock_db_cm.__aexit__ = AsyncMock(return_value=False)
+        mock_db_ctx = MagicMock()
+        mock_db_ctx.__aenter__ = AsyncMock(return_value=mock_db)
+        mock_db_ctx.__aexit__ = AsyncMock(return_value=False)
 
         with patch('backend.api.routes.websocket.get_websocket_user',
                    return_value=mock_user), \
-             patch('backend.api.routes.websocket.get_db_context', return_value=mock_db_cm), \
+             patch('backend.api.routes.websocket.get_db_context',
+                   return_value=mock_db_ctx), \
              patch('backend.api.routes.websocket._project_svc') as mock_svc:
             mock_svc.get_project = AsyncMock(return_value=mock_project)
             await project_websocket(mock_websocket, "project-123")
@@ -415,19 +414,18 @@ class TestWorkflowWebSocket:
             ]
         )
 
-        # Create a mock workflow with context logs
         mock_workflow = MagicMock()
-        mock_workflow.context = {"logs": ["step 1 done", "step 2 done"]}
+        mock_workflow.context = {"logs": [{"message": "step started"}]}
 
-        # Mock the db context manager and workflow service
         mock_db = AsyncMock()
-        mock_db_cm = AsyncMock()
-        mock_db_cm.__aenter__ = AsyncMock(return_value=mock_db)
-        mock_db_cm.__aexit__ = AsyncMock(return_value=False)
+        mock_db_ctx = MagicMock()
+        mock_db_ctx.__aenter__ = AsyncMock(return_value=mock_db)
+        mock_db_ctx.__aexit__ = AsyncMock(return_value=False)
 
         with patch('backend.api.routes.websocket.get_websocket_user',
                    return_value=mock_user), \
-             patch('backend.api.routes.websocket.get_db_context', return_value=mock_db_cm), \
+             patch('backend.api.routes.websocket.get_db_context',
+                   return_value=mock_db_ctx), \
              patch('backend.api.routes.websocket._workflow_svc') as mock_svc:
             mock_svc.get_workflow = AsyncMock(return_value=mock_workflow)
             await workflow_websocket(mock_websocket, "workflow-123")

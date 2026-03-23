@@ -9,7 +9,7 @@ Covers uncovered lines in backend/api/health.py:
 - Lines 284-285 (readiness check application exception path)
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -288,7 +288,17 @@ class TestReadinessCheckEndpoint:
     @pytest.mark.asyncio
     async def test_readiness_check_success(self, mock_settings):
         """Test successful readiness check."""
-        with patch('backend.api.health.get_settings', return_value=mock_settings):
+        mock_conn = AsyncMock()
+        mock_conn.execute = AsyncMock()
+        mock_conn_ctx = MagicMock()
+        mock_conn_ctx.__aenter__ = AsyncMock(return_value=mock_conn)
+        mock_conn_ctx.__aexit__ = AsyncMock(return_value=False)
+        mock_engine = MagicMock()
+        mock_engine.connect = MagicMock(return_value=mock_conn_ctx)
+
+        with patch('backend.api.health.get_settings', return_value=mock_settings), \
+             patch('backend.db.session.engine', mock_engine), \
+             patch('backend.api.health._check_redis', new=AsyncMock(return_value=True)):
             response = await readiness_check()
 
         assert response.ready is True
@@ -370,8 +380,17 @@ class TestHealthCheckIntegration:
     @pytest.mark.asyncio
     async def test_full_health_check_flow(self, mock_healthy_settings):
         """Test complete health check flow."""
-        with patch('backend.api.health.get_settings', return_value=mock_healthy_settings):
-            with patch('backend.api.health.get_correlation_id', return_value="integration-test-123"):
+        mock_conn = AsyncMock()
+        mock_conn.execute = AsyncMock()
+        mock_conn_ctx = MagicMock()
+        mock_conn_ctx.__aenter__ = AsyncMock(return_value=mock_conn)
+        mock_conn_ctx.__aexit__ = AsyncMock(return_value=False)
+        mock_engine = MagicMock()
+        mock_engine.connect = MagicMock(return_value=mock_conn_ctx)
+        with patch('backend.api.health.get_settings', return_value=mock_healthy_settings), \
+             patch('backend.api.health.get_correlation_id', return_value="integration-test-123"), \
+             patch('backend.db.session.engine', mock_engine), \
+             patch('backend.api.health._check_redis', new=AsyncMock(return_value=True)):
                 # Health check
                 health_response = await health_check()
                 assert health_response.status == HealthStatus.HEALTHY

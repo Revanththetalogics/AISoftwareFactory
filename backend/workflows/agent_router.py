@@ -13,7 +13,7 @@ from backend.agents.base_agent import Task as AgentTask
 from backend.agents.stubs import BackendEngineerAgent, CEOAgent, ProductManagerAgent
 from backend.core.logging import get_logger
 from backend.workflows.state_machine import ProjectPhase
-from backend.workflows.task_manager import WorkflowTask
+from backend.workflows.task_manager import TaskManager, WorkflowTask
 
 logger = get_logger(__name__)
 
@@ -37,6 +37,7 @@ class AgentRouter:
     def __init__(self):
         """Initialize the agent router."""
         self._registry = get_agent_registry()
+        self._task_manager = TaskManager()
         self._logger = get_logger(__name__)
         self._initialize_default_agents()
 
@@ -235,7 +236,7 @@ class AgentRouter:
 
     def get_agent_workload(self, agent_id: str) -> int:
         """
-        Get the number of tasks assigned to an agent.
+        Get the number of tasks currently assigned to an agent.
 
         Args:
             agent_id: Agent ID
@@ -243,17 +244,17 @@ class AgentRouter:
         Returns:
             Number of assigned tasks
         """
-        # This would integrate with TaskManager in a full implementation
-        # For now, return 0 as stub
-        return 0
+        return len(self._task_manager.get_assigned_tasks(agent_id=agent_id))
 
     def get_available_agents(self) -> list[BaseAgent]:
         """
-        Get list of available agents.
+        Get list of agents that have capacity to accept new tasks.
 
         Returns:
-            List of agents that can accept new tasks
+            List of agents whose current workload is below the capacity cap
         """
-        # In a full implementation, this would check agent capacity
-        # For now, return all registered agents
-        return self._registry.list_all()
+        max_tasks_per_agent = 5
+        return [
+            agent for agent in self._registry.list_all()
+            if self.get_agent_workload(agent.agent_id) < max_tasks_per_agent
+        ]

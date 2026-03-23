@@ -2,7 +2,9 @@
 Deployment API Routes.
 
 This module provides REST endpoints for deployment management.
-Uses DeploymentService for in-memory deployment tracking.
+
+TODO: Wire to DatabaseDeploymentService once implemented in database_services.py.
+Currently using DeploymentOrchestrator which uses in-memory storage.
 """
 
 
@@ -11,30 +13,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from backend.api.dependencies import get_current_user
 from backend.api.models import DeploymentRequest, DeploymentResponse
 from backend.core.logging import get_logger
-from backend.deployment.orchestrator import DeploymentEnvironment
-from backend.services.deployment_service import DeploymentService
+from backend.deployment.orchestrator import DeploymentEnvironment, DeploymentOrchestrator
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/deployments", tags=["deployments"])
 
-# Deployment service instance
-_service = DeploymentService()
-
-
-def _to_response(d: dict) -> DeploymentResponse:
-    """Convert a DeploymentService dict to DeploymentResponse."""
-    return DeploymentResponse(
-        deployment_id=d["deployment_id"],
-        project_id=d["project_id"],
-        environment=d["environment"],
-        version=d["version"],
-        status=d["status"],
-        steps=d.get("steps", []),
-        started_at=d.get("started_at"),
-        completed_at=d.get("completed_at"),
-        error_message=d.get("error_message"),
-        url=d.get("url"),
-    )
+# Deployment orchestrator instance
+_orchestrator = DeploymentOrchestrator()
 
 
 @router.post(
@@ -52,31 +37,41 @@ async def create_deployment(
 
     The deployment will be queued and executed asynchronously.
     """
-    # Validate environment via the enum
     try:
-        DeploymentEnvironment(request.environment)
+        env = DeploymentEnvironment(request.environment)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid environment: {request.environment}",
         ) from exc
 
-    result = await _service.create_deployment(
+    result = _orchestrator.create_deployment(
         project_id=request.project_id,
-        environment=request.environment,
+        environment=env,
         version=request.version,
         config=request.config or {},
     )
 
     logger.info(
         "Deployment created",
-        deployment_id=result["deployment_id"],
+        deployment_id=result.deployment_id,
         project_id=request.project_id,
         environment=request.environment,
         user=user.user_id if user else "anonymous",
     )
 
-    return _to_response(result)
+    return DeploymentResponse(
+        deployment_id=result.deployment_id,
+        project_id=result.project_name,
+        environment=result.environment.value,
+        version=request.version,
+        status=result.status.value,
+        steps=[step.to_dict() for step in result.steps],
+        started_at=result.started_at,
+        completed_at=result.completed_at,
+        error_message=None,
+        url=None,
+    )
 
 
 @router.get(
@@ -92,11 +87,33 @@ async def list_deployments(
     """
     List deployments with optional filtering.
     """
-    deployments = await _service.list_deployments(
-        project_id=project_id,
-        environment=environment,
+    env = None
+    if environment:
+        try:
+            env = DeploymentEnvironment(environment)
+        except ValueError:
+            pass
+
+    deployments = _orchestrator.list_deployments(
+        project_name=project_id,
+        environment=env,
     )
-    return [_to_response(d) for d in deployments]
+
+    return [
+        DeploymentResponse(
+            deployment_id=d.deployment_id,
+            project_id=d.project_name,
+            environment=d.environment.value,
+            version="unknown",
+            status=d.status.value,
+            steps=[step.to_dict() for step in d.steps],
+            started_at=d.started_at,
+            completed_at=d.completed_at,
+            error_message=None,
+            url=None,
+        )
+        for d in deployments
+    ]
 
 
 @router.get(
@@ -111,7 +128,7 @@ async def get_deployment(
     """
     Get detailed information about a deployment.
     """
-    deployment = await _service.get_deployment(deployment_id)
+    deployment = _orchestrator.get_deployment(deployment_id)
 
     if not deployment:
         raise HTTPException(
@@ -119,7 +136,18 @@ async def get_deployment(
             detail=f"Deployment {deployment_id} not found",
         )
 
-    return _to_response(deployment)
+    return DeploymentResponse(
+        deployment_id=deployment.deployment_id,
+        project_id=deployment.project_name,
+        environment=deployment.environment.value,
+        version="unknown",
+        status=deployment.status.value,
+        steps=[step.to_dict() for step in deployment.steps],
+        started_at=deployment.started_at,
+        completed_at=deployment.completed_at,
+        error_message=None,
+        url=None,
+    )
 
 
 @router.post(
@@ -134,15 +162,15 @@ async def cancel_deployment(
     """
     Cancel a pending or in-progress deployment.
     """
-    success = await _service.cancel_deployment(deployment_id)
+    success = _orchestrator.cancel_deployment(deployment_id)
 
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Deployment {deployment_id} not found or already in terminal state",
+            detail=f"Deployment {deployment_id} not found",
         )
 
-    deployment = await _service.get_deployment(deployment_id)
+    deployment = _orchestrator.get_deployment(deployment_id)
 
     logger.info(
         "Deployment cancelled",
@@ -150,7 +178,18 @@ async def cancel_deployment(
         user=user.user_id if user else "anonymous",
     )
 
-    return _to_response(deployment)
+    return DeploymentResponse(
+        deployment_id=deployment.deployment_id,
+        project_id=deployment.project_name,
+        environment=deployment.environment.value,
+        version="unknown",
+        status=deployment.status.value,
+        steps=[step.to_dict() for step in deployment.steps],
+        started_at=deployment.started_at,
+        completed_at=deployment.completed_at,
+        error_message=None,
+        url=None,
+    )
 
 
 @router.get(

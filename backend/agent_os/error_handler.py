@@ -183,4 +183,34 @@ class ErrorHandler:
             error=str(error),
             context=context
         )
-        # TODO: Implement actual escalation (email, notification, etc.)
+        # Write to structured escalation log
+        try:
+            import json
+            from datetime import datetime
+            from pathlib import Path
+            log_entry = {
+                "task_id": task_id,
+                "error": str(error),
+                "context": context,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+            reports_dir = Path("reports")
+            reports_dir.mkdir(exist_ok=True)
+            with open(reports_dir / "escalations.jsonl", "a") as f:
+                f.write(json.dumps(log_entry) + "\n")
+        except Exception as log_exc:
+            self._logger.warning("Failed to write escalation log", error=str(log_exc))
+        # Attempt webhook if configured
+        try:
+            from backend.core.config import get_settings
+            webhook_url = getattr(get_settings(), "ESCALATION_WEBHOOK_URL", None)
+            if webhook_url:
+                import asyncio
+
+                import httpx
+                async def _send():
+                    async with httpx.AsyncClient() as client:
+                        await client.post(webhook_url, json=log_entry, timeout=5.0)
+                asyncio.get_event_loop().create_task(_send())
+        except Exception as we:
+            self._logger.warning("Webhook escalation failed", error=str(we))

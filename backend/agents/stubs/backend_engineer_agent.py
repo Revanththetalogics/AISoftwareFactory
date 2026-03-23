@@ -10,6 +10,7 @@ from typing import Any
 
 from backend.agents.base_agent import BaseAgent, Task, TaskResult, TaskStatus
 from backend.core.logging import get_logger
+from backend.llm.router import get_llm_router
 
 logger = get_logger(__name__)
 
@@ -113,7 +114,8 @@ class BackendEngineerAgent(BaseAgent):
             )
 
     async def _process_backend_task(self, task: Task) -> dict[str, Any]:
-        """Process Backend Engineer-specific tasks."""
+        """Process Backend Engineer-specific tasks using the enterprise LLM router."""
+        llm = get_llm_router().get_agent_llm(task_type="coding")
         task_handlers = {
             "api_design": self._handle_api_design,
             "database_design": self._handle_database_design,
@@ -124,154 +126,192 @@ class BackendEngineerAgent(BaseAgent):
         }
 
         handler = task_handlers.get(task.task_type, self._handle_generic_task)
-        return await handler(task)
+        return await handler(task, llm=llm)
 
-    async def _handle_api_design(self, task: Task) -> dict[str, Any]:
+    async def _handle_api_design(self, task: Task, llm: Any = None) -> dict[str, Any]:
         """Handle API design tasks."""
+        prompt = (
+            f"You are a senior backend engineer. Design a complete REST API for:\n"
+            f"{task.description}\n\n"
+            f"Respond as JSON with keys: api_design (string description), "
+            f"endpoints (list of objects with path, method, description, auth_required), "
+            f"authentication (string), rate_limiting (string), versioning (string), "
+            f"error_handling (string)."
+        )
+        raw = llm(prompt) if llm else f"API design for: {task.description}"
+        try:
+            import json
+            import re
+            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            if match:
+                return json.loads(match.group())
+        except Exception:  # noqa: S110
+            pass
         return {
-            "api_design": f"API design for: {task.description}",
-            "endpoints": [
-                {
-                    "path": "/api/v1/users",
-                    "method": "GET",
-                    "description": "List all users",
-                    "auth_required": True,
-                },
-                {
-                    "path": "/api/v1/users",
-                    "method": "POST",
-                    "description": "Create new user",
-                    "auth_required": False,
-                },
-                {
-                    "path": "/api/v1/users/{id}",
-                    "method": "GET",
-                    "description": "Get user by ID",
-                    "auth_required": True,
-                },
-            ],
+            "api_design": raw,
+            "endpoints": [{"path": "/api/v1/resource", "method": "GET", "description": raw, "auth_required": True}],
             "authentication": "JWT Bearer",
-            "rate_limiting": "100 requests per minute",
-            "versioning": "URL path versioning (v1, v2)",
+            "rate_limiting": "TBD",
+            "versioning": "URL path versioning",
+            "error_handling": "Standard HTTP error codes",
         }
 
-    async def _handle_database_design(self, task: Task) -> dict[str, Any]:
+    async def _handle_database_design(self, task: Task, llm: Any = None) -> dict[str, Any]:
         """Handle database design tasks."""
+        prompt = (
+            f"You are a senior backend engineer. Design a PostgreSQL database schema for:\n"
+            f"{task.description}\n\n"
+            f"Respond as JSON with keys: database_design (string description), "
+            f"entities (list of objects with name, fields list), "
+            f"indexes (list of strings), constraints (list of strings), "
+            f"migrations (list of strings describing migrations needed)."
+        )
+        raw = llm(prompt) if llm else f"Database design for: {task.description}"
+        try:
+            import json
+            import re
+            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            if match:
+                return json.loads(match.group())
+        except Exception:  # noqa: S110
+            pass
         return {
-            "database_design": f"Database design for: {task.description}",
-            "entities": [
-                {
-                    "name": "User",
-                    "fields": [
-                        {"name": "id", "type": "UUID", "primary_key": True},
-                        {"name": "email", "type": "VARCHAR(255)", "unique": True},
-                        {"name": "password_hash", "type": "VARCHAR(255)"},
-                        {"name": "created_at", "type": "TIMESTAMP"},
-                    ],
-                },
-                {
-                    "name": "Project",
-                    "fields": [
-                        {"name": "id", "type": "UUID", "primary_key": True},
-                        {"name": "name", "type": "VARCHAR(255)"},
-                        {"name": "owner_id", "type": "UUID", "foreign_key": "User.id"},
-                    ],
-                },
-            ],
-            "indexes": ["User.email", "Project.owner_id"],
-            "constraints": ["Foreign key constraints", "Unique constraints"],
+            "database_design": raw,
+            "entities": [],
+            "indexes": [],
+            "constraints": [],
+            "migrations": [],
         }
 
-    async def _handle_business_logic(self, task: Task) -> dict[str, Any]:
+    async def _handle_business_logic(self, task: Task, llm: Any = None) -> dict[str, Any]:
         """Handle business logic implementation tasks."""
+        prompt = (
+            f"You are a senior backend engineer. Design the business logic layer for:\n"
+            f"{task.description}\n\n"
+            f"Respond as JSON with keys: business_logic (string description), "
+            f"services (list of objects with name, methods list, responsibilities), "
+            f"validation_rules (list of strings), "
+            f"error_cases (list of strings), "
+            f"code_outline (string with key class/function signatures)."
+        )
+        raw = llm(prompt) if llm else f"Business logic for: {task.description}"
+        try:
+            import json
+            import re
+            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            if match:
+                return json.loads(match.group())
+        except Exception:  # noqa: S110
+            pass
         return {
-            "business_logic": f"Business logic for: {task.description}",
-            "services": [
-                {
-                    "name": "UserService",
-                    "methods": ["create_user", "update_user", "delete_user", "get_user"],
-                },
-                {
-                    "name": "AuthService",
-                    "methods": ["login", "logout", "refresh_token", "verify_token"],
-                },
-            ],
-            "validation_rules": [
-                "Email must be valid format",
-                "Password must be at least 8 characters",
-                "User must be 18+ years old",
-            ],
+            "business_logic": raw,
+            "services": [],
+            "validation_rules": [],
+            "error_cases": [],
+            "code_outline": "",
         }
 
-    async def _handle_security(self, task: Task) -> dict[str, Any]:
+    async def _handle_security(self, task: Task, llm: Any = None) -> dict[str, Any]:
         """Handle security implementation tasks."""
+        prompt = (
+            f"You are a senior backend security engineer. Design the security implementation for:\n"
+            f"{task.description}\n\n"
+            f"Respond as JSON with keys: security (string description), "
+            f"authentication (object with type, algorithm, expiration), "
+            f"authorization (object with type, roles list), "
+            f"data_protection (list of strings), "
+            f"vulnerabilities_addressed (list of strings), "
+            f"security_headers (list of strings)."
+        )
+        raw = llm(prompt) if llm else f"Security implementation for: {task.description}"
+        try:
+            import json
+            import re
+            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            if match:
+                return json.loads(match.group())
+        except Exception:  # noqa: S110
+            pass
         return {
-            "security": f"Security implementation for: {task.description}",
-            "authentication": {
-                "type": "JWT",
-                "algorithm": "HS256",
-                "expiration": "24 hours",
-            },
-            "authorization": {
-                "type": "RBAC",
-                "roles": ["admin", "user", "guest"],
-            },
-            "data_protection": [
-                "Passwords hashed with bcrypt",
-                "Sensitive data encrypted at rest",
-                "HTTPS only",
-            ],
-            "vulnerabilities_addressed": [
-                "SQL Injection (parameterized queries)",
-                "XSS (output encoding)",
-                "CSRF (tokens)",
-            ],
+            "security": raw,
+            "authentication": {},
+            "authorization": {},
+            "data_protection": [],
+            "vulnerabilities_addressed": [],
+            "security_headers": [],
         }
 
-    async def _handle_performance(self, task: Task) -> dict[str, Any]:
+    async def _handle_performance(self, task: Task, llm: Any = None) -> dict[str, Any]:
         """Handle performance optimization tasks."""
+        prompt = (
+            f"You are a senior backend performance engineer. Design optimizations for:\n"
+            f"{task.description}\n\n"
+            f"Respond as JSON with keys: performance (string description), "
+            f"optimizations (list of strings), "
+            f"caching_strategy (object mapping cache_type->strategy), "
+            f"target_metrics (object mapping metric_name->target), "
+            f"bottlenecks (list of strings), "
+            f"profiling_approach (string)."
+        )
+        raw = llm(prompt) if llm else f"Performance optimization for: {task.description}"
+        try:
+            import json
+            import re
+            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            if match:
+                return json.loads(match.group())
+        except Exception:  # noqa: S110
+            pass
         return {
-            "performance": f"Performance optimization for: {task.description}",
-            "optimizations": [
-                "Database query optimization",
-                "Redis caching layer",
-                "CDN for static assets",
-                "Database connection pooling",
-            ],
-            "caching_strategy": {
-                "user_sessions": "Redis, 24h TTL",
-                "api_responses": "Redis, 5m TTL",
-                "static_assets": "CDN, 1d TTL",
-            },
-            "target_metrics": {
-                "api_response_time": "< 200ms p95",
-                "database_query_time": "< 50ms",
-                "cache_hit_rate": "> 80%",
-            },
+            "performance": raw,
+            "optimizations": [],
+            "caching_strategy": {},
+            "target_metrics": {},
+            "bottlenecks": [],
+            "profiling_approach": "",
         }
 
-    async def _handle_testing(self, task: Task) -> dict[str, Any]:
+    async def _handle_testing(self, task: Task, llm: Any = None) -> dict[str, Any]:
         """Handle testing tasks."""
+        prompt = (
+            f"You are a senior backend engineer. Design a comprehensive test strategy for:\n"
+            f"{task.description}\n\n"
+            f"Respond as JSON with keys: testing (string description), "
+            f"unit_tests (object with coverage_target, framework, test_files list), "
+            f"integration_tests (object with coverage_target, scope list), "
+            f"e2e_tests (object with scope list), "
+            f"test_data_strategy (string), "
+            f"ci_pipeline (string)."
+        )
+        raw = llm(prompt) if llm else f"Test suite for: {task.description}"
+        try:
+            import json
+            import re
+            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            if match:
+                return json.loads(match.group())
+        except Exception:  # noqa: S110
+            pass
         return {
-            "testing": f"Test suite for: {task.description}",
-            "unit_tests": {
-                "coverage_target": "90%",
-                "framework": "pytest",
-                "files": ["test_user_service.py", "test_auth_service.py"],
-            },
-            "integration_tests": {
-                "coverage_target": "80%",
-                "scope": ["API endpoints", "Database integration"],
-            },
-            "e2e_tests": {
-                "scope": ["User flows", "Critical paths"],
-            },
+            "testing": raw,
+            "unit_tests": {},
+            "integration_tests": {},
+            "e2e_tests": {},
+            "test_data_strategy": "",
+            "ci_pipeline": "",
         }
 
-    async def _handle_generic_task(self, task: Task) -> dict[str, Any]:
+    async def _handle_generic_task(self, task: Task, llm: Any = None) -> dict[str, Any]:
         """Handle generic tasks."""
+        prompt = (
+            f"You are a senior backend engineer. Complete the following task:\n"
+            f"Task type: {task.task_type}\n"
+            f"Description: {task.description}\n\n"
+            f"Provide a detailed, technical response."
+        )
+        result = llm(prompt) if llm else f"Processed: {task.description}"
         return {
-            "result": f"Processed: {task.description}",
+            "result": result,
             "task_type": task.task_type,
         }
 

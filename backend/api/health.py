@@ -249,6 +249,18 @@ async def health_check() -> HealthResponse:
     )
 
 
+async def _check_redis(redis_url: str) -> bool:
+    """Check Redis connectivity. Extracted for testability."""
+    try:
+        import redis.asyncio as aioredis  # noqa: PLC0415
+        r = aioredis.from_url(redis_url, socket_connect_timeout=2)
+        await r.ping()
+        await r.aclose()
+        return True
+    except Exception:  # noqa: S110
+        return False
+
+
 @router.get(
     "/ready",
     response_model=ReadinessResponse,
@@ -284,11 +296,19 @@ async def readiness_check() -> ReadinessResponse:
     except Exception:
         checks["application"] = False
 
-    # Future: Check database connectivity (Phase 5)
-    checks["database"] = True  # Stub for now
+    # Real database connectivity check
+    try:
+        from sqlalchemy import text
 
-    # Future: Check Redis connectivity (Phase 4)
-    checks["redis"] = True  # Stub for now
+        from backend.db.session import engine
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        checks["database"] = True
+    except Exception:
+        checks["database"] = False
+
+    # Real Redis connectivity check
+    checks["redis"] = await _check_redis(settings.REDIS_URL)
 
     all_ready = all(checks.values())
 

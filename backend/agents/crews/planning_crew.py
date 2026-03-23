@@ -5,17 +5,16 @@ This crew handles the initial planning phase including requirements gathering,
 product definition, and project scoping.
 """
 
-from typing import Any
-
 from crewai import Crew, Task
 
 from backend.agents.roles import get_ceo_role, get_product_manager_role
 from backend.core.logging import get_logger
+from backend.llm.router import get_llm_router
 
 logger = get_logger(__name__)
 
 
-def create_planning_crew(llm: Any = None) -> Crew:
+def create_planning_crew() -> Crew:
     """
     Create the planning crew for requirements and product definition.
 
@@ -23,8 +22,7 @@ def create_planning_crew(llm: Any = None) -> Crew:
     - CEO: Strategic oversight and decision making
     - Product Manager: Requirements gathering and product definition
 
-    Args:
-        llm: Language model to use for all agents
+    Both agents are wired to the enterprise LLM router (Ollama) automatically.
 
     Returns:
         Crew: Configured planning crew
@@ -34,6 +32,8 @@ def create_planning_crew(llm: Any = None) -> Crew:
         >>> crew = create_planning_crew()
         >>> result = crew.kickoff()
     """
+    llm = get_llm_router().get_agent_llm(task_type="reasoning")
+
     # Create agents
     ceo = get_ceo_role(llm=llm)
     pm = get_product_manager_role(llm=llm)

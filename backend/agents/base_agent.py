@@ -227,24 +227,33 @@ class BaseAgent(ABC):
         """
         Query the project brain/memory system.
 
-        This is a stub method that will be fully implemented in Phase 5
-        when the Project Brain is built.
+        Uses the in-memory MemoryStore to retrieve stored agent memories
+        matching the given query string.
 
         Args:
             query: Query string
 
         Returns:
             Dictionary containing query results
-
-        TODO: Implement full integration with Project Brain (Phase 5)
         """
         self._logger.debug("Querying memory", query=query)
-        # Stub implementation - returns empty results
-        return {
-            "query": query,
-            "results": [],
-            "total": 0,
-        }
+        try:
+            from backend.brain.memory_store import MemoryStore
+            store = MemoryStore()
+            memories = store.retrieve(agent_id=self.agent_id, query=query, limit=10)
+            results = [
+                {
+                    "content": m.content,
+                    "type": m.memory_type,
+                    "importance": m.importance,
+                    "created_at": m.created_at.isoformat(),
+                }
+                for m in memories
+            ]
+            return {"query": query, "results": results, "total": len(results)}
+        except Exception as exc:
+            self._logger.warning("Memory query failed", query=query, error=str(exc))
+            return {"query": query, "results": [], "total": 0}
 
     def has_capability(self, capability: str) -> bool:
         """

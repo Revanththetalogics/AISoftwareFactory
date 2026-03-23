@@ -602,20 +602,39 @@ Return only the selector string."""
         current_path: str,
         threshold: float
     ) -> VisualDiff:
-        """Compare two screenshots and return diff information."""
-        # This would use a library like pixelmatch or PIL
-        # For now, return a placeholder
-
-        diff_path = current_path.replace(".png", "_diff.png")
-
-        return VisualDiff(
-            baseline_path=baseline_path,
-            current_path=current_path,
-            diff_path=diff_path,
-            pixel_diff_count=0,
-            diff_percentage=0.0,
-            is_significant=False,
-        )
+        """Compare two screenshots and return diff information using PIL pixel diff."""
+        try:
+            from PIL import Image, ImageChops
+            baseline = Image.open(baseline_path).convert("RGB")
+            current = Image.open(current_path).convert("RGB")
+            # Resize current to match baseline if sizes differ
+            if baseline.size != current.size:
+                current = current.resize(baseline.size, Image.LANCZOS)
+            diff = ImageChops.difference(baseline, current)
+            total_pixels = baseline.width * baseline.height
+            diff_pixels = sum(1 for p in diff.getdata() if any(c > 10 for c in p))
+            diff_pct = diff_pixels / total_pixels if total_pixels else 0.0
+            diff_path = current_path.replace(".png", "_diff.png")
+            diff.save(diff_path)
+            return VisualDiff(
+                baseline_path=baseline_path,
+                current_path=current_path,
+                diff_path=diff_path,
+                pixel_diff_count=diff_pixels,
+                diff_percentage=diff_pct,
+                is_significant=diff_pct > threshold,
+            )
+        except Exception as exc:
+            self._logger.warning("Screenshot comparison failed", error=str(exc))
+            diff_path = current_path.replace(".png", "_diff.png")
+            return VisualDiff(
+                baseline_path=baseline_path,
+                current_path=current_path,
+                diff_path=diff_path,
+                pixel_diff_count=0,
+                diff_percentage=0.0,
+                is_significant=False,
+            )
 
     def _group_by_browser(self) -> dict[str, int]:
         """Group test results by browser."""

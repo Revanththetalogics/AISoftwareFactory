@@ -506,6 +506,7 @@ class TestEngineeringCrew:
 class TestPlanningCrew:
     """Tests for planning_crew module."""
 
+    @patch('backend.agents.crews.planning_crew.get_llm_router')
     @patch('backend.agents.crews.planning_crew.get_ceo_role')
     @patch('backend.agents.crews.planning_crew.get_product_manager_role')
     @patch('backend.agents.crews.planning_crew.Crew')
@@ -513,10 +514,14 @@ class TestPlanningCrew:
         self,
         mock_crew_class,
         mock_pm_role,
-        mock_ceo_role
+        mock_ceo_role,
+        mock_get_router
     ):
-        """Test creating planning crew."""
+        """Test creating planning crew - LLM is auto-wired from router."""
         from backend.agents.crews.planning_crew import create_planning_crew
+
+        mock_llm = Mock()
+        mock_get_router.return_value.get_agent_llm.return_value = mock_llm
 
         mock_agent = Mock()
         mock_ceo_role.return_value = mock_agent
@@ -528,34 +533,10 @@ class TestPlanningCrew:
         crew = create_planning_crew()
 
         assert crew == mock_crew_instance
-        mock_ceo_role.assert_called_once_with(llm=None)
-        mock_pm_role.assert_called_once_with(llm=None)
-        mock_crew_class.assert_called_once()
-
-    @patch('backend.agents.crews.planning_crew.get_ceo_role')
-    @patch('backend.agents.crews.planning_crew.get_product_manager_role')
-    @patch('backend.agents.crews.planning_crew.Crew')
-    def test_create_planning_crew_with_llm(
-        self,
-        mock_crew_class,
-        mock_pm_role,
-        mock_ceo_role
-    ):
-        """Test creating planning crew with custom LLM."""
-        from backend.agents.crews.planning_crew import create_planning_crew
-
-        mock_llm = Mock()
-        mock_agent = Mock()
-        mock_ceo_role.return_value = mock_agent
-        mock_pm_role.return_value = mock_agent
-
-        mock_crew_instance = Mock()
-        mock_crew_class.return_value = mock_crew_instance
-
-        create_planning_crew(llm=mock_llm)
-
+        mock_get_router.return_value.get_agent_llm.assert_called_once_with(task_type="reasoning")
         mock_ceo_role.assert_called_once_with(llm=mock_llm)
         mock_pm_role.assert_called_once_with(llm=mock_llm)
+        mock_crew_class.assert_called_once()
 
     @patch('backend.agents.crews.planning_crew.Task')
     def test_create_requirements_task(self, mock_task_class):
@@ -591,6 +572,7 @@ class TestPlanningCrew:
 class TestDesignCrew:
     """Tests for design_crew module."""
 
+    @patch('backend.agents.crews.design_crew.get_llm_router')
     @patch('backend.agents.crews.design_crew.get_ceo_role')
     @patch('backend.agents.crews.design_crew.get_architect_role')
     @patch('backend.agents.crews.design_crew.get_product_manager_role')
@@ -600,10 +582,14 @@ class TestDesignCrew:
         mock_crew_class,
         mock_pm_role,
         mock_architect_role,
-        mock_ceo_role
+        mock_ceo_role,
+        mock_get_router
     ):
-        """Test creating design crew."""
+        """Test creating design crew - LLM is auto-wired from router."""
         from backend.agents.crews.design_crew import create_design_crew
+
+        mock_llm = Mock()
+        mock_get_router.return_value.get_agent_llm.return_value = mock_llm
 
         mock_agent = Mock()
         mock_ceo_role.return_value = mock_agent
@@ -616,35 +602,7 @@ class TestDesignCrew:
         crew = create_design_crew()
 
         assert crew == mock_crew_instance
-        mock_ceo_role.assert_called_once_with(llm=None)
-        mock_architect_role.assert_called_once_with(llm=None)
-        mock_pm_role.assert_called_once_with(llm=None)
-
-    @patch('backend.agents.crews.design_crew.get_ceo_role')
-    @patch('backend.agents.crews.design_crew.get_architect_role')
-    @patch('backend.agents.crews.design_crew.get_product_manager_role')
-    @patch('backend.agents.crews.design_crew.Crew')
-    def test_create_design_crew_with_llm(
-        self,
-        mock_crew_class,
-        mock_pm_role,
-        mock_architect_role,
-        mock_ceo_role
-    ):
-        """Test creating design crew with LLM."""
-        from backend.agents.crews.design_crew import create_design_crew
-
-        mock_llm = Mock()
-        mock_agent = Mock()
-        mock_ceo_role.return_value = mock_agent
-        mock_architect_role.return_value = mock_agent
-        mock_pm_role.return_value = mock_agent
-
-        mock_crew_instance = Mock()
-        mock_crew_class.return_value = mock_crew_instance
-
-        create_design_crew(llm=mock_llm)
-
+        mock_get_router.return_value.get_agent_llm.assert_called_once_with(task_type="reasoning")
         mock_ceo_role.assert_called_once_with(llm=mock_llm)
         mock_architect_role.assert_called_once_with(llm=mock_llm)
         mock_pm_role.assert_called_once_with(llm=mock_llm)
@@ -683,6 +641,7 @@ class TestDesignCrew:
 class TestImplementationCrew:
     """Tests for implementation_crew module."""
 
+    @patch('backend.agents.crews.implementation_crew.get_llm_router')
     @patch('backend.agents.crews.implementation_crew.get_architect_role')
     @patch('backend.agents.crews.implementation_crew.get_backend_engineer_role')
     @patch('backend.agents.crews.implementation_crew.get_frontend_engineer_role')
@@ -694,10 +653,14 @@ class TestImplementationCrew:
         mock_pm_role,
         mock_frontend_role,
         mock_backend_role,
-        mock_architect_role
+        mock_architect_role,
+        mock_get_router
     ):
-        """Test creating implementation crew."""
+        """Test creating implementation crew - LLM is auto-wired from router."""
         from backend.agents.crews.implementation_crew import create_implementation_crew
+
+        mock_llm = Mock()
+        mock_get_router.return_value.get_agent_llm.return_value = mock_llm
 
         mock_agent = Mock()
         mock_architect_role.return_value = mock_agent
@@ -711,39 +674,7 @@ class TestImplementationCrew:
         crew = create_implementation_crew()
 
         assert crew == mock_crew_instance
-        mock_architect_role.assert_called_once_with(llm=None)
-        mock_backend_role.assert_called_once_with(llm=None)
-        mock_frontend_role.assert_called_once_with(llm=None)
-        mock_pm_role.assert_called_once_with(llm=None)
-
-    @patch('backend.agents.crews.implementation_crew.get_architect_role')
-    @patch('backend.agents.crews.implementation_crew.get_backend_engineer_role')
-    @patch('backend.agents.crews.implementation_crew.get_frontend_engineer_role')
-    @patch('backend.agents.crews.implementation_crew.get_product_manager_role')
-    @patch('backend.agents.crews.implementation_crew.Crew')
-    def test_create_implementation_crew_with_llm(
-        self,
-        mock_crew_class,
-        mock_pm_role,
-        mock_frontend_role,
-        mock_backend_role,
-        mock_architect_role
-    ):
-        """Test creating implementation crew with LLM."""
-        from backend.agents.crews.implementation_crew import create_implementation_crew
-
-        mock_llm = Mock()
-        mock_agent = Mock()
-        mock_architect_role.return_value = mock_agent
-        mock_backend_role.return_value = mock_agent
-        mock_frontend_role.return_value = mock_agent
-        mock_pm_role.return_value = mock_agent
-
-        mock_crew_instance = Mock()
-        mock_crew_class.return_value = mock_crew_instance
-
-        create_implementation_crew(llm=mock_llm)
-
+        mock_get_router.return_value.get_agent_llm.assert_called_once_with(task_type="coding")
         mock_architect_role.assert_called_once_with(llm=mock_llm)
         mock_backend_role.assert_called_once_with(llm=mock_llm)
         mock_frontend_role.assert_called_once_with(llm=mock_llm)
@@ -785,6 +716,7 @@ class TestImplementationCrew:
 class TestDeploymentCrew:
     """Tests for deployment_crew module."""
 
+    @patch('backend.agents.crews.deployment_crew.get_llm_router')
     @patch('backend.agents.crews.deployment_crew.get_devops_engineer_role')
     @patch('backend.agents.crews.deployment_crew.get_architect_role')
     @patch('backend.agents.crews.deployment_crew.get_backend_engineer_role')
@@ -794,10 +726,14 @@ class TestDeploymentCrew:
         mock_crew_class,
         mock_backend_role,
         mock_architect_role,
-        mock_devops_role
+        mock_devops_role,
+        mock_get_router
     ):
-        """Test creating deployment crew."""
+        """Test creating deployment crew - LLM is auto-wired from router."""
         from backend.agents.crews.deployment_crew import create_deployment_crew
+
+        mock_llm = Mock()
+        mock_get_router.return_value.get_agent_llm.return_value = mock_llm
 
         mock_agent = Mock()
         mock_devops_role.return_value = mock_agent
@@ -810,35 +746,7 @@ class TestDeploymentCrew:
         crew = create_deployment_crew()
 
         assert crew == mock_crew_instance
-        mock_devops_role.assert_called_once_with(llm=None)
-        mock_architect_role.assert_called_once_with(llm=None)
-        mock_backend_role.assert_called_once_with(llm=None)
-
-    @patch('backend.agents.crews.deployment_crew.get_devops_engineer_role')
-    @patch('backend.agents.crews.deployment_crew.get_architect_role')
-    @patch('backend.agents.crews.deployment_crew.get_backend_engineer_role')
-    @patch('backend.agents.crews.deployment_crew.Crew')
-    def test_create_deployment_crew_with_llm(
-        self,
-        mock_crew_class,
-        mock_backend_role,
-        mock_architect_role,
-        mock_devops_role
-    ):
-        """Test creating deployment crew with LLM."""
-        from backend.agents.crews.deployment_crew import create_deployment_crew
-
-        mock_llm = Mock()
-        mock_agent = Mock()
-        mock_devops_role.return_value = mock_agent
-        mock_architect_role.return_value = mock_agent
-        mock_backend_role.return_value = mock_agent
-
-        mock_crew_instance = Mock()
-        mock_crew_class.return_value = mock_crew_instance
-
-        create_deployment_crew(llm=mock_llm)
-
+        mock_get_router.return_value.get_agent_llm.assert_called_once_with(task_type="coding")
         mock_devops_role.assert_called_once_with(llm=mock_llm)
         mock_architect_role.assert_called_once_with(llm=mock_llm)
         mock_backend_role.assert_called_once_with(llm=mock_llm)

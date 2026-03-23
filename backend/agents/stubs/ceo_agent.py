@@ -10,6 +10,7 @@ from typing import Any
 
 from backend.agents.base_agent import BaseAgent, Task, TaskResult, TaskStatus
 from backend.core.logging import get_logger
+from backend.llm.router import get_llm_router
 
 logger = get_logger(__name__)
 
@@ -86,7 +87,6 @@ class CEOAgent(BaseAgent):
         )
 
         try:
-            # Stub implementation - will integrate with CrewAI in Phase 3
             output = await self._process_ceo_task(task)
 
             execution_time = (time.time() - start_time) * 1000
@@ -119,72 +119,138 @@ class CEOAgent(BaseAgent):
 
     async def _process_ceo_task(self, task: Task) -> dict[str, Any]:
         """
-        Process CEO-specific tasks.
+        Process CEO-specific tasks using the enterprise LLM router.
 
         Args:
             task: Task to process
 
         Returns:
             Dictionary with task output
-
-        TODO: Integrate with CrewAI CEO role in Phase 3
         """
+        llm = get_llm_router().get_agent_llm(task_type="reasoning")
         task_handlers = {
             "strategic_planning": self._handle_strategic_planning,
             "decision_making": self._handle_decision_making,
             "resource_allocation": self._handle_resource_allocation,
             "risk_assessment": self._handle_risk_assessment,
         }
-
         handler = task_handlers.get(task.task_type, self._handle_generic_task)
-        return await handler(task)
+        return await handler(task, llm=llm)
 
-    async def _handle_strategic_planning(self, task: Task) -> dict[str, Any]:
+    async def _handle_strategic_planning(self, task: Task, llm: Any = None) -> dict[str, Any]:
         """Handle strategic planning tasks."""
+        prompt = (
+            f"You are a strategic CEO. Create a detailed strategic plan for the following:\n"
+            f"{task.description}\n\n"
+            f"Respond as JSON with keys: plan (string), objectives (list of strings), "
+            f"timeline (string), resources_needed (list of strings), key_risks (list of strings)."
+        )
+        raw = llm(prompt) if llm else f"Strategic plan for: {task.description}"
+        try:
+            import json
+            import re
+            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            if match:
+                parsed = json.loads(match.group())
+                return parsed
+        except Exception:  # noqa: S110
+            pass
         return {
-            "plan": f"Strategic plan for: {task.description}",
-            "objectives": ["Objective 1", "Objective 2", "Objective 3"],
-            "timeline": "Q1 2024",
-            "resources_needed": ["Team A", "Team B"],
+            "plan": raw,
+            "objectives": [],
+            "timeline": "TBD",
+            "resources_needed": [],
+            "key_risks": [],
         }
 
-    async def _handle_decision_making(self, task: Task) -> dict[str, Any]:
+    async def _handle_decision_making(self, task: Task, llm: Any = None) -> dict[str, Any]:
         """Handle decision making tasks."""
+        prompt = (
+            f"You are a strategic CEO. Analyse and make a clear decision on:\n"
+            f"{task.description}\n\n"
+            f"Respond as JSON with keys: decision (string), rationale (string), "
+            f"alternatives_considered (list of strings), risk_level (low|medium|high), "
+            f"recommended_action (string)."
+        )
+        raw = llm(prompt) if llm else f"Decision on: {task.description}"
+        try:
+            import json
+            import re
+            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            if match:
+                return json.loads(match.group())
+        except Exception:  # noqa: S110
+            pass
         return {
-            "decision": f"Decision on: {task.description}",
-            "rationale": "Based on strategic alignment and resource availability",
-            "alternatives_considered": ["Option A", "Option B"],
-            "risk_level": "low",
+            "decision": raw,
+            "rationale": "",
+            "alternatives_considered": [],
+            "risk_level": "unknown",
+            "recommended_action": raw,
         }
 
-    async def _handle_resource_allocation(self, task: Task) -> dict[str, Any]:
+    async def _handle_resource_allocation(self, task: Task, llm: Any = None) -> dict[str, Any]:
         """Handle resource allocation tasks."""
+        prompt = (
+            f"You are a strategic CEO. Propose a resource allocation plan for:\n"
+            f"{task.description}\n\n"
+            f"Respond as JSON with keys: allocation (string description), budget (string), "
+            f"team_assignments (dict of role->headcount), timeline (string), "
+            f"priority_areas (list of strings)."
+        )
+        raw = llm(prompt) if llm else f"Resource plan for: {task.description}"
+        try:
+            import json
+            import re
+            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            if match:
+                return json.loads(match.group())
+        except Exception:  # noqa: S110
+            pass
         return {
-            "allocation": f"Resource plan for: {task.description}",
-            "budget": "$100,000",
-            "team_assignments": {
-                "backend": 2,
-                "frontend": 2,
-                "devops": 1,
-            },
+            "allocation": raw,
+            "budget": "TBD",
+            "team_assignments": {},
+            "timeline": "TBD",
+            "priority_areas": [],
         }
 
-    async def _handle_risk_assessment(self, task: Task) -> dict[str, Any]:
+    async def _handle_risk_assessment(self, task: Task, llm: Any = None) -> dict[str, Any]:
         """Handle risk assessment tasks."""
+        prompt = (
+            f"You are a strategic CEO. Perform a thorough risk assessment for:\n"
+            f"{task.description}\n\n"
+            f"Respond as JSON with keys: assessment (string summary), "
+            f"risks (list of objects with type, level, description, mitigation), "
+            f"overall_risk_level (low|medium|high|critical), "
+            f"recommended_mitigations (list of strings)."
+        )
+        raw = llm(prompt) if llm else f"Risk analysis for: {task.description}"
+        try:
+            import json
+            import re
+            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            if match:
+                return json.loads(match.group())
+        except Exception:  # noqa: S110
+            pass
         return {
-            "assessment": f"Risk analysis for: {task.description}",
-            "risks": [
-                {"type": "technical", "level": "medium", "mitigation": "Add tests"},
-                {"type": "schedule", "level": "low", "mitigation": "Buffer time"},
-            ],
+            "assessment": raw,
+            "risks": [],
+            "overall_risk_level": "unknown",
+            "recommended_mitigations": [],
         }
 
-    async def _handle_generic_task(self, task: Task) -> dict[str, Any]:
+    async def _handle_generic_task(self, task: Task, llm: Any = None) -> dict[str, Any]:
         """Handle generic tasks."""
-        return {
-            "result": f"Processed: {task.description}",
-            "task_type": task.task_type,
-        }
+        prompt = (
+            f"You are a strategic CEO. Respond to the following task:\n"
+            f"Task type: {task.task_type}\n"
+            f"Description: {task.description}\n\n"
+            f"Provide a thorough, actionable response."
+        )
+        result = llm(prompt) if llm else f"Processed: {task.description}"
+        return {"result": result, "task_type": task.task_type}
 
     def _get_relevant_capabilities(self, task: Task) -> list:
         """Get capabilities relevant to the task."""

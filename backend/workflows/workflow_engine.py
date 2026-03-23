@@ -368,7 +368,7 @@ class WorkflowEngine:
         return state
 
     async def _execute_testing_phase(self, state: WorkflowState) -> WorkflowState:
-        """Execute the testing phase."""
+        """Execute the testing phase using the TestIntelligenceEngine."""
         self._logger.info("Executing testing phase", project_id=state.project_id)
 
         state.update_phase_status(
@@ -376,14 +376,33 @@ class WorkflowEngine:
             PhaseStatus.IN_PROGRESS,
         )
 
-        # Testing phase - stub for now
-        # In Phase 6, this will integrate with Simulation Layer
-
-        state.update_phase_status(
-            ProjectPhase.TESTING,
-            PhaseStatus.COMPLETED,
-            output={"message": "Testing phase completed (stub)"},
-        )
+        try:
+            from backend.testing.intelligence_engine import TestIntelligenceEngine
+            engine = TestIntelligenceEngine()
+            source_path = state.context.get("source_path", "backend")
+            report = await engine.analyze_codebase(source_path)
+            output = {
+                "bugs_detected": len(report.get("bugs", [])),
+                "tests_generated": len(report.get("test_cases", [])),
+                "coverage": report.get("coverage_percentage", 0.0),
+                "summary": report.get("summary", "Testing phase complete."),
+            }
+            state.update_phase_status(
+                ProjectPhase.TESTING,
+                PhaseStatus.COMPLETED,
+                output=output,
+            )
+        except Exception as exc:
+            self._logger.error(
+                "Testing phase failed",
+                project_id=state.project_id,
+                error=str(exc),
+            )
+            state.update_phase_status(
+                ProjectPhase.TESTING,
+                PhaseStatus.FAILED,
+                error=str(exc),
+            )
 
         state.set_current_phase(ProjectPhase.TESTING)
         return state

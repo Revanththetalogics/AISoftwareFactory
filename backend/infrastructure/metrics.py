@@ -172,23 +172,39 @@ class MetricsCollector:
         self._active_request_count = 0
         self._user_sessions = defaultdict(int)
         self._recent_errors = deque(maxlen=1000)  # Keep last 1000 errors
+        self._start_time = time.time()
 
         # Start background metrics collection
         self._start_background_collection()
 
     def _start_background_collection(self):
         """Start background metrics collection tasks."""
-        # This would typically be started with the application
-        pass
+        try:
+            import asyncio
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                loop.create_task(self._collect_system_metrics())
+        except RuntimeError:
+            pass  # No event loop at import time — metrics task started lazily
+
+    async def _collect_system_metrics(self):
+        """Periodically collect system-level metrics."""
+        import asyncio
+        while True:
+            try:
+                import psutil
+                process = psutil.Process()
+                self.memory_usage_bytes.set(process.memory_info().rss)
+                self.cpu_usage_percent.set(process.cpu_percent(interval=None))
+                self.concurrent_requests.set(self._active_request_count)
+            except Exception:  # noqa: S110
+                pass
+            await asyncio.sleep(15)
 
     def record_api_request(self, method: str, endpoint: str, status_code: int, duration: float):
         """Record an API request."""
         self.api_requests_total.labels(method=method, endpoint=endpoint, status_code=status_code).inc()
         self.api_request_duration.labels(method=method, endpoint=endpoint).observe(duration)
-
-        # Track concurrent requests
-        self._active_request_count += 1
-        self.concurrent_requests.set(self._active_request_count)
 
     def record_api_error(self, method: str, endpoint: str, error_type: str):
         """Record an API error."""
@@ -374,8 +390,9 @@ class MetricsMiddleware:
         method = scope["method"]
         path = scope["path"]
 
-        # Track request
-        self.collector.record_api_request(method, path, 200, 0)  # Placeholder
+        # Track request — increment active count before processing
+        self.collector._active_request_count += 1
+        self.collector.concurrent_requests.set(self.collector._active_request_count)
 
         async def wrapped_send(message):
             if message["type"] == "http.response.start":
