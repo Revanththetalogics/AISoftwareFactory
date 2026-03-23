@@ -8,8 +8,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - ENVIRONMENT=staging
-      - LOG_LEVEL=info
+      - ENVIRONMENT=${ENVIRONMENT:-staging}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
       - DATABASE_URL=postgresql://aifactory:${POSTGRES_PASSWORD}@postgres:5432/aifactory
       - REDIS_URL=redis://redis:6379
       - OLLAMA_URL=http://ollama:11434
@@ -91,6 +91,31 @@ services:
       timeout: 15s
       retries: 5
       start_period: 120s
+
+  # Pulls the 4 required LLM models into Ollama on first deploy.
+  # Runs once and exits — restarts are skipped if models already exist.
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: ollama-init
+    restart: "no"
+    networks:
+      - ai-factory
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ollama_data:/root/.ollama
+    entrypoint: >
+      /bin/sh -c "
+        echo '=== Pulling LLM models into Ollama ===' &&
+        ollama pull llama3.2 &&
+        ollama pull deepseek-coder-v2 &&
+        ollama pull qwen2.5 &&
+        ollama pull mixtral:8x7b &&
+        echo '=== All models ready ==='
+      "
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
 
   postgres:
     image: postgres:15-alpine

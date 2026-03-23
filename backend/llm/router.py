@@ -10,7 +10,6 @@ from typing import Any
 
 from backend.core.logging import get_logger
 from backend.llm.providers.base import BaseLLMProvider, LLMRequest, LLMResponse
-
 logger = get_logger(__name__)
 
 
@@ -57,16 +56,18 @@ to the best available provider based on model requirements, availability,
         ... )
     """
 
-    def __init__(self, default_model: str = "llama3.2"):
+    def __init__(self, default_model: str | None = None):
         """
         Initialize the model router.
 
         Args:
-            default_model: Default model to use
+            default_model: Default model to use. Defaults to settings.LLM_DEFAULT_MODEL.
         """
+        from backend.core.config import get_settings
+        settings = get_settings()
         self.providers: dict[str, BaseLLMProvider] = {}
         self.model_configs: dict[str, ModelConfig] = {}
-        self.default_model = default_model
+        self.default_model = default_model or settings.LLM_DEFAULT_MODEL
         self._logger = get_logger(__name__)
 
         # Initialize with default model configs

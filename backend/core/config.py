@@ -97,6 +97,18 @@ class Settings(BaseSettings):
         default="http://localhost:11434",
         description="Ollama API base URL"
     )
+    OLLAMA_MODEL: str = Field(
+        default="llama3.2",
+        description="Default Ollama model for general tasks"
+    )
+    LLM_DEFAULT_MODEL: str = Field(
+        default="llama3.2",
+        description="Default LLM model name used by the model router"
+    )
+    LLM_PROVIDER: str = Field(
+        default="ollama",
+        description="LLM provider to use (ollama, openai)"
+    )
 
     # Monitoring
     ENABLE_METRICS: bool = Field(default=True, description="Enable Prometheus metrics")

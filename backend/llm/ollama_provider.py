@@ -6,7 +6,6 @@ enabling local LLM execution with circuit breaker protection
 and configurable timeouts.
 """
 
-import os
 import time
 from collections.abc import AsyncIterator
 from typing import Any
@@ -40,8 +39,9 @@ class OllamaProvider(BaseLLMProvider):
             config: Provider configuration with optional 'base_url' and 'model'
         """
         super().__init__(config)
-        self.base_url = self.config.get("base_url", os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"))
-        self.model = self.config.get("model", os.getenv("OLLAMA_MODEL", "llama3.2"))
+        settings = get_settings()
+        self.base_url = self.config.get("base_url", settings.OLLAMA_URL)
+        self.model = self.config.get("model", settings.OLLAMA_MODEL)
         self._session: aiohttp.ClientSession | None = None
 
     async def _get_session(self) -> aiohttp.ClientSession:
