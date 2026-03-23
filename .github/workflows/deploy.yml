@@ -156,21 +156,32 @@ jobs:
                 docker rm -f "$name" 2>/dev/null || true
               done
 
-              # Start core services (ollama-init is excluded — it's a background job)
+              # Start all core services
               COMPOSE_PROJECT_NAME=ai-factory \
               docker compose --env-file .env up -d --no-build --remove-orphans \
                 backend frontend nginx ollama postgres redis
 
-              # Trigger ollama-init in a detached nohup process so SSH exits immediately.
-              # It will wait for ollama to become healthy, then pull all 4 models.
-              # Monitor progress: docker logs -f ollama-init
+              # Pull LLM models in the background via docker exec on the running ollama container.
+              # Waits for Ollama API to be ready, then pulls all 4 models non-blocking.
+              # Monitor: cat /tmp/ollama-init.log
               nohup bash -c '
-                COMPOSE_PROJECT_NAME=ai-factory \
-                docker compose --env-file /home/ubuntu/ai-factory/.env \
-                  -f /home/ubuntu/ai-factory/docker-compose.yml \
-                  up ollama-init
+                echo "[ollama-init] Waiting for Ollama API on localhost:11434..."
+                for i in $(seq 1 60); do
+                  if curl -sf http://localhost:11434/api/tags > /dev/null 2>&1; then
+                    echo "[ollama-init] Ollama ready after ${i}x5s"
+                    break
+                  fi
+                  sleep 5
+                done
+                echo "[ollama-init] Pulling models..."
+                docker exec ollama ollama pull llama3.2
+                docker exec ollama ollama pull deepseek-coder-v2
+                docker exec ollama ollama pull qwen2.5
+                docker exec ollama ollama pull mixtral:8x7b
+                echo "[ollama-init] All models pulled successfully"
               ' > /tmp/ollama-init.log 2>&1 &
               disown $!
+              echo "=== Model pull running in background — monitor: cat /tmp/ollama-init.log ==="
 
               echo "=== Cleaning up old images ==="
               docker image prune -f

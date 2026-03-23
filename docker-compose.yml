@@ -87,37 +87,11 @@ services:
     networks:
       - ai-factory
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/11434' 2>/dev/null && exit 0 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 30
       start_period: 20s
-
-  # Pulls the 4 required LLM models into Ollama on first deploy.
-  # Runs once and exits — restarts are skipped if models already exist.
-  # Does NOT block other services — backend/frontend start independently.
-  ollama-init:
-    image: ollama/ollama:latest
-    container_name: ollama-init
-    restart: "no"
-    networks:
-      - ai-factory
-    depends_on:
-      ollama:
-        condition: service_healthy
-    volumes:
-      - ollama_data:/root/.ollama
-    entrypoint: >
-      /bin/sh -c "
-        echo '=== Pulling LLM models into Ollama ===' &&
-        ollama pull llama3.2 &&
-        ollama pull deepseek-coder-v2 &&
-        ollama pull qwen2.5 &&
-        ollama pull mixtral:8x7b &&
-        echo '=== All models ready ==='
-      "
-    environment:
-      - OLLAMA_HOST=http://ollama:11434
 
   postgres:
     image: postgres:15-alpine
