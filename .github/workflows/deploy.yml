@@ -179,9 +179,12 @@ jobs:
           # Run deployment remotely
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} \
-            "BACKEND_IMAGE=${DEPLOY_BACKEND} FRONTEND_IMAGE=${DEPLOY_FRONTEND} NGINX_IMAGE=${DEPLOY_NGINX} bash -s" << 'ENDSSH'
+            "BACKEND_IMAGE=${DEPLOY_BACKEND} FRONTEND_IMAGE=${DEPLOY_FRONTEND} NGINX_IMAGE=${DEPLOY_NGINX} DOCKER_USER=${{ secrets.DOCKERHUB_USERNAME }} DOCKER_PASS=${{ secrets.DOCKERHUB_TOKEN }} bash -s" << 'ENDSSH'
               set -e
               cd /home/ubuntu/ai-factory
+
+              echo "=== Logging in to Docker Hub ==="
+              echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
 
               echo "=== Pulling latest images ==="
               docker pull "${BACKEND_IMAGE}"
