@@ -13,6 +13,9 @@ services:
       - DATABASE_URL=postgresql://aifactory:${POSTGRES_PASSWORD}@postgres:5432/aifactory
       - REDIS_URL=redis://redis:6379
       - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2}
+      - LLM_DEFAULT_MODEL=${LLM_DEFAULT_MODEL:-llama3.2}
+      - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
       - SECRET_KEY=${SECRET_KEY}
       - CORS_ORIGINS=${CORS_ORIGINS:-https://ai-staging.thetalogics.com}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-ai-staging.thetalogics.com}
