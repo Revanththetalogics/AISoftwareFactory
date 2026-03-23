@@ -96,42 +96,45 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Copy nginx.conf to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          password: ${{ secrets.VPS_PASSWORD }}
-          source: "nginx.conf,docker-compose.yml"
-          target: "/home/ubuntu/ai-factory"
+      # ── Write the SSH private key to a temp file ──────────────
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy on VPS
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          password: ${{ secrets.VPS_PASSWORD }}
-          script: |
-            set -e
-            cd /home/ubuntu/ai-factory
+      # ── Copy config files, then deploy ────────────────────────
+      - name: Copy config files & deploy
+        run: |
+          DEPLOY_BACKEND="${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_TAG }}"
+          DEPLOY_FRONTEND="${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_TAG }}"
 
-            echo "=== Pulling latest images ==="
-            docker pull ${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_TAG }}
-            docker pull ${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_TAG }}
+          # Copy config files to VPS
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            nginx.conf docker-compose.yml \
+            ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/home/ubuntu/ai-factory/
 
-            echo "=== Updating nginx config ==="
-            cp nginx.conf /home/ubuntu/nginx.conf
+          # Run deployment remotely, passing image tags as env vars
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} \
+            "BACKEND_IMAGE=${DEPLOY_BACKEND} FRONTEND_IMAGE=${DEPLOY_FRONTEND} bash -s" << 'ENDSSH'
+              set -e
+              cd /home/ubuntu/ai-factory
 
-            echo "=== Restarting services ==="
-            BACKEND_IMAGE=${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_TAG }} \
-            FRONTEND_IMAGE=${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_TAG }} \
-            docker compose up -d --no-build
+              echo "=== Updating nginx config ==="
+              cp nginx.conf /home/ubuntu/nginx.conf
 
-            echo "=== Cleaning up old images ==="
-            docker image prune -f
+              echo "=== Pulling latest images ==="
+              docker pull "${BACKEND_IMAGE}"
+              docker pull "${FRONTEND_IMAGE}"
 
-            echo ""
-            echo "✅ Deployment complete!"
-            echo "   Branch : ${{ github.ref_name }}"
-            echo "   Commit : ${{ github.sha }}"
-            echo "   URL    : https://ai-staging.thetalogics.com"
+              echo "=== Restarting services ==="
+              docker compose up -d --no-build
+
+              echo "=== Cleaning up old images ==="
+              docker image prune -f
+
+              echo ""
+              echo "✅ Deployment complete!"
+          ENDSSH
