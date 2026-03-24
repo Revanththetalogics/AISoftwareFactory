@@ -1,148 +1,308 @@
 'use client';
 
-// Prevent static generation - this page requires authentication
 export const dynamic = 'force-dynamic';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Bot, Clock, Pause, Play, RefreshCw, Zap, Terminal } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Bot,
+  Brain,
+  Users,
+  Activity,
+  Zap,
+  TrendingUp,
+  Clock,
+  Target,
+  MoreHorizontal,
+  Filter,
+  Search,
+  RefreshCw,
+  Plus,
+  Pause,
+  Play,
+  AlertCircle,
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useState, useEffect } from 'react';
-import { AgentCard, AgentGrid } from '@/components/system/agent-card';
-import { containerVariants, slideVariants } from '@/lib/motion-variants';
-import type { AgentRole, AgentStatus } from '@/components/system/agent-card';
+import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AgentCard, AgentGrid, type AgentStatus, type AgentRole } from '@/components/system/agent-card';
+import { MetricPanel, type MetricData } from '@/components/system/metric-panel';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
 
-interface AgentData {
-  id: string;
-  name: string;
-  role: string;
-  description: string;
-  status: 'idle' | 'running' | 'paused';
-  currentTask: string;
-  progress: number;
-  executionTime: string;
-  logs: string[];
-}
-
-const agents: AgentData[] = [
+// Mock agent data
+const agents = [
   {
-    id: '1',
+    agentId: 'agent-001',
     name: 'CEO Agent',
-    role: 'Executive',
-    description: 'Strategic oversight and decision making',
-    status: 'running',
-    currentTask: 'Reviewing project roadmap',
-    progress: 78,
-    executionTime: '2h 15m',
-    logs: ['Analyzing market requirements', 'Setting project priorities', 'Allocating resources'],
-  },
-  {
-    id: '2',
-    name: 'Product Manager',
-    role: 'Product Manager',
-    description: 'Requirements gathering and feature planning',
-    status: 'running',
-    currentTask: 'Writing user stories',
-    progress: 65,
-    executionTime: '1h 45m',
-    logs: ['Interviewing stakeholders', 'Defining user personas', 'Creating product backlog'],
-  },
-  {
-    id: '3',
-    name: 'Backend Engineer',
-    role: 'Backend Developer',
-    description: 'API development and database design',
-    status: 'running',
-    currentTask: 'Building authentication API',
-    progress: 82,
-    executionTime: '3h 20m',
-    logs: ['Designing database schema', 'Implementing JWT auth', 'Writing API tests'],
-  },
-  {
-    id: '4',
-    name: 'Frontend Engineer',
-    role: 'Frontend Developer',
-    description: 'UI/UX implementation and component development',
-    status: 'idle',
-    currentTask: 'Waiting for API specs',
-    progress: 0,
-    executionTime: '0m',
-    logs: ['Reviewing design mockups', 'Setting up component library', 'Configuring Tailwind'],
-  },
-  {
-    id: '5',
-    name: 'UX Designer',
-    role: 'Designer',
-    description: 'User experience and interface design',
-    status: 'running',
-    currentTask: 'Creating wireframes',
-    progress: 45,
-    executionTime: '1h 30m',
-    logs: ['Researching user needs', 'Sketching layouts', 'Defining color palette'],
-  },
-  {
-    id: '6',
-    name: 'DevOps Engineer',
-    role: 'DevOps Engineer',
-    description: 'Infrastructure and deployment automation',
-    status: 'idle',
-    currentTask: 'Monitoring CI/CD pipeline',
+    role: 'orchestrator' as AgentRole,
+    status: 'success' as AgentStatus,
+    currentTask: 'Project oversight and coordination',
     progress: 100,
-    executionTime: '45m',
-    logs: ['Setting up Docker containers', 'Configuring GitHub Actions', 'Deploying to staging'],
+    metrics: {
+      tasksCompleted: 156,
+      avgExecutionTime: '4m 30s',
+      successRate: 98.5,
+      totalTokens: 2450000,
+      activeDuration: '48h 12m',
+    },
+    crew: 'Leadership',
   },
   {
-    id: '7',
+    agentId: 'agent-002',
+    name: 'Product Manager',
+    role: 'orchestrator' as AgentRole,
+    status: 'running' as AgentStatus,
+    currentTask: 'Defining user stories for v2.0',
+    progress: 78,
+    metrics: {
+      tasksCompleted: 89,
+      avgExecutionTime: '6m 15s',
+      successRate: 96.2,
+      totalTokens: 1890000,
+      activeDuration: '36h 45m',
+    },
+    crew: 'Leadership',
+  },
+  {
+    agentId: 'agent-003',
+    name: 'System Architect',
+    role: 'orchestrator' as AgentRole,
+    status: 'success' as AgentStatus,
+    currentTask: 'Reviewing microservices design',
+    progress: 100,
+    metrics: {
+      tasksCompleted: 67,
+      avgExecutionTime: '15m 20s',
+      successRate: 99.1,
+      totalTokens: 3200000,
+      activeDuration: '52h 30m',
+    },
+    crew: 'Architecture',
+  },
+  {
+    agentId: 'agent-004',
+    name: 'Backend Engineer',
+    role: 'executor' as AgentRole,
+    status: 'running' as AgentStatus,
+    currentTask: 'Implementing GraphQL resolvers',
+    progress: 65,
+    metrics: {
+      tasksCompleted: 234,
+      avgExecutionTime: '8m 45s',
+      successRate: 94.8,
+      totalTokens: 4120000,
+      activeDuration: '72h 15m',
+    },
+    crew: 'Engineering',
+  },
+  {
+    agentId: 'agent-005',
+    name: 'Frontend Engineer',
+    role: 'executor' as AgentRole,
+    status: 'running' as AgentStatus,
+    currentTask: 'Building dashboard components',
+    progress: 82,
+    metrics: {
+      tasksCompleted: 198,
+      avgExecutionTime: '7m 30s',
+      successRate: 95.5,
+      totalTokens: 3650000,
+      activeDuration: '68h 20m',
+    },
+    crew: 'Engineering',
+  },
+  {
+    agentId: 'agent-006',
+    name: 'Database Engineer',
+    role: 'executor' as AgentRole,
+    status: 'idle' as AgentStatus,
+    currentTask: undefined,
+    progress: 0,
+    metrics: {
+      tasksCompleted: 145,
+      avgExecutionTime: '10m 15s',
+      successRate: 97.3,
+      totalTokens: 2100000,
+      activeDuration: '45h 30m',
+    },
+    crew: 'Engineering',
+  },
+  {
+    agentId: 'agent-007',
     name: 'QA Engineer',
-    role: 'QA Engineer',
-    description: 'Testing and quality verification',
-    status: 'paused',
-    currentTask: 'Waiting for code completion',
-    progress: 30,
-    executionTime: '1h 10m',
-    logs: ['Writing test cases', 'Setting up test environment', 'Planning test strategy'],
+    role: 'validator' as AgentRole,
+    status: 'queued' as AgentStatus,
+    currentTask: 'Waiting for build completion',
+    progress: 15,
+    metrics: {
+      tasksCompleted: 312,
+      avgExecutionTime: '5m 20s',
+      successRate: 98.9,
+      totalTokens: 1580000,
+      activeDuration: '38h 45m',
+    },
+    crew: 'Quality Assurance',
   },
   {
-    id: '8',
-    name: 'Database Architect',
-    role: 'Database Administrator',
-    description: 'Database design and optimization',
-    status: 'running',
-    currentTask: 'Optimizing query performance',
-    progress: 60,
-    executionTime: '2h 5m',
-    logs: ['Designing entity relationships', 'Creating migration scripts', 'Indexing tables'],
+    agentId: 'agent-008',
+    name: 'Security Auditor',
+    role: 'validator' as AgentRole,
+    status: 'idle' as AgentStatus,
+    currentTask: undefined,
+    progress: 0,
+    metrics: {
+      tasksCompleted: 89,
+      avgExecutionTime: '12m 40s',
+      successRate: 99.5,
+      totalTokens: 980000,
+      activeDuration: '28h 15m',
+    },
+    crew: 'Quality Assurance',
+  },
+  {
+    agentId: 'agent-009',
+    name: 'DevOps Engineer',
+    role: 'deployer' as AgentRole,
+    status: 'running' as AgentStatus,
+    currentTask: 'Configuring Kubernetes cluster',
+    progress: 45,
+    metrics: {
+      tasksCompleted: 178,
+      avgExecutionTime: '14m 30s',
+      successRate: 96.8,
+      totalTokens: 1950000,
+      activeDuration: '42h 30m',
+    },
+    crew: 'Infrastructure',
+  },
+  {
+    agentId: 'agent-010',
+    name: 'UX Designer',
+    role: 'executor' as AgentRole,
+    status: 'error' as AgentStatus,
+    currentTask: 'Design system token generation failed',
+    progress: 30,
+    metrics: {
+      tasksCompleted: 67,
+      avgExecutionTime: '18m 20s',
+      successRate: 88.5,
+      totalTokens: 1250000,
+      activeDuration: '32h 10m',
+    },
+    crew: 'Design',
   },
 ];
 
+// Agent crews
+const crews = [
+  { name: 'Leadership', count: 2, color: '#8b5cf6' },
+  { name: 'Architecture', count: 1, color: '#3b82f6' },
+  { name: 'Engineering', count: 3, color: '#10b981' },
+  { name: 'Quality Assurance', count: 2, color: '#f59e0b' },
+  { name: 'Infrastructure', count: 1, color: '#ef4444' },
+  { name: 'Design', count: 1, color: '#ec4899' },
+];
+
+// Performance data for charts
+const performanceData = [
+  { time: '00:00', tasks: 12, tokens: 45000 },
+  { time: '04:00', tasks: 8, tokens: 32000 },
+  { time: '08:00', tasks: 25, tokens: 98000 },
+  { time: '12:00', tasks: 32, tokens: 125000 },
+  { time: '16:00', tasks: 28, tokens: 110000 },
+  { time: '20:00', tasks: 18, tokens: 72000 },
+  { time: '23:59', tasks: 15, tokens: 58000 },
+];
+
+const successRateData = [
+  { name: 'Orchestrator', rate: 97.8, tasks: 312 },
+  { name: 'Executor', rate: 94.5, tasks: 645 },
+  { name: 'Validator', rate: 98.9, tasks: 401 },
+  { name: 'Deployer', rate: 96.2, tasks: 178 },
+];
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.25, 0, 1] as const },
+  },
+};
+
 export default function AgentsPage() {
-  const [selectedAgent, setSelectedAgent] = useState<AgentData | null>(null);
-  const [agentList, setAgentList] = useState<AgentData[]>(agents);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCrew, setSelectedCrew] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<AgentStatus | null>(null);
 
-  // Simulate real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setAgentList((prev: AgentData[]) =>
-        prev.map((agent: AgentData) => {
-          if (agent.status === 'running' && agent.progress < 100) {
-            return {
-              ...agent,
-              progress: Math.min(agent.progress + Math.random() * 2, 100),
-            };
-          }
-          return agent;
-        })
-      );
-    }, 3000);
+  const filteredAgents = agents.filter((agent) => {
+    const matchesSearch =
+      agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      agent.agentId.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCrew = !selectedCrew || agent.crew === selectedCrew;
+    const matchesStatus = !selectedStatus || agent.status === selectedStatus;
+    return matchesSearch && matchesCrew && matchesStatus;
+  });
 
-    return () => clearInterval(interval);
-  }, []);
+  const statusCounts = agents.reduce((acc, agent) => {
+    acc[agent.status] = (acc[agent.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
-  const runningCount = agentList.filter((a: AgentData) => a.status === 'running').length;
-  const idleCount = agentList.filter((a: AgentData) => a.status === 'idle').length;
-  const pausedCount = agentList.filter((a: AgentData) => a.status === 'paused').length;
+  const metrics: MetricData[] = [
+    {
+      id: 'total-agents',
+      label: 'Total Agents',
+      value: agents.length,
+      icon: Bot,
+      delta: { value: 12.5, direction: 'up' },
+    },
+    {
+      id: 'active-agents',
+      label: 'Active Now',
+      value: statusCounts.running || 0,
+      icon: Activity,
+      delta: { value: 25, direction: 'up' },
+    },
+    {
+      id: 'tasks-completed',
+      label: 'Tasks Completed',
+      value: agents.reduce((sum, a) => sum + a.metrics.tasksCompleted, 0),
+      icon: Target,
+      delta: { value: 18.2, direction: 'up' },
+    },
+    {
+      id: 'avg-success',
+      label: 'Avg Success Rate',
+      value: `${(agents.reduce((sum, a) => sum + a.metrics.successRate, 0) / agents.length).toFixed(1)}%`,
+      icon: TrendingUp,
+      delta: { value: 2.1, direction: 'up' },
+    },
+  ];
 
   return (
     <motion.div
@@ -152,200 +312,197 @@ export default function AgentsPage() {
       className="space-y-6"
     >
       {/* Header */}
-      <motion.div variants={slideVariants} initial="hidden" animate="visible" className="flex items-center justify-between">
+      <motion.div variants={itemVariants} className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary">AI Agents</h1>
+          <h1 className="text-3xl font-bold text-text-primary">AI Agent Crews</h1>
           <p className="mt-1 text-text-secondary">
-            Monitor and manage your AI engineering team
+            Manage and monitor your AI engineering workforce
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" className="border-border-default text-text-secondary hover:bg-bg-hover">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="border-border-default text-text-secondary">
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
-          <Button className="bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700">
-            <Zap className="mr-2 h-4 w-4" />
-            Start All
+          <Button variant="ai-action" size="sm">
+            <Plus className="mr-2 h-4 w-4" />
+            Add Agent
           </Button>
         </div>
       </motion.div>
 
-      {/* Stats */}
-      <motion.div variants={slideVariants} initial="hidden" animate="visible" className="grid gap-4 md:grid-cols-4">
-        <Card className="border-border-default bg-bg-panel">
-          <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-state-running-dim p-3">
-              <Bot className="h-5 w-5 text-state-running" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-text-primary">{agentList.length}</p>
-              <p className="text-xs text-text-tertiary">Total Agents</p>
+      {/* Metrics */}
+      <motion.div variants={itemVariants}>
+        <MetricPanel metrics={metrics} variant="compact" />
+      </motion.div>
+
+      {/* Charts Row */}
+      <motion.div variants={itemVariants} className="grid gap-6 lg:grid-cols-3">
+        {/* Performance Chart */}
+        <Card className="lg:col-span-2 border-border-default bg-bg-panel">
+          <CardHeader>
+            <CardTitle className="text-lg text-text-primary">Agent Activity (24h)</CardTitle>
+            <CardDescription className="text-text-secondary">
+              Tasks completed and token consumption over time
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[250px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={performanceData}>
+                  <defs>
+                    <linearGradient id="colorTasks" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--state-running)" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="var(--state-running)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                  <XAxis dataKey="time" stroke="var(--text-tertiary)" fontSize={12} />
+                  <YAxis stroke="var(--text-tertiary)" fontSize={12} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'var(--bg-elevated)',
+                      border: '1px solid var(--border-default)',
+                      borderRadius: '8px',
+                    }}
+                    labelStyle={{ color: 'var(--text-primary)' }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="tasks"
+                    stroke="var(--state-running)"
+                    strokeWidth={2}
+                    fill="url(#colorTasks)"
+                    name="Tasks"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
+
+        {/* Success Rate by Role */}
         <Card className="border-border-default bg-bg-panel">
-          <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-state-success-dim p-3">
-              <Play className="h-5 w-5 text-state-success" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-state-success">{runningCount}</p>
-              <p className="text-xs text-text-tertiary">Running</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border-default bg-bg-panel">
-          <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-state-idle-dim p-3">
-              <Clock className="h-5 w-5 text-state-idle" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-state-idle">{idleCount}</p>
-              <p className="text-xs text-text-tertiary">Idle</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border-default bg-bg-panel">
-          <CardContent className="flex items-center gap-4 pt-6">
-            <div className="rounded-lg bg-state-warning-dim p-3">
-              <Pause className="h-5 w-5 text-state-warning" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-state-warning">{pausedCount}</p>
-              <p className="text-xs text-text-tertiary">Paused</p>
+          <CardHeader>
+            <CardTitle className="text-lg text-text-primary">Success by Role</CardTitle>
+            <CardDescription className="text-text-secondary">
+              Performance across agent types
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[250px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={successRateData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" horizontal={false} />
+                  <XAxis type="number" domain={[85, 100]} stroke="var(--text-tertiary)" fontSize={12} />
+                  <YAxis dataKey="name" type="category" stroke="var(--text-tertiary)" fontSize={11} width={80} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'var(--bg-elevated)',
+                      border: '1px solid var(--border-default)',
+                      borderRadius: '8px',
+                    }}
+                  />
+                  <Bar dataKey="rate" fill="var(--state-success)" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
       </motion.div>
 
-      {/* Agents Grid - Using new AgentCard component */}
-      <motion.div variants={slideVariants} initial="hidden" animate="visible">
-        <AgentGrid columns={4}>
-          {agentList.map((agent: AgentData) => (
-            <AgentCard
-              key={agent.id}
-              agentId={agent.id}
-              name={agent.name}
-              role={agent.role as unknown as AgentRole}
-              status={agent.status as unknown as AgentStatus}
-              currentTask={agent.currentTask}
-              progress={agent.progress}
-              metrics={{
-                avgExecutionTime: agent.executionTime,
-                tasksCompleted: agent.logs.length,
-                successRate: 95,
-              }}
-              onClick={() => setSelectedAgent(agent)}
-              compact
-            />
-          ))}
-        </AgentGrid>
+      {/* Crews Overview */}
+      <motion.div variants={itemVariants}>
+        <Card className="border-border-default bg-bg-panel">
+          <CardHeader>
+            <CardTitle className="text-lg text-text-primary">Agent Crews</CardTitle>
+            <CardDescription className="text-text-secondary">
+              Teams organized by function and expertise
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {crews.map((crew) => (
+                <button
+                  key={crew.name}
+                  onClick={() => setSelectedCrew(selectedCrew === crew.name ? null : crew.name)}
+                  className={`p-4 rounded-xl border transition-all text-left ${
+                    selectedCrew === crew.name
+                      ? 'border-state-running bg-state-running-dim'
+                      : 'border-border-default bg-bg-elevated hover:border-emphasis'
+                  }`}
+                >
+                  <div
+                    className="w-3 h-3 rounded-full mb-2"
+                    style={{ backgroundColor: crew.color }}
+                  />
+                  <p className="text-sm font-medium text-text-primary">{crew.name}</p>
+                  <p className="text-xs text-text-secondary">{crew.count} agents</p>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
 
-      {/* Agent Detail Panel */}
-      {selectedAgent && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="grid gap-6 lg:grid-cols-3"
-        >
-          <Card className="lg:col-span-2 border-border-default bg-bg-panel">
-            <CardHeader>
-              <div className="flex items-center gap-4">
-                <div className="rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 p-3">
-                  <Bot className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl text-text-primary">{selectedAgent.name}</CardTitle>
-                  <p className="text-sm text-text-secondary">{selectedAgent.role}</p>
-                </div>
+      {/* Agents Grid */}
+      <motion.div variants={itemVariants}>
+        <Card className="border-border-default bg-bg-panel">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-lg text-text-primary">All Agents</CardTitle>
+              <CardDescription className="text-text-secondary">
+                {filteredAgents.length} agents matching filters
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
+                <Input
+                  placeholder="Search agents..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-64 border-border-default bg-bg-input pl-10 text-text-primary"
+                />
               </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="rounded-lg border border-border-default bg-bg-elevated p-4">
-                  <p className="text-xs text-text-tertiary">Status</p>
-                  <Badge variant="outline" className={`mt-1 ${
-                    selectedAgent.status === 'running' ? 'bg-state-success-dim text-state-success border-state-success' :
-                    selectedAgent.status === 'idle' ? 'bg-state-idle-dim text-state-idle border-state-idle' :
-                    'bg-state-warning-dim text-state-warning border-state-warning'
-                  }`}>
-                    {selectedAgent.status.charAt(0).toUpperCase() + selectedAgent.status.slice(1)}
-                  </Badge>
-                </div>
-                <div className="rounded-lg border border-border-default bg-bg-elevated p-4">
-                  <p className="text-xs text-text-tertiary">Progress</p>
-                  <p className="mt-1 font-medium text-text-primary">{Math.round(selectedAgent.progress)}%</p>
-                </div>
-                <div className="rounded-lg border border-border-default bg-bg-elevated p-4">
-                  <p className="text-xs text-text-tertiary">Execution Time</p>
-                  <p className="mt-1 font-medium text-text-primary">{selectedAgent.executionTime}</p>
-                </div>
+              {/* Status Filter */}
+              <div className="flex items-center gap-1">
+                {(['running', 'success', 'idle', 'error', 'queued'] as AgentStatus[]).map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => setSelectedStatus(selectedStatus === status ? null : status)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      selectedStatus === status
+                        ? 'bg-state-running-dim text-state-running'
+                        : 'bg-bg-elevated text-text-secondary hover:bg-bg-hover'
+                    }`}
+                  >
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                    <span className="ml-1.5 opacity-60">{statusCounts[status] || 0}</span>
+                  </button>
+                ))}
               </div>
-
-              {selectedAgent.status === 'running' && (
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm text-text-tertiary">Current Task Progress</span>
-                    <span className="text-sm font-medium text-text-primary">
-                      {Math.round(selectedAgent.progress)}%
-                    </span>
-                  </div>
-                  <div className="h-3 w-full rounded-full bg-bg-base overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-violet-500 to-indigo-600 transition-all duration-300"
-                      style={{ width: `${selectedAgent.progress}%` }}
-                    />
-                  </div>
-                  <p className="mt-2 text-sm text-text-secondary">{selectedAgent.currentTask}</p>
-                </div>
-              )}
-
-              <div className="flex gap-3">
-                {selectedAgent.status === 'running' ? (
-                  <Button variant="outline" className="flex-1 border-border-default text-text-secondary hover:bg-bg-hover">
-                    <Pause className="mr-2 h-4 w-4" />
-                    Pause Agent
-                  </Button>
-                ) : (
-                  <Button className="flex-1 bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700">
-                    <Play className="mr-2 h-4 w-4" />
-                    Resume Agent
-                  </Button>
-                )}
-                <Button variant="outline" className="border-border-default text-text-secondary hover:bg-bg-hover">
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Restart
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border-default bg-bg-panel">
-            <CardHeader>
-              <CardTitle className="text-lg text-text-primary">Activity Log</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[300px]">
-                <div className="space-y-3">
-                  {selectedAgent.logs.map((log, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="mt-1 rounded-full bg-state-running-dim p-1">
-                        <Terminal className="h-3 w-3 text-state-running" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-text-primary">{log}</p>
-                        <p className="text-xs text-text-tertiary">{index * 5 + 2} min ago</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <AgentGrid columns={3}>
+              {filteredAgents.map((agent) => (
+                <AgentCard
+                  key={agent.agentId}
+                  agentId={agent.agentId}
+                  name={agent.name}
+                  role={agent.role}
+                  status={agent.status}
+                  currentTask={agent.currentTask}
+                  progress={agent.progress}
+                  metrics={agent.metrics}
+                />
+              ))}
+            </AgentGrid>
+          </CardContent>
+        </Card>
+      </motion.div>
     </motion.div>
   );
 }

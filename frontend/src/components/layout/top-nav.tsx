@@ -1,13 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Wifi, WifiOff } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { ThemeToggle, UserProfile } from './user-profile';
 import { NotificationCenter } from './notification-center';
+import { useRealtime } from './realtime-provider';
 
 export function TopNav() {
   const [searchQuery, setSearchQuery] = useState('');
+  const { isConnected, isConnecting } = useRealtime();
 
   return (
     <header 
@@ -45,6 +48,34 @@ export function TopNav() {
 
         {/* Right Side */}
         <div className="flex items-center gap-3">
+          {/* Connection Status */}
+          <Badge 
+            variant="outline" 
+            className={`hidden sm:inline-flex ${
+              isConnected 
+                ? 'bg-state-success-dim text-state-success border-state-success/30' 
+                : isConnecting 
+                ? 'bg-state-warning-dim text-state-warning border-state-warning/30'
+                : 'bg-state-error-dim text-state-error border-state-error/30'
+            }`}
+          >
+            {isConnected ? (
+              <>
+                <Wifi className="mr-1.5 h-3 w-3" />
+                Live
+              </>
+            ) : isConnecting ? (
+              <>
+                <WifiOff className="mr-1.5 h-3 w-3 animate-pulse" />
+                Connecting...
+              </>
+            ) : (
+              <>
+                <WifiOff className="mr-1.5 h-3 w-3" />
+                Offline
+              </>
+            )}
+          </Badge>
           <ThemeToggle />
           <NotificationCenter />
           <UserProfile />

@@ -1,0 +1,2 @@
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-03-23T03:07:59.770796"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-03-23T03:07:59.773858"}

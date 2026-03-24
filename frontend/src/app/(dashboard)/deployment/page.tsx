@@ -2,40 +2,141 @@
 
 export const dynamic = 'force-dynamic';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Rocket,
+  Globe,
   Server,
   CheckCircle2,
   AlertCircle,
   Clock,
-  Globe,
+  GitCommit,
+  GitBranch,
+  Activity,
+  Cpu,
+  HardDrive,
+  Network,
+  TrendingUp,
+  TrendingDown,
+  MoreHorizontal,
+  RefreshCw,
+  Play,
+  Pause,
+  RotateCcw,
   Terminal,
-  ExternalLink,
-  Copy,
-  Check,
+  ChevronRight,
+  Shield,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DeploymentStatusCard, type DeploymentEnvironment, type DeploymentStatus } from '@/components/system/deployment-status-card';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { useState } from 'react';
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+} from 'recharts';
+
+// Mock deployment data
+const deployments = [
+  {
+    id: 'dep-001',
+    environment: 'production' as DeploymentEnvironment,
+    status: 'running' as DeploymentStatus,
+    version: '2.4.1',
+    commitHash: 'a1b2c3d',
+    deployedAt: new Date('2024-01-18T14:30:00'),
+    buildDuration: '12m 34s',
+    healthChecks: [
+      { name: 'API', status: 'passing' as const, lastCheck: new Date(), responseTime: 45 },
+      { name: 'Database', status: 'passing' as const, lastCheck: new Date(), responseTime: 12 },
+      { name: 'Cache', status: 'passing' as const, lastCheck: new Date(), responseTime: 8 },
+      { name: 'Queue', status: 'passing' as const, lastCheck: new Date(), responseTime: 23 },
+    ],
+    metrics: {
+      cpu: 42.5,
+      memory: 68.2,
+      requests: 1250,
+      latency: 45,
+      errorRate: 0.02,
+    },
+  },
+  {
+    id: 'dep-002',
+    environment: 'staging' as DeploymentEnvironment,
+    status: 'running' as DeploymentStatus,
+    version: '2.5.0-beta',
+    commitHash: 'e4f5g6h',
+    deployedAt: new Date('2024-01-18T10:15:00'),
+    buildDuration: '10m 12s',
+    healthChecks: [
+      { name: 'API', status: 'passing' as const, lastCheck: new Date(), responseTime: 52 },
+      { name: 'Database', status: 'passing' as const, lastCheck: new Date(), responseTime: 15 },
+      { name: 'Cache', status: 'passing' as const, lastCheck: new Date(), responseTime: 10 },
+    ],
+    metrics: {
+      cpu: 35.8,
+      memory: 54.3,
+      requests: 320,
+      latency: 52,
+      errorRate: 0.05,
+    },
+  },
+  {
+    id: 'dep-003',
+    environment: 'development' as DeploymentEnvironment,
+    status: 'building' as DeploymentStatus,
+    version: '2.5.0-dev',
+    commitHash: 'i7j8k9l',
+    buildDuration: 'In progress',
+    healthChecks: [],
+  },
+];
+
+// Mock deployment history
+const deploymentHistory = [
+  { version: 'v2.4.1', env: 'production', status: 'success', date: '2024-01-18', duration: '12m' },
+  { version: 'v2.4.0', env: 'production', status: 'success', date: '2024-01-15', duration: '11m' },
+  { version: 'v2.3.2', env: 'production', status: 'rollback', date: '2024-01-12', duration: '8m' },
+  { version: 'v2.3.1', env: 'production', status: 'failed', date: '2024-01-10', duration: '15m' },
+  { version: 'v2.3.0', env: 'production', status: 'success', date: '2024-01-08', duration: '10m' },
+];
+
+// Metrics data
+const trafficData = [
+  { time: '00:00', requests: 800, errors: 2 },
+  { time: '04:00', requests: 450, errors: 1 },
+  { time: '08:00', requests: 1200, errors: 3 },
+  { time: '12:00', requests: 2100, errors: 5 },
+  { time: '16:00', requests: 1850, errors: 4 },
+  { time: '20:00', requests: 1400, errors: 3 },
+  { time: '23:59', requests: 950, errors: 2 },
+];
+
+const resourceData = [
+  { time: '00:00', cpu: 35, memory: 62 },
+  { time: '04:00', cpu: 28, memory: 58 },
+  { time: '08:00', cpu: 55, memory: 70 },
+  { time: '12:00', cpu: 72, memory: 78 },
+  { time: '16:00', cpu: 68, memory: 75 },
+  { time: '20:00', cpu: 48, memory: 68 },
+  { time: '23:59', cpu: 38, memory: 64 },
+];
 
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
+    transition: { staggerChildren: 0.1 },
   },
 };
 
@@ -44,163 +145,27 @@ const itemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: {
-      duration: 0.4,
-      ease: [0.25, 0.25, 0, 1] as const,
-    },
+    transition: { duration: 0.4, ease: [0.25, 0.25, 0, 1] as const },
   },
 };
-
-interface Environment {
-  id: string;
-  name: string;
-  type: 'development' | 'staging' | 'production';
-  status: 'running' | 'stopped' | 'deploying' | 'error';
-  url: string;
-  version: string;
-  lastDeployed: string;
-  health: 'healthy' | 'degraded' | 'unhealthy';
-  metrics: {
-    cpu: number;
-    memory: number;
-    requests: number;
-    errors: number;
-  };
-  features: string[];
-}
-
-const environments: Environment[] = [
-  {
-    id: '1',
-    name: 'Development',
-    type: 'development',
-    status: 'running',
-    url: 'https://dev.myapp.theta.ai',
-    version: 'v1.4.2-dev',
-    lastDeployed: '2 hours ago',
-    health: 'healthy',
-    metrics: {
-      cpu: 23,
-      memory: 45,
-      requests: 120,
-      errors: 0,
-    },
-    features: ['Auto-deploy on push', 'Hot reload', 'Debug mode'],
-  },
-  {
-    id: '2',
-    name: 'Staging',
-    type: 'staging',
-    status: 'running',
-    url: 'https://staging.myapp.theta.ai',
-    version: 'v1.4.1',
-    lastDeployed: '1 day ago',
-    health: 'healthy',
-    metrics: {
-      cpu: 34,
-      memory: 52,
-      requests: 450,
-      errors: 2,
-    },
-    features: ['Production-like', 'Integration tests', 'QA access'],
-  },
-  {
-    id: '3',
-    name: 'Production',
-    type: 'production',
-    status: 'running',
-    url: 'https://myapp.theta.ai',
-    version: 'v1.4.0',
-    lastDeployed: '3 days ago',
-    health: 'healthy',
-    metrics: {
-      cpu: 56,
-      memory: 68,
-      requests: 12500,
-      errors: 12,
-    },
-    features: ['SSL enabled', 'CDN enabled', 'Auto-scaling'],
-  },
-];
-
-const deploymentHistory = [
-  {
-    id: '1',
-    version: 'v1.4.2-dev',
-    environment: 'Development',
-    status: 'success',
-    timestamp: '2 hours ago',
-    duration: '3m 45s',
-    triggeredBy: 'AI Agent',
-  },
-  {
-    id: '2',
-    version: 'v1.4.1',
-    environment: 'Staging',
-    status: 'success',
-    timestamp: '1 day ago',
-    duration: '5m 20s',
-    triggeredBy: 'AI Agent',
-  },
-  {
-    id: '3',
-    version: 'v1.4.0',
-    environment: 'Production',
-    status: 'success',
-    timestamp: '3 days ago',
-    duration: '4m 15s',
-    triggeredBy: 'Manual',
-  },
-  {
-    id: '4',
-    version: 'v1.3.9',
-    environment: 'Production',
-    status: 'failed',
-    timestamp: '5 days ago',
-    duration: '2m 30s',
-    triggeredBy: 'AI Agent',
-  },
-];
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'running':
     case 'success':
-      return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-    case 'stopped':
-      return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
-    case 'deploying':
-      return 'bg-violet-500/10 text-violet-400 border-violet-500/20';
-    case 'error':
+      return 'text-state-success';
     case 'failed':
-      return 'bg-red-500/10 text-red-400 border-red-500/20';
+      return 'text-state-error';
+    case 'rollback':
+      return 'text-state-warning';
     default:
-      return 'bg-slate-500/10 text-slate-400';
-  }
-};
-
-const getHealthIcon = (health: string) => {
-  switch (health) {
-    case 'healthy':
-      return <CheckCircle2 className="h-4 w-4 text-emerald-400" />;
-    case 'degraded':
-      return <AlertCircle className="h-4 w-4 text-amber-400" />;
-    case 'unhealthy':
-      return <AlertCircle className="h-4 w-4 text-red-400" />;
-    default:
-      return <CheckCircle2 className="h-4 w-4 text-emerald-400" />;
+      return 'text-text-secondary';
   }
 };
 
 export default function DeploymentPage() {
-  const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
-  const [showDeployDialog, setShowDeployDialog] = useState(false);
+  const [selectedEnv, setSelectedEnv] = useState<DeploymentEnvironment>('production');
 
-  const handleCopyUrl = (url: string) => {
-    navigator.clipboard.writeText(url);
-    setCopiedUrl(url);
-    setTimeout(() => setCopiedUrl(null), 2000);
-  };
+  const activeDeployment = deployments.find((d) => d.environment === selectedEnv);
 
   return (
     <motion.div
@@ -214,203 +179,378 @@ export default function DeploymentPage() {
         <div>
           <h1 className="text-3xl font-bold text-text-primary">Deployment</h1>
           <p className="mt-1 text-text-secondary">
-            Manage your application environments and deployments
+            Manage deployments across environments
           </p>
         </div>
-        <Dialog open={showDeployDialog} onOpenChange={setShowDeployDialog}>
-          <DialogTrigger>
-            <Button className="bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700">
-              <Rocket className="mr-2 h-4 w-4" />
-              Deploy to Production
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="border-border-default bg-bg-base">
-            <DialogHeader>
-              <DialogTitle className="text-xl text-text-primary">Deploy to Production</DialogTitle>
-              <DialogDescription className="text-text-secondary">
-                This will deploy the current staging version to production. Please confirm.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 pt-4">
-              <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="h-5 w-5 text-amber-400" />
-                  <div>
-                    <p className="font-medium text-amber-400">Warning</p>
-                    <p className="text-sm text-amber-300/80">
-                      This action will make your changes live. Ensure all tests have passed.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  className="flex-1 border-border-default text-text-secondary hover:bg-bg-hover"
-                  onClick={() => setShowDeployDialog(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="flex-1 bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700"
-                  onClick={() => setShowDeployDialog(false)}
-                >
-                  <Rocket className="mr-2 h-4 w-4" />
-                  Confirm Deploy
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="border-border-default text-text-secondary">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh
+          </Button>
+          <Button variant="ai-action">
+            <Rocket className="mr-2 h-4 w-4" />
+            Deploy
+          </Button>
+        </div>
       </motion.div>
 
-      {/* Environments */}
-      <motion.div variants={itemVariants} className="grid gap-6 lg:grid-cols-3">
-        {environments.map((env) => (
-          <Card
-            key={env.id}
-            className="border-border-default bg-bg-panel/50 backdrop-blur-sm"
+      {/* Environment Cards */}
+      <motion.div variants={itemVariants} className="grid gap-4 md:grid-cols-3">
+        {deployments.map((deployment) => (
+          <button
+            key={deployment.id}
+            onClick={() => setSelectedEnv(deployment.environment)}
+            className={`text-left p-4 rounded-xl border transition-all ${
+              selectedEnv === deployment.environment
+                ? 'border-state-running bg-state-running-dim'
+                : 'border-border-default bg-bg-panel hover:border-emphasis'
+            }`}
           >
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`rounded-lg p-2.5 ${
-                      env.type === 'production'
-                        ? 'bg-gradient-to-br from-violet-500 to-indigo-600'
-                        : env.type === 'staging'
-                        ? 'bg-gradient-to-br from-blue-500 to-cyan-600'
-                        : 'bg-gradient-to-br from-slate-500 to-slate-600'
-                    }`}
-                  >
-                    <Server className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg text-text-primary">{env.name}</CardTitle>
-                    <p className="text-xs text-text-tertiary">{env.version}</p>
-                  </div>
-                </div>
-                <Badge variant="outline" className={getStatusColor(env.status)}>
-                  {env.status.charAt(0).toUpperCase() + env.status.slice(1)}
-                </Badge>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                {deployment.environment === 'production' && <Globe className="h-5 w-5 text-state-error" />}
+                {deployment.environment === 'staging' && <Server className="h-5 w-5 text-state-warning" />}
+                {deployment.environment === 'development' && <Terminal className="h-5 w-5 text-state-running" />}
+                <span className="font-semibold text-text-primary capitalize">{deployment.environment}</span>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between rounded-lg border border-border-default bg-bg-elevated/30 p-3">
-                <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-text-tertiary" />
-                  <span className="text-sm text-text-secondary">{env.url}</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-text-secondary hover:text-text-primary"
-                  onClick={() => handleCopyUrl(env.url)}
-                >
-                  {copiedUrl === env.url ? (
-                    <Check className="h-4 w-4 text-state-success" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg border border-border-default bg-bg-elevated/30 p-3">
-                  <p className="text-xs text-text-tertiary">CPU Usage</p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <Progress value={env.metrics.cpu} className="h-1.5 flex-1 bg-bg-base" />
-                    <span className="text-sm font-medium text-text-primary">{env.metrics.cpu}%</span>
-                  </div>
-                </div>
-                <div className="rounded-lg border border-border-default bg-bg-elevated/30 p-3">
-                  <p className="text-xs text-text-tertiary">Memory</p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <Progress value={env.metrics.memory} className="h-1.5 flex-1 bg-bg-base" />
-                    <span className="text-sm font-medium text-text-primary">{env.metrics.memory}%</span>
-                  </div>
-                </div>
-              </div>
-
+              <Badge
+                variant="outline"
+                className={
+                  deployment.status === 'running'
+                    ? 'bg-state-success-dim text-state-success'
+                    : deployment.status === 'building'
+                    ? 'bg-state-running-dim text-state-running'
+                    : 'bg-state-error-dim text-state-error'
+                }
+              >
+                {deployment.status === 'running' && <span className="w-1.5 h-1.5 rounded-full bg-state-success animate-pulse mr-1" />}
+                {deployment.status}
+              </Badge>
+            </div>
+            <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2 text-text-secondary">
-                  <Clock className="h-4 w-4" />
-                  <span>Deployed {env.lastDeployed}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  {getHealthIcon(env.health)}
-                  <span className="capitalize text-text-primary">{env.health}</span>
-                </div>
+                <span className="text-text-secondary">Version</span>
+                <span className="font-mono text-text-primary">{deployment.version}</span>
               </div>
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 border-border-default text-text-secondary hover:bg-bg-hover"
-                >
-                  <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
-                  Open
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 border-border-default text-text-secondary hover:bg-bg-hover"
-                >
-                  <Terminal className="mr-1.5 h-3.5 w-3.5" />
-                  Logs
-                </Button>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-text-secondary">Commit</span>
+                <span className="font-mono text-text-code">{deployment.commitHash}</span>
               </div>
-            </CardContent>
-          </Card>
+              {deployment.deployedAt && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-text-secondary">Deployed</span>
+                  <span className="text-text-primary">
+                    {deployment.deployedAt.toLocaleDateString()}
+                  </span>
+                </div>
+              )}
+            </div>
+          </button>
         ))}
       </motion.div>
 
-      {/* Deployment History */}
-      <motion.div variants={itemVariants}>
-        <Card className="border-border-default bg-bg-panel/50">
-          <CardHeader>
-            <CardTitle className="text-lg text-text-primary">Deployment History</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {deploymentHistory.map((deployment) => (
-                <div
-                  key={deployment.id}
-                  className="flex items-center justify-between rounded-lg border border-border-default bg-bg-elevated/30 p-4"
-                >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`rounded-lg p-2 ${
-                        deployment.status === 'success'
-                          ? 'bg-state-success-dim'
-                          : 'bg-state-error-dim'
-                      }`}
-                    >
-                      {deployment.status === 'success' ? (
-                        <CheckCircle2 className="h-5 w-5 text-state-success" />
-                      ) : (
-                        <AlertCircle className="h-5 w-5 text-state-error" />
-                      )}
+      {/* Selected Environment Details */}
+      {activeDeployment && (
+        <motion.div variants={itemVariants} className="grid gap-6 lg:grid-cols-3">
+          {/* Main Status Card */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="border-border-default bg-bg-panel">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg text-text-primary capitalize">
+                    {activeDeployment.environment} Environment
+                  </CardTitle>
+                  <CardDescription className="text-text-secondary">
+                    Current deployment status and metrics
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="border-border-default">
+                    <Pause className="mr-2 h-4 w-4" />
+                    Pause
+                  </Button>
+                  <Button variant="outline" size="sm" className="border-border-default">
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Rollback
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Version Info */}
+                <div className="flex items-center gap-6 p-4 rounded-lg bg-bg-elevated border border-border-subtle">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-state-running-dim">
+                      <GitCommit className="h-5 w-5 text-state-running" />
                     </div>
                     <div>
-                      <p className="font-medium text-text-primary">
-                        {deployment.version} → {deployment.environment}
-                      </p>
-                      <p className="text-sm text-text-tertiary">
-                        {deployment.timestamp} • {deployment.duration} • {deployment.triggeredBy}
-                      </p>
+                      <p className="text-xs text-text-secondary">Version</p>
+                      <p className="font-mono font-medium text-text-primary">{activeDeployment.version}</p>
                     </div>
                   </div>
-                  <Badge variant="outline" className={getStatusColor(deployment.status)}>
-                    {deployment.status.charAt(0).toUpperCase() + deployment.status.slice(1)}
-                  </Badge>
+                  <div className="h-8 w-px bg-border-subtle" />
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-state-running-dim">
+                      <GitBranch className="h-5 w-5 text-state-running" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-text-secondary">Commit</p>
+                      <p className="font-mono font-medium text-text-code">{activeDeployment.commitHash}</p>
+                    </div>
+                  </div>
+                  <div className="h-8 w-px bg-border-subtle" />
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-state-running-dim">
+                      <Clock className="h-5 w-5 text-state-running" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-text-secondary">Build Time</p>
+                      <p className="font-mono font-medium text-text-primary">{activeDeployment.buildDuration}</p>
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+
+                {/* Health Checks */}
+                {activeDeployment.healthChecks.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-text-secondary mb-3">Health Checks</h4>
+                    <div className="grid grid-cols-4 gap-3">
+                      {activeDeployment.healthChecks.map((check) => (
+                        <div
+                          key={check.name}
+                          className="p-3 rounded-lg border border-border-subtle bg-bg-elevated"
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <div
+                              className={`w-2 h-2 rounded-full ${
+                                check.status === 'passing' ? 'bg-state-success' : 'bg-state-error'
+                              }`}
+                            />
+                            <span className="text-sm font-medium text-text-primary">{check.name}</span>
+                          </div>
+                          <p className="text-xs text-text-secondary">
+                            {check.responseTime}ms response
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Metrics */}
+                {activeDeployment.metrics && (
+                  <div>
+                    <h4 className="text-sm font-medium text-text-secondary mb-3">Resource Metrics</h4>
+                    <div className="grid grid-cols-4 gap-4">
+                      <div className="p-4 rounded-lg border border-border-subtle bg-bg-elevated">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Cpu className="h-4 w-4 text-text-secondary" />
+                          <span className="text-xs text-text-secondary">CPU</span>
+                        </div>
+                        <p className={`text-xl font-bold font-mono ${
+                          activeDeployment.metrics.cpu > 80 ? 'text-state-error' : 
+                          activeDeployment.metrics.cpu > 60 ? 'text-state-warning' : 'text-state-success'
+                        }`}>
+                          {activeDeployment.metrics.cpu}%
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg border border-border-subtle bg-bg-elevated">
+                        <div className="flex items-center gap-2 mb-2">
+                          <HardDrive className="h-4 w-4 text-text-secondary" />
+                          <span className="text-xs text-text-secondary">Memory</span>
+                        </div>
+                        <p className={`text-xl font-bold font-mono ${
+                          activeDeployment.metrics.memory > 80 ? 'text-state-error' : 
+                          activeDeployment.metrics.memory > 60 ? 'text-state-warning' : 'text-state-success'
+                        }`}>
+                          {activeDeployment.metrics.memory}%
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg border border-border-subtle bg-bg-elevated">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Network className="h-4 w-4 text-text-secondary" />
+                          <span className="text-xs text-text-secondary">Requests</span>
+                        </div>
+                        <p className="text-xl font-bold font-mono text-text-primary">
+                          {activeDeployment.metrics.requests}/s
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg border border-border-subtle bg-bg-elevated">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Activity className="h-4 w-4 text-text-secondary" />
+                          <span className="text-xs text-text-secondary">Latency</span>
+                        </div>
+                        <p className={`text-xl font-bold font-mono ${
+                          activeDeployment.metrics.latency > 200 ? 'text-state-error' : 
+                          activeDeployment.metrics.latency > 100 ? 'text-state-warning' : 'text-state-success'
+                        }`}>
+                          {activeDeployment.metrics.latency}ms
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Traffic Chart */}
+            <Card className="border-border-default bg-bg-panel">
+              <CardHeader>
+                <CardTitle className="text-lg text-text-primary">Traffic Overview</CardTitle>
+                <CardDescription className="text-text-secondary">
+                  Request volume and error rate (24h)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[250px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={trafficData}>
+                      <defs>
+                        <linearGradient id="colorRequests" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="var(--state-running)" stopOpacity={0.3} />
+                          <stop offset="100%" stopColor="var(--state-running)" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                      <XAxis dataKey="time" stroke="var(--text-tertiary)" fontSize={12} />
+                      <YAxis stroke="var(--text-tertiary)" fontSize={12} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'var(--bg-elevated)',
+                          border: '1px solid var(--border-default)',
+                          borderRadius: '8px',
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="requests"
+                        stroke="var(--state-running)"
+                        strokeWidth={2}
+                        fill="url(#colorRequests)"
+                        name="Requests"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="errors"
+                        stroke="var(--state-error)"
+                        strokeWidth={2}
+                        fill="transparent"
+                        name="Errors"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Quick Actions */}
+            <Card className="border-border-default bg-bg-panel">
+              <CardHeader>
+                <CardTitle className="text-lg text-text-primary">Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button variant="outline" className="w-full justify-start border-border-default text-text-secondary">
+                  <Shield className="mr-2 h-4 w-4" />
+                  View Logs
+                  <ChevronRight className="ml-auto h-4 w-4" />
+                </Button>
+                <Button variant="outline" className="w-full justify-start border-border-default text-text-secondary">
+                  <Activity className="mr-2 h-4 w-4" />
+                  Monitoring
+                  <ChevronRight className="ml-auto h-4 w-4" />
+                </Button>
+                <Button variant="outline" className="w-full justify-start border-border-default text-text-secondary">
+                  <GitBranch className="mr-2 h-4 w-4" />
+                  View Source
+                  <ChevronRight className="ml-auto h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Deployment History */}
+            <Card className="border-border-default bg-bg-panel">
+              <CardHeader>
+                <CardTitle className="text-lg text-text-primary">Recent Deployments</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {deploymentHistory.map((dep, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 rounded-lg border border-border-subtle bg-bg-elevated"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-2 h-2 rounded-full ${
+                            dep.status === 'success'
+                              ? 'bg-state-success'
+                              : dep.status === 'failed'
+                              ? 'bg-state-error'
+                              : 'bg-state-warning'
+                          }`}
+                        />
+                        <div>
+                          <p className="font-medium text-text-primary text-sm">{dep.version}</p>
+                          <p className="text-xs text-text-secondary">
+                            {dep.date} • {dep.duration}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={`text-xs ${getStatusColor(dep.status)}`}
+                      >
+                        {dep.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Resource Usage */}
+            <Card className="border-border-default bg-bg-panel">
+              <CardHeader>
+                <CardTitle className="text-lg text-text-primary">Resource Usage</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[150px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={resourceData}>
+                      <defs>
+                        <linearGradient id="colorCpu" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="var(--state-running)" stopOpacity={0.3} />
+                          <stop offset="100%" stopColor="var(--state-running)" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                      <XAxis dataKey="time" stroke="var(--text-tertiary)" fontSize={10} />
+                      <YAxis stroke="var(--text-tertiary)" fontSize={10} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'var(--bg-elevated)',
+                          border: '1px solid var(--border-default)',
+                          borderRadius: '8px',
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="cpu"
+                        stroke="var(--state-running)"
+                        strokeWidth={2}
+                        fill="url(#colorCpu)"
+                        name="CPU %"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </motion.div>
+      )}
     </motion.div>
   );
 }

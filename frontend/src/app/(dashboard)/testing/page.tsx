@@ -1,510 +1,597 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
+export const dynamic = 'force-dynamic';
 
-import { 
-  Play, 
-  Bug, 
-  Shield, 
-  Activity, 
-  CheckCircle, 
-  XCircle, 
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import {
+  TestTube,
+  CheckCircle2,
+  XCircle,
   AlertTriangle,
-  RefreshCw,
+  Play,
+  RotateCcw,
   FileCode,
-  Eye,
-  Zap,
+  GitPullRequest,
+  Shield,
   TrendingUp,
-} from "lucide-react";
+  Clock,
+  Target,
+  Bug,
+  Zap,
+  Filter,
+  Search,
+  MoreHorizontal,
+  ChevronRight,
+  Code2,
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  AreaChart,
+  Area,
+} from 'recharts';
 
-interface TestHealthData {
-  summary: {
-    total_test_suites: number;
-    total_tests: number;
-    flaky_tests: number;
-    total_bugs_detected: number;
-    critical_bugs: number;
-    average_coverage: number;
-    fixes_applied: number;
-  };
-  flaky_tests: Array<{
-    id: string;
-    name: string;
-    failure_rate: number;
-    quarantined: boolean;
-  }>;
-  recent_bugs: Array<{
-    id: string;
-    severity: string;
-    category: string;
-    title: string;
-    file_path: string;
-  }>;
-  recent_fixes: Array<{
-    bug_id: string;
-    success: boolean;
-    file_path: string;
-  }>;
-  coverage_trend: Array<{
-    timestamp: string;
-    overall_coverage: number;
-  }>;
-}
+// Mock test data
+const testStats = {
+  total: 1248,
+  passed: 1189,
+  failed: 32,
+  skipped: 27,
+  coverage: 87.5,
+  duration: '4m 32s',
+};
 
-export default function TestingDashboard() {
-  const [healthData, setHealthData] = useState<TestHealthData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("overview");
+// Mock bug data
+const bugs = [
+  {
+    id: 'BUG-001',
+    title: 'Memory leak in WebSocket connection handler',
+    severity: 'critical',
+    status: 'open',
+    component: 'Backend',
+    reportedAt: new Date('2024-01-18T10:30:00'),
+    aiFixAvailable: true,
+  },
+  {
+    id: 'BUG-002',
+    title: 'Dashboard charts not responsive on mobile',
+    severity: 'medium',
+    status: 'in_progress',
+    component: 'Frontend',
+    reportedAt: new Date('2024-01-17T14:20:00'),
+    aiFixAvailable: true,
+  },
+  {
+    id: 'BUG-003',
+    title: 'API rate limiting not enforced',
+    severity: 'high',
+    status: 'open',
+    component: 'Backend',
+    reportedAt: new Date('2024-01-16T09:15:00'),
+    aiFixAvailable: false,
+  },
+  {
+    id: 'BUG-004',
+    title: 'Dark mode toggle state not persisted',
+    severity: 'low',
+    status: 'resolved',
+    component: 'Frontend',
+    reportedAt: new Date('2024-01-15T16:45:00'),
+    resolvedAt: new Date('2024-01-16T11:30:00'),
+    aiFixAvailable: true,
+  },
+  {
+    id: 'BUG-005',
+    title: 'Database connection pool exhaustion',
+    severity: 'critical',
+    status: 'in_progress',
+    component: 'Infrastructure',
+    reportedAt: new Date('2024-01-18T08:00:00'),
+    aiFixAvailable: true,
+  },
+];
 
-  useEffect(() => {
-    fetchHealthData();
-  }, []);
+// Mock test files
+const testFiles = [
+  { name: 'auth.service.test.ts', tests: 24, passed: 24, failed: 0, coverage: 96.5, duration: '12s' },
+  { name: 'user.controller.test.ts', tests: 18, passed: 17, failed: 1, coverage: 89.2, duration: '8s' },
+  { name: 'payment.gateway.test.ts', tests: 32, passed: 30, failed: 2, coverage: 84.7, duration: '15s' },
+  { name: 'dashboard.component.test.tsx', tests: 12, passed: 12, failed: 0, coverage: 92.1, duration: '6s' },
+  { name: 'api.client.test.ts', tests: 45, passed: 43, failed: 2, coverage: 78.5, duration: '22s' },
+];
 
-  const fetchHealthData = async () => {
-    try {
-      const response = await fetch("/api/v1/testing/health");
-      const data = await response.json();
-      setHealthData(data);
-    } catch (error) {
-      console.error("Failed to fetch health data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+// Chart data
+const coverageData = [
+  { name: 'Statements', value: 87.5, color: '#10b981' },
+  { name: 'Branches', value: 82.3, color: '#3b82f6' },
+  { name: 'Functions', value: 91.2, color: '#8b5cf6' },
+  { name: 'Lines', value: 88.9, color: '#f59e0b' },
+];
 
-  const runFullSuite = async () => {
-    try {
-      await fetch("/api/v1/testing/run-full-suite", { method: "POST" });
-      alert("Full test suite started in background");
-    } catch (error) {
-      console.error("Failed to start test suite:", error);
-    }
-  };
+const bugSeverityData = [
+  { name: 'Critical', value: 2, color: '#ef4444' },
+  { name: 'High', value: 3, color: '#f97316' },
+  { name: 'Medium', value: 8, color: '#f59e0b' },
+  { name: 'Low', value: 12, color: '#3b82f6' },
+];
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <RefreshCw className="w-8 h-8 animate-spin" />
-      </div>
-    );
+const testTrendData = [
+  { date: 'Mon', passed: 980, failed: 25 },
+  { date: 'Tue', passed: 1050, failed: 30 },
+  { date: 'Wed', passed: 1120, failed: 28 },
+  { date: 'Thu', passed: 1150, failed: 35 },
+  { date: 'Fri', passed: 1189, failed: 32 },
+];
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.25, 0, 1] as const },
+  },
+};
+
+const getSeverityColor = (severity: string) => {
+  switch (severity) {
+    case 'critical':
+      return 'bg-state-error-dim text-state-error border-state-error/30';
+    case 'high':
+      return 'bg-orange-500/10 text-orange-400 border-orange-500/30';
+    case 'medium':
+      return 'bg-state-warning-dim text-state-warning border-state-warning/30';
+    case 'low':
+      return 'bg-state-running-dim text-state-running border-state-running/30';
+    default:
+      return 'bg-bg-elevated text-text-secondary border-border-default';
   }
+};
 
-  const summary = healthData?.summary || {
-    total_test_suites: 0,
-    total_tests: 0,
-    flaky_tests: 0,
-    total_bugs_detected: 0,
-    critical_bugs: 0,
-    average_coverage: 0,
-    fixes_applied: 0,
-  };
+const getStatusIcon = (status: string) => {
+  switch (status) {
+    case 'open':
+      return <AlertTriangle className="h-4 w-4 text-state-error" />;
+    case 'in_progress':
+      return <Clock className="h-4 w-4 text-state-warning" />;
+    case 'resolved':
+      return <CheckCircle2 className="h-4 w-4 text-state-success" />;
+    default:
+      return null;
+  }
+};
+
+export default function TestingPage() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSeverity, setSelectedSeverity] = useState<string | null>(null);
+
+  const filteredBugs = bugs.filter((bug) => {
+    const matchesSearch =
+      bug.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      bug.id.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSeverity = !selectedSeverity || bug.severity === selectedSeverity;
+    return matchesSearch && matchesSeverity;
+  });
 
   return (
-    <div className="container mx-auto px-6 py-4 space-y-6">
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-6"
+    >
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <motion.div variants={itemVariants} className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">AI Testing Dashboard</h1>
-          <p className="text-text-secondary">
-            Autonomous test generation, bug detection, and self-healing
+          <h1 className="text-3xl font-bold text-text-primary">Testing & QA</h1>
+          <p className="mt-1 text-text-secondary">
+            AI-powered testing, bug detection, and quality assurance
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={fetchHealthData}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="border-border-default text-text-secondary">
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Regenerate Tests
           </Button>
-          <Button onClick={runFullSuite}>
-            <Play className="w-4 h-4 mr-2" />
-            Run Full Suite
+          <Button variant="ai-action">
+            <Play className="mr-2 h-4 w-4" />
+            Run Test Suite
           </Button>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Test Coverage</CardTitle>
-            <Shield className="w-4 h-4 text-text-secondary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {summary.average_coverage?.toFixed(1) || 0}%
+      {/* Test Summary Stats */}
+      <motion.div variants={itemVariants} className="grid gap-4 md:grid-cols-5">
+        <Card className="border-border-default bg-bg-panel">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-text-secondary">Total Tests</p>
+                <p className="text-2xl font-bold text-text-primary font-mono">{testStats.total}</p>
+              </div>
+              <TestTube className="h-8 w-8 text-state-running opacity-50" />
             </div>
-            <Progress 
-              value={summary.average_coverage || 0} 
-              className="mt-2"
-            />
           </CardContent>
         </Card>
+        <Card className="border-border-default bg-bg-panel">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-text-secondary">Passed</p>
+                <p className="text-2xl font-bold text-state-success font-mono">{testStats.passed}</p>
+              </div>
+              <CheckCircle2 className="h-8 w-8 text-state-success opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border-default bg-bg-panel">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-text-secondary">Failed</p>
+                <p className="text-2xl font-bold text-state-error font-mono">{testStats.failed}</p>
+              </div>
+              <XCircle className="h-8 w-8 text-state-error opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border-default bg-bg-panel">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-text-secondary">Coverage</p>
+                <p className="text-2xl font-bold text-state-running font-mono">{testStats.coverage}%</p>
+              </div>
+              <Shield className="h-8 w-8 text-state-running opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border-default bg-bg-panel">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-text-secondary">Duration</p>
+                <p className="text-2xl font-bold text-text-primary font-mono">{testStats.duration}</p>
+              </div>
+              <Clock className="h-8 w-8 text-text-secondary opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Tests</CardTitle>
-            <CheckCircle className="w-4 h-4 text-text-secondary" />
+      {/* Main Content Grid */}
+      <motion.div variants={itemVariants} className="grid gap-6 lg:grid-cols-3">
+        {/* Coverage Chart */}
+        <Card className="border-border-default bg-bg-panel">
+          <CardHeader>
+            <CardTitle className="text-lg text-text-primary">Code Coverage</CardTitle>
+            <CardDescription className="text-text-secondary">
+              Coverage metrics by category
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{summary.total_tests || 0}</div>
-            <p className="text-xs text-text-secondary">
-              {summary.total_test_suites || 0} test suites
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Bugs Detected</CardTitle>
-            <Bug className="w-4 h-4 text-text-secondary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{summary.total_bugs_detected || 0}</div>
-            <p className="text-xs text-state-error">
-              {summary.critical_bugs || 0} critical
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Auto-Fixes</CardTitle>
-            <Zap className="w-4 h-4 text-text-secondary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{summary.fixes_applied || 0}</div>
-            <p className="text-xs text-state-success">Successfully applied</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="bugs">Bugs</TabsTrigger>
-          <TabsTrigger value="flaky">Flaky Tests</TabsTrigger>
-          <TabsTrigger value="coverage">Coverage</TabsTrigger>
-          <TabsTrigger value="actions">Actions</TabsTrigger>
-        </TabsList>
-
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Bugs</CardTitle>
-                <CardDescription>Latest detected issues</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {healthData?.recent_bugs?.slice(0, 5).map((bug) => (
-                    <div 
-                      key={bug.id} 
-                      className="flex items-center justify-between p-2 border rounded"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Bug className={`w-4 h-4 ${
-                          bug.severity === 'critical' ? 'text-state-error' : 
-                          bug.severity === 'high' ? 'text-orange-500' : 'text-state-warning'
-                        }`} />
-                        <div>
-                          <p className="text-sm font-medium">{bug.title}</p>
-                          <p className="text-xs text-text-secondary">{bug.file_path}</p>
-                        </div>
-                      </div>
-                      <Badge variant={
-                        bug.severity === 'critical' ? 'destructive' : 
-                        bug.severity === 'high' ? 'default' : 'secondary'
-                      }>
-                        {bug.severity}
-                      </Badge>
-                    </div>
-                  )) || <p className="text-text-secondary">No recent bugs</p>}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Fixes</CardTitle>
-                <CardDescription>Automatically applied fixes</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {healthData?.recent_fixes?.slice(0, 5).map((fix, idx) => (
-                    <div 
-                      key={idx} 
-                      className="flex items-center justify-between p-2 border rounded"
-                    >
-                      <div className="flex items-center gap-2">
-                        {fix.success ? (
-                          <CheckCircle className="w-4 h-4 text-state-success" />
-                        ) : (
-                          <XCircle className="w-4 h-4 text-state-error" />
-                        )}
-                        <div>
-                          <p className="text-sm font-medium">Bug {fix.bug_id}</p>
-                          <p className="text-xs text-text-secondary">{fix.file_path}</p>
-                        </div>
-                      </div>
-                      <Badge variant={fix.success ? 'default' : 'destructive'}>
-                        {fix.success ? 'Fixed' : 'Failed'}
-                      </Badge>
-                    </div>
-                  )) || <p className="text-text-secondary">No recent fixes</p>}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Coverage Trend */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Coverage Trend</CardTitle>
-              <CardDescription>Test coverage over time</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-48 flex items-end gap-2">
-                {healthData?.coverage_trend?.map((point, idx) => (
-                  <div 
-                    key={idx}
-                    className="flex-1 bg-primary/20 rounded-t"
-                    style={{ height: `${point.overall_coverage}%` }}
-                    title={`${new Date(point.timestamp).toLocaleDateString()}: ${point.overall_coverage.toFixed(1)}%`}
+            <div className="h-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={coverageData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {coverageData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'var(--bg-elevated)',
+                      border: '1px solid var(--border-default)',
+                      borderRadius: '8px',
+                    }}
                   />
-                )) || <p className="text-text-secondary">No coverage data</p>}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-4">
+              {coverageData.map((item) => (
+                <div key={item.name} className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                  <span className="text-xs text-text-secondary">{item.name}</span>
+                  <span className="text-xs font-mono text-text-primary">{item.value}%</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Bugs Tab */}
-        <TabsContent value="bugs" className="space-y-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Bug Detection</CardTitle>
-                <CardDescription>Scan your code for bugs and security issues</CardDescription>
-              </div>
-              <Button>
-                <Bug className="w-4 h-4 mr-2" />
-                Scan All Files
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {healthData?.recent_bugs?.map((bug) => (
-                  <div 
-                    key={bug.id} 
-                    className={`p-4 rounded-lg border ${
-                      bug.severity === 'critical' 
-                        ? 'border-red-500/50 bg-state-error-dim' 
-                        : 'border-border-default bg-bg-hover/50'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <AlertTriangle className={`w-5 h-5 mt-0.5 ${
-                        bug.severity === 'critical' ? 'text-state-error' : 'text-state-warning'
-                      }`} />
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium text-text-primary">{bug.title}</p>
-                            <p className="text-sm text-text-secondary">{bug.file_path}</p>
-                            <p className="text-xs text-text-tertiary">Category: {bug.category}</p>
+        {/* Bug Severity */}
+        <Card className="border-border-default bg-bg-panel">
+          <CardHeader>
+            <CardTitle className="text-lg text-text-primary">Bug Distribution</CardTitle>
+            <CardDescription className="text-text-secondary">
+              Issues by severity level
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={bugSeverityData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" horizontal={false} />
+                  <XAxis type="number" stroke="var(--text-tertiary)" fontSize={12} />
+                  <YAxis dataKey="name" type="category" stroke="var(--text-tertiary)" fontSize={11} width={60} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'var(--bg-elevated)',
+                      border: '1px solid var(--border-default)',
+                      borderRadius: '8px',
+                    }}
+                  />
+                  <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                    {bugSeverityData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Test Trend */}
+        <Card className="border-border-default bg-bg-panel">
+          <CardHeader>
+            <CardTitle className="text-lg text-text-primary">Test Trend</CardTitle>
+            <CardDescription className="text-text-secondary">
+              Pass/fail rate over time
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={testTrendData}>
+                  <defs>
+                    <linearGradient id="colorPassed" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--state-success)" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="var(--state-success)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                  <XAxis dataKey="date" stroke="var(--text-tertiary)" fontSize={12} />
+                  <YAxis stroke="var(--text-tertiary)" fontSize={12} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'var(--bg-elevated)',
+                      border: '1px solid var(--border-default)',
+                      borderRadius: '8px',
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="passed"
+                    stroke="var(--state-success)"
+                    strokeWidth={2}
+                    fill="url(#colorPassed)"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="failed"
+                    stroke="var(--state-error)"
+                    strokeWidth={2}
+                    fill="transparent"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Tabs Section */}
+      <motion.div variants={itemVariants}>
+        <Tabs defaultValue="bugs" className="space-y-4">
+          <TabsList className="bg-bg-panel border border-border-default">
+            <TabsTrigger
+              value="bugs"
+              className="data-[state=active]:bg-state-running-dim data-[state=active]:text-state-running"
+            >
+              <Bug className="mr-2 h-4 w-4" />
+              Bugs ({bugs.length})
+            </TabsTrigger>
+            <TabsTrigger
+              value="files"
+              className="data-[state=active]:bg-state-running-dim data-[state=active]:text-state-running"
+            >
+              <FileCode className="mr-2 h-4 w-4" />
+              Test Files
+            </TabsTrigger>
+            <TabsTrigger
+              value="ai-fixes"
+              className="data-[state=active]:bg-state-running-dim data-[state=active]:text-state-running"
+            >
+              <Zap className="mr-2 h-4 w-4" />
+              AI Fixes
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="bugs">
+            <Card className="border-border-default bg-bg-panel">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg text-text-primary">Bug Tracker</CardTitle>
+                  <CardDescription className="text-text-secondary">
+                    AI-detected issues and suggested fixes
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
+                    <Input
+                      placeholder="Search bugs..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-64 border-border-default bg-bg-input pl-10 text-text-primary"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {['critical', 'high', 'medium', 'low'].map((severity) => (
+                      <button
+                        key={severity}
+                        onClick={() => setSelectedSeverity(selectedSeverity === severity ? null : severity)}
+                        className={`px-2 py-1 rounded-md text-xs font-medium transition-all capitalize ${
+                          selectedSeverity === severity
+                            ? 'bg-state-running-dim text-state-running'
+                            : 'bg-bg-elevated text-text-secondary hover:bg-bg-hover'
+                        }`}
+                      >
+                        {severity}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {filteredBugs.map((bug) => (
+                    <div
+                      key={bug.id}
+                      className="flex items-center justify-between p-4 rounded-lg border border-border-subtle bg-bg-elevated hover:border-emphasis transition-all"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="mt-0.5">{getStatusIcon(bug.status)}</div>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-mono text-text-tertiary">{bug.id}</span>
+                            <Badge variant="outline" className={`text-xs ${getSeverityColor(bug.severity)}`}>
+                              {bug.severity}
+                            </Badge>
+                            {bug.aiFixAvailable && (
+                              <Badge variant="outline" className="bg-state-success-dim text-state-success text-xs">
+                                <Zap className="mr-1 h-3 w-3" />
+                                AI Fix Available
+                              </Badge>
+                            )}
                           </div>
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="outline">
-                              <Eye className="w-4 h-4 mr-1" />
-                              View
-                            </Button>
-                            <Button size="sm">
-                              <Zap className="w-4 h-4 mr-1" />
-                              Fix
-                            </Button>
+                          <p className="font-medium text-text-primary">{bug.title}</p>
+                          <p className="text-xs text-text-secondary mt-1">
+                            {bug.component} • Reported {bug.reportedAt.toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {bug.aiFixAvailable && (
+                          <Button variant="outline" size="sm" className="border-state-success text-state-success hover:bg-state-success-dim">
+                            <Code2 className="mr-2 h-4 w-4" />
+                            Apply Fix
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-text-secondary">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="files">
+            <Card className="border-border-default bg-bg-panel">
+              <CardHeader>
+                <CardTitle className="text-lg text-text-primary">Test Files</CardTitle>
+                <CardDescription className="text-text-secondary">
+                  Coverage and results by file
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {testFiles.map((file) => (
+                    <div
+                      key={file.name}
+                      className="flex items-center justify-between p-4 rounded-lg border border-border-subtle bg-bg-elevated"
+                    >
+                      <div className="flex items-center gap-4">
+                        <FileCode className="h-5 w-5 text-state-running" />
+                        <div>
+                          <p className="font-medium text-text-primary font-mono text-sm">{file.name}</p>
+                          <p className="text-xs text-text-secondary">
+                            {file.tests} tests • {file.duration}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-6">
+                        <div className="text-right">
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="text-state-success">{file.passed} passed</span>
+                            {file.failed > 0 && (
+                              <span className="text-state-error">{file.failed} failed</span>
+                            )}
                           </div>
+                          <Progress value={(file.passed / file.tests) * 100} className="h-1 w-24 mt-1 bg-bg-base" />
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs text-text-secondary">Coverage</span>
+                          <p className={`font-mono font-medium ${file.coverage >= 90 ? 'text-state-success' : file.coverage >= 80 ? 'text-state-warning' : 'text-state-error'}`}>
+                            {file.coverage}%
+                          </p>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )) || <p className="text-text-secondary">No bugs detected</p>}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Flaky Tests Tab */}
-        <TabsContent value="flaky" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Flaky Tests</CardTitle>
-              <CardDescription>Tests with inconsistent results</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {healthData?.flaky_tests?.map((test) => (
-                  <div 
-                    key={test.id}
-                    className="flex items-center justify-between p-3 border rounded"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Activity className="w-4 h-4 text-state-warning" />
-                      <div>
-                        <p className="font-medium">{test.name}</p>
-                        <p className="text-sm text-text-secondary">
-                          Failure rate: {(test.failure_rate * 100).toFixed(1)}%
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      {test.quarantined ? (
-                        <Badge variant="outline">Quarantined</Badge>
-                      ) : (
-                        <Button size="sm" variant="outline">
-                          Quarantine
-                        </Button>
-                      )}
-                      <Button size="sm" variant="outline">
-                        <RefreshCw className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )) || <p className="text-text-secondary">No flaky tests detected</p>}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Coverage Tab */}
-        <TabsContent value="coverage" className="space-y-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Coverage Analysis</CardTitle>
-                <CardDescription>Identify coverage gaps</CardDescription>
-              </div>
-              <Button>
-                <TrendingUp className="w-4 h-4 mr-2" />
-                Analyze Coverage
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="p-4 border rounded text-center">
-                    <p className="text-2xl font-bold text-state-success">
-                      {summary.average_coverage >= 80 ? 'Good' : summary.average_coverage >= 50 ? 'Fair' : 'Poor'}
-                    </p>
-                    <p className="text-sm text-text-secondary">Coverage Level</p>
-                  </div>
-                  <div className="p-4 border rounded text-center">
-                    <p className="text-2xl font-bold">{healthData?.flaky_tests?.length || 0}</p>
-                    <p className="text-sm text-text-secondary">Flaky Tests</p>
-                  </div>
-                  <div className="p-4 border rounded text-center">
-                    <p className="text-2xl font-bold">{summary.fixes_applied || 0}</p>
-                    <p className="text-sm text-text-secondary">Auto-Fixes</p>
-                  </div>
+                  ))}
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Actions Tab */}
-        <TabsContent value="actions" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Generate Tests</CardTitle>
-                <CardDescription>AI-powered test generation</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button className="w-full" variant="outline">
-                  <FileCode className="w-4 h-4 mr-2" />
-                  Generate Unit Tests
-                </Button>
-                <Button className="w-full" variant="outline">
-                  <Eye className="w-4 h-4 mr-2" />
-                  Generate E2E Tests
-                </Button>
-                <Button className="w-full" variant="outline">
-                  <Shield className="w-4 h-4 mr-2" />
-                  Generate Security Tests
-                </Button>
               </CardContent>
             </Card>
+          </TabsContent>
 
-            <Card>
+          <TabsContent value="ai-fixes">
+            <Card className="border-border-default bg-bg-panel">
               <CardHeader>
-                <CardTitle>Run Tests</CardTitle>
-                <CardDescription>Execute test suites</CardDescription>
+                <CardTitle className="text-lg text-text-primary">AI-Generated Fixes</CardTitle>
+                <CardDescription className="text-text-secondary">
+                  Automated code corrections suggested by AI agents
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <Button className="w-full" variant="outline">
-                  <Play className="w-4 h-4 mr-2" />
-                  Run Unit Tests
-                </Button>
-                <Button className="w-full" variant="outline">
-                  <Eye className="w-4 h-4 mr-2" />
-                  Run E2E Tests
-                </Button>
-                <Button className="w-full" variant="outline">
-                  <Activity className="w-4 h-4 mr-2" />
-                  Run Visual Regression
-                </Button>
+              <CardContent>
+                <div className="flex flex-col items-center justify-center py-12 text-text-secondary">
+                  <Zap className="h-12 w-12 mb-4 opacity-50" />
+                  <p className="text-lg font-medium">3 AI fixes ready to apply</p>
+                  <p className="text-sm mt-1">Review and approve suggested corrections</p>
+                  <Button variant="ai-action" className="mt-4">
+                    Review Fixes
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Auto-Fix</CardTitle>
-                <CardDescription>Automatically fix detected issues</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button className="w-full" variant="outline">
-                  <Zap className="w-4 h-4 mr-2" />
-                  Fix All Critical Bugs
-                </Button>
-                <Button className="w-full" variant="outline">
-                  <Bug className="w-4 h-4 mr-2" />
-                  Fix Security Issues
-                </Button>
-                <Button className="w-full" variant="outline">
-                  <TrendingUp className="w-4 h-4 mr-2" />
-                  Fix Performance Issues
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Reports</CardTitle>
-                <CardDescription>View detailed reports</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button className="w-full" variant="outline">
-                  <FileCode className="w-4 h-4 mr-2" />
-                  Coverage Report
-                </Button>
-                <Button className="w-full" variant="outline">
-                  <Bug className="w-4 h-4 mr-2" />
-                  Bug Report
-                </Button>
-                <Button className="w-full" variant="outline">
-                  <Activity className="w-4 h-4 mr-2" />
-                  Test Execution Report
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
+          </TabsContent>
+        </Tabs>
+      </motion.div>
+    </motion.div>
   );
 }
