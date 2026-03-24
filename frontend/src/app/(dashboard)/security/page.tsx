@@ -31,7 +31,7 @@ export default function SecurityPage() {
           <h1 className="text-3xl font-bold text-text-primary">Security</h1>
           <p className="text-text-secondary">Security scanning and vulnerability management</p>
         </div>
-        <Button className="bg-rose-500 hover:bg-rose-600">
+        <Button className="bg-state-error hover:bg-state-error">
           <ShieldCheck className="mr-2 h-4 w-4" />
           Run Security Scan
         </Button>
@@ -40,11 +40,11 @@ export default function SecurityPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-border-default bg-bg-base/50">
           <CardContent className="p-6">
-            <div className="rounded-lg bg-rose-500/10 p-3 w-fit">
-              <AlertOctagon className="h-6 w-6 text-rose-400" />
+            <div className="rounded-lg bg-state-error-dim p-3 w-fit">
+              <AlertOctagon className="h-6 w-6 text-state-error" />
             </div>
             <h3 className="mt-4 font-semibold text-text-primary">Vulnerabilities</h3>
-            <p className="text-2xl font-bold text-rose-400">{securityStats.vulnerabilities}</p>
+            <p className="text-2xl font-bold text-state-error">{securityStats.vulnerabilities}</p>
           </CardContent>
         </Card>
 
@@ -60,11 +60,11 @@ export default function SecurityPage() {
 
         <Card className="border-border-default bg-bg-base/50">
           <CardContent className="p-6">
-            <div className="rounded-lg bg-state-info-dim p-3 w-fit">
-              <CheckCircle className="h-6 w-6 text-state-info" />
+            <div className="rounded-lg bg-state-running-dim p-3 w-fit">
+              <CheckCircle className="h-6 w-6 text-state-running" />
             </div>
             <h3 className="mt-4 font-semibold text-text-primary">Compliance</h3>
-            <p className="text-2xl font-bold text-state-info">{securityStats.compliance}</p>
+            <p className="text-2xl font-bold text-state-running">{securityStats.compliance}</p>
           </CardContent>
         </Card>
 
@@ -91,8 +91,8 @@ export default function SecurityPage() {
                 className="flex items-center gap-3 p-4 rounded-lg bg-bg-hover/30"
               >
                 <FileWarning className={`h-5 w-5 ${
-                  vuln.severity === 'high' ? 'text-rose-400' :
-                  vuln.severity === 'medium' ? 'text-state-warning' : 'text-state-info'
+                  vuln.severity === 'high' ? 'text-state-error' :
+                  vuln.severity === 'medium' ? 'text-state-warning' : 'text-state-running'
                 }`} />
                 <div className="flex-1">
                   <p className="text-text-primary">{vuln.title}</p>
@@ -101,9 +101,9 @@ export default function SecurityPage() {
                 <Badge
                   variant="outline"
                   className={
-                    vuln.severity === 'high' ? 'bg-rose-500/10 text-rose-400' :
+                    vuln.severity === 'high' ? 'bg-state-error-dim text-state-error' :
                     vuln.severity === 'medium' ? 'bg-state-warning-dim text-state-warning' :
-                    'bg-state-info-dim text-state-info'
+                    'bg-state-running-dim text-state-running'
                   }
                 >
                   {vuln.severity}

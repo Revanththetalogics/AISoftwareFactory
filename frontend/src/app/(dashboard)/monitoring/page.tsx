@@ -30,7 +30,7 @@ export default function MonitoringPage() {
           <h1 className="text-3xl font-bold text-text-primary">Monitoring</h1>
           <p className="text-text-secondary">Real-time system metrics and alerts</p>
         </div>
-        <Button className="bg-rose-500 hover:bg-rose-600">
+        <Button className="bg-state-error hover:bg-state-error">
           <LineChart className="mr-2 h-4 w-4" />
           View Metrics
         </Button>
@@ -41,8 +41,8 @@ export default function MonitoringPage() {
           <Card key={metric.name} className="border-border-default bg-bg-base/50">
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
-                <div className="rounded-lg bg-rose-500/10 p-3">
-                  <metric.icon className="h-6 w-6 text-rose-400" />
+                <div className="rounded-lg bg-state-running-dim p-3">
+                  <metric.icon className="h-6 w-6 text-state-running" />
                 </div>
                 <span className="text-2xl font-bold text-text-primary">
                   {metric.value}{metric.unit}
@@ -51,7 +51,7 @@ export default function MonitoringPage() {
               <h3 className="mt-4 font-semibold text-text-primary">{metric.name}</h3>
               <div className="mt-2 h-2 rounded-full bg-bg-hover">
                 <div
-                  className="h-full rounded-full bg-rose-500"
+                  className="h-full rounded-full bg-state-running"
                   style={{ width: `${(metric.value / metric.max) * 100}%` }}
                 />
               </div>
@@ -72,7 +72,7 @@ export default function MonitoringPage() {
                 className="flex items-center gap-3 p-4 rounded-lg bg-bg-hover/30"
               >
                 <AlertTriangle className={`h-5 w-5 ${
-                  alert.severity === 'warning' ? 'text-state-warning' : 'text-state-info'
+                  alert.severity === 'warning' ? 'text-state-warning' : 'text-state-running'
                 }`} />
                 <div className="flex-1">
                   <p className="text-text-primary">{alert.message}</p>
@@ -83,7 +83,7 @@ export default function MonitoringPage() {
                   className={
                     alert.severity === 'warning'
                       ? 'bg-state-warning-dim text-state-warning'
-                      : 'bg-state-info-dim text-state-info'
+                      : 'bg-state-running-dim text-state-running'
                   }
                 >
                   {alert.severity}

@@ -32,7 +32,7 @@ export default function DatabasePage() {
           <h1 className="text-3xl font-bold text-text-primary">Database</h1>
           <p className="text-text-secondary">Manage database schema and monitor performance</p>
         </div>
-        <Button className="bg-cyan-500 hover:bg-cyan-600">
+        <Button className="bg-state-running hover:bg-state-running">
           <Activity className="mr-2 h-4 w-4" />
           Run Migration
         </Button>
@@ -41,8 +41,8 @@ export default function DatabasePage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-border-default bg-bg-base/50">
           <CardContent className="p-6">
-            <div className="rounded-lg bg-cyan-500/10 p-3 w-fit">
-              <Table className="h-6 w-6 text-cyan-400" />
+            <div className="rounded-lg bg-state-running-dim p-3 w-fit">
+              <Table className="h-6 w-6 text-state-running" />
             </div>
             <h3 className="mt-4 font-semibold text-text-primary">Tables</h3>
             <p className="text-2xl font-bold text-text-primary">{dbStats.tables}</p>
@@ -51,8 +51,8 @@ export default function DatabasePage() {
 
         <Card className="border-border-default bg-bg-base/50">
           <CardContent className="p-6">
-            <div className="rounded-lg bg-cyan-500/10 p-3 w-fit">
-              <Rows3 className="h-6 w-6 text-cyan-400" />
+            <div className="rounded-lg bg-state-running-dim p-3 w-fit">
+              <Rows3 className="h-6 w-6 text-state-running" />
             </div>
             <h3 className="mt-4 font-semibold text-text-primary">Records</h3>
             <p className="text-2xl font-bold text-text-primary">{dbStats.records.toLocaleString()}</p>
@@ -61,8 +61,8 @@ export default function DatabasePage() {
 
         <Card className="border-border-default bg-bg-base/50">
           <CardContent className="p-6">
-            <div className="rounded-lg bg-cyan-500/10 p-3 w-fit">
-              <HardDrive className="h-6 w-6 text-cyan-400" />
+            <div className="rounded-lg bg-state-running-dim p-3 w-fit">
+              <HardDrive className="h-6 w-6 text-state-running" />
             </div>
             <h3 className="mt-4 font-semibold text-text-primary">Size</h3>
             <p className="text-2xl font-bold text-text-primary">{dbStats.size}</p>
@@ -71,8 +71,8 @@ export default function DatabasePage() {
 
         <Card className="border-border-default bg-bg-base/50">
           <CardContent className="p-6">
-            <div className="rounded-lg bg-cyan-500/10 p-3 w-fit">
-              <Activity className="h-6 w-6 text-cyan-400" />
+            <div className="rounded-lg bg-state-success-dim p-3 w-fit">
+              <Activity className="h-6 w-6 text-state-success" />
             </div>
             <h3 className="mt-4 font-semibold text-text-primary">Uptime</h3>
             <p className="text-2xl font-bold text-state-success">{dbStats.uptime}</p>
@@ -92,7 +92,7 @@ export default function DatabasePage() {
                 className="flex items-center justify-between p-4 rounded-lg bg-bg-hover/30"
               >
                 <div className="flex items-center gap-3">
-                  <Database className="h-5 w-5 text-cyan-400" />
+                  <Database className="h-5 w-5 text-state-running" />
                   <span className="font-medium text-text-primary">{table.name}</span>
                 </div>
                 <div className="flex items-center gap-6 text-sm text-text-secondary">

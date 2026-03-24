@@ -24,7 +24,7 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon"
       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-      className="text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+      className="text-text-secondary hover:bg-bg-hover hover:text-text-primary"
       aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
     >
       <AnimatePresence mode="wait">
@@ -82,39 +82,39 @@ export function UserProfile() {
       <DropdownMenuTrigger>
         <Button
           variant="ghost"
-          className="relative h-9 w-9 rounded-full border border-slate-700 bg-slate-800 hover:bg-slate-700"
+          className="relative h-9 w-9 rounded-full border border-border-default bg-bg-panel hover:bg-bg-hover"
           aria-label="User menu"
           aria-haspopup="menu"
         >
           <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-gradient-to-br from-violet-500 to-indigo-600 text-white text-sm">
+            <AvatarFallback className="bg-gradient-to-br from-state-queued to-state-running text-text-primary text-sm">
               {initials}
             </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 border-slate-700 bg-slate-900" role="menu" aria-label="User settings">
+      <DropdownMenuContent align="end" className="w-56 border-border-default bg-bg-elevated" role="menu" aria-label="User settings">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium text-slate-200">{displayName}</p>
+            <p className="text-sm font-medium text-text-primary">{displayName}</p>
             {displayEmail && (
-              <p className="text-xs text-slate-400">{displayEmail}</p>
+              <p className="text-xs text-text-secondary">{displayEmail}</p>
             )}
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-slate-700" />
-        <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 focus:text-slate-200" role="menuitem">
+        <DropdownMenuSeparator className="bg-border-default" />
+        <DropdownMenuItem className="text-text-secondary focus:bg-bg-hover focus:text-text-primary" role="menuitem">
           <User className="mr-2 h-4 w-4" aria-hidden="true" />
           Profile
         </DropdownMenuItem>
-        <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 focus:text-slate-200" role="menuitem">
+        <DropdownMenuItem className="text-text-secondary focus:bg-bg-hover focus:text-text-primary" role="menuitem">
           <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
           Settings
         </DropdownMenuItem>
-        <DropdownMenuSeparator className="bg-slate-700" />
+        <DropdownMenuSeparator className="bg-border-default" />
         <DropdownMenuItem 
           onClick={handleLogout}
-          className="text-red-400 focus:bg-slate-800 focus:text-red-300 cursor-pointer"
+          className="text-state-error focus:bg-bg-hover focus:text-state-error cursor-pointer"
           role="menuitem"
         >
           <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />

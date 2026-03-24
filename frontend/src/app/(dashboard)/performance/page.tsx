@@ -33,7 +33,7 @@ export default function PerformancePage() {
           <h1 className="text-3xl font-bold text-text-primary">Performance</h1>
           <p className="text-text-secondary">Performance monitoring and optimization</p>
         </div>
-        <Button className="bg-rose-500 hover:bg-rose-600">
+        <Button className="bg-state-error hover:bg-state-error">
           <Zap className="mr-2 h-4 w-4" />
           Run Benchmarks
         </Button>
@@ -42,8 +42,8 @@ export default function PerformancePage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-border-default bg-bg-base/50">
           <CardContent className="p-6">
-            <div className="rounded-lg bg-rose-500/10 p-3 w-fit">
-              <Timer className="h-6 w-6 text-rose-400" />
+            <div className="rounded-lg bg-state-error-dim p-3 w-fit">
+              <Timer className="h-6 w-6 text-state-error" />
             </div>
             <h3 className="mt-4 font-semibold text-text-primary">Avg Response</h3>
             <p className="text-2xl font-bold text-text-primary">{perfMetrics.avgResponseTime}</p>
@@ -72,8 +72,8 @@ export default function PerformancePage() {
 
         <Card className="border-border-default bg-bg-base/50">
           <CardContent className="p-6">
-            <div className="rounded-lg bg-state-info-dim p-3 w-fit">
-              <TrendingUp className="h-6 w-6 text-state-info" />
+            <div className="rounded-lg bg-state-running-dim p-3 w-fit">
+              <TrendingUp className="h-6 w-6 text-state-running" />
             </div>
             <h3 className="mt-4 font-semibold text-text-primary">CPU Efficiency</h3>
             <p className="text-2xl font-bold text-text-primary">{perfMetrics.cpuEfficiency}</p>

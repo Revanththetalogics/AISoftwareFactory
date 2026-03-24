@@ -27,7 +27,7 @@ export function SidebarSection({ title, items, pathname, colorScheme }: SidebarS
   return (
     <>
       <div className="mb-2 px-4">
-        <h3 id={sectionId} className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+        <h3 id={sectionId} className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
           {title}
         </h3>
       </div>
@@ -44,7 +44,7 @@ export function SidebarSection({ title, items, pathname, colorScheme }: SidebarS
           );
         })}
       </nav>
-      <Separator className="my-4 bg-slate-800" />
+      <Separator className="my-4 bg-border-subtle" />
     </>
   );
 }

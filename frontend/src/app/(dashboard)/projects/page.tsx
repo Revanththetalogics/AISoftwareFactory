@@ -66,24 +66,24 @@ const itemVariants = {
 const getStatusColor = (status: string) => {
   switch (status) {
     case 'active':
-      return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+      return 'bg-state-success-dim text-state-success border-state-success/30';
     case 'completed':
-      return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+      return 'bg-state-running-dim text-state-running border-state-running/30';
     case 'draft':
-      return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+      return 'bg-state-idle-dim text-state-idle border-state-idle/30';
     default:
-      return 'bg-slate-500/10 text-slate-400';
+      return 'bg-state-idle-dim text-state-idle';
   }
 };
 
 const getHealthIcon = (health: string) => {
   switch (health) {
     case 'good':
-      return <CheckCircle2 className="h-4 w-4 text-emerald-400" />;
+      return <CheckCircle2 className="h-4 w-4 text-state-success" />;
     case 'warning':
-      return <AlertCircle className="h-4 w-4 text-amber-400" />;
+      return <AlertCircle className="h-4 w-4 text-state-warning" />;
     default:
-      return <CheckCircle2 className="h-4 w-4 text-emerald-400" />;
+      return <CheckCircle2 className="h-4 w-4 text-state-success" />;
   }
 };
 
@@ -151,7 +151,7 @@ export default function ProjectsPage() {
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-state-running" />
       </div>
     );
   }
@@ -173,7 +173,7 @@ export default function ProjectsPage() {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger>
-            <Button className="bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700">
+            <Button className="bg-gradient-to-r from-state-queued to-state-running hover:from-state-queued hover:to-state-running">
               <Plus className="mr-2 h-4 w-4" />
               New Project
             </Button>
@@ -206,7 +206,7 @@ export default function ProjectsPage() {
                 />
               </div>
               <Button 
-                className="w-full bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700"
+                className="w-full bg-gradient-to-r from-state-queued to-state-running hover:from-state-queued hover:to-state-running"
                 onClick={handleCreateProject}
                 disabled={createProject.isPending}
               >
@@ -395,7 +395,7 @@ export default function ProjectsPage() {
                 </div>
 
                 <div className="flex gap-3">
-                  <Button className="flex-1 bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700">
+                  <Button className="flex-1 bg-gradient-to-r from-state-queued to-state-running hover:from-state-queued hover:to-state-running">
                     <Sparkles className="mr-2 h-4 w-4" />
                     Continue Building
                   </Button>

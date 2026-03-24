@@ -313,8 +313,8 @@ export default function DashboardPage() {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500/20 to-indigo-500/20">
-                          <Zap className="h-5 w-5 text-violet-400" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-state-queued/20 to-state-running/20">
+                          <Zap className="h-5 w-5 text-state-running" />
                         </div>
                         <div>
                           <h4 className="font-medium text-text-primary">{project.name}</h4>
@@ -345,7 +345,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="h-2 w-full rounded-full bg-bg-base">
                         <div
-                          className="h-2 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 transition-all duration-300"
+                          className="h-2 rounded-full bg-gradient-to-r from-state-queued to-state-running transition-all duration-300"
                           style={{ width: `${project.progress}%` }}
                         />
                       </div>

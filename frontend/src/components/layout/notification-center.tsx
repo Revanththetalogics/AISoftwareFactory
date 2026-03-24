@@ -55,7 +55,7 @@ export function NotificationCenter() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+          className="relative text-text-secondary hover:bg-bg-hover hover:text-text-primary"
           aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
           aria-haspopup="menu"
         >
@@ -71,42 +71,42 @@ export function NotificationCenter() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[380px] border-slate-700 bg-slate-900" role="menu" aria-label="Notifications">
+      <DropdownMenuContent align="end" className="w-[380px] border-border-default bg-bg-elevated" role="menu" aria-label="Notifications">
         <DropdownMenuLabel className="flex items-center justify-between">
-          <span className="text-slate-200">Notifications</span>
+          <span className="text-text-primary">Notifications</span>
           <Button
             variant="ghost"
             size="sm"
-            className="h-auto text-xs text-violet-400 hover:text-violet-300"
+            className="h-auto text-xs text-state-running hover:text-state-running"
             aria-label="Mark all notifications as read"
           >
             Mark all read
           </Button>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-slate-700" />
+        <DropdownMenuSeparator className="bg-border-default" />
         <ScrollArea className="h-[300px]" role="list" aria-label="Notification list">
           {mockNotifications.map((notification) => (
             <DropdownMenuItem
               key={notification.id}
-              className="flex cursor-pointer items-start gap-3 p-3 focus:bg-slate-800"
+              className="flex cursor-pointer items-start gap-3 p-3 focus:bg-bg-hover"
               role="listitem"
             >
               <div
                 className={`mt-0.5 h-2 w-2 rounded-full ${
                   notification.type === 'success'
-                    ? 'bg-emerald-400'
+                    ? 'bg-state-success'
                     : notification.type === 'warning'
-                      ? 'bg-amber-400'
+                      ? 'bg-state-warning'
                       : notification.type === 'error'
-                        ? 'bg-red-400'
-                        : 'bg-blue-400'
+                        ? 'bg-state-error'
+                        : 'bg-state-running'
                 }`}
                 aria-hidden="true"
               />
               <div className="flex-1">
-                <p className="text-sm font-medium text-slate-200">{notification.title}</p>
-                <p className="text-xs text-slate-400">{notification.message}</p>
-                <p className="mt-1 text-xs text-slate-500">{notification.timestamp}</p>
+                <p className="text-sm font-medium text-text-primary">{notification.title}</p>
+                <p className="text-xs text-text-secondary">{notification.message}</p>
+                <p className="mt-1 text-xs text-text-tertiary">{notification.timestamp}</p>
               </div>
             </DropdownMenuItem>
           ))}

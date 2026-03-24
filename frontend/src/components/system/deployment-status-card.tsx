@@ -51,9 +51,9 @@ export interface DeploymentStatusCardProps {
 }
 
 const envColors: Record<DeploymentEnvironment, string> = {
-  development: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
-  staging: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-  production: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+  development: 'text-state-running bg-state-running-dim border-state-running/30',
+  staging: 'text-state-warning bg-state-warning-dim border-state-warning/30',
+  production: 'text-state-success bg-state-success-dim border-state-success/30',
 };
 
 const statusIcons: Record<DeploymentStatus, React.ElementType> = {

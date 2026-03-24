@@ -96,8 +96,8 @@ export function Sidebar() {
       <div className="flex h-full flex-col">
         {/* Logo */}
         <div className="flex h-[--topbar-height] items-center gap-3 border-b border-border-default px-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg shadow-violet-500/20" aria-hidden="true">
-            <Sparkles className="h-5 w-5 text-white" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-state-queued to-state-running shadow-lg shadow-state-running/20" aria-hidden="true">
+            <Sparkles className="h-5 w-5 text-text-primary" />
           </div>
           <div>
             <h1 className="text-base font-semibold text-text-primary">AI Factory</h1>
