@@ -27,7 +27,7 @@ const buttonVariants = cva(
         system:
           "font-system border-border-default bg-bg-panel text-text-code hover:bg-state-running-dim hover:border-state-running hover:text-state-running transition-colors",
         "ai-action":
-          "relative bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/30 transition-all glow-running",
+          "relative bg-gradient-to-r from-state-queued to-state-running text-text-primary hover:from-state-queued hover:to-state-running shadow-lg shadow-state-running/20 hover:shadow-state-running/30 transition-all glow-running",
       },
       size: {
         default:

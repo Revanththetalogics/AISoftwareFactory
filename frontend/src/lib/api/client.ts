@@ -198,6 +198,13 @@ class ApiClient {
     });
   }
 
+  async quickstartProject(data: { idea: string; template?: string; tech_stack?: Record<string, unknown> }) {
+    return this.request<{ project_id: string; workflow_id: string; message: string; status: string }>('/projects/quickstart', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Workflows
   async executeWorkflow(data: { project_id: string; phase?: string; async_execution?: boolean }) {
     return this.request<Workflow>('/workflows/execute', {
@@ -297,6 +304,87 @@ class ApiClient {
   // Agent Roles
   async getAvailableRoles() {
     return this.request<string[]>('/agents/roles/available');
+  }
+
+  // Dynamic Agent/Crew Management
+  async createAgent(data: {
+    name: string;
+    role: string;
+    goal: string;
+    backstory: string;
+    llm_task_type?: string;
+    allow_delegation?: boolean;
+  }) {
+    return this.request<{
+      agent_id: string;
+      name: string;
+      role: string;
+      llm_model: string;
+      message: string;
+    }>('/agent-management/agents', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getCustomAgents() {
+    return this.request<Array<{
+      agent_id: string;
+      name: string;
+      role: string;
+      llm_model: string;
+      message: string;
+    }>>('/agent-management/agents');
+  }
+
+  async deleteAgent(agentId: string) {
+    return this.request<void>(`/agent-management/agents/${agentId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async createCrew(data: {
+    name: string;
+    description: string;
+    agent_ids: string[];
+    process?: 'sequential' | 'hierarchical' | 'parallel';
+  }) {
+    return this.request<{
+      crew_id: string;
+      name: string;
+      agent_count: number;
+      message: string;
+    }>('/agent-management/crews', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getCustomCrews() {
+    return this.request<Array<{
+      crew_id: string;
+      name: string;
+      agent_count: number;
+      message: string;
+    }>>('/agent-management/crews');
+  }
+
+  async deleteCrew(crewId: string) {
+    return this.request<void>(`/agent-management/crews/${crewId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getLLMModels() {
+    return this.request<{
+      models: Array<{
+        id: string;
+        name: string;
+        task_types: string[];
+        description: string;
+        context_window: number;
+      }>;
+    }>('/agent-management/llm-models');
   }
 
   // Deployment Environments

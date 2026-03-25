@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 export function StatCardSkeleton() {
   return (
-    <Card className="border-slate-800 bg-slate-900/50">
+    <Card className="border-border-default bg-bg-panel/50">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <Skeleton className="h-4 w-24" />
         <Skeleton className="h-8 w-8 rounded-lg" />
@@ -20,7 +20,7 @@ export function StatCardSkeleton() {
 
 export function ActivityItemSkeleton() {
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-slate-800/50 p-3">
+    <div className="flex items-start gap-3 rounded-lg border border-border-default/50 p-3">
       <Skeleton className="h-10 w-10 rounded-lg" />
       <div className="flex-1 space-y-2">
         <Skeleton className="h-4 w-3/4" />
@@ -33,7 +33,7 @@ export function ActivityItemSkeleton() {
 
 export function ProjectCardSkeleton() {
   return (
-    <Card className="border-slate-800 bg-slate-900/50">
+    <Card className="border-border-default bg-bg-panel/50">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -62,7 +62,7 @@ export function ProjectCardSkeleton() {
 
 export function AgentCardSkeleton() {
   return (
-    <Card className="border-slate-800 bg-slate-900/50">
+    <Card className="border-border-default bg-bg-panel/50">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <Skeleton className="h-10 w-10 rounded-lg" />
@@ -110,7 +110,7 @@ export function DashboardSkeleton() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Activity Feed */}
         <div className="lg:col-span-2">
-          <Card className="border-slate-800 bg-slate-900/50">
+          <Card className="border-border-default bg-bg-panel/50">
             <CardHeader>
               <Skeleton className="h-6 w-32" />
               <Skeleton className="h-4 w-48" />
@@ -127,7 +127,7 @@ export function DashboardSkeleton() {
 
         {/* Pipeline */}
         <div>
-          <Card className="border-slate-800 bg-slate-900/50">
+          <Card className="border-border-default bg-bg-panel/50">
             <CardHeader>
               <Skeleton className="h-6 w-32" />
               <Skeleton className="h-4 w-48" />

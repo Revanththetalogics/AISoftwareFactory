@@ -1,5 +1,11 @@
 export { useWebSocket } from './useWebSocket';
 export {
+  useEventSource,
+  useMetricsStream,
+  useEventStream,
+  type EventSourceMessage,
+} from './useEventSource';
+export {
   useProjects,
   useProject,
   useCreateProject,
@@ -25,3 +31,12 @@ export {
   useAvailableRoles,
   useAvailableEnvironments,
 } from './useMetadata';
+export {
+  useLLMModels,
+  useCustomAgents,
+  useCreateAgent,
+  useDeleteAgent,
+  useCustomCrews,
+  useCreateCrew,
+  useDeleteCrew,
+} from './useAgentManagement';

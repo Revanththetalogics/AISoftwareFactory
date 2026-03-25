@@ -25,7 +25,7 @@ export default function KnowledgePage() {
           <h1 className="text-3xl font-bold text-text-primary">Knowledge Base</h1>
           <p className="text-text-secondary">RAG-powered knowledge management for AI agents</p>
         </div>
-        <Button className="bg-violet-500 hover:bg-violet-600">
+        <Button className="bg-state-queued hover:bg-state-queued">
           <Plus className="mr-2 h-4 w-4" />
           Add Knowledge
         </Button>
@@ -46,8 +46,8 @@ export default function KnowledgePage() {
           <Card key={kb.id} className="border-border-default bg-bg-base/50">
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
-                <div className="rounded-lg bg-indigo-500/10 p-3">
-                  <Brain className="h-6 w-6 text-indigo-400" />
+                <div className="rounded-lg bg-state-queued-dim p-3">
+                  <Brain className="h-6 w-6 text-state-queued" />
                 </div>
                 <Badge variant="secondary">RAG</Badge>
               </div>

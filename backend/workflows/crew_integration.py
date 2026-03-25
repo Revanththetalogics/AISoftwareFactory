@@ -15,6 +15,8 @@ from backend.agents.crews import (
     create_design_crew,
     create_implementation_crew,
     create_planning_crew,
+    create_test_generation_task,
+    create_testing_crew,
 )
 from backend.agents.crews.deployment_crew import (
     create_infrastructure_task,
@@ -83,6 +85,8 @@ class CrewIntegration:
             crew = create_design_crew()
         elif phase == ProjectPhase.IMPLEMENTATION:
             crew = create_implementation_crew()
+        elif phase == ProjectPhase.TESTING:
+            crew = create_testing_crew()
         elif phase == ProjectPhase.DEPLOYMENT:
             crew = create_deployment_crew()
 
@@ -207,6 +211,13 @@ class CrewIntegration:
                 tasks.append(create_backend_implementation_task(architecture, requirements))
                 tasks.append(create_frontend_implementation_task(architecture, requirements))
 
+        elif phase == ProjectPhase.TESTING:
+            backend_code = context.get("backend_code", "")
+            frontend_code = context.get("frontend_code", "")
+            requirements = context.get("requirements", "")
+            if backend_code or frontend_code:
+                tasks.append(create_test_generation_task(backend_code, frontend_code, requirements))
+
         elif phase == ProjectPhase.DEPLOYMENT:
             architecture = context.get("architecture", "")
             if architecture:
@@ -275,6 +286,14 @@ class CrewIntegration:
                 context_updates["backend_code"] = crew_output["backend_code"]
             if "frontend_code" in crew_output:
                 context_updates["frontend_code"] = crew_output["frontend_code"]
+
+        elif phase == ProjectPhase.TESTING:
+            if "test_suite" in crew_output:
+                context_updates["test_suite"] = crew_output["test_suite"]
+            if "test_coverage" in crew_output:
+                context_updates["test_coverage"] = crew_output["test_coverage"]
+            if "code_review" in crew_output:
+                context_updates["code_review"] = crew_output["code_review"]
 
         elif phase == ProjectPhase.DEPLOYMENT:
             if "infrastructure" in crew_output:

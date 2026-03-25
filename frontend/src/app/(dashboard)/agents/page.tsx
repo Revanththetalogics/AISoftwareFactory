@@ -6,30 +6,21 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Bot,
-  Brain,
   Users,
   Activity,
-  Zap,
   TrendingUp,
-  Clock,
   Target,
-  MoreHorizontal,
-  Filter,
   Search,
   RefreshCw,
-  Plus,
-  Pause,
-  Play,
-  AlertCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentCard, AgentGrid, type AgentStatus, type AgentRole } from '@/components/system/agent-card';
 import { MetricPanel, type MetricData } from '@/components/system/metric-panel';
+import { AgentCreator } from '@/components/agents/AgentCreator';
+import { CrewCreator } from '@/components/agents/CrewCreator';
+import { useCustomAgents, useCustomCrews, useDeleteAgent, useDeleteCrew } from '@/lib/hooks';
 import {
   AreaChart,
   Area,
@@ -40,9 +31,6 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  PieChart,
-  Pie,
-  Cell,
 } from 'recharts';
 
 // Mock agent data
@@ -259,6 +247,12 @@ export default function AgentsPage() {
   const [selectedCrew, setSelectedCrew] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<AgentStatus | null>(null);
 
+  // Fetch custom agents and crews from backend
+  const { data: customAgents = [] } = useCustomAgents();
+  const { data: customCrews = [] } = useCustomCrews();
+  const deleteAgent = useDeleteAgent();
+  const deleteCrew = useDeleteCrew();
+
   const filteredAgents = agents.filter((agent) => {
     const matchesSearch =
       agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -324,10 +318,8 @@ export default function AgentsPage() {
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
-          <Button variant="ai-action" size="sm">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Agent
-          </Button>
+          <AgentCreator />
+          <CrewCreator />
         </div>
       </motion.div>
 
@@ -444,6 +436,89 @@ export default function AgentsPage() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Custom Agents & Crews */}
+      {(customAgents.length > 0 || customCrews.length > 0) && (
+        <motion.div variants={itemVariants} className="grid gap-6 lg:grid-cols-2">
+          {/* Custom Agents */}
+          {customAgents.length > 0 && (
+            <Card className="border-border-default bg-bg-panel">
+              <CardHeader>
+                <CardTitle className="text-lg text-text-primary flex items-center gap-2">
+                  <Bot className="h-5 w-5 text-state-queued" />
+                  Custom Agents
+                </CardTitle>
+                <CardDescription className="text-text-secondary">
+                  Dynamically created agents
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {customAgents.map((agent) => (
+                    <div
+                      key={agent.agent_id}
+                      className="flex items-center justify-between p-3 rounded-lg border border-border-default bg-bg-elevated"
+                    >
+                      <div>
+                        <p className="font-medium text-text-primary">{agent.name}</p>
+                        <p className="text-xs text-text-secondary">{agent.role} • {agent.llm_model}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteAgent.mutate(agent.agent_id)}
+                        disabled={deleteAgent.isPending}
+                        className="text-state-error hover:text-state-error hover:bg-state-error-dim"
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Custom Crews */}
+          {customCrews.length > 0 && (
+            <Card className="border-border-default bg-bg-panel">
+              <CardHeader>
+                <CardTitle className="text-lg text-text-primary flex items-center gap-2">
+                  <Users className="h-5 w-5 text-state-queued" />
+                  Custom Crews
+                </CardTitle>
+                <CardDescription className="text-text-secondary">
+                  Dynamically created crews
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {customCrews.map((crew) => (
+                    <div
+                      key={crew.crew_id}
+                      className="flex items-center justify-between p-3 rounded-lg border border-border-default bg-bg-elevated"
+                    >
+                      <div>
+                        <p className="font-medium text-text-primary">{crew.name}</p>
+                        <p className="text-xs text-text-secondary">{crew.agent_count} agents</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteCrew.mutate(crew.crew_id)}
+                        disabled={deleteCrew.isPending}
+                        className="text-state-error hover:text-state-error hover:bg-state-error-dim"
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </motion.div>
+      )}
 
       {/* Agents Grid */}
       <motion.div variants={itemVariants}>

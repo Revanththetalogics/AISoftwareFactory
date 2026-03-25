@@ -6,6 +6,8 @@ for managing the software development lifecycle.
 """
 
 
+from datetime import datetime
+
 from langgraph.graph import END, StateGraph
 
 from backend.core.logging import get_logger
@@ -42,6 +44,35 @@ class WorkflowEngine:
         self._graph = self._build_graph()
         self._logger = get_logger(__name__)
         self._logger.info("Workflow engine initialized")
+
+    async def _broadcast_phase_event(
+        self,
+        project_id: str,
+        phase: ProjectPhase,
+        status: str,
+        output: dict | None = None,
+        error: str | None = None,
+    ):
+        """Broadcast phase execution events to connected clients."""
+        # Lazy import to avoid circular imports
+        try:
+            from backend.api.routes.events import broadcast_event
+
+            event_data = {
+                "project_id": project_id,
+                "phase": phase.value,
+                "status": status,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+            if output:
+                event_data["output"] = output
+            if error:
+                event_data["error"] = error
+
+            await broadcast_event("workflow_progress", event_data)
+        except ImportError:
+            # Events not available, skip broadcasting
+            pass
 
     def _build_graph(self) -> StateGraph:
         """
@@ -253,15 +284,22 @@ class WorkflowEngine:
         return state
 
     async def _execute_requirements_phase(self, state: WorkflowState) -> WorkflowState:
-        """Execute the requirements phase with CrewAI."""
+        """Execute the requirements phase with CrewAI using Mixtral for reasoning."""
         self._logger.info("Executing requirements phase", project_id=state.project_id)
+
+        await self._broadcast_phase_event(
+            state.project_id,
+            ProjectPhase.REQUIREMENTS,
+            "started",
+            {"message": "AI Product Manager analyzing requirements with Mixtral"}
+        )
 
         state.update_phase_status(
             ProjectPhase.REQUIREMENTS,
             PhaseStatus.IN_PROGRESS,
         )
 
-        # Execute with CrewAI
+        # Execute with CrewAI (uses Mixtral via task_type="reasoning")
         result = await self.crew_integration.execute_phase(
             ProjectPhase.REQUIREMENTS,
             state.context,
@@ -281,11 +319,25 @@ class WorkflowEngine:
                 PhaseStatus.COMPLETED,
                 output=result["output"],
             )
+
+            await self._broadcast_phase_event(
+                state.project_id,
+                ProjectPhase.REQUIREMENTS,
+                "completed",
+                result["output"]
+            )
         else:
             state.update_phase_status(
                 ProjectPhase.REQUIREMENTS,
                 PhaseStatus.FAILED,
                 error=result.get("error", "Unknown error"),
+            )
+
+            await self._broadcast_phase_event(
+                state.project_id,
+                ProjectPhase.REQUIREMENTS,
+                "failed",
+                error=result.get("error", "Unknown error")
             )
 
         state.set_current_phase(ProjectPhase.REQUIREMENTS)
@@ -368,7 +420,7 @@ class WorkflowEngine:
         return state
 
     async def _execute_testing_phase(self, state: WorkflowState) -> WorkflowState:
-        """Execute the testing phase using the TestIntelligenceEngine."""
+        """Execute the testing phase with CrewAI."""
         self._logger.info("Executing testing phase", project_id=state.project_id)
 
         state.update_phase_status(
@@ -376,32 +428,30 @@ class WorkflowEngine:
             PhaseStatus.IN_PROGRESS,
         )
 
-        try:
-            from backend.testing.intelligence_engine import TestIntelligenceEngine
-            engine = TestIntelligenceEngine()
-            source_path = state.context.get("source_path", "backend")
-            report = await engine.analyze_codebase(source_path)
-            output = {
-                "bugs_detected": len(report.get("bugs", [])),
-                "tests_generated": len(report.get("test_cases", [])),
-                "coverage": report.get("coverage_percentage", 0.0),
-                "summary": report.get("summary", "Testing phase complete."),
-            }
+        # Execute with CrewAI using DeepSeek Coder for code review
+        result = await self.crew_integration.execute_phase(
+            ProjectPhase.TESTING,
+            state.context,
+        )
+
+        if result["success"]:
+            context_updates = self.crew_integration.map_crew_output_to_state(
+                ProjectPhase.TESTING,
+                result["output"],
+            )
+            for key, value in context_updates.items():
+                state.add_to_context(key, value)
+
             state.update_phase_status(
                 ProjectPhase.TESTING,
                 PhaseStatus.COMPLETED,
-                output=output,
+                output=result["output"],
             )
-        except Exception as exc:
-            self._logger.error(
-                "Testing phase failed",
-                project_id=state.project_id,
-                error=str(exc),
-            )
+        else:
             state.update_phase_status(
                 ProjectPhase.TESTING,
                 PhaseStatus.FAILED,
-                error=str(exc),
+                error=result.get("error", "Unknown error"),
             )
 
         state.set_current_phase(ProjectPhase.TESTING)

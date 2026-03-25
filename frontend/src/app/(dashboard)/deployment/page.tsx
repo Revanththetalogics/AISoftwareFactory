@@ -8,8 +8,6 @@ import {
   Rocket,
   Globe,
   Server,
-  CheckCircle2,
-  AlertCircle,
   Clock,
   GitCommit,
   GitBranch,
@@ -17,11 +15,7 @@ import {
   Cpu,
   HardDrive,
   Network,
-  TrendingUp,
-  TrendingDown,
-  MoreHorizontal,
   RefreshCw,
-  Play,
   Pause,
   RotateCcw,
   Terminal,
@@ -31,9 +25,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DeploymentStatusCard, type DeploymentEnvironment, type DeploymentStatus } from '@/components/system/deployment-status-card';
+import { type DeploymentEnvironment, type DeploymentStatus } from '@/components/system/deployment-status-card';
 import {
   AreaChart,
   Area,
@@ -42,8 +34,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
 } from 'recharts';
 
 // Mock deployment data

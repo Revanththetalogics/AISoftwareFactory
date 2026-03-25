@@ -12,14 +12,10 @@ import {
   Play,
   RotateCcw,
   FileCode,
-  GitPullRequest,
   Shield,
-  TrendingUp,
   Clock,
-  Target,
   Bug,
   Zap,
-  Filter,
   Search,
   MoreHorizontal,
   ChevronRight,
@@ -160,7 +156,7 @@ const getSeverityColor = (severity: string) => {
     case 'critical':
       return 'bg-state-error-dim text-state-error border-state-error/30';
     case 'high':
-      return 'bg-orange-500/10 text-orange-400 border-orange-500/30';
+      return 'bg-state-warning-dim text-state-warning border-state-warning/30';
     case 'medium':
       return 'bg-state-warning-dim text-state-warning border-state-warning/30';
     case 'low':

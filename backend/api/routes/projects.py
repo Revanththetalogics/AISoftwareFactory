@@ -5,19 +5,22 @@ This module provides REST endpoints for project CRUD operations.
 """
 
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.api.dependencies import get_current_user
+from backend.api.dependencies import get_current_user, get_workflow_service
 from backend.api.models import (
     ProjectCreate,
     ProjectResponse,
     ProjectStatus,
     ProjectUpdate,
+    QuickStartRequest,
+    QuickStartResponse,
 )
 from backend.core.logging import get_logger
 from backend.db.session import get_db
-from backend.services.database_services import get_project_service
+from backend.models.workflow import WorkflowStatus
+from backend.services.database_services import DatabaseWorkflowService, get_project_service
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -356,4 +359,148 @@ async def activate_project(
         created_at=updated_project.created_at,
         updated_at=updated_project.updated_at,
         metadata=updated_project.extra_metadata
+    )
+
+
+@router.post(
+    "/quickstart",
+    response_model=QuickStartResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Create and start project from a single prompt",
+)
+async def quickstart_project(
+    request: QuickStartRequest,
+    background_tasks: BackgroundTasks,
+    user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    workflow_service: DatabaseWorkflowService = Depends(get_workflow_service),
+) -> QuickStartResponse:
+    """
+    Create a new project and immediately start the AI development workflow.
+
+    This is the single-prompt SaaS creation endpoint. It:
+    1. Creates a project from the user's idea/prompt
+    2. Activates the project
+    3. Starts the LangGraph workflow in the background
+    4. Returns immediately with project and workflow IDs
+
+    The workflow will execute all phases: Requirements → Architecture →
+    Implementation → Testing → Deployment
+    """
+    # Import here to avoid circular imports
+    from backend.workflows.state_machine import ProjectPhase, WorkflowState
+    from backend.workflows.workflow_engine import WorkflowEngine
+
+    # Step 1: Create project from the prompt
+    project = await project_service.create_project(
+        name=request.idea[:50] + "..." if len(request.idea) > 50 else request.idea,
+        description=request.idea,
+        requirements={
+            "prompt": request.idea,
+            "template": request.template or "custom",
+            "auto_start": True,
+        },
+        tech_stack=request.tech_stack or {},
+        owner_id=user.user_id if user else None,
+        db=db
+    )
+
+    logger.info(
+        "QuickStart project created",
+        project_id=project.id,
+        template=request.template,
+        user=user.user_id if user else "anonymous",
+    )
+
+    # Step 2: Activate the project
+    await project_service.update_project(
+        project_id=project.id,
+        updates={
+            "status": "active",
+            "current_phase": "requirements"
+        },
+        db=db
+    )
+
+    # Step 3: Create workflow
+    steps = [
+        {"id": "requirements", "name": "Requirements Analysis"},
+        {"id": "architecture", "name": "System Design"},
+        {"id": "implementation", "name": "Implementation"},
+        {"id": "testing", "name": "Testing"},
+        {"id": "deployment", "name": "Deployment"},
+    ]
+
+    workflow = await workflow_service.create_workflow(
+        name=f"Auto-generated workflow for {project.name}",
+        project_id=project.id,
+        steps=steps,
+        created_by=user.user_id if user else None,
+        db=db
+    )
+
+    # Step 4: Start workflow execution in background
+    async def execute_full_workflow():
+        """Execute the complete workflow pipeline."""
+        try:
+            await workflow_service.update_workflow_status(
+                workflow_id=workflow.id,
+                status=WorkflowStatus.RUNNING,
+                current_step_id="requirements"
+            )
+
+            # Initialize and run the workflow engine
+            engine = WorkflowEngine()
+            initial_state = WorkflowState(
+                project_id=project.id,
+                current_phase=ProjectPhase.IDEA,
+                context={
+                    "prompt": request.idea,
+                    "template": request.template,
+                    "tech_stack": request.tech_stack,
+                }
+            )
+
+            final_state = await engine.run(initial_state)
+
+            # Update final status
+            if final_state.current_phase == ProjectPhase.FAILED:
+                await workflow_service.update_workflow_status(
+                    workflow_id=workflow.id,
+                    status=WorkflowStatus.FAILED,
+                    current_step_id=final_state.current_phase.value
+                )
+            else:
+                await workflow_service.update_workflow_status(
+                    workflow_id=workflow.id,
+                    status=WorkflowStatus.COMPLETED,
+                    current_step_id=final_state.current_phase.value
+                )
+
+        except Exception as exc:
+            logger.error(
+                "QuickStart workflow execution failed",
+                project_id=project.id,
+                workflow_id=workflow.id,
+                error=str(exc),
+            )
+            await workflow_service.update_workflow_status(
+                workflow_id=workflow.id,
+                status=WorkflowStatus.FAILED
+            )
+
+    background_tasks.add_task(execute_full_workflow)
+
+    logger.info(
+        "QuickStart workflow started",
+        project_id=project.id,
+        workflow_id=workflow.id,
+        user=user.user_id if user else "anonymous",
+    )
+
+    return QuickStartResponse(
+        project_id=project.id,
+        workflow_id=workflow.id,
+        message="Project created and workflow started. Monitor progress via SSE events.",
+        status="started",
     )

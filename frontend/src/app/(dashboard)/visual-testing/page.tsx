@@ -24,7 +24,7 @@ export default function VisualTestingPage() {
           <h1 className="text-3xl font-bold text-text-primary">Visual Regression</h1>
           <p className="text-text-secondary">AI-powered visual testing and comparison</p>
         </div>
-        <Button className="bg-amber-500 hover:bg-amber-600">
+        <Button className="bg-state-warning hover:bg-state-warning">
           <Camera className="mr-2 h-4 w-4" />
           Run Visual Tests
         </Button>

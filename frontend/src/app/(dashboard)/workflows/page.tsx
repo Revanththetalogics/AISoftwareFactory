@@ -14,11 +14,9 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  MoreHorizontal,
   Plus,
   Search,
-  Filter,
-  ArrowRight,
+
   Terminal,
   Activity,
 } from 'lucide-react';

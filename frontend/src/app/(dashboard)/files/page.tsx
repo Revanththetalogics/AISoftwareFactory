@@ -37,7 +37,7 @@ export default function FilesPage() {
           <h1 className="text-3xl font-bold text-text-primary">File Manager</h1>
           <p className="text-text-secondary">Browse and manage generated files</p>
         </div>
-        <Button className="bg-emerald-500 hover:bg-emerald-600">
+        <Button className="bg-state-success hover:bg-state-success">
           <Upload className="mr-2 h-4 w-4" />
           Upload
         </Button>
@@ -63,7 +63,7 @@ export default function FilesPage() {
                     {child.type === 'folder' ? (
                       <Folder className="h-4 w-4 text-state-warning" />
                     ) : (
-                      <File className="h-4 w-4 text-state-info" />
+                      <File className="h-4 w-4 text-state-running" />
                     )}
                     <span className="text-text-secondary text-sm">{child.name}</span>
                   </div>

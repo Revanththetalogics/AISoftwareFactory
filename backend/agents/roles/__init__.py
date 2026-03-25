@@ -11,6 +11,7 @@ from backend.agents.roles.ceo_role import get_ceo_role
 from backend.agents.roles.devops_engineer_role import get_devops_engineer_role
 from backend.agents.roles.frontend_engineer_role import get_frontend_engineer_role
 from backend.agents.roles.product_manager_role import get_product_manager_role
+from backend.agents.roles.qa_engineer_role import get_qa_engineer_role
 
 __all__ = [
     "get_ceo_role",
@@ -19,4 +20,5 @@ __all__ = [
     "get_frontend_engineer_role",
     "get_architect_role",
     "get_devops_engineer_role",
+    "get_qa_engineer_role",
 ]

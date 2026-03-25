@@ -39,12 +39,12 @@ export default function CodeGenPage() {
               placeholder="Describe what you want to build..."
               value={prompt}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPrompt(e.target.value)}
-              className="min-h-[200px] w-full rounded-md border border-border-default bg-slate-950 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="min-h-[200px] w-full rounded-md border border-border-default bg-bg-code px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-state-success"
             />
             <Button 
               onClick={handleGenerate}
               disabled={generating || !prompt}
-              className="w-full bg-emerald-500 hover:bg-emerald-600"
+              className="w-full bg-state-success hover:bg-state-success"
             >
               {generating ? (
                 <>
@@ -74,10 +74,10 @@ export default function CodeGenPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="min-h-[200px] rounded-lg bg-slate-950 p-4 font-mono text-sm text-text-secondary">
+            <div className="min-h-[200px] rounded-lg bg-bg-code p-4 font-mono text-sm text-text-secondary">
               {generating ? (
                 <div className="flex items-center justify-center h-full">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-state-success border-t-transparent" />
                 </div>
               ) : (
                 '// Generated code will appear here...'

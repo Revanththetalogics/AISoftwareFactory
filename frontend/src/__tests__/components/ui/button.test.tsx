@@ -78,7 +78,7 @@ describe('Button', () => {
     it('renders ai-action variant', () => {
       render(<Button variant="ai-action">AI Action</Button>);
       const button = screen.getByRole('button');
-      expect(button.className).toContain('from-violet-600');
+      expect(button.className).toContain('from-state-queued');
     });
   });
 

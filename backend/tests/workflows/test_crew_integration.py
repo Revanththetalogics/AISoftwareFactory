@@ -89,12 +89,12 @@ class TestCrewIntegration:
             assert crew1 == crew2
             mock_create.assert_called_once()  # Only called once
 
-    def test_assemble_crew_for_phase_no_crew(self):
+    def test_assemble_crew_for_phase_idea_no_crew(self):
         """Test assembling crew for phase that doesn't use crews."""
         integration = CrewIntegration()
 
-        # TESTING phase doesn't have a crew
-        crew = integration.assemble_crew_for_phase(ProjectPhase.TESTING)
+        # IDEA phase doesn't have a crew (it's before REQUIREMENTS)
+        crew = integration.assemble_crew_for_phase(ProjectPhase.IDEA)
 
         assert crew is None
 

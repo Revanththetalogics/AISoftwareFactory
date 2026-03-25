@@ -192,3 +192,28 @@ class HealthCheckResponse(BaseModel):
     timestamp: datetime
     components: dict[str, str]
     uptime_seconds: float
+
+
+class QuickStartRequest(BaseModel):
+    """Request model for single-prompt SaaS creation."""
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "idea": "A SaaS platform for managing freelance projects with time tracking and invoicing",
+            "template": "saas_starter",
+            "tech_stack": {"frontend": "nextjs", "backend": "fastapi"}
+        }
+    })
+
+    idea: str = Field(..., min_length=10, description="Your SaaS idea/prompt")
+    template: str | None = Field(None, description="Optional template to use")
+    tech_stack: dict[str, Any] | None = Field(None, description="Technology stack preferences")
+
+
+class QuickStartResponse(BaseModel):
+    """Response model for QuickStart endpoint."""
+    model_config = ConfigDict(from_attributes=True)
+
+    project_id: str
+    workflow_id: str
+    message: str
+    status: str

@@ -50,10 +50,10 @@ const roleIcons: Record<AgentRole, React.ElementType> = {
 };
 
 const roleColors: Record<AgentRole, string> = {
-  orchestrator: 'text-violet-400 bg-violet-500/10 border-violet-500/20',
-  executor: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
-  validator: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
-  deployer: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
+  orchestrator: 'text-state-queued bg-state-queued-dim border-state-queued/30',
+  executor: 'text-state-running bg-state-running-dim border-state-running/30',
+  validator: 'text-state-success bg-state-success-dim border-state-success/30',
+  deployer: 'text-state-warning bg-state-warning-dim border-state-warning/30',
 };
 
 const statusColors: Record<AgentStatus, string> = {

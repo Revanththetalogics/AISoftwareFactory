@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { Bot, Brain, Activity, Sparkles, Zap, ArrowRight } from 'lucide-react';
+import { Bot, Brain, Activity, Zap, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,16 @@ import { AgentCard, AgentGrid } from '@/components/system/agent-card';
 import { SystemMetrics } from '@/components/system/metric-panel';
 import { ExecutionTimeline } from '@/components/system/execution-timeline';
 import { MiniLogViewer } from '@/components/system/log-stream';
+import { QuickStartButton } from '@/components/project/QuickStartButton';
+import { TemplateSelector } from '@/components/project/TemplateSelector';
+import { AgentActivityFeed } from '@/components/agents/AgentActivityFeed';
+import { AgentCollaborationView } from '@/components/agents/AgentCollaborationView';
+import { CodeReviewInterface } from '@/components/codegen/CodeReviewInterface';
+import { AutoTestGenerator } from '@/components/testing/AutoTestGenerator';
+import { DeploymentPipeline } from '@/components/deployment/DeploymentPipeline';
+import { DeploymentPreview } from '@/components/deployment/DeploymentPreview';
+import { OptimizationAdvisor } from '@/components/infrastructure/OptimizationAdvisor';
+import { CostEstimator } from '@/components/infrastructure/CostEstimator';
 import { containerVariants, slideVariants } from '@/lib/motion-variants';
 import type { TimelinePhase } from '@/components/system/execution-timeline';
 import type { LogLevel, LogEntry } from '@/components/system/log-stream';
@@ -189,10 +199,10 @@ export default function DashboardPage() {
             Monitor your AI Software Factory operations in real-time
           </p>
         </div>
-        <Button variant="ai-action">
-          <Sparkles className="mr-2 h-4 w-4" />
-          New Project
-        </Button>
+        <div className="flex items-center gap-3">
+          <TemplateSelector />
+          <QuickStartButton />
+        </div>
       </motion.div>
 
       {/* System Metrics */}
@@ -214,7 +224,7 @@ export default function DashboardPage() {
           animate="visible"
           className="lg:col-span-2"
         >
-          <Card className="border-border-default bg-bg-panel">
+          <Card className="glass-panel border-border-default/50">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-lg text-text-primary">Active Agents</CardTitle>
@@ -222,7 +232,7 @@ export default function DashboardPage() {
                   Real-time status of AI engineering team
                 </p>
               </div>
-              <Badge variant="secondary" className="bg-state-running-dim text-state-running">
+              <Badge variant="secondary" className="bg-state-running-dim text-state-running animate-pulse">
                 <Activity className="mr-1 h-3 w-3" />
                 Live
               </Badge>
@@ -247,16 +257,23 @@ export default function DashboardPage() {
           </Card>
         </motion.div>
 
+        {/* Agent Activity Feed */}
+        <motion.div variants={slideVariants} initial="hidden" animate="visible">
+          <Card className="glass-panel border-border-default/50 h-[500px]">
+            <AgentActivityFeed />
+          </Card>
+        </motion.div>
+
         {/* Project Pipeline */}
         <motion.div variants={slideVariants} initial="hidden" animate="visible">
-          <Card className="border-border-default bg-bg-panel">
-            <CardHeader>
+          <Card className="glass-panel border-border-default/50">
+            <CardHeader className="pb-3">
               <CardTitle className="text-lg text-text-primary">Project Pipeline</CardTitle>
               <p className="text-sm text-text-secondary">
                 Development lifecycle stages
               </p>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               <ExecutionTimeline 
                 phases={timelinePhases}
                 compact
@@ -267,11 +284,11 @@ export default function DashboardPage() {
       </div>
 
       {/* Bottom Section: Logs & Projects */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         {/* Recent Activity Logs */}
         <motion.div variants={slideVariants} initial="hidden" animate="visible">
-          <Card className="border-border-default bg-bg-panel">
-            <CardHeader className="flex flex-row items-center justify-between">
+          <Card className="glass-panel border-border-default/50">
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
               <div>
                 <CardTitle className="text-lg text-text-primary">Activity Logs</CardTitle>
                 <p className="text-sm text-text-secondary">
@@ -283,7 +300,7 @@ export default function DashboardPage() {
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               <MiniLogViewer logs={recentLogs} limit={6} />
             </CardContent>
           </Card>
@@ -291,8 +308,8 @@ export default function DashboardPage() {
 
         {/* Recent Projects */}
         <motion.div variants={slideVariants} initial="hidden" animate="visible">
-          <Card className="border-border-default bg-bg-panel">
-            <CardHeader className="flex flex-row items-center justify-between">
+          <Card className="glass-panel border-border-default/50">
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
               <div>
                 <CardTitle className="text-lg text-text-primary">Recent Projects</CardTitle>
                 <p className="text-sm text-text-secondary">
@@ -304,12 +321,12 @@ export default function DashboardPage() {
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="pt-0">
+              <div className="space-y-3">
                 {recentProjects.map((project) => (
                   <div
                     key={project.id}
-                    className="rounded-xl border border-border-subtle bg-bg-elevated p-4 transition-all hover:border-emphasis hover:bg-bg-hover"
+                    className="rounded-lg border border-border-subtle/50 bg-bg-elevated/50 p-3 transition-all hover:border-emphasis hover:bg-bg-hover"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
@@ -355,6 +372,44 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
+        </motion.div>
+      </div>
+
+      {/* Advanced Features Section */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Code Review Interface */}
+        <motion.div variants={slideVariants} initial="hidden" animate="visible">
+          <CodeReviewInterface />
+        </motion.div>
+
+        {/* Auto Test Generator */}
+        <motion.div variants={slideVariants} initial="hidden" animate="visible">
+          <AutoTestGenerator />
+        </motion.div>
+
+        {/* Agent Collaboration View */}
+        <motion.div variants={slideVariants} initial="hidden" animate="visible">
+          <AgentCollaborationView />
+        </motion.div>
+
+        {/* Deployment Pipeline */}
+        <motion.div variants={slideVariants} initial="hidden" animate="visible">
+          <DeploymentPipeline />
+        </motion.div>
+
+        {/* Deployment Preview */}
+        <motion.div variants={slideVariants} initial="hidden" animate="visible">
+          <DeploymentPreview />
+        </motion.div>
+
+        {/* Optimization Advisor */}
+        <motion.div variants={slideVariants} initial="hidden" animate="visible">
+          <OptimizationAdvisor />
+        </motion.div>
+
+        {/* Cost Estimator */}
+        <motion.div variants={slideVariants} initial="hidden" animate="visible">
+          <CostEstimator />
         </motion.div>
       </div>
     </motion.div>

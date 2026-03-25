@@ -221,8 +221,20 @@ class TestWorkflowEngine:
 
     @pytest.mark.asyncio
     async def test_execute_testing_phase(self):
-        """Test testing phase execution (stub)."""
-        with patch("backend.workflows.workflow_engine.CrewIntegration"):
+        """Test testing phase execution."""
+        with patch("backend.workflows.workflow_engine.CrewIntegration") as mock_crew_cls:
+            mock_crew = MagicMock()
+            mock_crew.execute_phase = AsyncMock(
+                return_value={
+                    "success": True,
+                    "output": {"test_results": "all tests passed"},
+                }
+            )
+            mock_crew.map_crew_output_to_state = MagicMock(
+                return_value={"test_results": "all tests passed"}
+            )
+            mock_crew_cls.return_value = mock_crew
+
             engine = WorkflowEngine()
             state = WorkflowState(project_id="test-123")
 

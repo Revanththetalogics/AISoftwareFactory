@@ -20,7 +20,17 @@ from backend.api.models import (
 )
 
 # Import route modules directly
-from backend.api.routes import agents, auth, deployments, projects, testing, websocket, workflows
+from backend.api.routes import (
+    agent_management,
+    agents,
+    auth,
+    deployments,
+    events,
+    projects,
+    testing,
+    websocket,
+    workflows,
+)
 
 # Main API router
 api_router = APIRouter(prefix="/api/v1")
@@ -33,6 +43,8 @@ api_router.include_router(workflows.router)
 api_router.include_router(agents.router)
 api_router.include_router(deployments.router)
 api_router.include_router(testing.router)
+api_router.include_router(events.router)
+api_router.include_router(agent_management.router)
 # WebSocket routes are mounted at app level, not in API router
 
 __all__ = [

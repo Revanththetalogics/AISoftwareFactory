@@ -3,7 +3,6 @@
 export const dynamic = 'force-dynamic';
 
 import { useState } from 'react';
-import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -14,11 +13,9 @@ import {
   FileCode,
   TestTube,
   Rocket,
-  Settings,
   MoreHorizontal,
   Clock,
   CheckCircle2,
-  AlertCircle,
   Loader2,
   Terminal,
   Bot,
@@ -274,9 +271,8 @@ const itemVariants = {
 };
 
 export default function ProjectDetailPage() {
-  const params = useParams();
   const [isWorkflowRunning, setIsWorkflowRunning] = useState(true);
-  const projectId = params.id as string;
+  // Project ID available via useParams().id when needed
 
   const getPhaseStatus = (phaseId: string) => {
     const phaseIndex = projectPhases.findIndex((p) => p.id === phaseId);

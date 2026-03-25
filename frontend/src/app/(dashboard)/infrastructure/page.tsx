@@ -25,7 +25,7 @@ export default function InfrastructurePage() {
           <h1 className="text-3xl font-bold text-text-primary">Infrastructure</h1>
           <p className="text-text-secondary">Manage cloud infrastructure and resources</p>
         </div>
-        <Button className="bg-cyan-500 hover:bg-cyan-600">
+        <Button className="bg-state-running hover:bg-state-running">
           <Cloud className="mr-2 h-4 w-4" />
           Provision Resources
         </Button>
@@ -36,8 +36,8 @@ export default function InfrastructurePage() {
           <Card key={component.id} className="border-border-default bg-bg-base/50">
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
-                <div className="rounded-lg bg-cyan-500/10 p-3">
-                  <component.icon className="h-6 w-6 text-cyan-400" />
+                <div className="rounded-lg bg-state-running-dim p-3">
+                  <component.icon className="h-6 w-6 text-state-running" />
                 </div>
                 <Badge
                   variant="secondary"
@@ -58,7 +58,7 @@ export default function InfrastructurePage() {
           <CardTitle className="text-text-primary">Terraform Configuration</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-lg bg-slate-950 p-4 font-mono text-sm text-text-secondary">
+          <div className="rounded-lg bg-bg-code p-4 font-mono text-sm text-text-secondary">
             <pre>{`# Infrastructure as Code
 resource "docker_container" "app" {
   image = "ai-factory:latest"

@@ -1,17 +1,17 @@
 'use client';
 
-import { createContext, useContext, useCallback, useState } from 'react';
-import { useWebSocket, type WebSocketMessage } from '@/lib/websocket';
+import { createContext, useContext, useCallback, useState, useEffect } from 'react';
+import { useEventStream, type EventSourceMessage } from '@/lib/hooks';
 import { toast } from 'sonner';
 
 interface RealtimeContextType {
   isConnected: boolean;
   isConnecting: boolean;
-  lastMessage: WebSocketMessage | null;
-  agentUpdates: Map<string, WebSocketMessage['data']>;
-  workflowUpdates: Map<string, WebSocketMessage['data']>;
-  logEntries: WebSocketMessage['data'][];
-  systemMetrics: WebSocketMessage['data'] | null;
+  lastMessage: EventSourceMessage | null;
+  agentUpdates: Map<string, unknown>;
+  workflowUpdates: Map<string, unknown>;
+  logEntries: unknown[];
+  systemMetrics: unknown | null;
 }
 
 const RealtimeContext = createContext<RealtimeContextType>({
@@ -33,20 +33,19 @@ interface RealtimeProviderProps {
 }
 
 export function RealtimeProvider({ children }: RealtimeProviderProps) {
-  const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
-  const [agentUpdates, setAgentUpdates] = useState<Map<string, WebSocketMessage['data']>>(new Map());
-  const [workflowUpdates, setWorkflowUpdates] = useState<Map<string, WebSocketMessage['data']>>(new Map());
-  const [logEntries, setLogEntries] = useState<WebSocketMessage['data'][]>([]);
-  const [systemMetrics, setSystemMetrics] = useState<WebSocketMessage['data'] | null>(null);
+  const [agentUpdates, setAgentUpdates] = useState<Map<string, unknown>>(new Map());
+  const [workflowUpdates, setWorkflowUpdates] = useState<Map<string, unknown>>(new Map());
+  const [logEntries, setLogEntries] = useState<unknown[]>([]);
+  const [systemMetrics, setSystemMetrics] = useState<unknown | null>(null);
+  const [hasConnected, setHasConnected] = useState(false);
 
-  const handleMessage = useCallback((message: WebSocketMessage) => {
-    setLastMessage(message);
-
+  const handleMessage = useCallback((message: EventSourceMessage) => {
     switch (message.type) {
       case 'agent_status':
         setAgentUpdates((prev) => {
           const next = new Map(prev);
-          next.set(message.data.agentId, message.data);
+          const data = message.data as { agent_id: string };
+          next.set(data.agent_id, message.data);
           return next;
         });
         break;
@@ -54,14 +53,15 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
       case 'workflow_progress':
         setWorkflowUpdates((prev) => {
           const next = new Map(prev);
-          next.set(message.data.workflowId, message.data);
+          const data = message.data as { workflow_id: string };
+          next.set(data.workflow_id, message.data);
           return next;
         });
         break;
 
       case 'log_entry':
         setLogEntries((prev) => {
-          const next = [message.data, ...prev].slice(0, 100); // Keep last 100 logs
+          const next = [message.data, ...prev].slice(0, 100);
           return next;
         });
         break;
@@ -71,32 +71,37 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
         break;
 
       case 'notification':
-        toast(message.data.title, {
-          description: message.data.message,
-          icon: message.data.type === 'error' ? '❌' : message.data.type === 'warning' ? '⚠️' : message.data.type === 'success' ? '✅' : 'ℹ️',
+        const notif = message.data as { title: string; message: string; type: string };
+        toast(notif.title, {
+          description: notif.message,
+          icon: notif.type === 'error' ? '❌' : notif.type === 'warning' ? '⚠️' : notif.type === 'success' ? '✅' : 'ℹ️',
         });
         break;
-    }
-  }, []);
 
-  const { isConnected, isConnecting } = useWebSocket({
-    enableMock: true,
-    onMessage: handleMessage,
-    onConnect: () => {
-      toast.success('Real-time connection established', {
-        description: 'Live updates are now active',
-      });
-    },
-    onDisconnect: () => {
-      toast.error('Real-time connection lost', {
-        description: 'Attempting to reconnect...',
-      });
-    },
-  });
+      case 'connected':
+        if (!hasConnected) {
+          toast.success('Real-time connection established', {
+            description: 'Live updates are now active',
+          });
+          setHasConnected(true);
+        }
+        break;
+    }
+  }, [hasConnected]);
+
+  const { isConnected, lastMessage } = useEventStream();
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (lastMessage) {
+      handleMessage(lastMessage);
+    }
+  }, [lastMessage, handleMessage]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const value: RealtimeContextType = {
     isConnected,
-    isConnecting,
+    isConnecting: !isConnected && hasConnected,
     lastMessage,
     agentUpdates,
     workflowUpdates,
