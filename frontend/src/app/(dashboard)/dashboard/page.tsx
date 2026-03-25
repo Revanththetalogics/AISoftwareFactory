@@ -376,39 +376,39 @@ export default function DashboardPage() {
       </div>
 
       {/* Advanced Features Section */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
         {/* Code Review Interface */}
-        <motion.div variants={slideVariants} initial="hidden" animate="visible">
+        <motion.div variants={slideVariants} initial="hidden" animate="visible" className="min-w-0">
           <CodeReviewInterface />
         </motion.div>
 
         {/* Auto Test Generator */}
-        <motion.div variants={slideVariants} initial="hidden" animate="visible">
+        <motion.div variants={slideVariants} initial="hidden" animate="visible" className="min-w-0">
           <AutoTestGenerator />
         </motion.div>
 
         {/* Agent Collaboration View */}
-        <motion.div variants={slideVariants} initial="hidden" animate="visible">
+        <motion.div variants={slideVariants} initial="hidden" animate="visible" className="min-w-0">
           <AgentCollaborationView />
         </motion.div>
 
         {/* Deployment Pipeline */}
-        <motion.div variants={slideVariants} initial="hidden" animate="visible">
+        <motion.div variants={slideVariants} initial="hidden" animate="visible" className="min-w-0">
           <DeploymentPipeline />
         </motion.div>
 
         {/* Deployment Preview */}
-        <motion.div variants={slideVariants} initial="hidden" animate="visible">
+        <motion.div variants={slideVariants} initial="hidden" animate="visible" className="min-w-0">
           <DeploymentPreview />
         </motion.div>
 
         {/* Optimization Advisor */}
-        <motion.div variants={slideVariants} initial="hidden" animate="visible">
+        <motion.div variants={slideVariants} initial="hidden" animate="visible" className="min-w-0">
           <OptimizationAdvisor />
         </motion.div>
 
         {/* Cost Estimator */}
-        <motion.div variants={slideVariants} initial="hidden" animate="visible">
+        <motion.div variants={slideVariants} initial="hidden" animate="visible" className="min-w-0">
           <CostEstimator />
         </motion.div>
       </div>
