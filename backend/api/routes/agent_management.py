@@ -161,7 +161,7 @@ async def create_crew(
 ) -> CreateCrewResponse:
     """
     Create a new custom crew dynamically from selected agents.
-    
+
     Combines multiple agents into a collaborative crew for specific tasks.
     """
     import uuid
@@ -233,7 +233,7 @@ async def get_llm_models(
 ) -> ListModelsResponse:
     """
     Get list of available LLM models for agent creation.
-    
+
     Returns models with their capabilities and recommended use cases.
     """
     models = [
