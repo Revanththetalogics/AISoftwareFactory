@@ -5,458 +5,118 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================
-   ThetaAI Design System - State-Driven Tokens
-   AI Operating System Control Plane
-   ============================================ */
-
-@theme inline {
-  /* =========================================
-     SYSTEM STATE COLORS
-     Used for real-time status indication
-     ========================================= */
-  --state-idle: oklch(0.6 0.05 260);        /* slate - neutral/inactive */
-  --state-running: oklch(0.7 0.15 250);     /* blue - active processing */
-  --state-success: oklch(0.7 0.18 145);     /* green - completed */
-  --state-warning: oklch(0.75 0.18 65);     /* amber - attention needed */
-  --state-error: oklch(0.65 0.2 35);        /* red - failure */
-  --state-queued: oklch(0.65 0.2 290);      /* purple - waiting */
-  --state-running-emphasis: oklch(0.6 0.18 250); /* blue - stronger accent */
-  
-  /* State color with opacity variants */
-  --state-idle-dim: oklch(0.6 0.05 260 / 0.5);
-  --state-running-dim: oklch(0.7 0.15 250 / 0.15);
-  --state-success-dim: oklch(0.7 0.18 145 / 0.15);
-  --state-warning-dim: oklch(0.75 0.18 65 / 0.15);
-  --state-error-dim: oklch(0.65 0.2 35 / 0.15);
-  --state-queued-dim: oklch(0.65 0.2 290 / 0.15);
-
-  /* =========================================
-     BACKGROUND LAYERS
-     Points to CSS variables for theme switching
-     ========================================= */
-  --bg-base: var(--token-bg-base);
-  --bg-panel: var(--token-bg-panel);
-  --bg-elevated: var(--token-bg-elevated);
-  --bg-overlay: var(--token-bg-overlay);
-
-  /* Semantic backgrounds */
-  --bg-code: var(--token-bg-code);
-  --bg-input: var(--token-bg-input);
-  --bg-selected: var(--token-bg-selected);
-  --bg-hover: var(--token-bg-hover);
-
-  /* =========================================
-     TEXT HIERARCHY
-     Points to CSS variables for theme switching
-     ========================================= */
-  --text-primary: var(--token-text-primary);
-  --text-secondary: var(--token-text-secondary);
-  --text-tertiary: var(--token-text-tertiary);
-  --text-code: var(--token-text-code);
-  --text-link: oklch(0.7 0.15 250);
-
-  /* =========================================
-     BORDER HIERARCHY
-     Points to CSS variables for theme switching
-     ========================================= */
-  --border-subtle: var(--token-border-subtle);
-  --border-default: var(--token-border-default);
-  --border-emphasis: var(--token-border-emphasis);
-  --border-state: var(--token-border-state);
-
-  /* =========================================
-     TYPOGRAPHY SYSTEM
-     Distinguish system text from UI
-     ========================================= */
-  --font-system: 'JetBrains Mono', 'Fira Code', monospace;
-  --font-ui: 'Inter', system-ui, sans-serif;
-  
-  /* Code text sizes */
-  --text-xs-code: 0.7rem;
-  --text-sm-code: 0.8125rem;
-  --text-md-code: 0.9375rem;
-  --text-lg-code: 1.0625rem;
-  
-  /* Line heights for density control */
-  --tight: 1.25;
-  --normal: 1.5;
-  --relaxed: 1.75;
-
-  /* =========================================
-     LAYOUT TOKENS
-     Panel dimensions and spacing
-     ========================================= */
-  --sidebar-width: 280px;
-  --sidebar-collapsed-width: 64px;
-  --topbar-height: 56px;
-  
-  /* Dense spacing scale */
-  --space-grid: 4px;
-  --space-compact: 8px;
-  --space-standard: 12px;
-  --space-relaxed: 16px;
-  --space-comfortable: 20px;
-  
-  /* Panel constraints */
-  --panel-min-width: 200px;
-  --panel-max-width: 800px;
-
-  /* =========================================
-     ANIMATION TOKENS
-     Motion system timing and easing
-     ========================================= */
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in-out-quad: cubic-bezier(0.45, 0, 0.55, 1);
-  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  --ease-smooth: cubic-bezier(0.25, 0.25, 0, 1);
-  
-  --duration-instant: 100ms;
-  --duration-fast: 200ms;
-  --duration-normal: 300ms;
-  --duration-slow: 500ms;
-  --duration-slower: 800ms;
-
-  /* =========================================
-     AI GRADIENT ACCENTS
-     Subtle system feel gradients
-     ========================================= */
-  --gradient-ai-primary: linear-gradient(135deg, oklch(0.7 0.15 280), oklch(0.65 0.2 250));
-  --gradient-ai-secondary: linear-gradient(135deg, oklch(0.6 0.15 180), oklch(0.7 0.15 280));
-  --gradient-ai-success: linear-gradient(135deg, oklch(0.7 0.18 145), oklch(0.65 0.15 160));
-  --gradient-ai-warning: linear-gradient(135deg, oklch(0.75 0.18 65), oklch(0.7 0.18 55));
-  --gradient-ai-error: linear-gradient(135deg, oklch(0.65 0.2 35), oklch(0.6 0.2 25));
-  
-  /* Glow effects */
-  --glow-running: 0 0 20px oklch(0.7 0.15 250 / 0.3);
-  --glow-success: 0 0 20px oklch(0.7 0.18 145 / 0.3);
-  --glow-error: 0 0 20px oklch(0.65 0.2 35 / 0.3);
-
-  /* =========================================
-     EXISTING THEME COMPATIBILITY
-     Map legacy tokens to new system
-     ========================================= */
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
-  
-  /* Legacy shadows (kept for compatibility) */
-  --shadow-card: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-elevated: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --gradient-primary: var(--gradient-ai-primary);
-  --gradient-violet: linear-gradient(to right, oklch(0.708 0.191 27.325), oklch(0.623 0.214 259.815));
-  --transition-base: all var(--duration-fast) var(--ease-smooth);
-  --transition-smooth: all var(--duration-normal) var(--ease-smooth);
-}
+  ThetaAI Design System - Dark AI Theme
+  AI Factory Control Room UI
+  ============================================ */
 
 :root {
-  /* =========================================
-     LIGHT THEME TOKENS
-     ========================================= */
-  /* Background layers - light */
-  --token-bg-base: oklch(0.97 0.005 260);       /* main background */
-  --token-bg-panel: oklch(1 0 0);               /* elevated panels */
-  --token-bg-elevated: oklch(0.98 0.005 260);   /* cards, modals */
-  --token-bg-overlay: oklch(0.96 0.005 260);    /* overlays, dropdowns */
-  --token-bg-code: oklch(0.94 0.005 260);       /* terminal/code blocks */
-  --token-bg-input: oklch(1 0 0);               /* input fields */
-  --token-bg-selected: oklch(0.93 0.01 260);    /* selected items */
-  --token-bg-hover: oklch(0.94 0.005 260 / 0.5); /* hover states */
-
-  /* Text hierarchy - light */
-  --token-text-primary: oklch(0.12 0.02 260);   /* primary content */
-  --token-text-secondary: oklch(0.35 0.02 260); /* secondary content */
-  --token-text-tertiary: oklch(0.5 0.01 260);   /* hints, placeholders */
-  --token-text-code: oklch(0.2 0.02 260);       /* code, logs */
-
-  /* Border hierarchy - light */
-  --token-border-subtle: oklch(0 0 0 / 0.06);   /* minimal separation */
-  --token-border-default: oklch(0 0 0 / 0.1);   /* standard borders */
-  --token-border-emphasis: oklch(0 0 0 / 0.18); /* important dividers */
-  --token-border-state: oklch(0 0 0 / 0.25);    /* state-driven borders */
-
-  /* shadcn tokens */
-  --background: var(--token-bg-base);
-  --foreground: var(--token-text-primary);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: #0B0F19;
+  --foreground: #F9FAFB;
+  --card: #1F2937;
+  --card-foreground: #F9FAFB;
+  --popover: #111827;
+  --popover-foreground: #F9FAFB;
+  --primary: #6366F1;
+  --primary-foreground: #FFFFFF;
+  --secondary: #8B5CF6;
+  --secondary-foreground: #FFFFFF;
+  --muted: #1F2937;
+  --muted-foreground: #9CA3AF;
+  --accent: #8B5CF6;
+  --accent-foreground: #FFFFFF;
+  --destructive: #EF4444;
+  --border: #374151;
+  --input: #1F2937;
+  --ring: #6366F1;
+  --radius: 0.5rem;
 }
 
 .dark {
-  /* =========================================
-     DARK THEME TOKENS
-     ========================================= */
-  /* Background layers - dark */
-  --token-bg-base: oklch(0.12 0.02 260);        /* main background */
-  --token-bg-panel: oklch(0.15 0.02 260);       /* elevated panels */
-  --token-bg-elevated: oklch(0.18 0.02 260);    /* cards, modals */
-  --token-bg-overlay: oklch(0.2 0.02 260);      /* overlays, dropdowns */
-  --token-bg-code: oklch(0.1 0.02 260);         /* terminal/code blocks */
-  --token-bg-input: oklch(0.16 0.02 260);       /* input fields */
-  --token-bg-selected: oklch(0.22 0.02 260);    /* selected items */
-  --token-bg-hover: oklch(0.18 0.02 260 / 0.5); /* hover states */
-
-  /* Text hierarchy - dark */
-  --token-text-primary: oklch(0.98 0 0);        /* primary content */
-  --token-text-secondary: oklch(0.7 0 0);       /* secondary content */
-  --token-text-tertiary: oklch(0.5 0 0);        /* hints, placeholders */
-  --token-text-code: oklch(0.85 0 0);           /* code, logs */
-
-  /* Border hierarchy - dark */
-  --token-border-subtle: oklch(1 0 0 / 0.08);   /* minimal separation */
-  --token-border-default: oklch(1 0 0 / 0.12);  /* standard borders */
-  --token-border-emphasis: oklch(1 0 0 / 0.2);  /* important dividers */
-  --token-border-state: oklch(1 0 0 / 0.3);     /* state-driven borders */
-
-  /* Map to new state-driven system */
-  --background: var(--bg-base);
-  --foreground: var(--text-primary);
-  --card: var(--bg-panel);
-  --card-foreground: var(--text-primary);
-  --popover: var(--bg-elevated);
-  --popover-foreground: var(--text-primary);
-  --primary: var(--state-running);
-  --primary-foreground: oklch(0.98 0 0);
-  --secondary: var(--bg-panel);
-  --secondary-foreground: var(--text-secondary);
-  --muted: var(--bg-panel);
-  --muted-foreground: var(--text-secondary);
-  --accent: var(--state-queued);
-  --accent-foreground: oklch(0.98 0 0);
-  --destructive: var(--state-error);
-  --border: var(--border-default);
-  --input: var(--bg-input);
-  --ring: var(--state-running);
-  --chart-1: var(--state-running);
-  --chart-2: var(--state-queued);
-  --chart-3: var(--state-success);
-  --chart-4: var(--state-warning);
-  --chart-5: var(--state-error);
-  --sidebar: var(--bg-panel);
-  --sidebar-foreground: var(--text-primary);
-  --sidebar-primary: var(--state-running);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: var(--bg-selected);
-  --sidebar-accent-foreground: var(--text-primary);
-  --sidebar-border: var(--border-default);
-  --sidebar-ring: var(--state-running);
+  --background: #0B0F19;
+  --foreground: #F9FAFB;
+  --card: #1F2937;
+  --card-foreground: #F9FAFB;
+  --popover: #111827;
+  --popover-foreground: #F9FAFB;
+  --primary: #6366F1;
+  --primary-foreground: #FFFFFF;
+  --secondary: #8B5CF6;
+  --secondary-foreground: #FFFFFF;
+  --muted: #1F2937;
+  --muted-foreground: #9CA3AF;
+  --accent: #8B5CF6;
+  --accent-foreground: #FFFFFF;
+  --destructive: #EF4444;
+  --border: #374151;
+  --input: #1F2937;
+  --ring: #6366F1;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: #374151;
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: #0B0F19;
+    color: #F9FAFB;
+    font-family: 'Inter', system-ui, sans-serif;
   }
   html {
-    @apply font-sans;
+    font-family: 'Inter', system-ui, sans-serif;
   }
 }
 
 @layer utilities {
-  /* Glass morphism effect */
-  .glass {
-    background: rgba(15, 23, 42, 0.5);
-    backdrop-filter: blur(12px);
+  .layout-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
   }
-
-  /* Gradient text */
-  .text-gradient {
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  
+  .sidebar-panel {
+    width: 240px;
+    background-color: #111827;
+    border-right: 1px solid #374151;
+    padding: 1rem;
+    flex-shrink: 0;
   }
-
-  /* Smooth scrolling container */
-  .scroll-smooth {
-    scroll-behavior: smooth;
+  
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
-
-  /* Hide scrollbar but keep functionality */
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  
+  .top-navbar {
+    height: 64px;
+    background-color: #111827;
+    border-bottom: 1px solid #374151;
+    padding: 0 1.5rem;
+    flex-shrink: 0;
   }
-
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
+  
+  .content-area {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
   }
-
-  /* Card hover effects */
-  .card-hover {
-    transition: all 0.2s ease;
+  
+  .main-panel {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
   }
-
-  .card-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-elevated);
+  
+  .right-panel {
+    width: 320px;
+    background-color: #111827;
+    border-left: 1px solid #374151;
+    padding: 1rem;
+    overflow-y: auto;
+    flex-shrink: 0;
   }
-
-  /* Pulse animation for status indicators */
-  @keyframes pulse-dot {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.5;
-    }
-  }
-
-  .animate-pulse-dot {
-    animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  /* ============================================
-     THETAAI DESIGN SYSTEM UTILITIES
-     State-driven and system-specific utilities
-     ============================================ */
-
-  /* State indicators */
-  .state-idle { color: var(--state-idle); }
-  .state-running { color: var(--state-running); }
-  .state-success { color: var(--state-success); }
-  .state-warning { color: var(--state-warning); }
-  .state-error { color: var(--state-error); }
-  .state-queued { color: var(--state-queued); }
-  .state-info { color: var(--state-running); }
-
-  /* State backgrounds */
-  .bg-state-idle { background-color: var(--state-idle); }
-  .bg-state-running { background-color: var(--state-running); }
-  .bg-state-success { background-color: var(--state-success); }
-  .bg-state-warning { background-color: var(--state-warning); }
-  .bg-state-error { background-color: var(--state-error); }
-  .bg-state-queued { background-color: var(--state-queued); }
-
-  /* State dim backgrounds */
-  .bg-state-idle-dim { background-color: var(--state-idle-dim); }
-  .bg-state-running-dim { background-color: var(--state-running-dim); }
-  .bg-state-success-dim { background-color: var(--state-success-dim); }
-  .bg-state-warning-dim { background-color: var(--state-warning-dim); }
-  .bg-state-error-dim { background-color: var(--state-error-dim); }
-  .bg-state-queued-dim { background-color: var(--state-queued-dim); }
-
-  /* State text colors */
-  .text-state-idle { color: var(--state-idle); }
-  .text-state-running { color: var(--state-running); }
-  .text-state-success { color: var(--state-success); }
-  .text-state-warning { color: var(--state-warning); }
-  .text-state-error { color: var(--state-error); }
-  .text-state-queued { color: var(--state-queued); }
-  .text-state-info { color: var(--state-running); }
-
-  /* State borders */
-  .border-state-idle { border-color: var(--state-idle); }
-  .border-state-running { border-color: var(--state-running); }
-  .border-state-success { border-color: var(--state-success); }
-  .border-state-warning { border-color: var(--state-warning); }
-  .border-state-error { border-color: var(--state-error); }
-  .border-state-queued { border-color: var(--state-queued); }
-
-  /* Typography */
-  .font-system { font-family: var(--font-system); }
-  .font-ui { font-family: var(--font-ui); }
-  .text-code { 
-    font-family: var(--font-system);
-    color: var(--text-code);
-  }
-
-  /* Density controls */
-  .density-compact { line-height: var(--tight); }
-  .density-normal { line-height: var(--normal); }
-  .density-relaxed { line-height: var(--relaxed); }
-
-  /* AI Gradients */
-  .gradient-ai-primary { background: var(--gradient-ai-primary); }
-  .gradient-ai-secondary { background: var(--gradient-ai-secondary); }
-  .gradient-ai-success { background: var(--gradient-ai-success); }
-  .gradient-ai-warning { background: var(--gradient-ai-warning); }
-  .gradient-ai-error { background: var(--gradient-ai-error); }
-
-  /* Glow effects */
-  .glow-running { box-shadow: var(--glow-running); }
-  .glow-success { box-shadow: var(--glow-success); }
-  .glow-error { box-shadow: var(--glow-error); }
-
-  /* Animation utilities */
-  .duration-instant { transition-duration: var(--duration-instant); }
-  .duration-fast { transition-duration: var(--duration-fast); }
-  .duration-normal { transition-duration: var(--duration-normal); }
-  .duration-slow { transition-duration: var(--duration-slow); }
-  .duration-slower { transition-duration: var(--duration-slower); }
-
-  .ease-out-expo { transition-timing-function: var(--ease-out-expo); }
-  .ease-in-out-quad { transition-timing-function: var(--ease-in-out-quad); }
-  .ease-spring { transition-timing-function: var(--ease-spring); }
-  .ease-smooth { transition-timing-function: var(--ease-smooth); }
-
-  /* Status dot with pulse */
+  
   .status-dot {
     width: 0.5rem;
     height: 0.5rem;
@@ -464,49 +124,36 @@
     display: inline-block;
   }
   
-  .status-dot.running {
-    background-color: var(--state-running);
-    animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  .status-dot.idle { background-color: #374151; }
+  .status-dot.running { 
+    background-color: #6366F1;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  .status-dot.success { background-color: #22C55E; }
+  .status-dot.warning { background-color: #F59E0B; }
+  .status-dot.error { background-color: #EF4444; }
+  .status-dot.queued { background-color: #8B5CF6; }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
   }
   
-  .status-dot.success {
-    background-color: var(--state-success);
+  .glow-primary {
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
   }
   
-  .status-dot.error {
-    background-color: var(--state-error);
+  .card-ai {
+    background-color: #1F2937;
+    border: 1px solid #374151;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
   }
   
-  .status-dot.idle {
-    background-color: var(--state-idle);
+  .card-ai:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
+    border-color: #4B5563;
   }
-
-  /* Glass morphism (enhanced) */
-  .glass-panel {
-    background: rgba(24, 24, 30, 0.7);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--border-default);
-  }
-
-  /* System text appearance */
-  .system-text {
-    font-family: var(--font-system);
-    font-size: var(--text-sm-code);
-    letter-spacing: -0.01em;
-  }
-
-  /* Dense information layout */
-  .info-dense {
-    @apply space-y-1;
-  }
-  
-  .info-dense > * {
-    @apply text-sm;
-  }
-
-  /* Border hierarchy */
-  .border-subtle { border-color: var(--border-subtle); }
-  .border-default { border-color: var(--border-default); }
-  .border-emphasis { border-color: var(--border-emphasis); }
-  .border-state { border-color: var(--border-state); }
 }

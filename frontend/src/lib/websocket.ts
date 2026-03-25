@@ -78,8 +78,6 @@ export interface UseWebSocketOptions {
   onConnect?: () => void;
   onDisconnect?: () => void;
   onError?: (error: Event) => void;
-  reconnectInterval?: number;
-  maxReconnectAttempts?: number;
   enableMock?: boolean;
 }
 
@@ -171,8 +169,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     onConnect,
     onDisconnect,
     onError,
-    reconnectInterval = 3000,
-    maxReconnectAttempts = 5,
     enableMock = true,
   } = options;
 
