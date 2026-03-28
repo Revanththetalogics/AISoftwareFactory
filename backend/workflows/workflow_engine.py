@@ -6,7 +6,7 @@ for managing the software development lifecycle.
 """
 
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from langgraph.graph import END, StateGraph
 
@@ -62,7 +62,7 @@ class WorkflowEngine:
                 "project_id": project_id,
                 "phase": phase.value,
                 "status": status,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
             if output:
                 event_data["output"] = output

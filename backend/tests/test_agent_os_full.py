@@ -10,7 +10,7 @@ Covers:
 """
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -182,14 +182,14 @@ class TestCircuitBreakerFull:
         """Test can_execute returns False in open state before recovery."""
         cb = CircuitBreaker(recovery_timeout=60.0)
         cb._state = CircuitState.OPEN
-        cb._last_failure = datetime.utcnow()
+        cb._last_failure = datetime.now(UTC)
         assert cb.can_execute() is False
 
     def test_can_execute_open_state_after_recovery(self):
         """Test can_execute transitions to half-open after recovery timeout."""
         cb = CircuitBreaker(recovery_timeout=1.0)
         cb._state = CircuitState.OPEN
-        cb._last_failure = datetime.utcnow() - timedelta(seconds=5)
+        cb._last_failure = datetime.now(UTC) - timedelta(seconds=5)
 
         result = cb.can_execute()
 
@@ -327,7 +327,7 @@ class TestErrorHandlerFull:
         # Set up open circuit breaker
         cb = CircuitBreaker(failure_threshold=1)
         cb._state = CircuitState.OPEN
-        cb._last_failure = datetime.utcnow()
+        cb._last_failure = datetime.now(UTC)
         handler._circuit_breakers["test_circuit"] = cb
 
         async def should_not_run():
@@ -688,7 +688,7 @@ class TestSchedulerFull:
         await scheduler.schedule_task(
             name="ready_task",
             execute=test_exec,
-            scheduled_at=datetime.utcnow() - timedelta(seconds=10)
+            scheduled_at=datetime.now(UTC) - timedelta(seconds=10)
         )
 
         ready = await scheduler.get_ready_tasks()
@@ -707,7 +707,7 @@ class TestSchedulerFull:
         await scheduler.schedule_task(
             name="future_task",
             execute=test_exec,
-            scheduled_at=datetime.utcnow() + timedelta(hours=1)
+            scheduled_at=datetime.now(UTC) + timedelta(hours=1)
         )
 
         ready = await scheduler.get_ready_tasks()
@@ -958,7 +958,7 @@ class TestScheduledTaskDataclass:
         task = ScheduledTask(
             task_id="t-123",
             name="test",
-            scheduled_at=datetime.utcnow(),
+            scheduled_at=datetime.now(UTC),
             priority=5,
             execute=exec_fn
         )

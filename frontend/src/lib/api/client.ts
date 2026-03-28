@@ -399,6 +399,27 @@ class ApiClient {
     });
   }
 
+  // Code Generation
+  async generateCode(data: {
+    prompt: string;
+    language: string;
+    framework?: string;
+    project_id?: string;
+  }) {
+    return this.request<{
+      generation_id: string;
+      code: string;
+      language: string;
+      files: Array<{ filename: string; content: string }>;
+      quality_score: number | null;
+      warnings: string[];
+      execution_time_ms: number;
+    }>('/codegen/generate', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // WebSocket
   connectWebSocket(channel: string, id?: string): WebSocket {
     const url = id ? `${this.wsUrl}/${channel}/${id}` : `${this.wsUrl}/${channel}`;

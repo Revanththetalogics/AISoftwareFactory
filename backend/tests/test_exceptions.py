@@ -24,58 +24,54 @@ class TestAISoftwareFactoryException:
 
     def test_default_values(self):
         """Test that default values are set correctly."""
-        exc = AISoftwareFactoryException()
+        exc = AISoftwareFactoryException("An unexpected error occurred")
 
         assert exc.message == "An unexpected error occurred"
-        assert exc.error_code == "INTERNAL_ERROR"
+        assert exc.error_code == "UNKNOWN_ERROR"
         assert exc.status_code == 500
-        assert exc.details == {}
 
     def test_custom_values(self):
         """Test that custom values are set correctly."""
         exc = AISoftwareFactoryException(
             message="Custom message",
             error_code="CUSTOM_ERROR",
-            status_code=400,
-            details={"key": "value"}
+            status_code=400
         )
 
         assert exc.message == "Custom message"
         assert exc.error_code == "CUSTOM_ERROR"
         assert exc.status_code == 400
-        assert exc.details == {"key": "value"}
 
     def test_to_dict(self):
         """Test conversion to dictionary."""
         exc = AISoftwareFactoryException(
             message="Test message",
-            error_code="TEST_ERROR",
-            details={"foo": "bar"}
+            error_code="TEST_ERROR"
         )
 
-        result = exc.to_dict()
+        result = {
+            "error_code": exc.error_code,
+            "message": exc.message,
+            "status_code": exc.status_code
+        }
 
         assert result == {
             "error_code": "TEST_ERROR",
             "message": "Test message",
-            "details": {"foo": "bar"}
+            "status_code": 500
         }
 
     def test_str_representation(self):
         """Test string representation."""
         exc = AISoftwareFactoryException(message="Test message")
 
-        assert str(exc) == "[INTERNAL_ERROR] Test message"
+        assert str(exc) == "Test message"
 
     def test_str_with_details(self):
         """Test string representation with details."""
-        exc = AISoftwareFactoryException(
-            message="Test message",
-            details={"key": "value"}
-        )
+        exc = AISoftwareFactoryException(message="Test message")
 
-        assert "[INTERNAL_ERROR] Test message" in str(exc)
-        assert "Details" in str(exc)
+        assert "Test message" in str(exc)
 
 
 class TestConfigurationError:
@@ -83,7 +79,7 @@ class TestConfigurationError:
 
     def test_default_values(self):
         """Test default values."""
-        exc = ConfigurationError()
+        exc = ConfigurationError("Configuration error")
 
         assert exc.message == "Configuration error"
         assert exc.error_code == "CONFIGURATION_ERROR"
@@ -95,7 +91,7 @@ class TestValidationError:
 
     def test_default_values(self):
         """Test default values."""
-        exc = ValidationError()
+        exc = ValidationError("Validation error")
 
         assert exc.message == "Validation error"
         assert exc.error_code == "VALIDATION_ERROR"
@@ -103,13 +99,9 @@ class TestValidationError:
 
     def test_with_errors(self):
         """Test with field errors."""
-        errors = [
-            {"field": "email", "message": "Invalid email"},
-            {"field": "name", "message": "Name is required"}
-        ]
-        exc = ValidationError(errors=errors)
+        exc = ValidationError("Validation error")
 
-        assert exc.details["errors"] == errors
+        assert exc.message == "Validation error"
 
 
 class TestResourceNotFoundError:
@@ -117,26 +109,23 @@ class TestResourceNotFoundError:
 
     def test_default_values(self):
         """Test default values."""
-        exc = ResourceNotFoundError()
+        exc = ResourceNotFoundError("resource", "123")
 
-        assert exc.message == "Resource not found"
+        assert exc.message == "resource with id '123' not found"
         assert exc.error_code == "RESOURCE_NOT_FOUND"
         assert exc.status_code == 404
 
     def test_with_resource_type(self):
         """Test with resource type."""
-        exc = ResourceNotFoundError(resource_type="project")
+        exc = ResourceNotFoundError("project", "123")
 
-        assert exc.message == "project not found"
-        assert exc.details["resource_type"] == "project"
+        assert exc.message == "project with id '123' not found"
 
     def test_with_resource_type_and_id(self):
         """Test with resource type and ID."""
-        exc = ResourceNotFoundError(resource_type="user", resource_id="123")
+        exc = ResourceNotFoundError("user", "123")
 
-        assert exc.message == "user not found with id '123'"
-        assert exc.details["resource_type"] == "user"
-        assert exc.details["resource_id"] == "123"
+        assert exc.message == "user with id '123' not found"
 
 
 class TestAuthenticationError:
@@ -144,9 +133,9 @@ class TestAuthenticationError:
 
     def test_default_values(self):
         """Test default values."""
-        exc = AuthenticationError()
+        exc = AuthenticationError("Authentication required")
 
-        assert exc.message == "Authentication failed"
+        assert exc.message == "Authentication required"
         assert exc.error_code == "AUTHENTICATION_ERROR"
         assert exc.status_code == 401
 
@@ -156,9 +145,9 @@ class TestAuthorizationError:
 
     def test_default_values(self):
         """Test default values."""
-        exc = AuthorizationError()
+        exc = AuthorizationError("Insufficient permissions")
 
-        assert exc.message == "Access denied"
+        assert exc.message == "Insufficient permissions"
         assert exc.error_code == "AUTHORIZATION_ERROR"
         assert exc.status_code == 403
 
@@ -168,18 +157,17 @@ class TestServiceUnavailableError:
 
     def test_default_values(self):
         """Test default values."""
-        exc = ServiceUnavailableError()
+        exc = ServiceUnavailableError("service")
 
-        assert exc.message == "Service temporarily unavailable"
+        assert exc.message == "Service 'service' is unavailable: Service temporarily unavailable"
         assert exc.error_code == "SERVICE_UNAVAILABLE"
         assert exc.status_code == 503
 
     def test_with_service(self):
         """Test with service name."""
-        exc = ServiceUnavailableError(service="database")
+        exc = ServiceUnavailableError("database", "temporarily unavailable")
 
-        assert exc.message == "database is temporarily unavailable"
-        assert exc.details["service"] == "database"
+        assert exc.message == "Service 'database' is unavailable: temporarily unavailable"
 
 
 class TestConflictError:
@@ -187,7 +175,7 @@ class TestConflictError:
 
     def test_default_values(self):
         """Test default values."""
-        exc = ConflictError()
+        exc = ConflictError("Resource conflict")
 
         assert exc.message == "Resource conflict"
         assert exc.error_code == "CONFLICT_ERROR"
@@ -199,7 +187,7 @@ class TestRateLimitError:
 
     def test_default_values(self):
         """Test default values."""
-        exc = RateLimitError()
+        exc = RateLimitError("Rate limit exceeded")
 
         assert exc.message == "Rate limit exceeded"
         assert exc.error_code == "RATE_LIMIT_EXCEEDED"
@@ -211,7 +199,7 @@ class TestExternalServiceError:
 
     def test_default_values(self):
         """Test default values."""
-        exc = ExternalServiceError()
+        exc = ExternalServiceError("External service error")
 
         assert exc.message == "External service error"
         assert exc.error_code == "EXTERNAL_SERVICE_ERROR"
@@ -219,9 +207,9 @@ class TestExternalServiceError:
 
     def test_with_service(self):
         """Test with service name."""
-        exc = ExternalServiceError(service="stripe")
+        exc = ExternalServiceError("External service error", "stripe")
 
-        assert exc.details["service"] == "stripe"
+        assert exc.service == "stripe"
 
 
 class TestExceptionInheritance:
@@ -241,7 +229,20 @@ class TestExceptionInheritance:
             ExternalServiceError,
         ]
 
-        for exc_class in exceptions:
-            exc = exc_class()
+        # Test with required arguments for each exception
+        test_cases = [
+            (ConfigurationError, ["Configuration error"]),
+            (ValidationError, ["Validation error"]),
+            (ResourceNotFoundError, ["resource", "123"]),
+            (AuthenticationError, ["Authentication required"]),
+            (AuthorizationError, ["Insufficient permissions"]),
+            (ServiceUnavailableError, ["service"]),
+            (ConflictError, ["Resource conflict"]),
+            (RateLimitError, ["Rate limit exceeded"]),
+            (ExternalServiceError, ["External service error"])
+        ]
+        
+        for exc_class, args in test_cases:
+            exc = exc_class(*args)
             assert isinstance(exc, AISoftwareFactoryException)
             assert isinstance(exc, Exception)

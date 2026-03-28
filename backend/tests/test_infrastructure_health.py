@@ -5,7 +5,7 @@ Covers all uncovered lines: 81, 100, 102-115, 142-210, 223-263, 293, 299, 310-31
 """
 
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -506,7 +506,7 @@ class TestHealthCheckResult:
             component="test",
             status=HealthStatus.HEALTHY,
             message="OK",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             latency_ms=50.0,
             details={"key": "value"}
         )
@@ -523,7 +523,7 @@ class TestHealthCheckResult:
             component="test",
             status=HealthStatus.HEALTHY,
             message="OK",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             latency_ms=50.0
         )
 

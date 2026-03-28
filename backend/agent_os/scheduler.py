@@ -8,7 +8,7 @@ cron-like scheduling, priority-based execution, and dependency resolution.
 import asyncio
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -72,7 +72,7 @@ class Scheduler:
         task = ScheduledTask(
             task_id=task_id,
             name=name,
-            scheduled_at=scheduled_at or datetime.utcnow(),
+            scheduled_at=scheduled_at or datetime.now(UTC),
             priority=priority,
             execute=execute,
             dependencies=dependencies or [],
@@ -80,7 +80,7 @@ class Scheduler:
         )
 
         self._scheduled_tasks[task_id] = task
-        await self._task_queue.put((priority, scheduled_at or datetime.utcnow(), task_id))
+        await self._task_queue.put((priority, scheduled_at or datetime.now(UTC), task_id))
 
         self._logger.info("Task scheduled", task_id=task_id, name=name)
         return task_id
@@ -108,7 +108,7 @@ class Scheduler:
         Returns:
             List of ready tasks
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         ready = []
 
         for task in self._scheduled_tasks.values():

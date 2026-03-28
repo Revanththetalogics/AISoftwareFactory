@@ -11,7 +11,7 @@ This module provides real-time event streaming for:
 import asyncio
 import json
 from collections.abc import AsyncGenerator
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
@@ -50,7 +50,7 @@ class EventBroadcaster:
         event = {
             "type": event_type,
             "data": data,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(UTC).isoformat()
         }
 
         # Remove disconnected clients
@@ -103,7 +103,7 @@ async def event_stream(
     await queue.put({
         "type": "connected",
         "data": {"user_id": user.user_id if user else "anonymous"},
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(UTC).isoformat(),
     })
 
     return StreamingResponse(
@@ -136,7 +136,7 @@ async def metrics_stream(
                     "memory": 62.1,
                     "network": 12.5,
                     "disk": 78.3,
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.now(UTC).isoformat()
                 }
 
                 yield f"data: {json.dumps({'type': 'system_metrics', 'data': metrics})}\n\n"

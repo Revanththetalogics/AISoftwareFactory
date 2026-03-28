@@ -5,7 +5,7 @@ This module provides document ingestion and management for the
 knowledge system.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -98,7 +98,7 @@ class KnowledgeBase:
             "metadata": metadata,
             "chunk_ids": chunk_ids,
             "chunk_count": len(chunks),
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(UTC).isoformat()
         }
 
         self._logger.info(

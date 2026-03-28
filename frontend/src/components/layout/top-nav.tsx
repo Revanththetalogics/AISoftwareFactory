@@ -14,11 +14,7 @@ export function TopNav() {
 
   return (
     <header 
-      className="fixed left-[--sidebar-width] right-0 top-0 z-30 h-[--topbar-height] border-b border-border-default bg-bg-panel/80 backdrop-blur-xl"
-      style={{
-        '--sidebar-width': '280px',
-        '--topbar-height': '56px',
-      } as React.CSSProperties}
+      className="top-navbar"
       role="banner"
     >
       {/* Skip to main content link */}

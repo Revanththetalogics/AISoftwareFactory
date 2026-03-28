@@ -4,11 +4,20 @@ API Request/Response Models for AI Software Factory.
 This module defines Pydantic models for API validation and serialization.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class APIResponse(BaseModel):
+    """Standard API response wrapper."""
+    success: bool
+    data: Any = None
+    message: str | None = None
+    error: str | None = None
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class ProjectStatus(StrEnum):
@@ -182,7 +191,7 @@ class WebSocketMessage(BaseModel):
     """Model for WebSocket messages."""
     type: str
     payload: dict[str, Any]
-    timestamp: datetime = Field(default_factory=datetime.now)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class HealthCheckResponse(BaseModel):

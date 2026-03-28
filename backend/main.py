@@ -34,6 +34,7 @@ from backend.middleware import (
     RequestLoggingMiddleware,
 )
 from backend.middleware.error_handler import setup_exception_handlers
+from backend.middleware.logging import LOGGING_CONFIGS, RequestResponseLoggingMiddleware
 from backend.middleware.metrics_middleware import PrometheusMetricsMiddleware
 from backend.middleware.rate_limit_middleware import RateLimitMiddleware
 
@@ -93,6 +94,18 @@ async def _connect_with_retry(
                     return False
 
 
+async def lifespan(app: FastAPI):
+    """Handle application lifecycle events using lifespan context manager."""
+    # Startup logic (equivalent to @app.on_event("startup"))
+    await _startup_logic()
+    yield
+    # Shutdown logic (equivalent to @app.on_event("shutdown"))
+    await _shutdown_logic()
+
+
+
+
+
 def create_application() -> FastAPI:
     """
     Create and configure the FastAPI application.
@@ -109,7 +122,7 @@ def create_application() -> FastAPI:
     """
     settings = get_settings()
 
-    # Create FastAPI application
+    # Create FastAPI application with lifespan context manager
     app = FastAPI(
         title=settings.APP_NAME,
         description="AI-powered software engineering platform for autonomous SaaS development",
@@ -118,6 +131,7 @@ def create_application() -> FastAPI:
         redoc_url="/redoc" if settings.is_development else None,
         openapi_url="/openapi.json" if settings.is_development else None,
         debug=settings.DEBUG,
+        lifespan=lifespan  # Use lifespan instead of on_event decorators
     )
 
     # Setup exception handlers
@@ -125,6 +139,17 @@ def create_application() -> FastAPI:
 
     # Add middleware (order matters - last added runs first for requests)
     # Desired request flow: CORS → CSRF → Auth → Error Handler → Request Logging → Metrics → Correlation ID
+
+    # 8. Enhanced Request/Response Logging (new middleware)
+    settings = get_settings()
+    logging_config = LOGGING_CONFIGS.get(settings.ENVIRONMENT, LOGGING_CONFIGS['production'])
+
+    app.add_middleware(
+        RequestResponseLoggingMiddleware,
+        log_request_body=logging_config['log_request_body'],
+        log_response_body=logging_config['log_response_body'],
+        exclude_paths=logging_config['exclude_paths']
+    )
 
     # 7. Correlation ID (innermost - runs last on requests)
     app.add_middleware(CorrelationIdMiddleware)
@@ -262,11 +287,10 @@ async def validate_database_schema() -> None:
             logger.debug("Could not verify indexes", error=str(e))
 
 
-@app.on_event("startup")
-async def startup_event() -> None:
+async def _startup_logic() -> None:
     """
     Handle application startup.
-
+    
     This function is called when the application starts and performs
     initialization tasks such as:
     - Logging startup information
@@ -436,12 +460,10 @@ async def startup_event() -> None:
 
     logger.info("Application startup complete")
 
-
-@app.on_event("shutdown")
-async def shutdown_event() -> None:
+def _shutdown_logic() -> None:
     """
     Handle graceful application shutdown.
-
+    
     This function is called when the application shuts down and performs
     cleanup tasks including:
     - Closing database connection pools
@@ -454,7 +476,7 @@ async def shutdown_event() -> None:
     try:
         from backend.db.session import engine
         if engine:
-            await engine.dispose()
+            engine.dispose()
             logger.info("Database connections closed")
     except Exception as exc:
         logger.warning("Error closing database connections", error=str(exc))
@@ -464,7 +486,7 @@ async def shutdown_event() -> None:
         import redis.asyncio as redis_lib
         settings = get_settings()
         redis_client = redis_lib.from_url(settings.REDIS_URL)
-        await redis_client.close()
+        redis_client.close()
         logger.info("Redis connections closed")
     except Exception as exc:
         logger.debug("Redis cleanup skipped", error=str(exc))
@@ -511,3 +533,8 @@ if __name__ == "__main__":  # pragma: no cover
         workers=settings.WORKERS if not settings.is_development else 1,
         log_level=settings.LOG_LEVEL.lower(),
     )
+
+
+# Backward compatibility aliases for tests
+startup_event = _startup_logic
+shutdown_event = _shutdown_logic

@@ -4,7 +4,7 @@ Project service for AI Software Factory.
 This module provides business logic for project management operations.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -128,7 +128,7 @@ class ProjectService:
             if field in updates:
                 project[field] = updates[field]
 
-        project["updated_at"] = datetime.utcnow().isoformat()
+        project["updated_at"] = datetime.now(UTC).isoformat()
 
         self._logger.info("Project updated", project_id=project_id)
         return project
@@ -169,6 +169,6 @@ class ProjectService:
             return None
 
         project["progress_percent"] = min(100.0, max(0.0, progress_percent))
-        project["updated_at"] = datetime.utcnow().isoformat()
+        project["updated_at"] = datetime.now(UTC).isoformat()
 
         return project

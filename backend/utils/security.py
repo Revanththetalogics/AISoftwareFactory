@@ -94,13 +94,15 @@ def sanitize_file_path(path: str, base_dir: str) -> str:
         if common != abs_base:
             raise ValidationError(
                 f"Path traversal detected: {path}",
-                details={"path": path, "base_dir": base_dir}
+                field="path",
+                value=path
             )
     except ValueError as exc:
         # Paths on different drives (Windows) or other issues
         raise ValidationError(
             f"Invalid path: {path}",
-            details={"path": path, "base_dir": base_dir}
+            field="path",
+            value=path
         ) from exc
 
     return abs_path

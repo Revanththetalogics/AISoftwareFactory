@@ -9,7 +9,7 @@ schema integrity, and connection pool statistics.
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -91,7 +91,7 @@ class HealthChecker:
                     component=name,
                     status=status,
                     message=message,
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(UTC),
                     latency_ms=latency,
                     details=details
                 )
@@ -109,7 +109,7 @@ class HealthChecker:
                     component=name,
                     status=HealthStatus.UNHEALTHY,
                     message=str(e),
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(UTC),
                     latency_ms=latency,
                     details={"error_type": type(e).__name__}
                 )
@@ -119,7 +119,7 @@ class HealthChecker:
 
         return {
             "status": overall_status.value,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "total_response_time_ms": round(total_latency_ms, 2),
             "components": [
                 {

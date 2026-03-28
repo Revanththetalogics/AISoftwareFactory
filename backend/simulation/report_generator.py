@@ -5,7 +5,7 @@ This module provides comprehensive test report generation in multiple formats.
 """
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -77,7 +77,7 @@ class ReportGenerator:
         lines = [
             "# Simulation Test Report",
             "",
-            f"**Generated:** {datetime.utcnow().isoformat()}",
+            f"**Generated:** {datetime.now(UTC).isoformat()}",
             "",
             "## Summary",
             ""
@@ -147,7 +147,7 @@ class ReportGenerator:
 </head>
 <body>
     <h1>Simulation Test Report</h1>
-    <p><strong>Generated:</strong> {datetime.utcnow().isoformat()}</p>
+    <p><strong>Generated:</strong> {datetime.now(UTC).isoformat()}</p>
 
     <div class="summary">
         <h2>Summary</h2>

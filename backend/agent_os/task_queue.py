@@ -4,7 +4,7 @@ Task queue for AgentOS.
 This module provides Redis-based task queue management for distributed task processing.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from backend.core.logging import get_logger
 from backend.models.task import Task, TaskStatus
@@ -93,7 +93,7 @@ class TaskQueue:
         # Get highest priority task
         task = queue.pop(0)
         task.status = TaskStatus.RUNNING
-        task.started_at = datetime.utcnow()
+        task.started_at = datetime.now(UTC)
 
         self._logger.info(
             "Task dequeued",
@@ -116,7 +116,7 @@ class TaskQueue:
             success: Whether task succeeded
         """
         task.status = TaskStatus.COMPLETED if success else TaskStatus.FAILED
-        task.completed_at = datetime.utcnow()
+        task.completed_at = datetime.now(UTC)
 
         self._logger.info(
             "Task completed",

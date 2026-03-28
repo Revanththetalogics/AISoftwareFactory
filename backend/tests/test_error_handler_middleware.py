@@ -36,7 +36,7 @@ class TestErrorHandlerMiddleware:
     @pytest.fixture
     def mock_settings(self):
         """Mock settings for testing."""
-        with patch("backend.middleware.error_handler.get_settings") as mock:
+        with patch("backend.core.config.get_settings") as mock:
             settings = MagicMock()
             settings.is_development = True
             settings.is_testing = True
@@ -48,7 +48,8 @@ class TestErrorHandlerMiddleware:
         app = FastAPI()
         middleware = ErrorHandlerMiddleware(app)
 
-        assert middleware.settings is not None
+        # Middleware initializes correctly
+        assert middleware.app == app
 
     @pytest.mark.asyncio
     async def test_dispatch_success(self, mock_settings):
@@ -113,7 +114,7 @@ class TestErrorHandlerMiddleware:
     @pytest.mark.asyncio
     async def test_dispatch_unexpected_exception_production(self):
         """Test handling of unexpected exception in production mode."""
-        with patch("backend.middleware.error_handler.get_settings") as mock:
+        with patch("backend.core.config.get_settings") as mock:
             settings = MagicMock()
             settings.is_development = False
             settings.is_testing = False
@@ -185,7 +186,7 @@ class TestSetupExceptionHandlers:
     @pytest.fixture
     def mock_settings(self):
         """Mock settings for testing."""
-        with patch("backend.middleware.error_handler.get_settings") as mock:
+        with patch("backend.core.config.get_settings") as mock:
             settings = MagicMock()
             settings.is_development = True
             settings.is_testing = True
@@ -247,7 +248,7 @@ class TestSetupExceptionHandlers:
     @pytest.mark.asyncio
     async def test_general_exception_handler_production(self):
         """Test general exception handler in production."""
-        with patch("backend.middleware.error_handler.get_settings") as mock:
+        with patch("backend.core.config.get_settings") as mock:
             settings = MagicMock()
             settings.is_development = False
             settings.is_testing = False
@@ -277,7 +278,7 @@ class TestErrorHandlerEdgeCases:
     @pytest.fixture
     def mock_settings(self):
         """Mock settings for testing."""
-        with patch("backend.middleware.error_handler.get_settings") as mock:
+        with patch("backend.core.config.get_settings") as mock:
             settings = MagicMock()
             settings.is_development = True
             settings.is_testing = True

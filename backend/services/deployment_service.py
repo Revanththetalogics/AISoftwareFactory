@@ -4,7 +4,7 @@ Deployment service for AI Software Factory.
 This module provides business logic for deployment management operations.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -53,7 +53,7 @@ class DeploymentService:
             "version": version,
             "status": "pending",
             "steps": [],
-            "started_at": datetime.utcnow().isoformat(),
+            "started_at": datetime.now(UTC).isoformat(),
             "completed_at": None,
             "error_message": None,
             "url": None,
@@ -140,7 +140,7 @@ class DeploymentService:
             deployment["url"] = url
 
         if status in ["success", "failed", "rolled_back"]:
-            deployment["completed_at"] = datetime.utcnow().isoformat()
+            deployment["completed_at"] = datetime.now(UTC).isoformat()
 
         self._logger.info(
             "Deployment status updated",
@@ -184,6 +184,6 @@ class DeploymentService:
             return False
 
         deployment["status"] = "cancelled"
-        deployment["completed_at"] = datetime.utcnow().isoformat()
+        deployment["completed_at"] = datetime.now(UTC).isoformat()
         self._logger.info("Deployment cancelled", deployment_id=deployment_id)
         return True

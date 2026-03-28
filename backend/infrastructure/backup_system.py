@@ -9,7 +9,7 @@ import asyncio
 import json
 import os
 import shutil
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -86,7 +86,7 @@ class BackupSystem:
             self._logger.warning("Backup system is disabled")
             return {"status": "disabled", "message": "Backup system is disabled"}
 
-        backup_name = name or f"backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+        backup_name = name or f"backup_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}"
         backup_path = self._backup_dir / backup_name
         backup_path.mkdir(exist_ok=True)
 
@@ -94,7 +94,7 @@ class BackupSystem:
 
         backup_info = {
             "name": backup_name,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "components": [],
             "status": "in_progress",
             "errors": [],
@@ -369,7 +369,7 @@ class BackupSystem:
         Returns:
             Number of backups removed
         """
-        cutoff_date = datetime.utcnow() - timedelta(days=self._retention_days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=self._retention_days)
         removed_count = 0
 
         for backup_dir in self._backup_dir.iterdir():

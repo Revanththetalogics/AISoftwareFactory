@@ -88,8 +88,7 @@ export function Sidebar() {
 
   return (
     <aside 
-      className="fixed left-0 top-0 z-40 h-screen w-[--sidebar-width] border-r border-border-default bg-bg-panel/95 backdrop-blur-xl"
-      style={{ '--sidebar-width': '280px' } as React.CSSProperties}
+      className="sidebar-panel"
       role="complementary"
       aria-label="Application sidebar"
     >

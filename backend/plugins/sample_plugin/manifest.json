@@ -1,0 +1,24 @@
+{
+  "id": "sample_plugin",
+  "name": "Sample Plugin",
+  "version": "1.0.0",
+  "description": "A sample plugin demonstrating the plugin architecture",
+  "author": "ThetaAI Team",
+  "type": "custom",
+  "entry_point": "main.py",
+  "dependencies": [],
+  "permissions": [
+    "read",
+    "write"
+  ],
+  "config_schema": {
+    "enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "debug": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

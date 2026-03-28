@@ -5,7 +5,7 @@ Covers all uncovered lines: 49-60, 85-140, 152-234, 247-265, 277-316, 328-363, 3
 """
 
 import json
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -694,7 +694,7 @@ class TestVerifyBackup:
             # Create backup directory with metadata and dump
             backup_path = tmp_path / "backups" / "test_backup"
             backup_path.mkdir(parents=True)
-            metadata = {"components": ["database", "config"], "created_at": datetime.utcnow().isoformat()}
+            metadata = {"components": ["database", "config"], "created_at": datetime.now(UTC).isoformat()}
             (backup_path / "metadata.json").write_text(json.dumps(metadata))
             (backup_path / "testdb.sql").write_text("-- SQL")
             (backup_path / "config").mkdir()
@@ -725,7 +725,7 @@ class TestVerifyBackup:
             # Create backup directory with metadata but no dump
             backup_path = tmp_path / "backups" / "test_backup"
             backup_path.mkdir(parents=True)
-            metadata = {"components": ["database"], "created_at": datetime.utcnow().isoformat()}
+            metadata = {"components": ["database"], "created_at": datetime.now(UTC).isoformat()}
             (backup_path / "metadata.json").write_text(json.dumps(metadata))
 
             result = await backup.verify_backup("test_backup")
@@ -782,13 +782,13 @@ class TestCleanupOldBackups:
             # Create old backup
             old_backup = tmp_path / "backups" / "old_backup"
             old_backup.mkdir(parents=True)
-            old_date = (datetime.utcnow() - timedelta(days=10)).isoformat()
+            old_date = (datetime.now(UTC) - timedelta(days=10)).isoformat()
             (old_backup / "metadata.json").write_text(json.dumps({"created_at": old_date}))
 
             # Create recent backup
             new_backup = tmp_path / "backups" / "new_backup"
             new_backup.mkdir(parents=True)
-            new_date = datetime.utcnow().isoformat()
+            new_date = datetime.now(UTC).isoformat()
             (new_backup / "metadata.json").write_text(json.dumps({"created_at": new_date}))
 
             removed = await backup._cleanup_old_backups()

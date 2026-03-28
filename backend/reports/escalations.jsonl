@@ -16,3 +16,17 @@
 {"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-03-25T14:33:42.295868"}
 {"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-03-25T14:42:37.478919"}
 {"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-03-25T14:42:37.482911"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-03-26T14:47:51.178629"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-03-26T14:47:51.441515"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-03-27T15:15:56.925269+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-03-27T15:15:56.932135+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-03-27T15:16:33.825357+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-03-27T15:16:33.828488+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-03-27T15:17:05.453037+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-03-27T15:17:05.463731+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-03-27T15:19:29.335272+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-03-27T15:19:29.338272+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-03-27T15:23:22.883087+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-03-27T15:23:22.886624+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-03-27T15:42:48.264813+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-03-27T15:42:48.267061+00:00"}

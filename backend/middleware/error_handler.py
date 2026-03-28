@@ -1,264 +1,336 @@
 """
-Global error handling middleware for AI Software Factory backend.
+Enhanced Error Handler Middleware
 
-This middleware catches all exceptions and converts them to standardized
-HTTP responses with proper error codes and logging.
+Provides comprehensive error handling with structured responses,
+request correlation, and detailed logging.
 """
 
+import logging
 import traceback
+import uuid
+from datetime import UTC, datetime
+from typing import Any
 
-from fastapi import Request, Response
+from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
-from backend.core.config import get_settings
-from backend.core.exceptions import AISoftwareFactoryException
-from backend.core.logging import get_correlation_id, get_logger
+from backend.core.exceptions import (
+    AISoftwareFactoryException,
+    BackendException,
+    ValidationError,
+    handle_backend_exception,
+)
+from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-
-class ErrorHandlerMiddleware(BaseHTTPMiddleware):
-    """
-    Middleware for global error handling.
-
-    This middleware catches all exceptions and:
-    1. Logs errors with full context
-    2. Converts custom exceptions to HTTP responses
-    3. Returns generic 500 errors for unexpected exceptions (in production)
-    4. Includes stack traces (in development)
-    5. Adds correlation ID to error responses
-
-    Example:
-        >>> app.add_middleware(ErrorHandlerMiddleware)
-    """
+class ErrorHandlerMiddleware:
+    """Enhanced error handling middleware."""
 
     def __init__(self, app):
-        """
-        Initialize middleware.
+        self.app = app
 
-        Args:
-            app: FastAPI application
-        """
-        super().__init__(app)
-        self.settings = get_settings()
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
 
-    async def dispatch(
-        self,
-        request: Request,
-        call_next: RequestResponseEndpoint,
-    ) -> Response:
-        """
-        Process request with error handling.
+        # Generate request ID for correlation
+        request_id = str(uuid.uuid4())
+        scope["request_id"] = request_id
 
-        Args:
-            request: Incoming request
-            call_next: Next middleware/handler in chain
+        async def send_wrapper(message):
+            if message["type"] == "http.response.start":
+                # Add request ID to response headers
+                headers = list(message.get("headers", []))
+                headers.append((b"x-request-id", request_id.encode()))
+                message["headers"] = headers
+            await send(message)
 
-        Returns:
-            Response from handler or error response
-        """
         try:
-            return await call_next(request)
-
-        except AISoftwareFactoryException as exc:
-            # Handle custom application exceptions
-            return self._handle_custom_exception(exc, request)
-
+            await self.app(scope, receive, send_wrapper)
         except Exception as exc:
-            # Handle unexpected exceptions
-            return self._handle_unexpected_exception(exc, request)
+            # Debug print
+            print(f"DEBUG: Caught exception: {type(exc)}, status_code: {getattr(exc, 'status_code', 'N/A')}")
+            # Handle the exception
+            response = await self.handle_exception(exc, request_id, scope)
+            await response(scope, receive, send)
 
-    def _handle_custom_exception(
-        self,
-        exc: AISoftwareFactoryException,
-        request: Request,
-    ) -> JSONResponse:
-        """
-        Handle custom application exceptions.
-
-        Args:
-            exc: Custom exception instance
-            request: FastAPI request
-
-        Returns:
-            JSON error response with standardized format
-        """
-        request_id = get_correlation_id()
-
-        # Log the error with context
-        logger.error(
-            "Application error",
-            error_code=exc.error_code,
-            message=exc.message,
-            details=exc.details,
-            path=request.url.path,
-            method=request.method,
-            request_id=request_id,
-        )
-
-        # Build standardized error response
-        error_response = {
-            "error": {
-                "code": exc.error_code,
-                "message": exc.message,
-                "details": exc.details or {},
-            },
-            "request_id": request_id,
-        }
-
-        return JSONResponse(
-            status_code=exc.status_code,
-            content=error_response,
-        )
-
-    def _handle_unexpected_exception(
+    async def handle_exception(
         self,
         exc: Exception,
-        request: Request,
+        request_id: str,
+        scope: dict[str, Any]
     ) -> JSONResponse:
-        """
-        Handle unexpected exceptions.
+        """Handle different types of exceptions."""
 
-        In production, returns a generic error message.
-        In development, includes the full error details and stack trace.
+        # Extract request info for logging
+        request_info = self._extract_request_info(scope)
 
-        Args:
-            exc: Unexpected exception
-            request: FastAPI request
+        # Handle BackendException and AISoftwareFactoryException subclasses
+        print(f"DEBUG: Checking if {type(exc)} is BackendException or AISoftwareFactoryException")
+        if isinstance(exc, (BackendException, AISoftwareFactoryException)):
+            print(f"DEBUG: Handling as backend exception")
+            return self._handle_backend_exception(exc, request_id, request_info)
 
-        Returns:
-            JSON error response with standardized format
-        """
-        request_id = get_correlation_id()
+        # Handle FastAPI HTTPException
+        elif isinstance(exc, HTTPException):
+            return self._handle_http_exception(exc, request_id, request_info)
 
-        # Log the full error with stack trace
-        logger.exception(
-            "Unexpected error",
-            error_type=type(exc).__name__,
-            error_message=str(exc),
-            path=request.url.path,
-            method=request.method,
-            request_id=request_id,
-        )
+        # Handle validation errors
+        elif isinstance(exc, ValidationError):
+            return self._handle_validation_error(exc, request_id, request_info)
 
-        if self.settings.is_development or self.settings.is_testing:
-            # Return detailed error in development
-            error_response = {
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": str(exc),
-                    "details": {
-                        "type": type(exc).__name__,
-                        "stack_trace": traceback.format_exc().split("\n"),
-                    },
-                },
-                "request_id": request_id,
-            }
+        # Handle generic exceptions
         else:
-            # Return generic error in production
-            error_response = {
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": "An unexpected error occurred. Please try again later.",
-                    "details": {},
-                },
+            return self._handle_generic_exception(exc, request_id, request_info)
+
+    def _handle_backend_exception(
+        self,
+        exc: AISoftwareFactoryException,
+        request_id: str,
+        request_info: dict[str, Any]
+    ) -> JSONResponse:
+        """Handle BackendException and subclasses."""
+
+        # Log the error with full context
+        self._log_backend_exception(exc, request_id, request_info)
+
+        # Convert to HTTPException and create response
+        http_exc = handle_backend_exception(exc, request_id, logger)
+        
+        # Debug print
+        print(f"DEBUG: Exception type: {type(exc)}, status_code: {exc.status_code}")
+        print(f"DEBUG: HTTPException status_code: {http_exc.status_code}")
+
+        # Add request_id to top level for test compatibility
+        response_content = http_exc.detail.copy()
+        response_content["request_id"] = request_id
+        
+        return JSONResponse(
+            status_code=http_exc.status_code,
+            content=response_content,
+            headers={"X-Request-ID": request_id}
+        )
+
+    def _handle_http_exception(
+        self,
+        exc: HTTPException,
+        request_id: str,
+        request_info: dict[str, Any]
+    ) -> JSONResponse:
+        """Handle FastAPI HTTPException."""
+
+        # Log HTTP exceptions (4xx are warnings, 5xx are errors)
+        log_level = logging.ERROR if exc.status_code >= 500 else logging.WARNING
+        logger.log(
+            log_level,
+            f"HTTP {exc.status_code}: {exc.detail}",
+            extra={
                 "request_id": request_id,
+                "status_code": exc.status_code,
+                "method": request_info.get("method"),
+                "path": request_info.get("path"),
+                "client": request_info.get("client")
+            }
+        )
+
+        # Ensure consistent error response format
+        if isinstance(exc.detail, dict):
+            response_content = exc.detail
+        else:
+            response_content = {
+                "success": False,
+                "error": {
+                    "code": "HTTP_ERROR",
+                    "message": str(exc.detail),
+                    "status_code": exc.status_code,
+                    "timestamp": datetime.now(UTC).isoformat()
+                }
             }
 
         return JSONResponse(
-            status_code=500,
-            content=error_response,
+            status_code=exc.status_code,
+            content=response_content,
+            headers={"X-Request-ID": request_id}
         )
 
-
-def setup_exception_handlers(app) -> None:
-    """
-    Setup exception handlers for FastAPI application.
-
-    This function adds exception handlers for specific exception types
-    that may be raised outside of the middleware context.
-
-    Args:
-        app: FastAPI application instance
-
-    Example:
-        >>> from fastapi import FastAPI
-        >>> app = FastAPI()
-        >>> setup_exception_handlers(app)
-    """
-
-    @app.exception_handler(AISoftwareFactoryException)
-    async def custom_exception_handler(
-        request: Request,
-        exc: AISoftwareFactoryException,
+    def _handle_validation_error(
+        self,
+        exc: ValidationError,
+        request_id: str,
+        request_info: dict[str, Any]
     ) -> JSONResponse:
-        """Handle custom application exceptions."""
-        request_id = get_correlation_id()
+        """Handle validation errors specifically."""
 
-        logger.error(
-            "Application error (handler)",
-            error_code=exc.error_code,
-            message=exc.message,
-            details=exc.details,
-            path=request.url.path,
-            request_id=request_id,
+        logger.warning(
+            f"Validation error: {exc.message}",
+            extra={
+                "request_id": request_id,
+                "field": exc.details.get("field"),
+                "value": exc.details.get("value"),
+                "method": request_info.get("method"),
+                "path": request_info.get("path")
+            }
         )
-
-        error_response = {
-            "error": {
-                "code": exc.error_code,
-                "message": exc.message,
-                "details": exc.details or {},
-            },
-            "request_id": request_id,
-        }
 
         return JSONResponse(
             status_code=exc.status_code,
-            content=error_response,
+            content={
+                "success": False,
+                "error": {
+                    "code": exc.error_code,
+                    "message": exc.message,
+                    "status_code": exc.status_code,
+                    "details": exc.details,
+                    "timestamp": datetime.now(UTC).isoformat()
+                }
+            },
+            headers={"X-Request-ID": request_id}
         )
 
-    @app.exception_handler(Exception)
-    async def general_exception_handler(
-        request: Request,
+    def _handle_generic_exception(
+        self,
         exc: Exception,
+        request_id: str,
+        request_info: dict[str, Any]
     ) -> JSONResponse:
         """Handle unexpected exceptions."""
-        settings = get_settings()
-        request_id = get_correlation_id()
 
-        logger.exception(
-            "Unexpected error (handler)",
-            error_type=type(exc).__name__,
-            error_message=str(exc),
-            path=request.url.path,
-            request_id=request_id,
+        # Log the full traceback for debugging
+        logger.error(
+            f"Unexpected error: {str(exc)}",
+            extra={
+                "request_id": request_id,
+                "method": request_info.get("method"),
+                "path": request_info.get("path"),
+                "client": request_info.get("client"),
+                "traceback": traceback.format_exc()
+            }
         )
 
-        if settings.is_development or settings.is_testing:
-            error_response = {
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": str(exc),
-                    "details": {
-                        "type": type(exc).__name__,
-                        "stack_trace": traceback.format_exc().split("\n"),
-                    },
-                },
-                "request_id": request_id,
-            }
-        else:
-            error_response = {
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": "An unexpected error occurred. Please try again later.",
-                    "details": {},
-                },
-                "request_id": request_id,
-            }
-
+        # Return generic error response
         return JSONResponse(
-            status_code=500,
-            content=error_response,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={
+                "success": False,
+                "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "An unexpected error occurred",
+                    "status_code": 500,
+                    "timestamp": datetime.now(UTC).isoformat(),
+                    "request_id": request_id
+                }
+            },
+            headers={"X-Request-ID": request_id}
         )
+
+    def _extract_request_info(self, scope: dict[str, Any]) -> dict[str, Any]:
+        """Extract relevant request information."""
+        return {
+            "method": scope.get("method", "UNKNOWN"),
+            "path": scope.get("path", "UNKNOWN"),
+            "client": scope.get("client", ["UNKNOWN", 0])[0] if scope.get("client") else "UNKNOWN",
+            "scheme": scope.get("scheme", "http"),
+            "http_version": scope.get("http_version", "1.1")
+        }
+
+    def _log_backend_exception(
+        self,
+        exc: AISoftwareFactoryException,
+        request_id: str,
+        request_info: dict[str, Any]
+    ):
+        """Log backend exception with appropriate level."""
+
+        # Determine log level based on status code
+        if exc.status_code >= 500:
+            log_level = logging.ERROR
+        elif exc.status_code >= 400:
+            log_level = logging.WARNING
+        else:
+            log_level = logging.INFO
+
+        logger.log(
+            log_level,
+            f"{exc.error_code}: {exc.message}",
+            extra={
+                "request_id": request_id,
+                "error_code": exc.error_code,
+                "status_code": exc.status_code,
+                "details": getattr(exc, 'details', {}),
+                "method": request_info.get("method"),
+                "path": request_info.get("path"),
+                "client": request_info.get("client")
+            }
+        )
+
+# Decorator for route-specific error handling
+def handle_route_errors(func):
+    """Decorator to wrap route functions with error handling."""
+    async def wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except BackendException:
+            # Re-raise BackendException to be handled by middleware
+            raise
+        except Exception as exc:
+            # Convert generic exceptions to BackendException
+            raise BackendException(
+                message=f"Route error: {str(exc)}",
+                error_code="ROUTE_ERROR",
+                status_code=500
+            ) from exc
+    return wrapper
+
+# Context manager for error handling in business logic
+class ErrorContext:
+    """Context manager for handling errors in business logic."""
+
+    def __init__(self, operation: str, resource: str = None):
+        self.operation = operation
+        self.resource = resource
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_val is not None:
+            # If it's already a BackendException, re-raise
+            if isinstance(exc_val, BackendException):
+                return False
+
+            # Convert other exceptions to appropriate BackendException
+            error_msg = f"Error during {self.operation}"
+            if self.resource:
+                error_msg += f" for {self.resource}"
+
+            raise BackendException(
+                message=f"{error_msg}: {str(exc_val)}",
+                error_code="OPERATION_ERROR",
+                status_code=500
+            ) from exc_val
+
+        return True
+
+# Utility function for safe execution with error handling
+async def safe_execute(operation, *args, **kwargs):
+    """Safely execute an operation with error handling."""
+    try:
+        if callable(operation):
+            return await operation(*args, **kwargs) if hasattr(operation, '__call__') else operation(*args, **kwargs)
+        else:
+            return operation
+    except BackendException:
+        raise
+    except Exception as exc:
+        raise BackendException(
+            message=f"Operation failed: {str(exc)}",
+            error_code="EXECUTION_ERROR",
+            status_code=500
+        ) from exc
+
+
+def setup_exception_handlers(app):
+    """Setup exception handlers for the FastAPI app."""
+    pass  # Exception handlers are typically setup elsewhere

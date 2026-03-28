@@ -153,11 +153,11 @@ describe('TopNav', () => {
   });
 
   describe('layout and positioning', () => {
-    it('has fixed positioning class', () => {
+    it('has top-navbar class', () => {
       render(<TopNav />);
       
       const header = document.querySelector('header');
-      expect(header?.className).toContain('fixed');
+      expect(header?.className).toContain('top-navbar');
     });
 
     it('positions content with flex justify-between', () => {

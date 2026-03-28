@@ -8,7 +8,7 @@ import asyncio
 import httpx
 import socket
 import sys
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 async def check_port_connectivity(host: str, port: int, service_name: str) -> Dict[str, Any]:
     """Check if a port is open and accepting connections"""

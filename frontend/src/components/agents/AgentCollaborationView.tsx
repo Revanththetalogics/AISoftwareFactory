@@ -230,11 +230,11 @@ function MessageFlow({ message, agents }: MessageFlowProps) {
 }
 
 interface AgentCollaborationViewProps {
-  projectId?: string;
+// Remove unused _projectId parameter
   className?: string;
 }
 
-export function AgentCollaborationView({ projectId: _projectId, className }: AgentCollaborationViewProps) {
+export function AgentCollaborationView({ className }: AgentCollaborationViewProps) {
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [activeAgents, setActiveAgents] = useState<string[]>(['pm', 'architect']);
   const { lastMessage } = useEventStream();
@@ -244,7 +244,7 @@ export function AgentCollaborationView({ projectId: _projectId, className }: Age
       const msg = lastMessage.data as Message;
       // eslint-disable-next-line react-hooks/set-state-in-effect -- Handling external SSE events
       setMessages(prev => [msg, ...prev].slice(0, 50));
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Handling external SSE events
+       
       setActiveAgents([msg.from, msg.to]);
     }
   }, [lastMessage]);

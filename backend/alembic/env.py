@@ -1,3 +1,14 @@
+"""
+Alembic migration environment configuration.
+
+This module configures the Alembic migration environment for the AI Software Factory.
+It sets up the database connection, logging, and model metadata for automatic
+migration generation.
+
+The configuration reads from alembic.ini and integrates with the application's
+SQLAlchemy models to enable database schema versioning and migration management.
+"""
+
 from logging.config import fileConfig
 
 # Import your models

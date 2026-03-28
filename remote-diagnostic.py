@@ -20,7 +20,7 @@ async def test_endpoint(url: str, description: str) -> Dict[str, Any]:
                 "status_code": response.status_code,
                 "content_length": len(response.content),
                 "is_nginx_welcome": b"Welcome to nginx" in response.content,
-                "is_frontend": b"<!DOCTYPE html>" in response.content and not b"Welcome to nginx" in response.content,
+                "is_frontend": b"<!DOCTYPE html>" in response.content and b"Welcome to nginx" not in response.content,
                 "success": response.status_code == 200
             }
     except Exception as e:

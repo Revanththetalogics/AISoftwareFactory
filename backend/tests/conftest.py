@@ -4,7 +4,7 @@ Pytest configuration and fixtures for AI Software Factory tests.
 
 import asyncio
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -72,8 +72,8 @@ def mock_db_user():
     user.first_name = "Test"
     user.last_name = "User"
     user.last_login = None
-    user.created_at = datetime.utcnow()
-    user.updated_at = datetime.utcnow()
+    user.created_at = datetime.now(UTC)
+    user.updated_at = datetime.now(UTC)
     return user
 
 

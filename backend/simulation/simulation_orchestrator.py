@@ -6,7 +6,7 @@ for all simulation components.
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from backend.core.logging import get_logger
@@ -124,7 +124,7 @@ class SimulationOrchestrator:
                     path = self._reporter.generate_html(combined_results)
                     results["reports"].append({"format": "html", "path": path})
 
-        results["end_time"] = datetime.utcnow().isoformat()
+        results["end_time"] = datetime.now(UTC).isoformat()
         results["status"] = "completed"
 
         self._logger.info(

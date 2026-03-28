@@ -8,7 +8,7 @@ and circuit breaker pattern.
 import asyncio
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -54,7 +54,7 @@ class CircuitBreaker:
 
         if self._state == CircuitState.OPEN:
             if self._last_failure and \
-               (datetime.utcnow() - self._last_failure).total_seconds() > self._recovery_timeout:
+               (datetime.now(UTC) - self._last_failure).total_seconds() > self._recovery_timeout:
                 self._state = CircuitState.HALF_OPEN
                 return True
             return False
@@ -69,7 +69,7 @@ class CircuitBreaker:
     def record_failure(self):
         """Record a failed execution."""
         self._failures += 1
-        self._last_failure = datetime.utcnow()
+        self._last_failure = datetime.now(UTC)
 
         if self._failures >= self._failure_threshold:
             self._state = CircuitState.OPEN
@@ -192,7 +192,7 @@ class ErrorHandler:
                 "task_id": task_id,
                 "error": str(error),
                 "context": context,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
             reports_dir = Path("reports")
             reports_dir.mkdir(exist_ok=True)

@@ -155,13 +155,12 @@ function ActivityItem({ activity, isLatest }: ActivityItemProps) {
 }
 
 interface AgentActivityFeedProps {
-  projectId?: string;
+// Remove unused _projectId parameter
   maxItems?: number;
   className?: string;
 }
 
 export function AgentActivityFeed({
-  projectId: _projectId,
   maxItems = 50,
   className
 }: AgentActivityFeedProps) {
