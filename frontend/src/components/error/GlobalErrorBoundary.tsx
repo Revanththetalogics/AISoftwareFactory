@@ -69,7 +69,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
             
             <CardContent className="text-center space-y-4">
               <p className="text-text-secondary">
-                We're sorry, but something unexpected happened. Our team has been notified.
+                We&apos;re sorry, but something unexpected happened. Our team has been notified.
               </p>
               
               {process.env.NODE_ENV === 'development' && this.state.error && (

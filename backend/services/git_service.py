@@ -19,14 +19,14 @@ logger = get_logger(__name__)
 class GitService:
     """
     Git repository management service.
-    
+
     Handles Git operations for file synchronization with remote repositories.
     """
 
     def __init__(self, working_directory: str = "./repositories"):
         """
         Initialize the Git service.
-        
+
         Args:
             working_directory: Directory to store cloned repositories
         """
@@ -42,12 +42,12 @@ class GitService:
     ) -> dict[str, Any]:
         """
         Clone a Git repository.
-        
+
         Args:
             repo_url: Repository URL (HTTPS or SSH)
             destination_name: Local folder name (defaults to repo name)
             branch: Branch to checkout
-            
+
         Returns:
             Repository information
         """
@@ -96,10 +96,10 @@ class GitService:
     async def pull_repository(self, repo_path: str) -> dict[str, Any]:
         """
         Pull latest changes from a repository.
-        
+
         Args:
             repo_path: Local repository path
-            
+
         Returns:
             Updated repository information
         """
@@ -138,12 +138,12 @@ class GitService:
     ) -> dict[str, Any]:
         """
         Push changes to remote repository.
-        
+
         Args:
             repo_path: Local repository path
             commit_message: Commit message
             branch: Target branch
-            
+
         Returns:
             Push result information
         """
@@ -206,11 +206,11 @@ class GitService:
     async def list_files(self, repo_path: str, relative_path: str = ".") -> list[dict[str, Any]]:
         """
         List files in a repository directory.
-        
+
         Args:
             repo_path: Local repository path
             relative_path: Relative path within repository
-            
+
         Returns:
             List of file information
         """
@@ -243,11 +243,11 @@ class GitService:
     async def read_file(self, repo_path: str, file_path: str) -> dict[str, Any]:
         """
         Read file content from repository.
-        
+
         Args:
             repo_path: Local repository path
             file_path: Path to file within repository
-            
+
         Returns:
             File content and metadata
         """
@@ -297,13 +297,13 @@ class GitService:
     ) -> dict[str, Any]:
         """
         Write file content to repository.
-        
+
         Args:
             repo_path: Local repository path
             file_path: Path to file within repository
             content: File content
             create_parents: Create parent directories if they don't exist
-            
+
         Returns:
             Write result information
         """
@@ -333,11 +333,11 @@ class GitService:
     async def delete_file(self, repo_path: str, file_path: str) -> dict[str, Any]:
         """
         Delete file from repository.
-        
+
         Args:
             repo_path: Local repository path
             file_path: Path to file within repository
-            
+
         Returns:
             Delete result information
         """

@@ -16,11 +16,6 @@ export default function SecurityDashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'vulnerabilities' | 'dependencies'>('overview');
   const [selectedVulnerability, setSelectedVulnerability] = useState<Vulnerability | null>(null);
 
-  useEffect(() => {
-    // Load initial security stats
-    loadSecurityStats();
-  }, []);
-
   const loadSecurityStats = async () => {
     try {
       // This would load current security statistics
@@ -29,6 +24,11 @@ export default function SecurityDashboard() {
       console.error('Failed to load security stats:', error);
     }
   };
+
+  useEffect(() => {
+    // Load initial security stats
+    loadSecurityStats();
+  }, [loadSecurityStats]);
 
   const startSecurityScan = async () => {
     setIsScanning(true);

@@ -95,10 +95,6 @@ export default function UserPreferencesDashboard() {
     }
   };
 
-  const getCategoryIcon = (categoryId: string) => {
-    const category = categories.find(c => c.id === categoryId);
-    return category?.icon || '⚙️';
-  };
 
   return (
     <div className="space-y-6">
@@ -209,7 +205,7 @@ export default function UserPreferencesDashboard() {
                         </label>
                         <select
                           value={theme}
-                          onChange={(e) => setTheme(e.target.value as any)}
+                          onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'system')}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                           <option value="light">Light</option>
@@ -224,7 +220,7 @@ export default function UserPreferencesDashboard() {
                         </label>
                         <select
                           value={fontSize}
-                          onChange={(e) => setFontSize(e.target.value as any)}
+                          onChange={(e) => setFontSize(e.target.value as 'small' | 'medium' | 'large')}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                           <option value="small">Small</option>
@@ -321,7 +317,7 @@ export default function UserPreferencesDashboard() {
                         </label>
                         <select
                           value={notificationFrequency}
-                          onChange={(e) => setNotificationFrequency(e.target.value as any)}
+                          onChange={(e) => setNotificationFrequency(e.target.value as 'instant' | 'hourly' | 'daily' | 'weekly')}
                           className="w-full md:w-64 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                           <option value="instant">Instant</option>
@@ -410,7 +406,7 @@ export default function UserPreferencesDashboard() {
                         </label>
                         <select
                           value={layout}
-                          onChange={(e) => setLayout(e.target.value as any)}
+                          onChange={(e) => setLayout(e.target.value as 'grid' | 'list' | 'kanban')}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                           <option value="grid">Grid</option>

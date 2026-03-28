@@ -9,7 +9,6 @@ import {
   PredictionResult,
   ReportGenerateRequest,
   ReportType,
-  TimeGranularity
 } from '@/services/analytics.service';
 
 export default function AdvancedAnalyticsDashboard() {
@@ -20,7 +19,7 @@ export default function AdvancedAnalyticsDashboard() {
   const [selectedMetric, setSelectedMetric] = useState('projects_created');
   const [timeRange, setTimeRange] = useState('last_30_days');
   const [isLoading, setIsLoading] = useState(false);
-  const [dashboardData, setDashboardData] = useState<Record<string, any> | null>(null);
+  const [dashboardData, setDashboardData] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     loadData();
@@ -157,22 +156,7 @@ export default function AdvancedAnalyticsDashboard() {
     return icons[metric] || '📊';
   };
 
-  const getTrendIndicator = (trend: Record<string, any>) => {
-    if (!trend) return null;
-    
-    const isPositive = trend.trend_direction === 'increasing';
-    const strength = trend.trend_classification;
-    
-    return (
-      <div className={`flex items-center ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-        <span className="mr-1">{isPositive ? '↗' : '↘'}</span>
-        <span className="text-sm font-medium">
-          {isPositive ? '+' : ''}{(trend.slope * 100).toFixed(1)}%
-        </span>
-        <span className="text-xs ml-1 capitalize">({strength})</span>
-      </div>
-    );
-  };
+
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
@@ -297,15 +281,15 @@ export default function AdvancedAnalyticsDashboard() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Total Queries:</span>
-                    <span className="font-medium">{dashboardData.total_queries}</span>
+                    <span className="font-medium">{String(dashboardData.total_queries)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Total Reports:</span>
-                    <span className="font-medium">{dashboardData.total_reports}</span>
+                    <span className="font-medium">{String(dashboardData.total_reports)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Total Predictions:</span>
-                    <span className="font-medium">{dashboardData.total_predictions}</span>
+                    <span className="font-medium">{String(dashboardData.total_predictions)}</span>
                   </div>
                   <div className="pt-2 border-t border-gray-200">
                     <div className="text-xs text-gray-500">
@@ -332,7 +316,7 @@ export default function AdvancedAnalyticsDashboard() {
                     <div className="ml-4">
                       <p className="text-sm text-gray-600">Total Queries</p>
                       <p className="text-2xl font-bold text-gray-900">
-                        {dashboardData?.total_queries || 0}
+                        {String(dashboardData?.total_queries || 0)}
                       </p>
                     </div>
                   </div>
@@ -346,7 +330,7 @@ export default function AdvancedAnalyticsDashboard() {
                     <div className="ml-4">
                       <p className="text-sm text-gray-600">Reports Generated</p>
                       <p className="text-2xl font-bold text-gray-900">
-                        {dashboardData?.total_reports || 0}
+                        {String(dashboardData?.total_reports || 0)}
                       </p>
                     </div>
                   </div>
@@ -360,7 +344,7 @@ export default function AdvancedAnalyticsDashboard() {
                     <div className="ml-4">
                       <p className="text-sm text-gray-600">Predictions Made</p>
                       <p className="text-2xl font-bold text-gray-900">
-                        {dashboardData?.total_predictions || 0}
+                        {String(dashboardData?.total_predictions || 0)}
                       </p>
                     </div>
                   </div>

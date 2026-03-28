@@ -86,10 +86,10 @@ class SchemaDiffRequest(BaseModel):
 async def create_schema(schema_data: SchemaCreate):
     """
     Create a new database schema.
-    
+
     Args:
         schema_data: Schema creation data
-    
+
     Returns:
         APIResponse with created schema
     """
@@ -161,10 +161,10 @@ async def list_schemas():
 async def get_schema(schema_name: str):
     """
     Get a specific database schema.
-    
+
     Args:
         schema_name: Name of the schema to retrieve
-    
+
     Returns:
         APIResponse with schema data
     """
@@ -199,11 +199,11 @@ async def get_schema(schema_name: str):
 async def update_schema(schema_name: str, update_data: SchemaUpdate):
     """
     Update an existing database schema.
-    
+
     Args:
         schema_name: Name of the schema to update
         update_data: Update data
-    
+
     Returns:
         APIResponse with updated schema
     """
@@ -255,10 +255,10 @@ async def update_schema(schema_name: str, update_data: SchemaUpdate):
 async def delete_schema(schema_name: str):
     """
     Delete a database schema.
-    
+
     Args:
         schema_name: Name of the schema to delete
-    
+
     Returns:
         APIResponse confirming deletion
     """
@@ -283,10 +283,10 @@ async def delete_schema(schema_name: str):
 async def create_migration(migration_data: MigrationCreate):
     """
     Create a new database migration.
-    
+
     Args:
         migration_data: Migration creation data
-    
+
     Returns:
         APIResponse with created migration
     """
@@ -312,10 +312,10 @@ async def create_migration(migration_data: MigrationCreate):
 async def apply_migration(migration_id: str):
     """
     Apply a database migration.
-    
+
     Args:
         migration_id: ID of the migration to apply
-        
+
     Returns:
         APIResponse confirming application
     """
@@ -340,10 +340,10 @@ async def apply_migration(migration_id: str):
 async def rollback_migration(migration_id: str):
     """
     Rollback a database migration.
-    
+
     Args:
         migration_id: ID of the migration to rollback
-        
+
     Returns:
         APIResponse confirming rollback
     """
@@ -368,10 +368,10 @@ async def rollback_migration(migration_id: str):
 async def list_migrations(applied_only: bool = False):
     """
     List database migrations.
-    
+
     Args:
         applied_only: If true, only return applied migrations
-        
+
     Returns:
         APIResponse with list of migrations
     """
@@ -394,10 +394,10 @@ async def list_migrations(applied_only: bool = False):
 async def generate_migration_from_diff(diff_request: SchemaDiffRequest):
     """
     Generate migration from schema difference.
-    
+
     Args:
         diff_request: Schema diff request data
-        
+
     Returns:
         APIResponse with generated migration
     """
@@ -422,11 +422,11 @@ async def generate_migration_from_diff(diff_request: SchemaDiffRequest):
 async def export_schema(schema_name: str, format: str):
     """
     Export a schema in specified format.
-    
+
     Args:
         schema_name: Name of the schema to export
         format: Export format (sql, json)
-        
+
     Returns:
         APIResponse with exported schema data
     """
@@ -449,7 +449,7 @@ async def export_schema(schema_name: str, format: str):
 async def get_column_types():
     """
     Get available column types.
-    
+
     Returns:
         APIResponse with list of column types
     """
@@ -470,7 +470,7 @@ async def get_column_types():
 async def get_constraint_types():
     """
     Get available constraint types.
-    
+
     Returns:
         APIResponse with list of constraint types
     """
@@ -491,7 +491,7 @@ async def get_constraint_types():
 async def get_index_types():
     """
     Get available index types.
-    
+
     Returns:
         APIResponse with list of index types
     """

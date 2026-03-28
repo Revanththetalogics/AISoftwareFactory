@@ -56,7 +56,7 @@ class DocumentResponse(BaseModel):
 async def get_knowledge_stats():
     """
     Get knowledge base statistics.
-    
+
     Returns:
         APIResponse containing knowledge base stats
     """
@@ -75,10 +75,10 @@ async def get_knowledge_stats():
 async def add_document(request: DocumentCreateRequest):
     """
     Add a new document to the knowledge base.
-    
+
     Args:
         request: Document creation request
-        
+
     Returns:
         APIResponse with document ID
     """
@@ -112,10 +112,10 @@ async def add_document(request: DocumentCreateRequest):
 async def get_document(doc_id: str):
     """
     Get a specific document by ID.
-    
+
     Args:
         doc_id: Document ID
-        
+
     Returns:
         APIResponse with document data
     """
@@ -153,11 +153,11 @@ async def get_document(doc_id: str):
 async def update_document(doc_id: str, request: DocumentUpdateRequest):
     """
     Update an existing document.
-    
+
     Args:
         doc_id: Document ID
         request: Update request data
-        
+
     Returns:
         APIResponse confirming update
     """
@@ -207,10 +207,10 @@ async def update_document(doc_id: str, request: DocumentUpdateRequest):
 async def delete_document(doc_id: str):
     """
     Delete a document from the knowledge base.
-    
+
     Args:
         doc_id: Document ID
-        
+
     Returns:
         APIResponse confirming deletion
     """
@@ -234,10 +234,10 @@ async def delete_document(doc_id: str):
 async def search_documents(request: SearchRequest):
     """
     Search documents in the knowledge base.
-    
+
     Args:
         request: Search request with query and parameters
-        
+
     Returns:
         APIResponse with search results
     """
@@ -290,12 +290,12 @@ async def list_documents(
 ):
     """
     List all documents in the knowledge base.
-    
+
     Args:
         skip: Number of documents to skip
         limit: Maximum number of documents to return
         tags: Comma-separated tags to filter by
-        
+
     Returns:
         APIResponse with list of documents
     """

@@ -406,10 +406,10 @@ class CustomizationService:
         layouts = list(self.layouts.values())
 
         if not include_system:
-            layouts = [l for l in layouts if not l.is_system_default]
+            layouts = [layout for layout in layouts if not layout.is_system_default]
 
         if not include_custom:
-            layouts = [l for l in layouts if not l.is_custom]
+            layouts = [layout for layout in layouts if not layout.is_custom]
 
         return layouts
 
@@ -538,7 +538,7 @@ class CustomizationService:
         """Get system default configurations."""
         try:
             default_theme = next((t for t in self.themes.values() if t.is_system_default and t.mode == ThemeMode.LIGHT), None)
-            default_layout = next((l for l in self.layouts.values() if l.is_system_default and l.type == LayoutType.DEFAULT), None)
+            default_layout = next((layout for layout in self.layouts.values() if layout.is_system_default and layout.type == LayoutType.DEFAULT), None)
 
             return {
                 "default_theme": default_theme.__dict__ if default_theme else None,

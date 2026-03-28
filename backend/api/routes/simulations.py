@@ -47,10 +47,10 @@ class SimulationResultResponse(BaseModel):
 async def run_simulation(request: SimulationRunRequest):
     """
     Run a new simulation.
-    
+
     Args:
         request: Simulation run request with code and configuration
-        
+
     Returns:
         APIResponse with simulation results
     """
@@ -95,10 +95,10 @@ async def run_simulation(request: SimulationRunRequest):
 async def get_simulation(simulation_id: str):
     """
     Get a specific simulation by ID.
-    
+
     Args:
         simulation_id: Simulation ID
-        
+
     Returns:
         APIResponse with simulation data
     """
@@ -113,11 +113,11 @@ async def list_simulations(
 ):
     """
     List recent simulations (placeholder - simulations are not persisted).
-    
+
     Args:
         skip: Number of simulations to skip
         limit: Maximum number of simulations to return
-        
+
     Returns:
         APIResponse with list of simulations
     """
@@ -138,7 +138,7 @@ async def list_simulations(
 async def get_simulation_stats():
     """
     Get simulation statistics.
-    
+
     Returns:
         APIResponse with simulation statistics
     """
@@ -163,10 +163,10 @@ async def get_simulation_stats():
 async def cancel_simulation(simulation_id: str):
     """
     Cancel a running simulation.
-    
+
     Args:
         simulation_id: Simulation ID to cancel
-        
+
     Returns:
         APIResponse confirming cancellation
     """
@@ -178,10 +178,10 @@ async def cancel_simulation(simulation_id: str):
 async def delete_simulation(simulation_id: str):
     """
     Delete a simulation and its results.
-    
+
     Args:
         simulation_id: Simulation ID to delete
-        
+
     Returns:
         APIResponse confirming deletion
     """

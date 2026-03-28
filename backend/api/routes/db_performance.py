@@ -29,7 +29,7 @@ async def database_health_check(db: AsyncSession = Depends(get_db)):
         start_time = time.time()
 
         # Basic connectivity
-        result = await db.execute("SELECT 1")
+        await db.execute("SELECT 1")
         connectivity_time = time.time() - start_time
 
         # Pool statistics
@@ -38,7 +38,7 @@ async def database_health_check(db: AsyncSession = Depends(get_db)):
         pool_stats = await pool_monitor.get_pool_stats()
 
         # Recent performance metrics
-        optimizer = QueryOptimizer()
+        QueryOptimizer()
 
         health_data = {
             "status": "healthy" if connectivity_time < 1.0 else "degraded",
@@ -167,7 +167,7 @@ async def get_slow_queries(
     try:
         # Query pg_stat_statements for slow queries
         query = """
-            SELECT 
+            SELECT
                 query,
                 calls,
                 total_time,
@@ -180,7 +180,7 @@ async def get_slow_queries(
                 shared_blks_read,
                 shared_blks_dirtied,
                 shared_blks_written
-            FROM pg_stat_statements 
+            FROM pg_stat_statements
             WHERE mean_time > :min_time
             ORDER BY mean_time DESC
             LIMIT :limit
@@ -224,7 +224,7 @@ async def get_query_optimization_suggestions(
         # Get table size
         try:
             size_query = """
-                SELECT 
+                SELECT
                     pg_size_pretty(pg_total_relation_size(:table_name)) as total_size,
                     pg_size_pretty(pg_relation_size(:table_name)) as table_size,
                     pg_size_pretty(pg_indexes_size(:table_name)) as indexes_size

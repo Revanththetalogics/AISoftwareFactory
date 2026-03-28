@@ -3,14 +3,13 @@
 import { useState, useEffect } from 'react';
 import { 
   loadingStateService, 
-  LoadingState, 
-  NetworkStatus,
+
   useLoadingState,
   useNetworkStatus
 } from '@/services/loading-state.service';
 
 export default function LoadingStatesDemo() {
-  const [demoData, setDemoData] = useState<{ items: any[]; timestamp: string } | null>(null);
+  const [demoData, setDemoData] = useState<{ items: unknown[]; timestamp: string } | null>(null);
   const [showSkeleton, setShowSkeleton] = useState(true);
   const [progressValue, setProgressValue] = useState(0);
   const [retryCount, setRetryCount] = useState(0);
@@ -258,18 +257,18 @@ export default function LoadingStatesDemo() {
 
           {listLoadingState === 'loaded' && demoData && (
             <div className="space-y-3">
-              {demoData.items.map((item: { id: string; name: string; description: string; status: string }) => (
-                <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              {demoData.items.map((item) => (
+                <div key={(item as { id: string; name: string; description: string; status: string }).id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div>
-                    <h3 className="font-medium text-gray-900">{item.name}</h3>
-                    <p className="text-sm text-gray-600">{item.description}</p>
+                    <h3 className="font-medium text-gray-900">{(item as { id: string; name: string; description: string; status: string }).name}</h3>
+                    <p className="text-sm text-gray-600">{(item as { id: string; name: string; description: string; status: string }).description}</p>
                   </div>
                   <span className={`px-2 py-1 text-xs rounded-full ${
-                    item.status === 'active' ? 'bg-green-100 text-green-800' :
-                    item.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    (item as { id: string; name: string; description: string; status: string }).status === 'active' ? 'bg-green-100 text-green-800' :
+                    (item as { id: string; name: string; description: string; status: string }).status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                     'bg-gray-100 text-gray-800'
                   }`}>
-                    {item.status}
+                    {(item as { id: string; name: string; description: string; status: string }).status}
                   </span>
                 </div>
               ))}

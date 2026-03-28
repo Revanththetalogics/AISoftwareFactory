@@ -439,7 +439,7 @@ export default function AITestingDashboard() {
               
               <div className="p-6">
                 <div className="space-y-4">
-                  {generatedTests.map((test, index) => (
+                  {generatedTests.map((test) => (
                     <div key={test.id} className="border border-gray-200 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-medium text-gray-900">{test.name}</h3>

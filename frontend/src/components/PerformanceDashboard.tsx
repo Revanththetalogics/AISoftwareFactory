@@ -52,7 +52,6 @@ export default function PerformanceDashboard() {
       }
     };
   }, [isProfiling, activeSession, updateRealtimeMetrics]);
-  };
 
   const startProfiling = async () => {
     try {

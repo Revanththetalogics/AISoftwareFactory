@@ -84,11 +84,11 @@ class CustomComponentCreate(BaseModel):
 async def list_themes(include_system: bool = True, include_custom: bool = True):
     """
     List available themes.
-    
+
     Args:
         include_system: Whether to include system default themes
         include_custom: Whether to include custom themes
-        
+
     Returns:
         APIResponse with list of themes
     """
@@ -110,10 +110,10 @@ async def list_themes(include_system: bool = True, include_custom: bool = True):
 async def create_theme(theme_data: ThemeCreate):
     """
     Create a new custom theme.
-    
+
     Args:
         theme_data: Theme creation data
-        
+
     Returns:
         APIResponse with created theme
     """
@@ -149,10 +149,10 @@ async def create_theme(theme_data: ThemeCreate):
 async def get_theme(theme_id: str):
     """
     Get a specific theme.
-    
+
     Args:
         theme_id: ID of the theme
-        
+
     Returns:
         APIResponse with theme data
     """
@@ -178,11 +178,11 @@ async def get_theme(theme_id: str):
 async def update_theme(theme_id: str, update_data: ThemeUpdate):
     """
     Update an existing theme.
-    
+
     Args:
         theme_id: ID of the theme to update
         update_data: Theme update data
-        
+
     Returns:
         APIResponse with updated theme
     """
@@ -206,10 +206,10 @@ async def update_theme(theme_id: str, update_data: ThemeUpdate):
 async def delete_theme(theme_id: str):
     """
     Delete a custom theme.
-    
+
     Args:
         theme_id: ID of the theme to delete
-        
+
     Returns:
         APIResponse confirming deletion
     """
@@ -235,11 +235,11 @@ async def delete_theme(theme_id: str):
 async def list_layouts(include_system: bool = True, include_custom: bool = True):
     """
     List available layouts.
-    
+
     Args:
         include_system: Whether to include system default layouts
         include_custom: Whether to include custom layouts
-        
+
     Returns:
         APIResponse with list of layouts
     """
@@ -261,10 +261,10 @@ async def list_layouts(include_system: bool = True, include_custom: bool = True)
 async def create_layout(layout_data: LayoutCreate):
     """
     Create a new custom layout.
-    
+
     Args:
         layout_data: Layout creation data
-        
+
     Returns:
         APIResponse with created layout
     """
@@ -296,10 +296,10 @@ async def create_layout(layout_data: LayoutCreate):
 async def get_layout(layout_id: str):
     """
     Get a specific layout.
-    
+
     Args:
         layout_id: ID of the layout
-        
+
     Returns:
         APIResponse with layout data
     """
@@ -325,7 +325,7 @@ async def get_layout(layout_id: str):
 async def get_user_preferences():
     """
     Get current user's preferences.
-    
+
     Returns:
         APIResponse with user preferences
     """
@@ -349,10 +349,10 @@ async def get_user_preferences():
 async def update_user_preferences(update_data: UserPreferencesUpdate):
     """
     Update user preferences.
-    
+
     Args:
         update_data: Preferences update data
-        
+
     Returns:
         APIResponse with updated preferences
     """
@@ -377,7 +377,7 @@ async def update_user_preferences(update_data: UserPreferencesUpdate):
 async def get_system_defaults():
     """
     Get system default configurations.
-    
+
     Returns:
         APIResponse with system defaults
     """
@@ -398,10 +398,10 @@ async def get_system_defaults():
 async def export_theme(theme_id: str):
     """
     Export theme configuration as JSON.
-    
+
     Args:
         theme_id: ID of the theme to export
-        
+
     Returns:
         APIResponse with exported theme data
     """
@@ -424,10 +424,10 @@ async def export_theme(theme_id: str):
 async def import_theme(theme_data: dict[str, Any]):
     """
     Import theme configuration from JSON.
-    
+
     Args:
         theme_data: Theme data to import
-        
+
     Returns:
         APIResponse with imported theme
     """
@@ -451,10 +451,10 @@ async def import_theme(theme_data: dict[str, Any]):
 async def create_custom_component(component_data: CustomComponentCreate):
     """
     Create a new custom UI component.
-    
+
     Args:
         component_data: Component creation data
-        
+
     Returns:
         APIResponse with created component
     """
@@ -490,10 +490,10 @@ async def create_custom_component(component_data: CustomComponentCreate):
 async def list_custom_components(active_only: bool = True):
     """
     List custom components.
-    
+
     Args:
         active_only: Whether to return only active components
-        
+
     Returns:
         APIResponse with list of components
     """
@@ -522,10 +522,10 @@ async def list_custom_components(active_only: bool = True):
 async def get_custom_component(component_id: str):
     """
     Get a specific custom component.
-    
+
     Args:
         component_id: ID of the component
-        
+
     Returns:
         APIResponse with component data
     """
@@ -556,11 +556,11 @@ async def get_custom_component(component_id: str):
 async def toggle_component_status(component_id: str, active: bool):
     """
     Toggle custom component active status.
-    
+
     Args:
         component_id: ID of the component
         active: Desired active status
-        
+
     Returns:
         APIResponse confirming status change
     """
@@ -585,10 +585,10 @@ async def toggle_component_status(component_id: str, active: bool):
 async def preview_theme(theme_id: str):
     """
     Get theme preview data for live preview.
-    
+
     Args:
         theme_id: ID of the theme to preview
-        
+
     Returns:
         APIResponse with theme preview CSS variables
     """
@@ -630,7 +630,7 @@ async def preview_theme(theme_id: str):
 async def get_customization_stats():
     """
     Get customization system statistics.
-    
+
     Returns:
         APIResponse with customization statistics
     """
@@ -645,8 +645,8 @@ async def get_customization_stats():
             "system_themes": len([t for t in themes if t.is_system_default]),
             "custom_themes": len([t for t in themes if t.is_custom]),
             "total_layouts": len(layouts),
-            "system_layouts": len([l for l in layouts if l.is_system_default]),
-            "custom_layouts": len([l for l in layouts if l.is_custom]),
+            "system_layouts": len([layout for layout in layouts if layout.is_system_default]),
+            "custom_layouts": len([layout for layout in layouts if layout.is_custom]),
             "total_components": len(components),
             "active_components": len([c for c in components if c.is_active]),
             "users_with_preferences": user_prefs

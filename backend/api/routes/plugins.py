@@ -38,7 +38,7 @@ class PluginAction(BaseModel):
 async def discover_plugins():
     """
     Discover available plugins in the system.
-    
+
     Returns:
         APIResponse with list of discovered plugins
     """
@@ -60,11 +60,11 @@ async def discover_plugins():
 async def load_plugin(plugin_id: str, config: PluginConfig | None = None):
     """
     Load and initialize a plugin.
-    
+
     Args:
         plugin_id: ID of the plugin to load
         config: Optional plugin configuration
-        
+
     Returns:
         APIResponse with loaded plugin information
     """
@@ -92,10 +92,10 @@ async def load_plugin(plugin_id: str, config: PluginConfig | None = None):
 async def unload_plugin(plugin_id: str):
     """
     Unload a plugin and clean up resources.
-    
+
     Args:
         plugin_id: ID of the plugin to unload
-        
+
     Returns:
         APIResponse confirming unload
     """
@@ -119,7 +119,7 @@ async def unload_plugin(plugin_id: str):
 async def list_loaded_plugins():
     """
     List all currently loaded plugins.
-    
+
     Returns:
         APIResponse with list of loaded plugins
     """
@@ -147,10 +147,10 @@ async def list_loaded_plugins():
 async def get_plugin(plugin_id: str):
     """
     Get information about a specific plugin.
-    
+
     Args:
         plugin_id: ID of the plugin
-        
+
     Returns:
         APIResponse with plugin information
     """
@@ -180,11 +180,11 @@ async def get_plugin(plugin_id: str):
 async def update_plugin_config(plugin_id: str, config: PluginConfig):
     """
     Update plugin configuration.
-    
+
     Args:
         plugin_id: ID of the plugin
         config: New configuration
-        
+
     Returns:
         APIResponse confirming update
     """
@@ -218,11 +218,11 @@ async def update_plugin_config(plugin_id: str, config: PluginConfig):
 async def execute_plugin_action(plugin_id: str, action: PluginAction):
     """
     Execute a custom action on a plugin.
-    
+
     Args:
         plugin_id: ID of the plugin
         action: Action to execute
-        
+
     Returns:
         APIResponse with action result
     """
@@ -261,11 +261,11 @@ async def execute_plugin_action(plugin_id: str, action: PluginAction):
 async def execute_hook(hook_type: str, payload: dict[str, Any] | None = None):
     """
     Execute a system hook across all subscribed plugins.
-    
+
     Args:
         hook_type: Type of hook to execute
         payload: Optional payload data
-        
+
     Returns:
         APIResponse with hook execution results
     """
@@ -293,7 +293,7 @@ async def execute_hook(hook_type: str, payload: dict[str, Any] | None = None):
 async def get_hook_types():
     """
     Get list of available hook types.
-    
+
     Returns:
         APIResponse with list of hook types
     """
@@ -314,7 +314,7 @@ async def get_hook_types():
 async def get_plugin_types():
     """
     Get list of available plugin types.
-    
+
     Returns:
         APIResponse with list of plugin types
     """
@@ -335,7 +335,7 @@ async def get_plugin_types():
 async def get_plugin_statistics():
     """
     Get plugin system statistics.
-    
+
     Returns:
         APIResponse with plugin statistics
     """
@@ -356,10 +356,10 @@ async def get_plugin_statistics():
 async def install_plugin(file: UploadFile = File(...)):
     """
     Install a plugin from an uploaded package file.
-    
+
     Args:
         file: Plugin package file (ZIP, tar, etc.)
-        
+
     Returns:
         APIResponse with installed plugin information
     """
@@ -392,10 +392,10 @@ async def install_plugin(file: UploadFile = File(...)):
 async def toggle_sandbox(enabled: bool):
     """
     Enable or disable plugin sandboxing.
-    
+
     Args:
         enabled: Whether to enable sandboxing
-        
+
     Returns:
         APIResponse confirming sandbox state
     """
@@ -415,10 +415,10 @@ async def toggle_sandbox(enabled: bool):
 async def get_recent_events(limit: int = 50):
     """
     Get recent plugin events and hook executions.
-    
+
     Args:
         limit: Maximum number of events to return
-        
+
     Returns:
         APIResponse with recent events
     """
@@ -446,10 +446,10 @@ async def get_recent_events(limit: int = 50):
 async def delete_plugin(plugin_id: str):
     """
     Delete a plugin entirely from the system.
-    
+
     Args:
         plugin_id: ID of the plugin to delete
-        
+
     Returns:
         APIResponse confirming deletion
     """

@@ -28,18 +28,18 @@ CONNECTION_POOL_WARNING = 0.8  # 80% utilization
 class QueryOptimizer:
     """
     Database Query Optimizer for Enhanced Performance.
-    
+
     This class provides comprehensive tools for analyzing, monitoring, and
     optimizing database query performance. It includes utilities for query
     timing analysis, optimization suggestions, and performance benchmarking.
-    
+
     Features:
         - Query performance analysis and timing
         - Optimization suggestion generation
         - Slow query detection and monitoring
         - Connection pool utilization tracking
         - Query complexity analysis
-    
+
     Example:
         >>> optimizer = QueryOptimizer()
         >>> metrics = await optimizer.analyze_query_performance(session, my_query_func, param1, param2)
@@ -50,25 +50,25 @@ class QueryOptimizer:
     async def analyze_query_performance(session: AsyncSession, query_func, *args, **kwargs) -> dict[str, Any]:
         """
         Analyze query performance and provide detailed optimization suggestions.
-        
+
         This method executes a query while measuring performance metrics and
         provides actionable recommendations for optimization based on execution time
         and query characteristics.
-        
+
         Args:
             session: SQLAlchemy async session for database operations
             query_func: Callable function that executes the database query
             *args: Positional arguments to pass to query_func
             **kwargs: Keyword arguments to pass to query_func
-            
+
         Returns:
             Dictionary containing comprehensive performance metrics and optimization suggestions
             Keys include: execution_time, is_slow, suggestions, complexity_score, resource_usage
-            
+
         Example:
             >>> async def get_user_data(session, user_id):
             ...     return await session.execute(select(User).where(User.id == user_id))
-            >>> 
+            >>>
             >>> metrics = await QueryOptimizer.analyze_query_performance(session, get_user_data, user_id=123)
             >>> if metrics['is_slow']:
             ...     print("Query is slow:", metrics['suggestions'])
@@ -109,25 +109,25 @@ class QueryOptimizer:
     def optimize_pagination(page: int = 1, size: int = 50, max_size: int = 1000) -> tuple[int, int]:
         """
         Optimize pagination parameters to prevent performance degradation.
-        
+
         This method validates and optimizes pagination parameters to ensure
         efficient database queries and prevent common performance pitfalls
         like deep pagination and excessive page sizes.
-        
+
         Args:
             page: Page number (1-indexed) for pagination
             size: Number of items per page
             max_size: Maximum allowed page size to prevent memory issues
-            
+
         Returns:
             Tuple containing (validated_page, validated_size) with safe values
-            
+
         Features:
             - Prevents negative page numbers
             - Enforces maximum page size limits
             - Warns about deep pagination (>100 pages)
             - Recommends cursor-based pagination for deep datasets
-            
+
         Example:
             >>> page, size = QueryOptimizer.optimize_pagination(page=5, size=200, max_size=500)
             >>> print(f"Loading page {page} with {size} items")
@@ -149,26 +149,26 @@ class QueryOptimizer:
                                 batch_size: int = 100) -> list[Any]:
         """
         Efficiently load entities by IDs in batches to eliminate N+1 query problems.
-        
+
         This method implements batch loading to prevent the classic N+1 query problem
         where loading related entities results in multiple individual database queries.
         It's particularly useful for loading large collections of related data efficiently.
-        
+
         Args:
             session: SQLAlchemy async session for database operations
             entity_class: SQLAlchemy model class to load instances of
             ids: List of entity primary key IDs to load
             batch_size: Number of entities to load in each batch (default: 100)
-            
+
         Returns:
             List of loaded entity instances in the same order as requested IDs
-            
+
         Benefits:
             - Eliminates N+1 query problem
             - Reduces database round trips
             - Improves memory efficiency through batching
             - Maintains ID ordering in results
-            
+
         Example:
             >>> user_ids = ['user1', 'user2', 'user3']
             >>> users = await QueryOptimizer.batch_load_entities(session, User, user_ids)
@@ -262,7 +262,7 @@ class QueryCache:
 def monitor_slow_queries(threshold: float = SLOW_QUERY_THRESHOLD):
     """
     Decorator to monitor and log slow database queries.
-    
+
     Args:
         threshold: Time threshold in seconds to consider a query slow
     """
@@ -298,12 +298,11 @@ def monitor_slow_queries(threshold: float = SLOW_QUERY_THRESHOLD):
 async def bulk_operation_context(session: AsyncSession, flush_interval: int = 1000):
     """
     Context manager for efficient bulk database operations.
-    
+
     Args:
         session: Database session
         flush_interval: Number of operations before automatic flush
     """
-    operations_count = 0
 
     try:
         yield lambda: setattr(bulk_operation_context, 'operations_count',
@@ -375,4 +374,4 @@ class OptimizedQueries:
         return result.scalars().all()
 
 # Import models at the end to avoid circular imports
-from backend.models.database import DBUser
+from backend.models.database import DBProject, DBTask, DBUser

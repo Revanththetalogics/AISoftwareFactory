@@ -54,7 +54,7 @@ class ResourceUsage(BaseModel):
 async def get_infrastructure_dashboard():
     """
     Get comprehensive infrastructure dashboard data.
-    
+
     Returns:
         APIResponse with infrastructure dashboard data
     """
@@ -99,7 +99,7 @@ async def get_infrastructure_dashboard():
 async def get_service_statuses():
     """
     Get status of all infrastructure services.
-    
+
     Returns:
         APIResponse with service statuses
     """
@@ -119,10 +119,10 @@ async def get_service_statuses():
 async def restart_service(service_name: str):
     """
     Restart a specific service.
-    
+
     Args:
         service_name: Name of the service to restart
-        
+
     Returns:
         APIResponse confirming restart
     """
@@ -146,7 +146,7 @@ async def restart_service(service_name: str):
 async def get_detailed_resource_usage():
     """
     Get detailed resource usage information.
-    
+
     Returns:
         APIResponse with detailed resource usage
     """
@@ -174,7 +174,7 @@ async def get_detailed_resource_usage():
 async def get_cluster_nodes():
     """
     Get information about all cluster nodes.
-    
+
     Returns:
         APIResponse with cluster node information
     """
@@ -194,10 +194,10 @@ async def get_cluster_nodes():
 async def drain_cluster_node(node_id: str):
     """
     Drain a cluster node for maintenance.
-    
+
     Args:
         node_id: ID of the node to drain
-        
+
     Returns:
         APIResponse confirming drain operation
     """
@@ -217,7 +217,7 @@ async def drain_cluster_node(node_id: str):
 async def get_active_alerts():
     """
     Get all currently active alerts.
-    
+
     Returns:
         APIResponse with active alerts
     """
@@ -237,7 +237,7 @@ async def get_active_alerts():
 async def start_maintenance_mode():
     """
     Start maintenance mode for the infrastructure.
-    
+
     Returns:
         APIResponse confirming maintenance mode start
     """
@@ -265,7 +265,7 @@ async def start_maintenance_mode():
 async def stop_maintenance_mode():
     """
     Stop maintenance mode for the infrastructure.
-    
+
     Returns:
         APIResponse confirming maintenance mode stop
     """
@@ -358,7 +358,7 @@ async def _get_service_health() -> list[dict[str, Any]]:
     """Get service health information."""
     try:
         # Get metrics from resource manager
-        metrics = resource_manager.get_metrics()
+        resource_manager.get_metrics()
         health = await resource_manager.health_check()
 
         services = []

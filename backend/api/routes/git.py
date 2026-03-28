@@ -52,10 +52,10 @@ class RepositoryInfo(BaseModel):
 async def clone_repository(request: CloneRepositoryRequest):
     """
     Clone a Git repository.
-    
+
     Args:
         request: Clone repository request
-        
+
     Returns:
         APIResponse with repository information
     """
@@ -85,10 +85,10 @@ async def clone_repository(request: CloneRepositoryRequest):
 async def pull_repository(repo_name: str):
     """
     Pull latest changes from a repository.
-    
+
     Args:
         repo_name: Repository name/directory
-        
+
     Returns:
         APIResponse with updated repository information
     """
@@ -111,11 +111,11 @@ async def pull_repository(repo_name: str):
 async def push_changes(repo_name: str, request: PushChangesRequest):
     """
     Push changes to remote repository.
-    
+
     Args:
         repo_name: Repository name/directory
         request: Push changes request
-        
+
     Returns:
         APIResponse with push result
     """
@@ -145,11 +145,11 @@ async def list_files(
 ):
     """
     List files in a repository directory.
-    
+
     Args:
         repo_name: Repository name/directory
         path: Relative path within repository
-        
+
     Returns:
         APIResponse with file list
     """
@@ -174,11 +174,11 @@ async def list_files(
 async def read_file(repo_name: str, file_path: str):
     """
     Read file content from repository.
-    
+
     Args:
         repo_name: Repository name/directory
         file_path: Path to file within repository
-        
+
     Returns:
         APIResponse with file content
     """
@@ -199,12 +199,12 @@ async def read_file(repo_name: str, file_path: str):
 async def write_file(repo_name: str, file_path: str, request: WriteFileRequest):
     """
     Write file content to repository.
-    
+
     Args:
         repo_name: Repository name/directory
         file_path: Path to file within repository
         request: Write file request
-        
+
     Returns:
         APIResponse confirming write operation
     """
@@ -232,11 +232,11 @@ async def write_file(repo_name: str, file_path: str, request: WriteFileRequest):
 async def delete_file(repo_name: str, file_path: str):
     """
     Delete file from repository.
-    
+
     Args:
         repo_name: Repository name/directory
         file_path: Path to file within repository
-        
+
     Returns:
         APIResponse confirming delete operation
     """
@@ -259,7 +259,7 @@ async def delete_file(repo_name: str, file_path: str):
 async def list_repositories():
     """
     List all cloned repositories.
-    
+
     Returns:
         APIResponse with repository list
     """

@@ -37,7 +37,7 @@ class HealthStatus(BaseModel):
 async def get_resource_metrics():
     """
     Get current resource usage metrics.
-    
+
     Returns:
         APIResponse with resource metrics
     """
@@ -57,7 +57,7 @@ async def get_resource_metrics():
 async def get_resource_health():
     """
     Get health status of all resources.
-    
+
     Returns:
         APIResponse with health status
     """
@@ -83,7 +83,7 @@ async def get_resource_health():
 async def start_monitoring():
     """
     Start connection monitoring.
-    
+
     Returns:
         APIResponse confirming monitoring started
     """
@@ -102,7 +102,7 @@ async def start_monitoring():
 async def stop_monitoring():
     """
     Stop connection monitoring.
-    
+
     Returns:
         APIResponse confirming monitoring stopped
     """
@@ -121,7 +121,7 @@ async def stop_monitoring():
 async def refresh_resources():
     """
     Refresh and reinitialize resources.
-    
+
     Returns:
         APIResponse confirming resources refreshed
     """
@@ -144,7 +144,7 @@ async def refresh_resources():
 async def get_resource_status():
     """
     Get comprehensive resource status.
-    
+
     Returns:
         APIResponse with detailed resource status
     """

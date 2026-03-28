@@ -1,7 +1,7 @@
 """
 Collaboration Features Service
 
-Provides real-time collaboration capabilities including comments, mentions, 
+Provides real-time collaboration capabilities including comments, mentions,
 notifications, and team workflow management.
 """
 

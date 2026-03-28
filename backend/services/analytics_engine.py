@@ -589,7 +589,7 @@ class AdvancedAnalyticsEngine:
                 return 0.0
 
             return numerator / denominator
-        except:
+        except ZeroDivisionError:
             return 0.0
 
 

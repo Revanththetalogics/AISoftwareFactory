@@ -387,7 +387,7 @@ realtime_monitor = RealtimeMonitor()
 async def realtime_monitoring_endpoint(websocket: WebSocket, client_id: str = "anonymous"):
     """
     WebSocket endpoint for real-time monitoring.
-    
+
     Clients can subscribe to different types of metrics and receive
     real-time updates.
     """

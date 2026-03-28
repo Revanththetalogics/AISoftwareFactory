@@ -70,7 +70,7 @@ class ErrorHandlerMiddleware:
         # Handle BackendException and AISoftwareFactoryException subclasses
         print(f"DEBUG: Checking if {type(exc)} is BackendException or AISoftwareFactoryException")
         if isinstance(exc, (BackendException, AISoftwareFactoryException)):
-            print(f"DEBUG: Handling as backend exception")
+            print("DEBUG: Handling as backend exception")
             return self._handle_backend_exception(exc, request_id, request_info)
 
         # Handle FastAPI HTTPException
@@ -98,7 +98,7 @@ class ErrorHandlerMiddleware:
 
         # Convert to HTTPException and create response
         http_exc = handle_backend_exception(exc, request_id, logger)
-        
+
         # Debug print
         print(f"DEBUG: Exception type: {type(exc)}, status_code: {exc.status_code}")
         print(f"DEBUG: HTTPException status_code: {http_exc.status_code}")
@@ -106,7 +106,7 @@ class ErrorHandlerMiddleware:
         # Add request_id to top level for test compatibility
         response_content = http_exc.detail.copy()
         response_content["request_id"] = request_id
-        
+
         return JSONResponse(
             status_code=http_exc.status_code,
             content=response_content,

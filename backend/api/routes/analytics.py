@@ -57,10 +57,10 @@ class CorrelationAnalysisRequest(BaseModel):
 async def create_analytics_query(query_data: AnalyticsQueryCreate):
     """
     Create a new analytics query.
-    
+
     Args:
         query_data: Analytics query creation data
-        
+
     Returns:
         APIResponse with created query
     """
@@ -88,7 +88,7 @@ async def create_analytics_query(query_data: AnalyticsQueryCreate):
 async def list_queries():
     """
     List all analytics queries.
-    
+
     Returns:
         APIResponse with list of queries
     """
@@ -110,10 +110,10 @@ async def list_queries():
 async def execute_query(query_id: str):
     """
     Execute an analytics query.
-    
+
     Args:
         query_id: ID of the query to execute
-        
+
     Returns:
         APIResponse with query results
     """
@@ -136,10 +136,10 @@ async def execute_query(query_id: str):
 async def generate_report(report_request: ReportGenerateRequest):
     """
     Generate an analytics report.
-    
+
     Args:
         report_request: Report generation request data
-        
+
     Returns:
         APIResponse with generated report
     """
@@ -169,7 +169,7 @@ async def generate_report(report_request: ReportGenerateRequest):
 async def list_reports():
     """
     List all analytics reports.
-    
+
     Returns:
         APIResponse with list of reports
     """
@@ -196,10 +196,10 @@ async def list_reports():
 async def get_report(report_id: str):
     """
     Get a specific analytics report.
-    
+
     Args:
         report_id: ID of the report to retrieve
-        
+
     Returns:
         APIResponse with report data
     """
@@ -230,10 +230,10 @@ async def get_report(report_id: str):
 async def predict_future_values(prediction_request: PredictionRequest):
     """
     Predict future values for a metric.
-    
+
     Args:
         prediction_request: Prediction request data
-        
+
     Returns:
         APIResponse with prediction results
     """
@@ -260,7 +260,7 @@ async def predict_future_values(prediction_request: PredictionRequest):
 async def list_predictions():
     """
     List all prediction results.
-    
+
     Returns:
         APIResponse with list of predictions
     """
@@ -282,10 +282,10 @@ async def list_predictions():
 async def get_trend_analysis(trend_request: TrendAnalysisRequest):
     """
     Perform trend analysis on a metric.
-    
+
     Args:
         trend_request: Trend analysis request data
-        
+
     Returns:
         APIResponse with trend analysis results
     """
@@ -311,10 +311,10 @@ async def get_trend_analysis(trend_request: TrendAnalysisRequest):
 async def get_correlation_analysis(correlation_request: CorrelationAnalysisRequest):
     """
     Perform correlation analysis between metrics.
-    
+
     Args:
         correlation_request: Correlation analysis request data
-        
+
     Returns:
         APIResponse with correlation analysis results
     """
@@ -340,7 +340,7 @@ async def get_correlation_analysis(correlation_request: CorrelationAnalysisReque
 async def get_available_metrics():
     """
     Get list of available metrics for analytics.
-    
+
     Returns:
         APIResponse with list of available metrics
     """
@@ -367,7 +367,7 @@ async def get_available_metrics():
 async def get_available_granularities():
     """
     Get list of available time granularities.
-    
+
     Returns:
         APIResponse with list of available granularities
     """
@@ -388,7 +388,7 @@ async def get_available_granularities():
 async def get_available_report_types():
     """
     Get list of available report types.
-    
+
     Returns:
         APIResponse with list of available report types
     """
@@ -409,7 +409,7 @@ async def get_available_report_types():
 async def get_analytics_dashboard_summary():
     """
     Get analytics dashboard summary with key metrics.
-    
+
     Returns:
         APIResponse with dashboard summary data
     """

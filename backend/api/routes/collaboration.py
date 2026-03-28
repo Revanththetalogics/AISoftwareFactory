@@ -62,10 +62,10 @@ class TeamMemberAdd(BaseModel):
 async def create_comment(comment_data: CommentCreate):
     """
     Create a new comment on an entity.
-    
+
     Args:
         comment_data: Comment creation data
-        
+
     Returns:
         APIResponse with created comment
     """
@@ -98,12 +98,12 @@ async def create_comment(comment_data: CommentCreate):
 async def get_comments(entity_type: str, entity_id: str, limit: int = 50):
     """
     Get comments for an entity.
-    
+
     Args:
         entity_type: Type of entity (project, task, etc.)
         entity_id: ID of the entity
         limit: Maximum number of comments to return
-        
+
     Returns:
         APIResponse with list of comments
     """
@@ -130,11 +130,11 @@ async def get_comments(entity_type: str, entity_id: str, limit: int = 50):
 async def update_comment(comment_id: str, update_data: CommentUpdate):
     """
     Update an existing comment.
-    
+
     Args:
         comment_id: ID of the comment to update
         update_data: Comment update data
-        
+
     Returns:
         APIResponse with updated comment
     """
@@ -161,10 +161,10 @@ async def update_comment(comment_id: str, update_data: CommentUpdate):
 async def delete_comment(comment_id: str):
     """
     Delete a comment.
-    
+
     Args:
         comment_id: ID of the comment to delete
-        
+
     Returns:
         APIResponse confirming deletion
     """
@@ -188,11 +188,11 @@ async def delete_comment(comment_id: str):
 async def add_reaction(comment_id: str, reaction_data: ReactionAdd):
     """
     Add a reaction to a comment.
-    
+
     Args:
         comment_id: ID of the comment
         reaction_data: Reaction data
-        
+
     Returns:
         APIResponse with updated comment
     """
@@ -222,11 +222,11 @@ async def add_reaction(comment_id: str, reaction_data: ReactionAdd):
 async def get_user_notifications(unread_only: bool = False, limit: int = 20):
     """
     Get notifications for the current user.
-    
+
     Args:
         unread_only: Whether to return only unread notifications
         limit: Maximum number of notifications to return
-        
+
     Returns:
         APIResponse with list of notifications
     """
@@ -256,11 +256,11 @@ async def get_user_notifications(unread_only: bool = False, limit: int = 20):
 async def mark_notification_read(notification_id: str, read_data: NotificationMarkRead):
     """
     Mark a notification as read/unread.
-    
+
     Args:
         notification_id: ID of the notification
         read_data: Read status data
-        
+
     Returns:
         APIResponse confirming update
     """
@@ -285,10 +285,10 @@ async def mark_notification_read(notification_id: str, read_data: NotificationMa
 async def create_team(team_data: TeamCreate):
     """
     Create a new team.
-    
+
     Args:
         team_data: Team creation data
-        
+
     Returns:
         APIResponse with created team
     """
@@ -332,11 +332,11 @@ async def create_team(team_data: TeamCreate):
 async def add_team_member(team_id: str, member_data: TeamMemberAdd):
     """
     Add a member to a team.
-    
+
     Args:
         team_id: ID of the team
         member_data: Member data
-        
+
     Returns:
         APIResponse with updated team
     """
@@ -369,7 +369,7 @@ async def add_team_member(team_id: str, member_data: TeamMemberAdd):
 async def list_teams():
     """
     List all teams.
-    
+
     Returns:
         APIResponse with list of teams
     """
@@ -396,10 +396,10 @@ async def list_teams():
 async def get_recent_activities(limit: int = 50):
     """
     Get recent activities across the system.
-    
+
     Args:
         limit: Maximum number of activities to return
-        
+
     Returns:
         APIResponse with list of activities
     """
@@ -421,12 +421,12 @@ async def get_recent_activities(limit: int = 50):
 async def get_entity_activities(entity_type: str, entity_id: str, limit: int = 20):
     """
     Get activities for a specific entity.
-    
+
     Args:
         entity_type: Type of entity
         entity_id: ID of the entity
         limit: Maximum number of activities to return
-        
+
     Returns:
         APIResponse with list of activities
     """
@@ -453,7 +453,7 @@ async def get_entity_activities(entity_type: str, entity_id: str, limit: int = 2
 async def get_collaboration_stats():
     """
     Get collaboration statistics.
-    
+
     Returns:
         APIResponse with collaboration statistics
     """
@@ -484,7 +484,7 @@ async def get_collaboration_stats():
 async def connect_user():
     """
     Register user as connected (for real-time features).
-    
+
     Returns:
         APIResponse confirming connection
     """
@@ -507,7 +507,7 @@ async def connect_user():
 async def disconnect_user():
     """
     Unregister user as connected.
-    
+
     Returns:
         APIResponse confirming disconnection
     """

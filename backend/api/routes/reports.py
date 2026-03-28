@@ -5,6 +5,7 @@ Provides REST endpoints for comprehensive reporting functionality including
 report generation, scheduling, templates, and export capabilities.
 """
 
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Response
@@ -57,11 +58,11 @@ async def list_report_templates(
 ):
     """
     List available report templates.
-    
+
     Args:
         report_type: Filter by report type
         include_system: Whether to include system default templates
-        
+
     Returns:
         APIResponse with list of templates
     """
@@ -86,10 +87,10 @@ async def list_report_templates(
 async def create_report_template(template_data: ReportTemplateCreate):
     """
     Create a new report template.
-    
+
     Args:
         template_data: Template creation data
-        
+
     Returns:
         APIResponse with created template
     """
@@ -123,10 +124,10 @@ async def create_report_template(template_data: ReportTemplateCreate):
 async def get_report_template(template_id: str):
     """
     Get a specific report template.
-    
+
     Args:
         template_id: ID of the template
-        
+
     Returns:
         APIResponse with template data
     """
@@ -152,10 +153,10 @@ async def get_report_template(template_id: str):
 async def list_report_definitions(active_only: bool = True):
     """
     List report definitions.
-    
+
     Args:
         active_only: Whether to return only active definitions
-        
+
     Returns:
         APIResponse with list of definitions
     """
@@ -177,10 +178,10 @@ async def list_report_definitions(active_only: bool = True):
 async def create_report_definition(definition_data: ReportDefinitionCreate):
     """
     Create a new report definition.
-    
+
     Args:
         definition_data: Definition creation data
-        
+
     Returns:
         APIResponse with created definition
     """
@@ -218,10 +219,10 @@ async def create_report_definition(definition_data: ReportDefinitionCreate):
 async def generate_report(generate_request: ReportGenerateRequest):
     """
     Generate a report based on definition.
-    
+
     Args:
         generate_request: Report generation request
-        
+
     Returns:
         APIResponse with generated report information
     """
@@ -257,12 +258,12 @@ async def list_generated_reports(
 ):
     """
     List generated reports.
-    
+
     Args:
         definition_id: Filter by definition ID
         status: Filter by report status
         limit: Maximum number of reports to return
-        
+
     Returns:
         APIResponse with list of generated reports
     """
@@ -295,10 +296,10 @@ async def list_generated_reports(
 async def get_generated_report(report_id: str):
     """
     Get a specific generated report.
-    
+
     Args:
         report_id: ID of the generated report
-        
+
     Returns:
         APIResponse with report data
     """
@@ -330,10 +331,10 @@ async def get_generated_report(report_id: str):
 async def list_report_schedules(active_only: bool = True):
     """
     List report schedules.
-    
+
     Args:
         active_only: Whether to return only active schedules
-        
+
     Returns:
         APIResponse with list of schedules
     """
@@ -360,11 +361,11 @@ async def list_report_schedules(active_only: bool = True):
 async def export_report(report_id: str, format: str):
     """
     Export a generated report in specified format.
-    
+
     Args:
         report_id: ID of the report to export
         format: Export format (pdf, csv, json, html, excel)
-        
+
     Returns:
         APIResponse with exported report data
     """
@@ -389,7 +390,7 @@ async def export_report(report_id: str, format: str):
 async def get_report_types():
     """
     Get list of available report types.
-    
+
     Returns:
         APIResponse with report types
     """
@@ -410,7 +411,7 @@ async def get_report_types():
 async def get_report_formats():
     """
     Get list of available report formats.
-    
+
     Returns:
         APIResponse with report formats
     """
@@ -431,7 +432,7 @@ async def get_report_formats():
 async def get_report_frequencies():
     """
     Get list of available report frequencies.
-    
+
     Returns:
         APIResponse with report frequencies
     """
@@ -452,7 +453,7 @@ async def get_report_frequencies():
 async def get_report_statuses():
     """
     Get list of available report statuses.
-    
+
     Returns:
         APIResponse with report statuses
     """
@@ -473,14 +474,14 @@ async def get_report_statuses():
 async def get_reporting_dashboard():
     """
     Get comprehensive reporting dashboard data.
-    
+
     Returns:
         APIResponse with dashboard information
     """
     try:
         # Get all relevant reporting data
         templates = await reporting_service.list_templates()
-        definitions = await reporting_service.get_report_definitions()
+        await reporting_service.get_report_definitions()
         reports = await reporting_service.get_generated_reports(limit=20)
         schedules = await reporting_service.get_report_schedules()
         stats = await reporting_service.get_reporting_statistics()
@@ -519,7 +520,7 @@ async def get_reporting_dashboard():
 async def get_reporting_statistics():
     """
     Get comprehensive reporting system statistics.
-    
+
     Returns:
         APIResponse with reporting statistics
     """
@@ -540,10 +541,10 @@ async def get_reporting_statistics():
 async def delete_report_definition(definition_id: str):
     """
     Delete a report definition.
-    
+
     Args:
         definition_id: ID of the definition to delete
-        
+
     Returns:
         APIResponse confirming deletion
     """

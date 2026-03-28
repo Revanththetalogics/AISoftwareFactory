@@ -232,7 +232,7 @@ class ResourceManager:
         try:
             start_time = time.time()
             async with self.get_db_session() as session:
-                result = await session.execute("SELECT 1")
+                await session.execute("SELECT 1")
                 latency = round((time.time() - start_time) * 1000, 2)
                 health_status['database'] = {
                     'status': 'healthy',

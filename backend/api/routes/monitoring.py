@@ -7,6 +7,7 @@ Provides endpoints for accessing metrics, alerts, and monitoring data.
 
 from fastapi import APIRouter, HTTPException, Response
 from fastapi.responses import PlainTextResponse
+from prometheus_client import CONTENT_TYPE_LATEST
 from pydantic import BaseModel
 
 from backend.api.models import APIResponse
@@ -38,7 +39,7 @@ class MetricSample(BaseModel):
 async def get_prometheus_metrics():
     """
     Get Prometheus metrics in text format.
-    
+
     Returns:
         Plain text Prometheus metrics
     """
@@ -56,7 +57,7 @@ async def get_prometheus_metrics():
 async def get_alert_rules():
     """
     Get all configured alert rules.
-    
+
     Returns:
         APIResponse with alert rules
     """
@@ -87,10 +88,10 @@ async def get_alert_rules():
 async def test_alert_rule(rule_name: str):
     """
     Test an alert rule.
-    
+
     Args:
         rule_name: Name of the rule to test
-        
+
     Returns:
         APIResponse with test results
     """
@@ -120,7 +121,7 @@ async def test_alert_rule(rule_name: str):
 async def get_detailed_health():
     """
     Get detailed health information with metrics.
-    
+
     Returns:
         APIResponse with detailed health data
     """
@@ -172,10 +173,10 @@ async def get_detailed_health():
 async def get_top_endpoints(limit: int = 10):
     """
     Get top performing endpoints by latency.
-    
+
     Args:
         limit: Number of endpoints to return
-        
+
     Returns:
         APIResponse with top endpoints
     """
@@ -219,10 +220,10 @@ async def get_top_endpoints(limit: int = 10):
 async def get_alert_history(hours: int = 24):
     """
     Get alert history for the specified time period.
-    
+
     Args:
         hours: Number of hours to look back
-        
+
     Returns:
         APIResponse with alert history
     """
@@ -259,11 +260,11 @@ async def get_alert_history(hours: int = 24):
 async def silence_alert(rule_name: str, duration_minutes: int = 30):
     """
     Silence an alert rule temporarily.
-    
+
     Args:
         rule_name: Name of the rule to silence
         duration_minutes: Duration to silence in minutes
-        
+
     Returns:
         APIResponse confirming silencing
     """
@@ -287,7 +288,7 @@ async def silence_alert(rule_name: str, duration_minutes: int = 30):
 async def get_dashboard_metrics():
     """
     Get metrics formatted for dashboard display.
-    
+
     Returns:
         APIResponse with dashboard-ready metrics
     """

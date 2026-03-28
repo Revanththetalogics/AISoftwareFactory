@@ -34,7 +34,7 @@ class NodeAction(BaseModel):
 async def get_scaling_stats():
     """
     Get cluster scaling statistics.
-    
+
     Returns:
         APIResponse with cluster statistics
     """
@@ -54,7 +54,7 @@ async def get_scaling_stats():
 async def get_leader_status():
     """
     Get cluster leader information.
-    
+
     Returns:
         APIResponse with leader information
     """
@@ -74,10 +74,10 @@ async def get_leader_status():
 async def perform_node_action(action: NodeAction):
     """
     Perform action on a cluster node.
-    
+
     Args:
         action: Node action request
-        
+
     Returns:
         APIResponse confirming action
     """
@@ -113,7 +113,7 @@ async def perform_node_action(action: NodeAction):
 async def get_scaling_policies():
     """
     Get available scaling policies.
-    
+
     Returns:
         APIResponse with policy information
     """
@@ -142,10 +142,10 @@ async def get_scaling_policies():
 async def change_scaling_policy(policy: ScalingPolicy):
     """
     Change the current scaling policy.
-    
+
     Args:
         policy: New scaling policy
-        
+
     Returns:
         APIResponse confirming policy change
     """
@@ -165,7 +165,7 @@ async def change_scaling_policy(policy: ScalingPolicy):
 async def get_scaling_health():
     """
     Get scaling system health status.
-    
+
     Returns:
         APIResponse with health information
     """
@@ -204,11 +204,11 @@ async def get_scaling_health():
 async def update_node_weight(node_id: str, weight: int):
     """
     Update node weight for weighted load balancing.
-    
+
     Args:
         node_id: Node identifier
         weight: New weight value (1-100)
-        
+
     Returns:
         APIResponse confirming weight update
     """
@@ -235,7 +235,7 @@ async def update_node_weight(node_id: str, weight: int):
 async def get_scaling_recommendations():
     """
     Get scaling recommendations based on current load.
-    
+
     Returns:
         APIResponse with scaling recommendations
     """

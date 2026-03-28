@@ -70,10 +70,10 @@ class SystemInfo(BaseModel):
 async def create_diagram(diagram_data: DiagramCreate):
     """
     Create a new architecture diagram.
-    
+
     Args:
         diagram_data: Diagram creation data
-        
+
     Returns:
         APIResponse with created diagram
     """
@@ -104,10 +104,10 @@ async def create_diagram(diagram_data: DiagramCreate):
 async def list_diagrams(diagram_type: str | None = None):
     """
     List all architecture diagrams.
-    
+
     Args:
         diagram_type: Optional filter by diagram type
-        
+
     Returns:
         APIResponse with list of diagrams
     """
@@ -136,10 +136,10 @@ async def list_diagrams(diagram_type: str | None = None):
 async def get_diagram(diagram_id: str):
     """
     Get a specific architecture diagram.
-    
+
     Args:
         diagram_id: ID of the diagram to retrieve
-        
+
     Returns:
         APIResponse with diagram data
     """
@@ -169,11 +169,11 @@ async def get_diagram(diagram_id: str):
 async def update_diagram(diagram_id: str, update_data: DiagramUpdate):
     """
     Update an existing architecture diagram.
-    
+
     Args:
         diagram_id: ID of the diagram to update
         update_data: Update data
-        
+
     Returns:
         APIResponse with updated diagram
     """
@@ -213,10 +213,10 @@ async def update_diagram(diagram_id: str, update_data: DiagramUpdate):
 async def delete_diagram(diagram_id: str):
     """
     Delete an architecture diagram.
-    
+
     Args:
         diagram_id: ID of the diagram to delete
-        
+
     Returns:
         APIResponse confirming deletion
     """
@@ -241,7 +241,7 @@ async def delete_diagram(diagram_id: str):
 async def list_templates():
     """
     List all available diagram templates.
-    
+
     Returns:
         APIResponse with list of templates
     """
@@ -269,10 +269,10 @@ async def list_templates():
 async def get_template(template_name: str):
     """
     Get a specific diagram template.
-    
+
     Args:
         template_name: Name of the template to retrieve
-        
+
     Returns:
         APIResponse with template data
     """
@@ -302,10 +302,10 @@ async def get_template(template_name: str):
 async def generate_system_diagram(system_info: SystemInfo):
     """
     Generate an architecture diagram from system information.
-    
+
     Args:
         system_info: System information for diagram generation
-        
+
     Returns:
         APIResponse with generated diagram
     """
@@ -330,11 +330,11 @@ async def generate_system_diagram(system_info: SystemInfo):
 async def export_diagram(diagram_id: str, format: str):
     """
     Export a diagram in specified format.
-    
+
     Args:
         diagram_id: ID of the diagram to export
         format: Export format (json, mermaid)
-        
+
     Returns:
         APIResponse with exported diagram data
     """
@@ -357,7 +357,7 @@ async def export_diagram(diagram_id: str, format: str):
 async def get_node_types():
     """
     Get available node types.
-    
+
     Returns:
         APIResponse with list of node types
     """
@@ -378,7 +378,7 @@ async def get_node_types():
 async def get_relationship_types():
     """
     Get available relationship types.
-    
+
     Returns:
         APIResponse with list of relationship types
     """
@@ -399,7 +399,7 @@ async def get_relationship_types():
 async def get_diagram_types():
     """
     Get available diagram types.
-    
+
     Returns:
         APIResponse with list of diagram types
     """

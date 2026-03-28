@@ -12,6 +12,19 @@ export default function RealtimeMonitoringDashboard() {
   const [activeAlerts, setActiveAlerts] = useState<AlertInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const setMetrics = (metrics: {
+    system?: SystemMetrics | null;
+    application?: ApplicationMetrics | null;
+    business?: BusinessMetrics | null;
+    cluster?: ClusterStatus | null;
+  }) => {
+    if (metrics.system) setSystemMetrics(metrics.system);
+    if (metrics.application) setApplicationMetrics(metrics.application);
+    if (metrics.business) setBusinessMetrics(metrics.business);
+    if (metrics.cluster) setClusterStatus(metrics.cluster);
+    if (isLoading) setIsLoading(false);
+  };
+
   useEffect(() => {
     // Connect to monitoring service
     const unsubscribeConnection = monitoringService.subscribeConnection(setIsConnected);
@@ -27,20 +40,7 @@ export default function RealtimeMonitoringDashboard() {
       unsubscribeAlerts();
       monitoringService.disconnect();
     };
-  }, []);
-
-  const setMetrics = (metrics: {
-    system?: SystemMetrics | null;
-    application?: ApplicationMetrics | null;
-    business?: BusinessMetrics | null;
-    cluster?: ClusterStatus | null;
-  }) => {
-    if (metrics.system) setSystemMetrics(metrics.system);
-    if (metrics.application) setApplicationMetrics(metrics.application);
-    if (metrics.business) setBusinessMetrics(metrics.business);
-    if (metrics.cluster) setClusterStatus(metrics.cluster);
-    if (isLoading) setIsLoading(false);
-  };
+  }, [setMetrics]);
 
   const acknowledgeAlert = (alertName: string) => {
     monitoringService.acknowledgeAlert(alertName);

@@ -217,18 +217,6 @@ class TestExceptionInheritance:
 
     def test_all_inherit_from_base(self):
         """Test that all custom exceptions inherit from AISoftwareFactoryException."""
-        exceptions = [
-            ConfigurationError,
-            ValidationError,
-            ResourceNotFoundError,
-            AuthenticationError,
-            AuthorizationError,
-            ServiceUnavailableError,
-            ConflictError,
-            RateLimitError,
-            ExternalServiceError,
-        ]
-
         # Test with required arguments for each exception
         test_cases = [
             (ConfigurationError, ["Configuration error"]),
@@ -241,7 +229,7 @@ class TestExceptionInheritance:
             (RateLimitError, ["Rate limit exceeded"]),
             (ExternalServiceError, ["External service error"])
         ]
-        
+
         for exc_class, args in test_cases:
             exc = exc_class(*args)
             assert isinstance(exc, AISoftwareFactoryException)

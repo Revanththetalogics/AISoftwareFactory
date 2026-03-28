@@ -82,11 +82,11 @@ async def generate_code(
 ) -> CodeGenerationResponse:
     """
     Generate code from a natural language prompt.
-    
+
     This endpoint uses the LLM system to generate code based on the provided
     description. It supports multiple programming languages and can incorporate
     framework-specific patterns.
-    
+
     Example:
         >>> {
         ...     "prompt": "Create a FastAPI endpoint for user authentication",
@@ -146,7 +146,6 @@ Return only the code without any explanations."""
 
         logger.info(
             "Code generation completed",
-            user_id=user.id,
             language=request.language,
             execution_time_ms=execution_time
         )
@@ -154,7 +153,7 @@ Return only the code without any explanations."""
         return response
 
     except Exception as e:
-        logger.error("Code generation failed", error=str(e), user_id=user.id)
+        logger.error("Code generation failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate code: {str(e)}"
@@ -172,7 +171,7 @@ async def validate_code(
 ) -> CodeValidationResponse:
     """
     Validate generated code for quality and correctness.
-    
+
     This endpoint performs static analysis on the provided code to check
     for syntax errors, best practices violations, and code quality issues.
     """
@@ -191,7 +190,7 @@ async def get_generation_history(
 ) -> GenerationHistoryResponse:
     """
     Get history of code generation requests for the current user.
-    
+
     Returns paginated list of previous generation requests with their results.
     """
     # TODO: Implement actual history storage
@@ -211,7 +210,7 @@ async def get_supported_languages(
 ) -> dict[str, Any]:
     """
     Get list of programming languages supported for code generation.
-    
+
     Returns available languages with their capabilities and framework support.
     """
     languages = {

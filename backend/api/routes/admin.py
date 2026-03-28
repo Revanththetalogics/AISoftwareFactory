@@ -55,10 +55,10 @@ class MaintenanceScheduleCreate(BaseModel):
 async def admin_login(auth_data: AdminAuth):
     """
     Authenticate administrative user.
-    
+
     Args:
         auth_data: Authentication credentials
-        
+
     Returns:
         APIResponse with authentication result
     """
@@ -93,7 +93,7 @@ async def admin_login(auth_data: AdminAuth):
 async def get_system_metrics():
     """
     Get current system performance metrics.
-    
+
     Returns:
         APIResponse with system metrics
     """
@@ -114,7 +114,7 @@ async def get_system_metrics():
 async def get_system_health():
     """
     Get comprehensive system health status.
-    
+
     Returns:
         APIResponse with system health information
     """
@@ -135,7 +135,7 @@ async def get_system_health():
 async def get_system_statistics():
     """
     Get comprehensive system statistics.
-    
+
     Returns:
         APIResponse with system statistics
     """
@@ -156,10 +156,10 @@ async def get_system_statistics():
 async def get_admin_users(active_only: bool = True):
     """
     Get list of administrative users.
-    
+
     Args:
         active_only: Whether to return only active users
-        
+
     Returns:
         APIResponse with list of admin users
     """
@@ -181,10 +181,10 @@ async def get_admin_users(active_only: bool = True):
 async def create_admin_user(user_data: AdminUserCreate):
     """
     Create a new administrative user.
-    
+
     Args:
         user_data: User creation data
-        
+
     Returns:
         APIResponse with created user information
     """
@@ -219,11 +219,11 @@ async def create_admin_user(user_data: AdminUserCreate):
 async def update_admin_user(user_id: str, update_data: AdminUserUpdate):
     """
     Update an administrative user.
-    
+
     Args:
         user_id: ID of the user to update
         update_data: User update data
-        
+
     Returns:
         APIResponse with updated user information
     """
@@ -257,12 +257,12 @@ async def get_audit_logs(
 ):
     """
     Get administrative audit logs.
-    
+
     Args:
         limit: Maximum number of logs to return
         user_id: Filter by user ID
         action: Filter by action type
-        
+
     Returns:
         APIResponse with audit logs
     """
@@ -284,10 +284,10 @@ async def get_audit_logs(
 async def log_admin_action(log_data: dict[str, Any]):
     """
     Manually log an administrative action.
-    
+
     Args:
         log_data: Audit log data
-        
+
     Returns:
         APIResponse confirming log entry
     """
@@ -317,10 +317,10 @@ async def log_admin_action(log_data: dict[str, Any]):
 async def get_maintenance_schedules(active_only: bool = True):
     """
     Get maintenance schedules.
-    
+
     Args:
         active_only: Whether to return only active schedules
-        
+
     Returns:
         APIResponse with maintenance schedules
     """
@@ -342,10 +342,10 @@ async def get_maintenance_schedules(active_only: bool = True):
 async def create_maintenance_schedule(schedule_data: MaintenanceScheduleCreate):
     """
     Create a maintenance schedule.
-    
+
     Args:
         schedule_data: Maintenance schedule data
-        
+
     Returns:
         APIResponse with created schedule
     """
@@ -377,10 +377,10 @@ async def create_maintenance_schedule(schedule_data: MaintenanceScheduleCreate):
 async def update_maintenance_mode(mode: str):
     """
     Update system maintenance mode.
-    
+
     Args:
         mode: Maintenance mode to set
-        
+
     Returns:
         APIResponse confirming mode update
     """
@@ -407,7 +407,7 @@ async def update_maintenance_mode(mode: str):
 async def get_current_maintenance_mode():
     """
     Get current maintenance mode.
-    
+
     Returns:
         APIResponse with current maintenance mode
     """
@@ -428,10 +428,10 @@ async def get_current_maintenance_mode():
 async def perform_system_backup(backup_type: str = "full"):
     """
     Perform system backup.
-    
+
     Args:
         backup_type: Type of backup to perform
-        
+
     Returns:
         APIResponse with backup information
     """
@@ -452,10 +452,10 @@ async def perform_system_backup(backup_type: str = "full"):
 async def restart_service(service_name: str):
     """
     Restart a system service.
-    
+
     Args:
         service_name: Name of the service to restart
-        
+
     Returns:
         APIResponse confirming restart
     """
@@ -479,7 +479,7 @@ async def restart_service(service_name: str):
 async def get_admin_dashboard():
     """
     Get comprehensive admin dashboard data.
-    
+
     Returns:
         APIResponse with dashboard information
     """
@@ -523,7 +523,7 @@ async def get_admin_dashboard():
 async def get_available_roles():
     """
     Get list of available user roles.
-    
+
     Returns:
         APIResponse with role information
     """
@@ -544,7 +544,7 @@ async def get_available_roles():
 async def get_available_permissions():
     """
     Get list of available permissions.
-    
+
     Returns:
         APIResponse with permission information
     """

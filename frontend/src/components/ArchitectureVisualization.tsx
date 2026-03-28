@@ -8,7 +8,6 @@ import {
   ArchitectureDiagram,
   NodeType,
   RelationshipType,
-  DiagramType
 } from '@/services/architecture-visualization.service';
 
 export default function ArchitectureVisualization() {
@@ -186,20 +185,20 @@ export default function ArchitectureVisualization() {
     });
   };
 
-  const addRelationship = (sourceId: string, targetId: string, type: RelationshipType) => {
-    if (!selectedDiagram) return;
-    
-    const newRelationship: Relationship = {
-      id: `rel_${Date.now()}`,
-      source_id: sourceId,
-      target_id: targetId,
-      type,
-      label: type.replace('_', ' ')
-    };
-    
-    const updatedRelationships = [...selectedDiagram.relationships, newRelationship];
-    updateDiagram({ relationships: updatedRelationships });
-  };
+// const addRelationship = (sourceId: string, targetId: string, type: RelationshipType) => {
+//   if (!selectedDiagram) return;
+//   
+//   const newRelationship: Relationship = {
+//     id: `rel_${Date.now()}`,
+//     source_id: sourceId,
+//     target_id: targetId,
+//     type,
+//     label: type.replace('_', ' ')
+//   };
+//   
+//   const updatedRelationships = [...selectedDiagram.relationships, newRelationship];
+//   updateDiagram({ relationships: updatedRelationships });
+// };
 
   const getNodeColor = (type: NodeType) => {
     const colors: Record<NodeType, string> = {
@@ -368,7 +367,7 @@ export default function ArchitectureVisualization() {
                     {(['service', 'database', 'cache', 'api_gateway'] as NodeType[]).map(type => (
                       <button
                         key={type}
-                        onClick={(e) => {
+                        onClick={() => {
                           const rect = canvasRef.current?.getBoundingClientRect();
                           if (rect) {
                             addNode(type, rect.width / 2, rect.height / 2);

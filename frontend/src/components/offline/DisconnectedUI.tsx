@@ -42,8 +42,10 @@ export function useNetworkStatus() {
     window.addEventListener('offline', handleOffline);
 
     // Initial check
-    setIsOnline(navigator.onLine);
-    setStatus(navigator.onLine ? 'online' : 'offline');
+    setTimeout(() => {
+      setIsOnline(navigator.onLine);
+      setStatus(navigator.onLine ? 'online' : 'offline');
+    }, 0);
 
     return () => {
       window.removeEventListener('online', handleOnline);
@@ -91,7 +93,9 @@ export function useServiceMonitor(services: string[]) {
         lastChecked: new Date()
       };
     });
-    setServiceStatuses(initialStatuses);
+    setTimeout(() => {
+      setServiceStatuses(initialStatuses);
+    }, 0);
   }, [services]);
 
   const checkService = async (serviceName: string, endpoint: string): Promise<ServiceStatus> => {

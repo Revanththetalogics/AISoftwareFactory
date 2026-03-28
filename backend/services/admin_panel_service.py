@@ -524,8 +524,8 @@ class AdminPanelService:
                 },
                 "activity": {
                     "recent_actions": len(logs),
-                    "actions_today": len([l for l in logs if "T" in l.timestamp and l.timestamp.split("T")[0] == datetime.now(UTC).strftime("%Y-%m-%d")]),
-                    "unique_users_today": len(set(l.user_id for l in logs if "T" in l.timestamp and l.timestamp.split("T")[0] == datetime.now(UTC).strftime("%Y-%m-%d")))
+                    "actions_today": len([log for log in logs if "T" in log.timestamp and log.timestamp.split("T")[0] == datetime.now(UTC).strftime("%Y-%m-%d")]),
+                    "unique_users_today": len(set(log.user_id for log in logs if "T" in log.timestamp and log.timestamp.split("T")[0] == datetime.now(UTC).strftime("%Y-%m-%d")))
                 },
                 "maintenance": {
                     "active_schedules": len([s for s in maintenance if s.is_active]),

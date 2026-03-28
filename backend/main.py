@@ -290,7 +290,7 @@ async def validate_database_schema() -> None:
 async def _startup_logic() -> None:
     """
     Handle application startup.
-    
+
     This function is called when the application starts and performs
     initialization tasks such as:
     - Logging startup information
@@ -463,7 +463,7 @@ async def _startup_logic() -> None:
 def _shutdown_logic() -> None:
     """
     Handle graceful application shutdown.
-    
+
     This function is called when the application shuts down and performs
     cleanup tasks including:
     - Closing database connection pools

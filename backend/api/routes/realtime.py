@@ -33,7 +33,7 @@ class EventFilter(BaseModel):
 async def realtime_monitoring_websocket(websocket: WebSocket, client_id: str = None):
     """
     WebSocket endpoint for real-time monitoring.
-    
+
     Args:
         websocket: WebSocket connection
         client_id: Optional client identifier
@@ -47,10 +47,10 @@ async def realtime_monitoring_websocket(websocket: WebSocket, client_id: str = N
 async def subscribe_to_monitoring(subscription: MonitoringSubscription):
     """
     Subscribe to real-time monitoring topics.
-    
+
     Args:
         subscription: Subscription details
-        
+
     Returns:
         APIResponse confirming subscription
     """
@@ -71,10 +71,10 @@ async def subscribe_to_monitoring(subscription: MonitoringSubscription):
 async def unsubscribe_from_monitoring(subscription: MonitoringSubscription):
     """
     Unsubscribe from real-time monitoring topics.
-    
+
     Args:
         subscription: Unsubscription details
-        
+
     Returns:
         APIResponse confirming unsubscription
     """
@@ -93,7 +93,7 @@ async def unsubscribe_from_monitoring(subscription: MonitoringSubscription):
 async def get_current_snapshot():
     """
     Get current system snapshot.
-    
+
     Returns:
         APIResponse with current system state
     """
@@ -113,11 +113,11 @@ async def get_current_snapshot():
 async def get_recent_events(limit: int = 100, filter: EventFilter = Depends()):
     """
     Get recent monitoring events.
-    
+
     Args:
         limit: Maximum number of events to return
         filter: Event filtering criteria
-        
+
     Returns:
         APIResponse with recent events
     """
@@ -166,12 +166,12 @@ async def trigger_alert_event(
 ):
     """
     Manually trigger an alert event.
-    
+
     Args:
         alert_name: Name of the alert
         severity: Severity level
         details: Alert details
-        
+
     Returns:
         APIResponse confirming alert trigger
     """
@@ -194,12 +194,12 @@ async def trigger_service_status_event(
 ):
     """
     Manually trigger a service status change event.
-    
+
     Args:
         service_name: Name of the service
         old_status: Previous status
         new_status: New status
-        
+
     Returns:
         APIResponse confirming event trigger
     """
@@ -220,7 +220,7 @@ async def trigger_service_status_event(
 async def get_active_connections():
     """
     Get information about active WebSocket connections.
-    
+
     Returns:
         APIResponse with connection information
     """
@@ -246,7 +246,7 @@ async def get_active_connections():
 async def start_monitoring_broadcast():
     """
     Start real-time monitoring broadcast.
-    
+
     Returns:
         APIResponse confirming start
     """
@@ -265,7 +265,7 @@ async def start_monitoring_broadcast():
 async def stop_monitoring_broadcast():
     """
     Stop real-time monitoring broadcast.
-    
+
     Returns:
         APIResponse confirming stop
     """
@@ -284,7 +284,7 @@ async def stop_monitoring_broadcast():
 async def get_live_metrics():
     """
     Get live metrics stream information.
-    
+
     Returns:
         APIResponse with live metrics configuration
     """
