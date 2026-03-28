@@ -16,6 +16,7 @@ from sqlalchemy.orm import joinedload
 
 from backend.core.config import get_settings
 from backend.core.logging import get_logger
+from backend.models.database import DBProject, DBTask, DBUser
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -373,5 +374,4 @@ class OptimizedQueries:
         result = await session.execute(stmt)
         return result.scalars().all()
 
-# Import models at the end to avoid circular imports
-from backend.models.database import DBProject, DBTask, DBUser
+# Models imported at top level
