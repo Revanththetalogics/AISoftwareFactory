@@ -51,7 +51,7 @@ class TestConfigSettings:
             "APP_VERSION": "2.0.0",
             "DEBUG": "true",
             "ENVIRONMENT": "development",
-            "HOST": "0.0.0.0",
+            "HOST": "127.0.0.1",  # nosec: B104 - test configuration only
             "PORT": "9000"
         }):
             settings = Settings()
@@ -60,7 +60,7 @@ class TestConfigSettings:
             assert settings.APP_VERSION == "2.0.0"
             assert settings.DEBUG is True
             assert settings.ENVIRONMENT == "development"
-            assert settings.HOST == "0.0.0.0"
+            assert settings.HOST == "127.0.0.1"  # nosec: B104 - test configuration only
             assert settings.PORT == 9000
 
     def test_environment_validation_valid_values(self):

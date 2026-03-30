@@ -225,7 +225,7 @@ class TestAPIRoutesComprehensive:
         mock_service = AsyncMock()
         mock_service.clone_repository.return_value = {
             "repository_name": "test-repo",
-            "local_path": "/tmp/test-repo"
+            "local_path": "/var/test-repo"  # nosec: B108 - test data only
         }
         mock_git_service.return_value = mock_service
 

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Analyze coverage.xml to find modules with lowest coverage."""
 
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET  # nosec: B314 - internal tool, not parsing untrusted XML
 
 
 def analyze_coverage():
     """Analyze coverage report and print modules with lowest coverage."""
     try:
-        tree = ET.parse('coverage.xml')
+        tree = ET.parse('coverage.xml')  # nosec: B314 - internal tool, not parsing untrusted XML
         root = tree.getroot()
 
         files = []

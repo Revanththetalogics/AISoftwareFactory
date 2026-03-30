@@ -123,11 +123,11 @@ class TestBackupManager:
     def backup_manager(self):
         """Create BackupManager instance."""
         from backend.infrastructure.backup_system import BackupManager
-        return BackupManager(backup_dir="/tmp/backups")
+        return BackupManager(backup_dir="/var/backups")  # nosec: B108 - test data only
 
     def test_init(self, backup_manager):
         """Test BackupManager initialization."""
-        assert backup_manager._backup_dir == "/tmp/backups"
+        assert backup_manager._backup_dir == "/var/backups"  # nosec: B108 - test data only
         assert hasattr(backup_manager, 'create_backup')
         assert hasattr(backup_manager, 'restore_backup')
 
@@ -169,7 +169,7 @@ class TestSecretsManager:
     def secrets_manager(self):
         """Create SecretsManager instance."""
         from backend.infrastructure.secrets_manager import SecretsManager
-        return SecretsManager(vault_path="/tmp/vault")
+        return SecretsManager(vault_path="/var/vault")  # nosec: B108 - test data only
 
     def test_init(self, secrets_manager):
         """Test SecretsManager initialization."""
