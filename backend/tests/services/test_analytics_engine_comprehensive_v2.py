@@ -2,14 +2,19 @@
 Comprehensive tests for AnalyticsEngine service to increase coverage.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime, UTC, timedelta
-import statistics
+from datetime import UTC, datetime, timedelta
 
+import pytest
 from backend.services.analytics_engine import (
-    AdvancedAnalyticsEngine, MetricType, TimeGranularity, ReportType,
-    DataPoint, TimeSeries, AnalyticsQuery, AnalyticsReport, PredictionResult
+    AdvancedAnalyticsEngine,
+    AnalyticsQuery,
+    AnalyticsReport,
+    DataPoint,
+    MetricType,
+    PredictionResult,
+    ReportType,
+    TimeGranularity,
+    TimeSeries,
 )
 
 
@@ -29,7 +34,7 @@ class TestAnalyticsEngine:
         assert hasattr(analytics_engine, 'predictions')
         assert hasattr(analytics_engine, 'project_series')
         assert hasattr(analytics_engine, 'user_series')
-        
+
         # Should have sample data initialized
         assert len(analytics_engine.queries) == 0
         assert len(analytics_engine.reports) == 0
@@ -45,14 +50,14 @@ class TestAnalyticsEngine:
         assert analytics_engine.project_series.metric_type == MetricType.COUNT
         assert analytics_engine.project_series.unit == "projects"
         assert len(analytics_engine.project_series.data_points) == 30
-        
+
         # Check user series
         assert isinstance(analytics_engine.user_series, TimeSeries)
         assert analytics_engine.user_series.name == "Active Users"
         assert analytics_engine.user_series.metric_type == MetricType.COUNT
         assert analytics_engine.user_series.unit == "users"
         assert len(analytics_engine.user_series.data_points) == 30
-        
+
         # Check data points
         for dp in analytics_engine.project_series.data_points:
             assert isinstance(dp, DataPoint)
@@ -74,7 +79,7 @@ class TestAnalyticsEngine:
             },
             granularity=TimeGranularity.DAY
         )
-        
+
         assert result is not None
         assert isinstance(result, AnalyticsQuery)
         assert result.name == "Test Query"
@@ -87,7 +92,7 @@ class TestAnalyticsEngine:
         assert len(result.id) > 0
         assert result.created_at is not None
         assert result.updated_at is not None
-        
+
         # Should be stored in queries dict
         assert result.id in analytics_engine.queries
         assert analytics_engine.queries[result.id] == result
@@ -108,10 +113,10 @@ class TestAnalyticsEngine:
             },
             granularity=TimeGranularity.DAY
         )
-        
+
         # Execute the query
         result = await analytics_engine.execute_query(query.id)
-        
+
         assert isinstance(result, dict)
         assert "projects_created" in result
         assert isinstance(result["projects_created"], list)
@@ -122,7 +127,7 @@ class TestAnalyticsEngine:
         """Test executing non-existent query."""
         with pytest.raises(ValueError) as exc_info:
             await analytics_engine.execute_query("nonexistent_query")
-        
+
         assert "Query nonexistent_query not found" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -139,9 +144,9 @@ class TestAnalyticsEngine:
             },
             granularity=TimeGranularity.DAY
         )
-        
+
         result = await analytics_engine.execute_query(query.id)
-        
+
         assert "projects_created" in result
         assert "active_users" in result
         assert isinstance(result["projects_created"], list)
@@ -162,14 +167,14 @@ class TestAnalyticsEngine:
             },
             granularity=TimeGranularity.DAY
         )
-        
+
         # Generate report
         result = await analytics_engine.generate_report(
             query_id=query.id,
             report_type=ReportType.SUMMARY,
             visualization_type="chart"
         )
-        
+
         assert result is not None
         assert isinstance(result, AnalyticsReport)
         assert result.name == "Report Test Report"
@@ -180,7 +185,7 @@ class TestAnalyticsEngine:
         assert len(result.id) > 0
         assert result.created_at is not None
         assert result.generated_at is not None
-        
+
         # Should be stored in reports dict
         assert result.id in analytics_engine.reports
         assert analytics_engine.reports[result.id] == result
@@ -193,7 +198,7 @@ class TestAnalyticsEngine:
                 query_id="nonexistent",
                 report_type=ReportType.SUMMARY
             )
-        
+
         assert "Query nonexistent not found" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -204,7 +209,7 @@ class TestAnalyticsEngine:
             periods=5,
             model_type="linear_regression"
         )
-        
+
         assert result is not None
         assert isinstance(result, PredictionResult)
         assert result.metric == "projects_created"
@@ -216,7 +221,7 @@ class TestAnalyticsEngine:
         assert isinstance(result.accuracy_score, float)
         assert 0.85 <= result.accuracy_score <= 0.95
         # Note: PredictionResult doesn't have an 'id' attribute in the dataclass
-        
+
         # Check predicted data points
         for dp in result.predicted_values:
             assert isinstance(dp, DataPoint)
@@ -232,7 +237,7 @@ class TestAnalyticsEngine:
             periods=3,
             model_type="linear_regression"
         )
-        
+
         assert result is not None
         assert result.metric == "active_users"
         assert len(result.predicted_values) == 3
@@ -245,7 +250,7 @@ class TestAnalyticsEngine:
                 metric="unknown_metric",
                 periods=5
             )
-        
+
         assert "Unknown metric: unknown_metric" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -257,12 +262,12 @@ class TestAnalyticsEngine:
             "start_date": (now - timedelta(days=15)).isoformat(),
             "end_date": (now + timedelta(days=1)).isoformat()
         }
-        
+
         result = await analytics_engine.get_trend_analysis(
             metric="projects_created",
             time_range=time_range
         )
-        
+
         assert isinstance(result, dict)
         # Handle both success and error cases
         if "error" not in result:
@@ -285,12 +290,12 @@ class TestAnalyticsEngine:
             "start_date": (now - timedelta(days=15)).isoformat(),
             "end_date": (now + timedelta(days=1)).isoformat()
         }
-        
+
         result = await analytics_engine.get_trend_analysis(
             metric="active_users",
             time_range=time_range
         )
-        
+
         assert isinstance(result, dict)
         # Handle both success and error cases
         if "error" not in result:
@@ -304,7 +309,7 @@ class TestAnalyticsEngine:
                 metric="unknown_metric",
                 time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-01-31T23:59:59Z"}
             )
-        
+
         assert "Unknown metric: unknown_metric" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -315,12 +320,12 @@ class TestAnalyticsEngine:
             "start_date": "2024-01-01T00:00:00Z",
             "end_date": "2024-01-02T23:59:59Z"  # Only 2 days
         }
-        
+
         result = await analytics_engine.get_trend_analysis(
             metric="projects_created",
             time_range=time_range
         )
-        
+
         # Should handle gracefully with error message
         assert isinstance(result, dict)
         if "error" in result:
@@ -335,12 +340,12 @@ class TestAnalyticsEngine:
             "start_date": (now - timedelta(days=15)).isoformat(),
             "end_date": (now + timedelta(days=1)).isoformat()
         }
-        
+
         result = await analytics_engine.get_correlation_analysis(
             metrics=["projects_created", "active_users"],
             time_range=time_range
         )
-        
+
         assert isinstance(result, dict)
         # Handle both success and error cases
         if "error" not in result:
@@ -361,13 +366,13 @@ class TestAnalyticsEngine:
             "start_date": (now - timedelta(days=15)).isoformat(),
             "end_date": (now + timedelta(days=1)).isoformat()
         }
-        
+
         # This should work but may return error or empty correlations
         result = await analytics_engine.get_correlation_analysis(
             metrics=["projects_created"],
             time_range=time_range
         )
-        
+
         assert isinstance(result, dict)
         # Either success with empty correlations or error message
         assert "correlations" in result or "error" in result
@@ -380,7 +385,7 @@ class TestAnalyticsEngine:
                 metrics=["projects_created", "unknown_metric"],
                 time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-01-31T23:59:59Z"}
             )
-        
+
         assert "Unknown metric: unknown_metric" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -392,15 +397,15 @@ class TestAnalyticsEngine:
             time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-01-31T23:59:59Z"},
             granularity=TimeGranularity.DAY
         )
-        
+
         await analytics_engine.create_analytics_query(
             name="Query 2", metrics=["active_users"], dimensions=[], filters={},
             time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-01-31T23:59:59Z"},
             granularity=TimeGranularity.DAY
         )
-        
+
         result = await analytics_engine.list_queries()
-        
+
         assert isinstance(result, list)
         assert len(result) >= 2
         for query in result:
@@ -415,11 +420,11 @@ class TestAnalyticsEngine:
             time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-01-31T23:59:59Z"},
             granularity=TimeGranularity.DAY
         )
-        
+
         await analytics_engine.generate_report(query.id, ReportType.SUMMARY)
-        
+
         result = await analytics_engine.list_reports()
-        
+
         assert isinstance(result, list)
         assert len(result) >= 1
         for report in result:
@@ -430,9 +435,9 @@ class TestAnalyticsEngine:
         """Test listing all predictions."""
         # Create a prediction
         await analytics_engine.predict_future_values("projects_created", periods=3)
-        
+
         result = await analytics_engine.list_predictions()
-        
+
         assert isinstance(result, list)
         assert len(result) >= 1
         for prediction in result:
@@ -444,13 +449,13 @@ class TestAnalyticsEngine:
             "start_date": "2024-01-01T00:00:00Z",
             "end_date": "2024-01-10T23:59:59Z"
         }
-        
+
         result = analytics_engine._aggregate_time_series(
             analytics_engine.project_series,
             time_range,
             TimeGranularity.DAY
         )
-        
+
         assert isinstance(result, list)
         if result:  # If there's data in the range
             data_point = result[0]
@@ -469,14 +474,14 @@ class TestAnalyticsEngine:
             DataPoint((now - timedelta(days=2)).isoformat(), 20.0),
             DataPoint((now + timedelta(days=1)).isoformat(), 30.0),
         ]
-        
+
         time_range = {
             "start_date": (now - timedelta(days=3)).isoformat(),
             "end_date": (now + timedelta(days=2)).isoformat()
         }
-        
+
         result = analytics_engine._filter_by_time_range(data_points, time_range)
-        
+
         assert isinstance(result, list)
         # Should include middle and future points, exclude old point
         assert len(result) == 2
@@ -487,9 +492,9 @@ class TestAnalyticsEngine:
         """Test linear trend calculation."""
         x_values = [1, 2, 3, 4, 5]
         y_values = [2, 4, 6, 8, 10]  # Perfect linear relationship
-        
+
         slope, intercept = analytics_engine._calculate_linear_trend(x_values, y_values)
-        
+
         assert isinstance(slope, float)
         assert isinstance(intercept, float)
         assert abs(slope - 2.0) < 0.001  # Should be approximately 2
@@ -500,12 +505,12 @@ class TestAnalyticsEngine:
         # Perfect positive correlation
         x_values = [1, 2, 3, 4, 5]
         y_values = [2, 4, 6, 8, 10]
-        
+
         correlation = analytics_engine._calculate_correlation(x_values, y_values)
-        
+
         assert isinstance(correlation, float)
         assert abs(correlation - 1.0) < 0.001  # Perfect positive correlation
-        
+
         # Perfect negative correlation
         y_values_negative = [10, 8, 6, 4, 2]
         correlation_negative = analytics_engine._calculate_correlation(x_values, y_values_negative)
@@ -516,7 +521,7 @@ class TestAnalyticsEngine:
         # Without metadata
         dp = DataPoint("2024-01-01T00:00:00Z", 10.5)
         assert dp.metadata == {}
-        
+
         # With metadata
         dp_with_meta = DataPoint("2024-01-01T00:00:00Z", 10.5, {"source": "api"})
         assert dp_with_meta.metadata == {"source": "api"}

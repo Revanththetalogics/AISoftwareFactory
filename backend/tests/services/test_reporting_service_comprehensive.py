@@ -2,13 +2,19 @@
 Comprehensive tests for ReportingService to increase coverage.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
+import pytest
 from backend.services.reporting_service import (
-    ReportingService, ReportType, ReportFormat, ReportFrequency, ReportStatus,
-    ReportTemplate, ReportDefinition, GeneratedReport, ReportSchedule
+    GeneratedReport,
+    ReportDefinition,
+    ReportFormat,
+    ReportFrequency,
+    ReportingService,
+    ReportSchedule,
+    ReportStatus,
+    ReportTemplate,
+    ReportType,
 )
 
 
@@ -31,13 +37,13 @@ class TestReportingService:
         assert isinstance(reporting_service.definitions, dict)
         assert isinstance(reporting_service.generated_reports, dict)
         assert isinstance(reporting_service.schedules, dict)
-        
+
         # Should have default templates initialized
         assert len(reporting_service.templates) > 0
         assert "template_health" in reporting_service.templates
         assert "template_performance" in reporting_service.templates
         assert "template_security" in reporting_service.templates
-        
+
         # Should have sample definitions
         assert len(reporting_service.definitions) > 0
 
@@ -52,7 +58,7 @@ class TestReportingService:
         assert health_template.format == ReportFormat.PDF
         assert health_template.is_system_default is True
         assert "include_metrics" in health_template.parameters
-        
+
         # Check performance template
         perf_template = reporting_service.templates.get("template_performance")
         assert perf_template is not None
@@ -61,7 +67,7 @@ class TestReportingService:
         assert perf_template.type == ReportType.PERFORMANCE
         assert perf_template.format == ReportFormat.HTML
         assert perf_template.is_system_default is True
-        
+
         # Check security template
         security_template = reporting_service.templates.get("template_security")
         assert security_template is not None
@@ -83,7 +89,7 @@ class TestReportingService:
             query_template="SELECT * FROM usage_logs WHERE date >= '{{start_date}}'",
             created_by="test_user"
         )
-        
+
         assert result is not None
         assert isinstance(result, ReportTemplate)
         assert result.name == "Custom Usage Report"
@@ -102,7 +108,7 @@ class TestReportingService:
     async def test_get_template_success(self, reporting_service):
         """Test getting existing template."""
         result = await reporting_service.get_template("template_health")
-        
+
         assert result is not None
         assert isinstance(result, ReportTemplate)
         assert result.id == "template_health"
@@ -118,7 +124,7 @@ class TestReportingService:
     async def test_list_templates_all(self, reporting_service):
         """Test listing all templates."""
         result = await reporting_service.list_templates()
-        
+
         assert isinstance(result, list)
         assert len(result) >= 3  # Should have at least default templates
         for template in result:
@@ -128,7 +134,7 @@ class TestReportingService:
     async def test_list_templates_filter_by_type(self, reporting_service):
         """Test listing templates filtered by type."""
         result = await reporting_service.list_templates(report_type=ReportType.SYSTEM_HEALTH)
-        
+
         assert isinstance(result, list)
         for template in result:
             assert template.type == ReportType.SYSTEM_HEALTH
@@ -137,7 +143,7 @@ class TestReportingService:
     async def test_list_templates_include_system(self, reporting_service):
         """Test listing templates with include_system filter."""
         result = await reporting_service.list_templates(include_system=False)
-        
+
         assert isinstance(result, list)
         for template in result:
             assert template.is_system_default is False
@@ -154,7 +160,7 @@ class TestReportingService:
             schedule_time="08:00:00",
             created_by="admin_user"
         )
-        
+
         assert result is not None
         assert isinstance(result, ReportDefinition)
         assert result.name == "Daily Health Check"
@@ -169,7 +175,7 @@ class TestReportingService:
         assert len(result.updated_at) > 0
         # Should be stored in definitions dict
         assert result.id in reporting_service.definitions
-        
+
         # Should have created a schedule
         assert len(reporting_service.schedules) > 0
 
@@ -186,9 +192,9 @@ class TestReportingService:
             schedule_time=None,
             created_by="test_user"
         )
-        
+
         result = await reporting_service.generate_report(definition.id)
-        
+
         assert result is not None
         assert isinstance(result, GeneratedReport)
         assert result.definition_id == definition.id
@@ -209,7 +215,7 @@ class TestReportingService:
         """Test generating report for non-existent definition."""
         with pytest.raises(ValueError) as exc_info:
             await reporting_service.generate_report("nonexistent")
-        
+
         assert "Report definition nonexistent not found" in str(exc_info.value)
 
 
@@ -227,12 +233,12 @@ class TestReportingService:
             schedule_time=None,
             created_by="test_user"
         )
-        
+
         await reporting_service.generate_report(definition.id)
         await reporting_service.generate_report(definition.id)
-        
+
         result = await reporting_service.get_generated_reports()
-        
+
         assert isinstance(result, list)
         assert len(result) >= 2
         for report in result:
@@ -261,9 +267,9 @@ class TestReportingService:
             schedule_time="10:00:00",
             created_by="user2"
         )
-        
+
         result = await reporting_service.get_report_definitions()
-        
+
         assert isinstance(result, list)
         assert len(result) >= 2
         for definition in result:
@@ -283,9 +289,9 @@ class TestReportingService:
             schedule_time="01:00:00",
             created_by="scheduler"
         )
-        
+
         result = await reporting_service.get_report_schedules()
-        
+
         assert isinstance(result, list)
         assert len(result) >= 1
         for schedule in result:
@@ -306,11 +312,11 @@ class TestReportingService:
             schedule_time=None,
             created_by="export_user"
         )
-        
+
         report = await reporting_service.generate_report(definition.id)
-        
+
         result = await reporting_service.export_report(report.id, ReportFormat.JSON)
-        
+
         assert isinstance(result, bytes)
         assert len(result) > 0
         # Should be valid JSON
@@ -331,11 +337,11 @@ class TestReportingService:
             schedule_time=None,
             created_by="csv_user"
         )
-        
+
         report = await reporting_service.generate_report(definition.id)
-        
+
         result = await reporting_service.export_report(report.id, ReportFormat.CSV)
-        
+
         assert isinstance(result, bytes)
         assert len(result) > 0
         # Should contain CSV-like content
@@ -347,7 +353,7 @@ class TestReportingService:
         """Test exporting non-existent report."""
         with pytest.raises(ValueError) as exc_info:
             await reporting_service.export_report("nonexistent", ReportFormat.JSON)
-        
+
         assert "Report nonexistent not found" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -363,12 +369,12 @@ class TestReportingService:
             schedule_time=None,
             created_by="fallback_user"
         )
-        
+
         report = await reporting_service.generate_report(definition.id)
-        
+
         # EXCEL format falls back to JSON in implementation
         result = await reporting_service.export_report(report.id, ReportFormat.EXCEL)
-        
+
         assert isinstance(result, bytes)
         assert len(result) > 0
         # Should be valid JSON (fallback)
@@ -389,11 +395,11 @@ class TestReportingService:
             schedule_time=None,
             created_by="stats_user"
         )
-        
+
         await reporting_service.generate_report(definition.id)
-        
+
         result = await reporting_service.get_reporting_statistics()
-        
+
         assert isinstance(result, dict)
         # Statistics structure changed - check for nested structure
         assert "templates" in result or "total_templates" in result
@@ -416,7 +422,7 @@ class TestReportingService:
             created_by="test_user",
             created_at=datetime.now(UTC).isoformat()
         )
-        
+
         assert template.id == "test-template"
         assert template.name == "Test Template"
         assert template.type == ReportType.CUSTOM
@@ -438,7 +444,7 @@ class TestReportingService:
             created_at=datetime.now(UTC).isoformat(),
             updated_at=datetime.now(UTC).isoformat()
         )
-        
+
         assert definition.id == "test-def"
         assert definition.name == "Test Definition"
         assert definition.template_id == "template_health"
@@ -462,7 +468,7 @@ class TestReportingService:
             error_message=None,
             recipient_emails=["user@example.com"]
         )
-        
+
         assert report.id == "test-report"
         assert report.status == ReportStatus.COMPLETED
         assert report.file_size == 1024
@@ -479,7 +485,7 @@ class TestReportingService:
             is_active=True,
             created_at=datetime.now(UTC).isoformat()
         )
-        
+
         assert schedule.id == "test-schedule"
         assert schedule.frequency == ReportFrequency.WEEKLY
         assert schedule.is_active is True
@@ -491,20 +497,20 @@ class TestReportingService:
         assert ReportType.PERFORMANCE.value == "performance"
         assert ReportType.SECURITY.value == "security"
         assert ReportType.USAGE.value == "usage"
-        
+
         # Test ReportFormat values
         assert ReportFormat.PDF.value == "pdf"
         assert ReportFormat.CSV.value == "csv"
         assert ReportFormat.JSON.value == "json"
         assert ReportFormat.HTML.value == "html"
-        
+
         # Test ReportFrequency values
         assert ReportFrequency.ONCE.value == "once"
         assert ReportFrequency.HOURLY.value == "hourly"
         assert ReportFrequency.DAILY.value == "daily"
         assert ReportFrequency.WEEKLY.value == "weekly"
         assert ReportFrequency.MONTHLY.value == "monthly"
-        
+
         # Test ReportStatus values
         assert ReportStatus.PENDING.value == "pending"
         assert ReportStatus.GENERATING.value == "generating"

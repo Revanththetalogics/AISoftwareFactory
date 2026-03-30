@@ -267,7 +267,7 @@ async def _handle_custom_exception(request, exc: AISoftwareFactoryException):
     """Handle custom AISoftwareFactoryException."""
     # Extract request_id from request state if available
     request_id = getattr(request, 'state', {}).get('request_id', 'unknown')
-    
+
     return JSONResponse(
         status_code=exc.status_code,
         content={
@@ -286,10 +286,10 @@ async def _handle_custom_exception(request, exc: AISoftwareFactoryException):
 async def _handle_general_exception(request, exc: Exception):
     """Handle general exceptions."""
     logger.error(f"Unhandled exception: {str(exc)}", extra={"traceback": traceback.format_exc()})
-    
+
     # Extract request_id from request state if available
     request_id = getattr(request, 'state', {}).get('request_id', 'unknown')
-    
+
     return JSONResponse(
         status_code=500,
         content={

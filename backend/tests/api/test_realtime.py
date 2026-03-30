@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
 from backend.api.routes.realtime import router
-from backend.monitoring.realtime import MonitorEventType, realtime_monitor
+from backend.monitoring.realtime import MonitorEventType
 
 
 class TestRealtimeRoutes:
@@ -256,7 +256,7 @@ class TestRealtimeRoutes:
         mock_realtime_monitor.connect = AsyncMock()
 
         with pytest.raises(WebSocketDisconnect):
-            with client.websocket_connect("/realtime/monitor?client_id=test-123") as websocket:
+            with client.websocket_connect("/realtime/monitor?client_id=test-123"):
                 # Connection should be established
                 pass
 
@@ -268,7 +268,7 @@ class TestRealtimeRoutes:
         mock_realtime_monitor.connect = AsyncMock()
 
         with pytest.raises(WebSocketDisconnect):
-            with client.websocket_connect("/realtime/monitor") as websocket:
+            with client.websocket_connect("/realtime/monitor"):
                 # Connection should be established with auto-generated ID
                 pass
 

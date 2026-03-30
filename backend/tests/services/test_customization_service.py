@@ -2,19 +2,16 @@
 Comprehensive tests for CustomizationService to increase coverage.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime, timedelta
 
+import pytest
 from backend.services.customization_service import (
+    CustomComponent,
     CustomizationService,
-    ThemeMode,
-    LayoutType,
-    ColorScheme,
-    Theme,
     Layout,
+    LayoutType,
+    Theme,
+    ThemeMode,
     UserPreferences,
-    CustomComponent
 )
 
 
@@ -44,7 +41,7 @@ class TestCustomizationService:
         assert isinstance(customization_service.layouts, dict)
         assert isinstance(customization_service.user_preferences, dict)
         assert isinstance(customization_service.custom_components, dict)
-        
+
         # Should have default themes and layouts
         assert len(customization_service.themes) > 0
         assert len(customization_service.layouts) > 0
@@ -185,7 +182,7 @@ class TestCustomizationService:
         """Test updating system theme (should be forbidden)."""
         # Try to update system default theme
         system_theme_id = "theme_light"
-        
+
         with pytest.raises(ValueError) as exc_info:
             await customization_service.update_theme(
                 theme_id=system_theme_id,
@@ -223,7 +220,7 @@ class TestCustomizationService:
     async def test_delete_theme_system_forbidden(self, customization_service):
         """Test deleting system theme (should be forbidden)."""
         system_theme_id = "theme_light"
-        
+
         with pytest.raises(ValueError) as exc_info:
             await customization_service.delete_theme(system_theme_id)
 
@@ -296,14 +293,14 @@ class TestCustomizationService:
         layouts = await customization_service.list_layouts()
 
         assert len(layouts) >= 1  # At least our custom layout plus system layouts
-        layout_ids = [l.id for l in layouts]
+        layout_ids = [layout.id for layout in layouts]
         assert custom_layout.id in layout_ids
 
     @pytest.mark.asyncio
     async def test_get_user_preferences_new_user(self, customization_service):
         """Test getting user preferences for new user (creates defaults)."""
         user_id = "newuser123"
-        
+
         # Get preferences for new user
         preferences = await customization_service.get_user_preferences(user_id)
 
@@ -324,10 +321,10 @@ class TestCustomizationService:
     async def test_get_user_preferences_existing_user(self, customization_service):
         """Test getting existing user preferences."""
         user_id = "existinguser123"
-        
+
         # Create preferences first
         await customization_service.get_user_preferences(user_id)
-        
+
         # Update preferences
         await customization_service.update_user_preferences(
             user_id=user_id,
@@ -346,7 +343,7 @@ class TestCustomizationService:
     async def test_update_user_preferences_success(self, customization_service):
         """Test updating user preferences."""
         user_id = "user123"
-        
+
         # Get initial preferences
         initial_prefs = await customization_service.get_user_preferences(user_id)
 
@@ -425,7 +422,7 @@ class TestCustomizationService:
     async def test_list_custom_components_success(self, customization_service):
         """Test listing custom components."""
         # Create multiple components
-        component1 = await customization_service.create_custom_component(
+        await customization_service.create_custom_component(
             name="Component 1",
             component_type="input",
             html_template="<input />",
@@ -434,7 +431,7 @@ class TestCustomizationService:
             created_by="user123"
         )
 
-        component2 = await customization_service.create_custom_component(
+        await customization_service.create_custom_component(
             name="Component 2",
             component_type="select",
             html_template="<select></select>",
@@ -493,12 +490,12 @@ class TestCustomizationService:
         assert "available_modes" in defaults
         assert "available_layout_types" in defaults
         assert "color_schemes" in defaults
-        
+
         # Check that enums are converted to values
         assert isinstance(defaults["available_modes"], list)
         assert "light" in defaults["available_modes"]
         assert "dark" in defaults["available_modes"]
-        
+
         assert isinstance(defaults["available_layout_types"], list)
         assert "default" in defaults["available_layout_types"]
         assert "compact" in defaults["available_layout_types"]

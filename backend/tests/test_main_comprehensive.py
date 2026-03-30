@@ -2,14 +2,18 @@
 Comprehensive tests for main.py to increase coverage.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-import asyncio
+
+import pytest
 from fastapi.testclient import TestClient
 
 from backend.main import (
-    create_application, _connect_with_retry, _startup_logic, 
-    _shutdown_logic, validate_database_schema, app, _startup_logic, _shutdown_logic
+    _connect_with_retry,
+    _shutdown_logic,
+    _startup_logic,
+    app,
+    create_application,
+    validate_database_schema,
 )
 
 
@@ -26,9 +30,9 @@ class TestMainApplication:
             mock_settings.return_value.ENVIRONMENT = "test"
             mock_settings.return_value.cors_origins_list = []
             mock_settings.return_value.ENABLE_METRICS = False
-            
+
             result = create_application()
-            
+
             assert result is not None
             assert result.title == "AI Software Factory"
             assert result.version == "1.0.0"
@@ -44,9 +48,9 @@ class TestMainApplication:
             mock_settings.return_value.ENVIRONMENT = "development"
             mock_settings.return_value.cors_origins_list = ["http://localhost:3000"]
             mock_settings.return_value.ENABLE_METRICS = False
-            
+
             result = create_application()
-            
+
             assert result is not None
             # Application should be created successfully with CORS middleware
 
@@ -60,9 +64,9 @@ class TestMainApplication:
             mock_settings.return_value.ENVIRONMENT = "development"
             mock_settings.return_value.cors_origins_list = []
             mock_settings.return_value.ENABLE_METRICS = True
-            
+
             result = create_application()
-            
+
             assert result is not None
             # Should have metrics mounted at /metrics
 
@@ -70,14 +74,14 @@ class TestMainApplication:
     async def test_connect_with_retry_success_immediate(self):
         """Test successful connection on first attempt."""
         mock_connect_fn = AsyncMock()
-        
+
         result = await _connect_with_retry(
             name="Test Service",
             connect_fn=mock_connect_fn,
             max_retries=3,
             delay=0.1
         )
-        
+
         assert result is True
         mock_connect_fn.assert_called_once()
 
@@ -85,14 +89,14 @@ class TestMainApplication:
     async def test_connect_with_retry_success_after_retries(self):
         """Test successful connection after retries."""
         call_count = 0
-        
+
         async def mock_connect_fn():
             nonlocal call_count
             call_count += 1
             if call_count < 3:
                 raise Exception("Connection failed")
             # Success on third attempt
-        
+
         with patch('asyncio.sleep') as mock_sleep:
             result = await _connect_with_retry(
                 name="Test Service",
@@ -100,7 +104,7 @@ class TestMainApplication:
                 max_retries=3,
                 delay=0.1
             )
-            
+
             assert result is True
             assert call_count == 3
             assert mock_sleep.call_count == 2  # Called twice for retries
@@ -110,7 +114,7 @@ class TestMainApplication:
         """Test failed connection for non-critical service."""
         mock_connect_fn = AsyncMock()
         mock_connect_fn.side_effect = Exception("Connection failed")
-        
+
         with patch('asyncio.sleep') as mock_sleep:
             result = await _connect_with_retry(
                 name="Test Service",
@@ -119,7 +123,7 @@ class TestMainApplication:
                 delay=0.1,
                 critical=False
             )
-            
+
             assert result is False
             assert mock_connect_fn.call_count == 2
             assert mock_sleep.call_count == 1
@@ -129,8 +133,8 @@ class TestMainApplication:
         """Test failed connection for critical service raises exception."""
         mock_connect_fn = AsyncMock()
         mock_connect_fn.side_effect = Exception("Connection failed")
-        
-        with patch('asyncio.sleep') as mock_sleep:
+
+        with patch('asyncio.sleep'):
             with pytest.raises(RuntimeError) as exc_info:
                 await _connect_with_retry(
                     name="Critical Service",
@@ -139,7 +143,7 @@ class TestMainApplication:
                     delay=0.1,
                     critical=True
                 )
-            
+
             assert "Failed to connect to critical service Critical Service" in str(exc_info.value)
             assert mock_connect_fn.call_count == 2
 
@@ -148,8 +152,8 @@ class TestMainApplication:
         """Test basic startup logic execution."""
         with patch('backend.core.config.get_settings') as mock_settings, \
              patch('backend.main._connect_with_retry') as mock_connect, \
-             patch('backend.db.init_db') as mock_init_db:
-            
+             patch('backend.db.init_db'):
+
             # Mock settings
             settings_mock = MagicMock()
             settings_mock.APP_NAME = "Test App"
@@ -162,13 +166,13 @@ class TestMainApplication:
             settings_mock.OLLAMA_URL = "http://localhost:11434"
             settings_mock.OTEL_ENABLED = False
             mock_settings.return_value = settings_mock
-            
+
             # Mock successful connections
             mock_connect.return_value = True
-            
+
             # Run startup logic
             await _startup_logic()
-            
+
             # Should complete without exceptions
 
     @pytest.mark.asyncio
@@ -184,7 +188,7 @@ class TestMainApplication:
         """Test secret key warning in development environment."""
         with patch('backend.core.config.get_settings') as mock_settings, \
              patch('backend.main._connect_with_retry') as mock_connect:
-            
+
             settings_mock = MagicMock()
             settings_mock.APP_NAME = "Test App"
             settings_mock.APP_VERSION = "1.0.0"
@@ -197,7 +201,7 @@ class TestMainApplication:
             settings_mock.OTEL_ENABLED = False
             mock_settings.return_value = settings_mock
             mock_connect.return_value = True
-            
+
             # Should complete without exception (warning is logged but doesn't raise)
             await _startup_logic()
 
@@ -206,10 +210,10 @@ class TestMainApplication:
         """Test basic shutdown logic execution."""
         with patch('backend.db.session.engine') as mock_engine:
             mock_engine.dispose = MagicMock()
-            
+
             # Run shutdown logic
             _shutdown_logic()
-            
+
             # Engine dispose should be called
             mock_engine.dispose.assert_called_once()
 
@@ -225,18 +229,18 @@ class TestMainApplication:
         """Test successful database schema validation."""
         mock_result = MagicMock()
         mock_result.fetchall.return_value = [('users',), ('projects',), ('workflows',)]
-        
+
         mock_session = AsyncMock()
         mock_session.__aenter__.return_value = mock_session
         mock_session.execute.return_value = mock_result
-        
+
         with patch('backend.db.session.AsyncSessionLocal') as mock_session_local, \
-             patch('sqlalchemy.text') as mock_text:
-            
+             patch('sqlalchemy.text'):
+
             mock_session_local.return_value = mock_session
-            
+
             await validate_database_schema()
-            
+
             # Should complete without exceptions
 
     @pytest.mark.asyncio
@@ -244,18 +248,18 @@ class TestMainApplication:
         """Test database schema validation with missing tables."""
         mock_result = MagicMock()
         mock_result.fetchall.return_value = [('users',)]  # Only one table exists
-        
+
         mock_session = AsyncMock()
         mock_session.__aenter__.return_value = mock_session
         mock_session.execute.return_value = mock_result
-        
+
         with patch('backend.db.session.AsyncSessionLocal') as mock_session_local, \
-             patch('sqlalchemy.text') as mock_text:
-            
+             patch('sqlalchemy.text'):
+
             mock_session_local.return_value = mock_session
-            
+
             await validate_database_schema()
-            
+
             # Should complete and log warning about missing tables
 
     @pytest.mark.asyncio
@@ -264,12 +268,12 @@ class TestMainApplication:
         mock_session = AsyncMock()
         mock_session.__aenter__.return_value = mock_session
         mock_session.execute.side_effect = Exception("Database error")
-        
+
         with patch('backend.db.session.AsyncSessionLocal') as mock_session_local:
             mock_session_local.return_value = mock_session
-            
+
             await validate_database_schema()
-            
+
             # Should handle exception gracefully and continue
 
     def test_root_endpoint(self):
@@ -281,10 +285,10 @@ class TestMainApplication:
             settings_mock.ENVIRONMENT = "development"
             settings_mock.is_development = True
             mock_settings.return_value = settings_mock
-            
+
             client = TestClient(app)
             response = client.get("/")
-            
+
             assert response.status_code == 200
             data = response.json()
             assert data["name"] == "AI Software Factory"
@@ -301,10 +305,10 @@ class TestMainApplication:
             settings_mock.ENVIRONMENT = "production"
             settings_mock.is_development = False
             mock_settings.return_value = settings_mock
-            
+
             client = TestClient(app)
             response = client.get("/")
-            
+
             assert response.status_code == 200
             data = response.json()
             # Documentation should still be present regardless of environment
@@ -320,8 +324,8 @@ class TestMainApplication:
 
     def test_backward_compatibility_aliases(self):
         """Test backward compatibility aliases exist."""
-        from backend.main import startup_event, shutdown_event
-        
+        from backend.main import shutdown_event, startup_event
+
         assert startup_event is _startup_logic
         assert shutdown_event is _shutdown_logic
 

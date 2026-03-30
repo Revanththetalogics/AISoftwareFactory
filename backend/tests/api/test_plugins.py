@@ -51,7 +51,7 @@ class TestPluginRoutes:
             "type": "feature",
             "author": "Test Author"
         }
-        
+
         mock_manifest2 = MagicMock()
         mock_manifest2.__dict__ = {
             "id": "plugin2",
@@ -61,7 +61,7 @@ class TestPluginRoutes:
             "type": "integration",
             "author": "Another Author"
         }
-        
+
         mock_manifests = [mock_manifest1, mock_manifest2]
         mock_plugin_manager.discover_plugins.return_value = mock_manifests
 
@@ -185,7 +185,7 @@ class TestPluginRoutes:
             ),
             MagicMock(
                 id="plugin2",
-                name="Loaded Plugin 2", 
+                name="Loaded Plugin 2",
                 status="inactive",
                 manifest=MagicMock(version="2.0.0")
             )

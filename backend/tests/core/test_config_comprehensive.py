@@ -3,9 +3,9 @@ Comprehensive tests for core/config.py to increase coverage.
 """
 
 import os
-import pytest
 from unittest.mock import patch
 
+import pytest
 from backend.core.config import Settings, get_settings, reload_settings
 
 
@@ -15,29 +15,29 @@ class TestConfigSettings:
     def test_settings_defaults(self):
         """Test default configuration values."""
         settings = Settings()
-        
+
         # Application settings
         assert settings.APP_NAME == "AI Software Factory"
         assert settings.APP_VERSION == "1.0.0"
         assert settings.DEBUG is False
         assert settings.ENVIRONMENT == "development"
         assert settings.LOG_LEVEL == "INFO"
-        
+
         # Server configuration
         assert settings.HOST == "127.0.0.1"
         assert settings.PORT == 8000
         assert settings.WORKERS == 1
-        
+
         # Security
         assert settings.SECRET_KEY == "your-secret-key-change-in-production"
         assert settings.ACCESS_TOKEN_EXPIRE_MINUTES == 30
-        
+
         # URLs
         assert settings.DATABASE_URL == "postgresql://user:password@localhost:5432/ai_factory"
         assert settings.REDIS_URL == "redis://localhost:6379/0"
         assert settings.OLLAMA_URL == "http://localhost:11434"
         assert settings.OLLAMA_MODEL == "llama3.2"
-        
+
         # Monitoring
         assert settings.ENABLE_METRICS is True
         assert settings.METRICS_PORT == 9090
@@ -55,7 +55,7 @@ class TestConfigSettings:
             "PORT": "9000"
         }):
             settings = Settings()
-            
+
             assert settings.APP_NAME == "Test App"
             assert settings.APP_VERSION == "2.0.0"
             assert settings.DEBUG is True
@@ -66,7 +66,7 @@ class TestConfigSettings:
     def test_environment_validation_valid_values(self):
         """Test environment validation with valid values."""
         valid_environments = ["development", "testing"]  # Skip staging/production due to secret key validation
-        
+
         for env in valid_environments:
             settings = Settings(ENVIRONMENT=env)
             assert settings.ENVIRONMENT == env
@@ -75,7 +75,7 @@ class TestConfigSettings:
         """Test environment validation rejects invalid values."""
         with pytest.raises(ValueError) as exc_info:
             Settings(ENVIRONMENT="invalid")
-        
+
         assert "ENVIRONMENT must be one of" in str(exc_info.value)
 
     def test_environment_validation_case_insensitive(self):
@@ -86,7 +86,7 @@ class TestConfigSettings:
     def test_log_level_validation_valid_values(self):
         """Test log level validation with valid values."""
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        
+
         for level in valid_levels:
             settings = Settings(LOG_LEVEL=level)
             assert settings.LOG_LEVEL == level
@@ -95,7 +95,7 @@ class TestConfigSettings:
         """Test log level validation handles case properly."""
         settings = Settings(LOG_LEVEL="debug")
         assert settings.LOG_LEVEL == "DEBUG"
-        
+
         settings = Settings(LOG_LEVEL="info")
         assert settings.LOG_LEVEL == "INFO"
 
@@ -103,13 +103,13 @@ class TestConfigSettings:
         """Test log level validation rejects invalid values."""
         with pytest.raises(ValueError) as exc_info:
             Settings(LOG_LEVEL="INVALID")
-        
+
         assert "LOG_LEVEL must be one of" in str(exc_info.value)
 
     def test_positive_integer_validation_valid(self):
         """Test positive integer validation accepts valid values."""
         settings = Settings(PORT=8080, METRICS_PORT=9091, DATABASE_POOL_SIZE=20, WORKERS=4)
-        
+
         assert settings.PORT == 8080
         assert settings.METRICS_PORT == 9091
         assert settings.DATABASE_POOL_SIZE == 20
@@ -120,7 +120,7 @@ class TestConfigSettings:
         with pytest.raises(ValueError) as exc_info:
             Settings(PORT=0)
         assert "Value must be a positive integer" in str(exc_info.value)
-        
+
         with pytest.raises(ValueError) as exc_info:
             Settings(WORKERS=-1)
         assert "Value must be a positive integer" in str(exc_info.value)
@@ -135,7 +135,7 @@ class TestConfigSettings:
         """Test secret key validation raises for default key in production."""
         with pytest.raises(ValueError) as exc_info:
             Settings(ENVIRONMENT="production", SECRET_KEY="your-secret-key-change-in-production")
-        
+
         assert "SECRET_KEY must be changed from default in production" in str(exc_info.value)
 
     def test_secret_key_validation_production_custom_ok(self):
@@ -163,7 +163,7 @@ class TestConfigSettings:
         settings = Settings(CORS_ORIGINS="", ENVIRONMENT="development")
         expected = [
             "http://localhost:3000",
-            "http://localhost:8000", 
+            "http://localhost:8000",
             "http://127.0.0.1:3000",
             "http://127.0.0.1:8000"
         ]
@@ -188,7 +188,7 @@ class TestConfigSettings:
         """Test is_development property."""
         settings = Settings(ENVIRONMENT="development")
         assert settings.is_development is True
-        
+
         settings = Settings(ENVIRONMENT="testing", SECRET_KEY="custom-secret-key")
         assert settings.is_development is False
 
@@ -196,7 +196,7 @@ class TestConfigSettings:
         """Test is_production property."""
         settings = Settings(ENVIRONMENT="production", SECRET_KEY="custom-secret-key")
         assert settings.is_production is True
-        
+
         settings = Settings(ENVIRONMENT="development")
         assert settings.is_production is False
 
@@ -204,7 +204,7 @@ class TestConfigSettings:
         """Test is_testing property."""
         settings = Settings(ENVIRONMENT="testing")
         assert settings.is_testing is True
-        
+
         settings = Settings(ENVIRONMENT="development")
         assert settings.is_testing is False
 
@@ -235,7 +235,7 @@ class TestConfigSettings:
         """Test that get_settings uses caching."""
         settings1 = get_settings()
         settings2 = get_settings()
-        
+
         # Should be the same instance due to caching
         assert settings1 is settings2
 
@@ -244,7 +244,7 @@ class TestConfigSettings:
         settings1 = get_settings()
         settings_reloaded = reload_settings()
         settings2 = get_settings()
-        
+
         # Reloaded should be different from first
         assert settings_reloaded is not settings1
         # But subsequent calls should be the same due to new cache
@@ -253,13 +253,13 @@ class TestConfigSettings:
     def test_reload_settings_cache_clear(self):
         """Test that reload_settings clears the cache."""
         # First get settings
-        settings1 = get_settings()
-        
+        get_settings()
+
         # Modify environment
         with patch.dict(os.environ, {"APP_NAME": "Modified App"}):
             # Reload should pick up the change
-            settings_reloaded = reload_settings()
-            
+            reload_settings()
+
             # The reloaded settings should reflect the environment change
             # Note: This might not work in all test environments due to how pydantic-settings works
             pass
@@ -272,7 +272,7 @@ class TestConfigSettings:
             LLM_DEFAULT_MODEL="gpt-4",
             LLM_PROVIDER="openai"
         )
-        
+
         assert settings.OLLAMA_URL == "http://custom-ollama:11434"
         assert settings.OLLAMA_MODEL == "mistral"
         assert settings.LLM_DEFAULT_MODEL == "gpt-4"
@@ -286,7 +286,7 @@ class TestConfigSettings:
             OTEL_ENABLED=False,
             OTEL_SERVICE_NAME="custom-service"
         )
-        
+
         assert settings.ENABLE_METRICS is False
         assert settings.METRICS_PORT == 8080
         assert settings.OTEL_ENABLED is False
@@ -300,7 +300,7 @@ class TestConfigSettings:
             DB_QUERY_TIMEOUT_SECONDS=15,
             EXTERNAL_HTTP_TIMEOUT_SECONDS=20
         )
-        
+
         assert settings.LLM_TIMEOUT_SECONDS == 45
         assert settings.LLM_STREAM_TIMEOUT_SECONDS == 90
         assert settings.DB_QUERY_TIMEOUT_SECONDS == 15
@@ -312,7 +312,7 @@ class TestConfigSettings:
             CB_FAILURE_THRESHOLD=10,
             CB_RECOVERY_TIMEOUT_SECONDS=60
         )
-        
+
         assert settings.CB_FAILURE_THRESHOLD == 10
         assert settings.CB_RECOVERY_TIMEOUT_SECONDS == 60
 
@@ -323,7 +323,7 @@ class TestConfigSettings:
             RATE_LIMIT_ADMIN=1000,
             RATE_LIMIT_WINDOW_SECONDS=30
         )
-        
+
         assert settings.RATE_LIMIT_DEFAULT == 200
         assert settings.RATE_LIMIT_ADMIN == 1000
         assert settings.RATE_LIMIT_WINDOW_SECONDS == 30
@@ -336,7 +336,7 @@ class TestConfigSettings:
             BACKUP_SCHEDULE="0 3 * * *",
             BACKUP_DIR="/var/backups"
         )
-        
+
         assert settings.BACKUP_ENABLED is False
         assert settings.BACKUP_RETENTION_DAYS == 60
         assert settings.BACKUP_SCHEDULE == "0 3 * * *"

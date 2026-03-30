@@ -2,12 +2,12 @@
 Comprehensive tests for authentication API routes.
 """
 
-import pytest
-from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+from fastapi.testclient import TestClient
+
 from backend.main import app
-from backend.services.auth_service import AuthService
 
 
 @pytest.fixture
@@ -222,7 +222,7 @@ class TestAuthRoutes:
         mock_user.role = "user"
         mock_user.full_name = "Test User"
         mock_user.created_at = "2024-01-01T00:00:00Z"
-        
+
         mock_auth_service.get_current_user.return_value = mock_user
 
         response = client.get(
@@ -243,7 +243,7 @@ class TestAuthRoutes:
         mock_updated_user.email = "updated@example.com"
         mock_updated_user.username = "updateduser"
         mock_updated_user.full_name = "Updated User"
-        
+
         mock_auth_service.update_user_profile.return_value = mock_updated_user
 
         response = client.put(

@@ -2,11 +2,11 @@
 Comprehensive tests for Brain modules to increase coverage.
 """
 
-import pytest
-from datetime import datetime, timedelta
+from datetime import datetime
 from unittest.mock import MagicMock
 
-from backend.brain.context_manager import ContextManager, Message, Conversation
+import pytest
+from backend.brain.context_manager import ContextManager, Conversation, Message
 from backend.brain.embeddings import EmbeddingEngine
 from backend.brain.knowledge_base import KnowledgeBase
 from backend.brain.memory_store import MemoryStore
@@ -19,7 +19,7 @@ class TestMessageDataclass:
     def test_create_message_basic(self):
         """Test creating a basic message."""
         msg = Message(role="user", content="Hello")
-        
+
         assert msg.role == "user"
         assert msg.content == "Hello"
         assert msg.metadata == {}
@@ -32,7 +32,7 @@ class TestMessageDataclass:
             content="Hi there!",
             metadata={"source": "gpt-4", "tokens": 10}
         )
-        
+
         assert msg.role == "assistant"
         assert msg.content == "Hi there!"
         assert len(msg.metadata) == 2
@@ -43,7 +43,7 @@ class TestMessageDataclass:
         before = datetime.utcnow()
         msg = Message(role="system", content="System message")
         after = datetime.utcnow()
-        
+
         assert before <= msg.timestamp <= after
 
 
@@ -53,7 +53,7 @@ class TestConversationDataclass:
     def test_create_conversation_basic(self):
         """Test creating a basic conversation."""
         conv = Conversation(conversation_id="conv_001")
-        
+
         assert conv.conversation_id == "conv_001"
         assert conv.messages == []
         assert conv.metadata == {}
@@ -67,7 +67,7 @@ class TestConversationDataclass:
             messages=[msg],
             metadata={"topic": "testing"}
         )
-        
+
         assert len(conv.messages) == 1
         assert conv.messages[0].content == "Test"
         assert conv.metadata["topic"] == "testing"
@@ -90,7 +90,7 @@ class TestContextManager:
     def test_create_conversation_auto_id(self, context_manager):
         """Test creating conversation with auto-generated ID."""
         conv_id = context_manager.create_conversation()
-        
+
         assert conv_id is not None
         assert len(conv_id) > 0
         assert conv_id in context_manager._conversations
@@ -101,7 +101,7 @@ class TestContextManager:
             conversation_id="my_conv_123",
             metadata={"user": "test_user"}
         )
-        
+
         assert conv_id == "my_conv_123"
         assert conv_id in context_manager._conversations
         assert context_manager._conversations[conv_id].metadata["user"] == "test_user"
@@ -109,14 +109,14 @@ class TestContextManager:
     def test_add_message_success(self, context_manager):
         """Test adding message to conversation."""
         conv_id = context_manager.create_conversation()
-        
+
         result = context_manager.add_message(
             conversation_id=conv_id,
             role="user",
             content="Hello, AI!",
             metadata={"sentiment": "positive"}
         )
-        
+
         assert result is True
         assert len(context_manager._conversations[conv_id].messages) == 1
         assert context_manager._conversations[conv_id].messages[0].role == "user"
@@ -129,15 +129,15 @@ class TestContextManager:
             role="user",
             content="Test"
         )
-        
+
         assert result is False
 
     def test_get_context_empty_conversation(self, context_manager):
         """Test getting context from empty conversation."""
         conv_id = context_manager.create_conversation()
-        
+
         context = context_manager.get_context(conv_id)
-        
+
         assert context == []
 
     def test_get_context_with_messages(self, context_manager):
@@ -145,9 +145,9 @@ class TestContextManager:
         conv_id = context_manager.create_conversation()
         context_manager.add_message(conv_id, "user", "Message 1")
         context_manager.add_message(conv_id, "assistant", "Response 1")
-        
+
         context = context_manager.get_context(conv_id)
-        
+
         assert len(context) == 2
         assert context[0]["role"] == "user"
         assert context[0]["content"] == "Message 1"
@@ -157,12 +157,12 @@ class TestContextManager:
     def test_get_context_max_messages(self, context_manager):
         """Test getting context with max_messages limit."""
         conv_id = context_manager.create_conversation()
-        
+
         for i in range(5):
             context_manager.add_message(conv_id, "user", f"Message {i}")
-        
+
         context = context_manager.get_context(conv_id, max_messages=2)
-        
+
         assert len(context) == 2
         assert context[0]["content"] == "Message 3"
         assert context[1]["content"] == "Message 4"
@@ -177,9 +177,9 @@ class TestContextManager:
         conv_id = context_manager.create_conversation()
         context_manager.add_message(conv_id, "user", "This is a test message about testing")
         context_manager.add_message(conv_id, "assistant", "Sure, I can help with that")
-        
+
         summary = context_manager.get_conversation_summary(conv_id)
-        
+
         assert summary is not None
         assert "Conversation about:" in summary
         assert "This is a test message" in summary
@@ -188,26 +188,26 @@ class TestContextManager:
     def test_get_conversation_summary_empty(self, context_manager):
         """Test getting summary of empty conversation."""
         conv_id = context_manager.create_conversation()
-        
+
         summary = context_manager.get_conversation_summary(conv_id)
-        
+
         assert summary == "Empty conversation"
 
     def test_get_conversation_summary_no_user_messages(self, context_manager):
         """Test getting summary with only assistant messages."""
         conv_id = context_manager.create_conversation()
         context_manager.add_message(conv_id, "assistant", "Hello")
-        
+
         summary = context_manager.get_conversation_summary(conv_id)
-        
+
         assert summary == "Empty conversation"
 
     def test_delete_conversation_success(self, context_manager):
         """Test deleting existing conversation."""
         conv_id = context_manager.create_conversation()
-        
+
         result = context_manager.delete_conversation(conv_id)
-        
+
         assert result is True
         assert conv_id not in context_manager._conversations
 
@@ -221,11 +221,11 @@ class TestContextManager:
         # Create manager with small token limit
         small_manager = ContextManager(max_tokens=50)
         conv_id = small_manager.create_conversation()
-        
+
         # Add multiple long messages
         for i in range(10):
             small_manager.add_message(conv_id, "user", f"This is a very long message number {i} with lots of text")
-        
+
         # Should have removed old messages
         assert len(small_manager._conversations[conv_id].messages) < 10
 
@@ -233,13 +233,13 @@ class TestContextManager:
         """Test that multiple conversations are isolated."""
         conv1 = context_manager.create_conversation()
         conv2 = context_manager.create_conversation()
-        
+
         context_manager.add_message(conv1, "user", "Message for conv1")
         context_manager.add_message(conv2, "user", "Message for conv2")
-        
+
         ctx1 = context_manager.get_context(conv1)
         ctx2 = context_manager.get_context(conv2)
-        
+
         assert len(ctx1) == 1
         assert len(ctx2) == 1
         assert ctx1[0]["content"] == "Message for conv1"
@@ -265,10 +265,10 @@ class TestEmbeddingEngine:
         mock_model = MagicMock()
         mock_model.encode.return_value = [0.1, 0.2, 0.3, 0.4, 0.5]
         embedding_engine._model = mock_model
-        
+
         import asyncio
         result = asyncio.run(embedding_engine.embed(["Test text"]))
-        
+
         assert len(result) == 1
         assert len(result[0]) == 5
         mock_model.encode.assert_called_once_with(["Test text"], convert_to_numpy=True)
@@ -300,7 +300,7 @@ class TestKnowledgeBase:
             metadata={"source": "test"},
             doc_id="doc1"
         )
-        
+
         assert doc_id == "doc1"
         assert len(knowledge_base._documents) == 1
         assert "doc1" in knowledge_base._documents
@@ -309,7 +309,7 @@ class TestKnowledgeBase:
     async def test_add_document_without_id(self, knowledge_base):
         """Test adding document without ID generates one."""
         doc_id = await knowledge_base.add_document(content="Test content")
-        
+
         assert doc_id is not None
         assert len(doc_id) > 0
         assert len(knowledge_base._documents) == 1
@@ -318,9 +318,9 @@ class TestKnowledgeBase:
     async def test_remove_document_success(self, knowledge_base):
         """Test removing document successfully."""
         await knowledge_base.add_document(content="Test", doc_id="doc_to_remove")
-        
+
         result = await knowledge_base.remove_document("doc_to_remove")
-        
+
         assert result is True
         assert len(knowledge_base._documents) == 0
 
@@ -334,9 +334,9 @@ class TestKnowledgeBase:
     async def test_get_document_success(self, knowledge_base):
         """Test getting document successfully."""
         await knowledge_base.add_document(content="Get me", doc_id="doc_get")
-        
+
         result = await knowledge_base.get_document("doc_get")
-        
+
         assert result is not None
         assert result["id"] == "doc_get"
 
@@ -351,9 +351,9 @@ class TestKnowledgeBase:
         """Test searching documents."""
         await knowledge_base.add_document(content="Python programming", doc_id="py")
         await knowledge_base.add_document(content="Java development", doc_id="java")
-        
+
         results = await knowledge_base.search("Python", top_k=1)
-        
+
         assert len(results) > 0
 
     @pytest.mark.asyncio
@@ -361,9 +361,9 @@ class TestKnowledgeBase:
         """Test getting knowledge base statistics."""
         await knowledge_base.add_document(content="Doc 1", doc_id="d1")
         await knowledge_base.add_document(content="Doc 2", doc_id="d2")
-        
+
         stats = await knowledge_base.get_statistics()
-        
+
         assert isinstance(stats, dict)
         assert stats["document_count"] == 2
 
@@ -389,7 +389,7 @@ class TestMemoryStore:
             memory_type="fact",
             importance=0.9
         )
-        
+
         assert memory_id is not None
         assert len(memory_store._memories) == 1
         assert memory_id in memory_store._memories
@@ -397,15 +397,15 @@ class TestMemoryStore:
 
     def test_recall_memory_success(self, memory_store):
         """Test recalling memory successfully."""
-        memory_id = memory_store.store(
+        memory_store.store(
             agent_id="agent_002",
             content="Water boils at 100C",
             memory_type="fact"
         )
-        
+
         # Use retrieve method instead of recall
         results = memory_store.retrieve(agent_id="agent_002")
-        
+
         assert len(results) > 0
         assert any(m.content == "Water boils at 100C" for m in results)
 
@@ -421,9 +421,9 @@ class TestMemoryStore:
             content="Forget me",
             memory_type="fact"
         )
-        
+
         result = memory_store.forget(memory_id)
-        
+
         assert result is True
         assert memory_id not in memory_store._memories
 
@@ -431,24 +431,24 @@ class TestMemoryStore:
         """Test clearing all memories."""
         memory_store.store(agent_id="agent_004", content="Mem1")
         memory_store.store(agent_id="agent_004", content="Mem2")
-        
+
         # Delete memories one by one (no clear_all method)
         memory_ids = list(memory_store._memories.keys())
         for mid in memory_ids:
             memory_store.forget(mid)
-        
+
         assert len(memory_store._memories) == 0
 
     def test_get_agent_memories(self, memory_store):
         """Test getting memories by agent."""
-        id1 = memory_store.store(agent_id="agent_005", content="Fact1", memory_type="fact")
-        id2 = memory_store.store(agent_id="agent_005", content="Pref1", memory_type="preference")
-        
+        memory_store.store(agent_id="agent_005", content="Fact1", memory_type="fact")
+        memory_store.store(agent_id="agent_005", content="Pref1", memory_type="preference")
+
         # Get all memories for agent
         memories = memory_store.retrieve(agent_id="agent_005")
-        
+
         assert len(memories) == 2
-        
+
         # Filter by type
         facts = memory_store.retrieve(agent_id="agent_005", memory_type="fact")
         assert len(facts) == 1
@@ -469,7 +469,7 @@ class TestRetrievalEngine:
                     {"text": f"Result about {query}", "score": 0.9, "metadata": {}},
                     {"text": "Another result", "score": 0.7, "metadata": {}}
                 ]
-        
+
         mock_kb = MockKB()
         return RetrievalEngine(knowledge_base=mock_kb)
 
@@ -477,7 +477,7 @@ class TestRetrievalEngine:
     async def test_retrieve_success(self, retrieval_engine):
         """Test retrieving documents successfully."""
         results = await retrieval_engine.retrieve(query="test query", top_k=3)
-        
+
         assert len(results) > 0
         assert all(isinstance(r, RetrievalResult) for r in results)
         assert all(hasattr(r, 'text') for r in results)
@@ -491,7 +491,7 @@ class TestRetrievalEngine:
             context_window=2,
             top_k=2
         )
-        
+
         assert len(results) > 0
         assert "text" in results[0]
         assert "score" in results[0]
@@ -502,7 +502,7 @@ class TestRetrievalEngine:
     async def test_retrieve_respects_top_k(self, retrieval_engine):
         """Test that retrieve respects top_k parameter."""
         results = await retrieval_engine.retrieve(query="test", top_k=1)
-        
+
         assert len(results) <= 1
 
     @pytest.mark.asyncio
@@ -510,7 +510,7 @@ class TestRetrievalEngine:
         """Test internal keyword matching (via retrieve)."""
         # The keyword matching is tested indirectly through retrieve
         results = await retrieval_engine.retrieve(query="python programming")
-        
+
         # Should have combined scores
         assert len(results) > 0
         assert all(0 <= r.score <= 1 for r in results)

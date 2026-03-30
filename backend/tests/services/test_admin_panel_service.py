@@ -2,11 +2,10 @@
 Comprehensive tests for AdminPanelService to increase coverage.
 """
 
-import pytest
-from unittest.mock import AsyncMock, Mock, patch
-from datetime import datetime, UTC, timedelta
+from unittest.mock import Mock, patch
 
-from backend.services.admin_panel_service import AdminPanelService, SystemMetrics, SystemHealth, AuditLog
+import pytest
+from backend.services.admin_panel_service import AdminPanelService, AuditLog, SystemHealth, SystemMetrics
 
 
 class TestAdminPanelService:
@@ -28,7 +27,7 @@ class TestAdminPanelService:
     async def test_get_system_health(self, admin_service):
         """Test getting system health information."""
         health = await admin_service.get_system_health()
-        
+
         assert isinstance(health, SystemHealth)
         assert health.overall_status.name == "HEALTHY"
         assert isinstance(health.services, dict)
@@ -40,11 +39,11 @@ class TestAdminPanelService:
     async def test_get_audit_logs(self, admin_service):
         """Test getting audit logs."""
         logs = await admin_service.get_audit_logs(limit=10)
-        
+
         assert isinstance(logs, list)
         # Should return the sample logs
         assert len(logs) >= 0
-        
+
         if logs:
             assert isinstance(logs[0], AuditLog)
 
@@ -52,7 +51,7 @@ class TestAdminPanelService:
     async def test_get_system_metrics(self, admin_service):
         """Test getting system metrics."""
         metrics = await admin_service.get_system_metrics()
-        
+
         assert isinstance(metrics, SystemMetrics)
         assert isinstance(metrics.cpu_usage, float)
         assert isinstance(metrics.memory_usage, float)
@@ -69,11 +68,11 @@ class TestAdminPanelService:
         """Test admin authentication."""
         # Test with sample user
         user = await admin_service.authenticate_admin("super_admin", "password123")
-        
+
         if user:
             assert user.username == "super_admin"
             assert user.is_active is True
-        
+
         # Test with invalid credentials
         invalid_user = await admin_service.authenticate_admin("nonexistent", "wrongpass")
         assert invalid_user is None
@@ -84,7 +83,7 @@ class TestAdminPanelService:
         # Test with user filter
         logs = await admin_service.get_audit_logs(user_id="admin_1")
         assert isinstance(logs, list)
-        
+
         # Test with action filter
         logs = await admin_service.get_audit_logs(action="user_created")
         assert isinstance(logs, list)
@@ -103,11 +102,11 @@ class TestAdminPanelService:
             mock_logger.info.side_effect = Exception("Logger error")
             mock_logger.error.side_effect = Exception("Logger error")
             mock_get_logger.return_value = mock_logger
-            
+
             # These operations should still work despite logger errors
             health = await admin_service.get_system_health()
             assert isinstance(health, SystemHealth)
-            
+
             metrics = await admin_service.get_system_metrics()
             assert isinstance(metrics, SystemMetrics)
 

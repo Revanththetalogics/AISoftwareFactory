@@ -297,12 +297,12 @@ class TestSetupExceptionHandlers:
     async def test_general_exception_handler_direct_call(self, mock_settings):
         """Test _handle_general_exception function directly."""
         from backend.middleware.error_handler import _handle_general_exception
-        
+
         request = MagicMock()
         exc = ValueError("Direct test error")
-        
+
         response = await _handle_general_exception(request, exc)
-        
+
         assert response.status_code == 500
         content = response.body.decode()
         assert "INTERNAL_ERROR" in content
@@ -327,7 +327,7 @@ class TestErrorHandlerEdgeCases:
         # Test exception handling with empty details.
         app = FastAPI()
         app.add_middleware(ErrorHandlerMiddleware)
-        
+
         @app.get("/empty-details")
         async def raise_empty():
             raise ValidationError(

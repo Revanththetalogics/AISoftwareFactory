@@ -2,17 +2,15 @@
 Comprehensive tests for database models to increase coverage.
 """
 
-import pytest
-from datetime import datetime, UTC
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from datetime import UTC, datetime
 
-from backend.models.database import (
-    DBUser, DBProject, DBWorkflow, DBTask, DBAgent, DBDeployment, DBAuditLog
-)
+import pytest
+from backend.db.base import Base
+from backend.models.database import DBAgent, DBAuditLog, DBDeployment, DBProject, DBTask, DBUser, DBWorkflow
 from backend.models.task import TaskPriority, TaskStatus
 from backend.models.workflow import WorkflowStatus, WorkflowTrigger
-from backend.db.base import Base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 
 # Create in-memory SQLite database for testing
@@ -47,11 +45,11 @@ class TestDBUser:
             first_name="Test",
             last_name="User"
         )
-        
+
         test_session.add(user)
         test_session.commit()
         test_session.refresh(user)
-        
+
         assert user.id == "user_123"
         assert user.username == "testuser"
         assert user.email == "test@example.com"
@@ -73,10 +71,10 @@ class TestDBUser:
             is_superuser=True,
             permissions=["admin", "read", "write", "delete"]
         )
-        
+
         test_session.add(user)
         test_session.commit()
-        
+
         assert user.is_superuser is True
         assert len(user.permissions) == 4
         assert "admin" in user.permissions
@@ -90,10 +88,10 @@ class TestDBUser:
             hashed_password="hashed_pwd",
             is_active=False
         )
-        
+
         test_session.add(user)
         test_session.commit()
-        
+
         assert user.is_active is False
 
     def test_user_last_login(self, test_session):
@@ -104,14 +102,14 @@ class TestDBUser:
             email="login@example.com",
             hashed_password="hashed_pwd"
         )
-        
+
         test_session.add(user)
         test_session.commit()
-        
+
         # Update last login
         user.last_login = datetime.now(UTC)
         test_session.commit()
-        
+
         assert user.last_login is not None
 
 
@@ -123,7 +121,7 @@ class TestDBProject:
         owner = DBUser(id="owner_123", username="owner", email="owner@example.com", hashed_password="pwd")
         test_session.add(owner)
         test_session.commit()
-        
+
         project = DBProject(
             id="proj_001",
             name="Test Project",
@@ -136,11 +134,11 @@ class TestDBProject:
             extra_metadata={"priority": "high"},
             owner_id=owner.id
         )
-        
+
         test_session.add(project)
         test_session.commit()
         test_session.refresh(project)
-        
+
         assert project.id == "proj_001"
         assert project.name == "Test Project"
         assert project.description == "A test project"
@@ -156,16 +154,16 @@ class TestDBProject:
         owner = DBUser(id="owner_456", username="owner2", email="owner2@example.com", hashed_password="pwd")
         test_session.add(owner)
         test_session.commit()
-        
+
         project = DBProject(
             id="proj_default",
             name="Default Project",
             owner_id=owner.id
         )
-        
+
         test_session.add(project)
         test_session.commit()
-        
+
         assert project.status == "draft"
         assert project.progress_percent == 0
         assert project.extra_metadata == {}
@@ -176,15 +174,15 @@ class TestDBProject:
         owner = DBUser(id="owner_789", username="owner3", email="owner3@example.com", hashed_password="pwd")
         test_session.add(owner)
         test_session.commit()
-        
+
         project = DBProject(id="proj_delete", name="To Delete", owner_id=owner.id)
         test_session.add(project)
         test_session.commit()
-        
+
         # Soft delete
         project.deleted_at = datetime.now(UTC)
         test_session.commit()
-        
+
         assert project.deleted_at is not None
 
 
@@ -196,11 +194,11 @@ class TestDBWorkflow:
         owner = DBUser(id="wf_owner", username="wf_owner", email="wf@example.com", hashed_password="pwd")
         test_session.add(owner)
         test_session.commit()
-        
+
         project = DBProject(id="proj_wf", name="WF Project", owner_id=owner.id)
         test_session.add(project)
         test_session.commit()
-        
+
         workflow = DBWorkflow(
             id="wf_001",
             name="CI/CD Pipeline",
@@ -212,11 +210,11 @@ class TestDBWorkflow:
             steps=[{"id": "step1", "name": "Build"}, {"id": "step2", "name": "Deploy"}],
             created_by=owner.id
         )
-        
+
         test_session.add(workflow)
         test_session.commit()
         test_session.refresh(workflow)
-        
+
         assert workflow.id == "wf_001"
         assert workflow.name == "CI/CD Pipeline"
         assert workflow.version == "2.0.0"
@@ -231,11 +229,11 @@ class TestDBWorkflow:
         owner = DBUser(id="wf_owner2", username="wf_owner2", email="wf2@example.com", hashed_password="pwd")
         test_session.add(owner)
         test_session.commit()
-        
+
         project = DBProject(id="proj_wf2", name="WF Project 2", owner_id=owner.id)
         test_session.add(project)
         test_session.commit()
-        
+
         workflow = DBWorkflow(
             id="wf_002",
             name="Test Workflow",
@@ -245,10 +243,10 @@ class TestDBWorkflow:
             completed_steps=["s1"],
             failed_steps=[]
         )
-        
+
         test_session.add(workflow)
         test_session.commit()
-        
+
         assert workflow.current_step_id == "s2"
         assert len(workflow.completed_steps) == 1
         assert workflow.failed_steps == []
@@ -258,11 +256,11 @@ class TestDBWorkflow:
         owner = DBUser(id="wf_owner3", username="wf_owner3", email="wf3@example.com", hashed_password="pwd")
         test_session.add(owner)
         test_session.commit()
-        
+
         project = DBProject(id="proj_wf3", name="WF Project 3", owner_id=owner.id)
         test_session.add(project)
         test_session.commit()
-        
+
         workflow = DBWorkflow(
             id="wf_003",
             name="Timed Workflow",
@@ -270,10 +268,10 @@ class TestDBWorkflow:
             started_at=datetime.now(UTC),
             completed_at=datetime.now(UTC)
         )
-        
+
         test_session.add(workflow)
         test_session.commit()
-        
+
         assert workflow.started_at is not None
         assert workflow.completed_at is not None
 
@@ -286,11 +284,11 @@ class TestDBTask:
         owner = DBUser(id="task_owner", username="task_owner", email="task@example.com", hashed_password="pwd")
         test_session.add(owner)
         test_session.commit()
-        
+
         project = DBProject(id="proj_task", name="Task Project", owner_id=owner.id)
         test_session.add(project)
         test_session.commit()
-        
+
         task = DBTask(
             id="task_001",
             name="Implement Feature",
@@ -306,11 +304,11 @@ class TestDBTask:
             timeout_seconds=600,
             created_by=owner.id
         )
-        
+
         test_session.add(task)
         test_session.commit()
         test_session.refresh(task)
-        
+
         assert task.id == "task_001"
         assert task.name == "Implement Feature"
         assert task.status == TaskStatus.RUNNING
@@ -326,11 +324,11 @@ class TestDBTask:
         owner = DBUser(id="task_owner2", username="task_owner2", email="task2@example.com", hashed_password="pwd")
         test_session.add(owner)
         test_session.commit()
-        
+
         project = DBProject(id="proj_task2", name="Task Project 2", owner_id=owner.id)
         test_session.add(project)
         test_session.commit()
-        
+
         task = DBTask(
             id="task_002",
             name="Dependent Task",
@@ -338,10 +336,10 @@ class TestDBTask:
             dependencies=["task_001", "task_003"],
             result={"output": "completed"}
         )
-        
+
         test_session.add(task)
         test_session.commit()
-        
+
         assert len(task.dependencies) == 2
         assert "task_001" in task.dependencies
         assert task.result == {"output": "completed"}
@@ -351,11 +349,11 @@ class TestDBTask:
         owner = DBUser(id="task_owner3", username="task_owner3", email="task3@example.com", hashed_password="pwd")
         test_session.add(owner)
         test_session.commit()
-        
+
         project = DBProject(id="proj_task3", name="Task Project 3", owner_id=owner.id)
         test_session.add(project)
         test_session.commit()
-        
+
         scheduled_time = datetime.now(UTC)
         task = DBTask(
             id="task_003",
@@ -365,10 +363,10 @@ class TestDBTask:
             started_at=scheduled_time,
             completed_at=datetime.now(UTC)
         )
-        
+
         test_session.add(task)
         test_session.commit()
-        
+
         assert task.scheduled_at is not None
         assert task.started_at is not None
         assert task.completed_at is not None
@@ -388,11 +386,11 @@ class TestDBAgent:
             status="busy",
             config={"model": "gpt-4", "temperature": 0.7}
         )
-        
+
         test_session.add(agent)
         test_session.commit()
         test_session.refresh(agent)
-        
+
         assert agent.id == "agent_001"
         assert agent.name == "Code Reviewer"
         assert agent.role == "reviewer"
@@ -407,10 +405,10 @@ class TestDBAgent:
             name="Developer Bot",
             role="developer"
         )
-        
+
         test_session.add(agent)
         test_session.commit()
-        
+
         assert agent.status == "idle"
         assert agent.current_task_id is None
 
@@ -424,10 +422,10 @@ class TestDBAgent:
             current_task_id="task_123",
             last_active=datetime.now(UTC)
         )
-        
+
         test_session.add(agent)
         test_session.commit()
-        
+
         assert agent.status == "active"
         assert agent.current_task_id == "task_123"
         assert agent.last_active is not None
@@ -441,11 +439,11 @@ class TestDBDeployment:
         owner = DBUser(id="deploy_owner", username="deploy_owner", email="deploy@example.com", hashed_password="pwd")
         test_session.add(owner)
         test_session.commit()
-        
+
         project = DBProject(id="proj_deploy", name="Deploy Project", owner_id=owner.id)
         test_session.add(project)
         test_session.commit()
-        
+
         deployment = DBDeployment(
             id="deploy_001",
             project_id=project.id,
@@ -456,11 +454,11 @@ class TestDBDeployment:
             url="https://app.example.com",
             created_by=owner.id
         )
-        
+
         test_session.add(deployment)
         test_session.commit()
         test_session.refresh(deployment)
-        
+
         assert deployment.id == "deploy_001"
         assert deployment.environment == "production"
         assert deployment.version == "1.0.0"
@@ -473,11 +471,11 @@ class TestDBDeployment:
         owner = DBUser(id="deploy_owner2", username="deploy_owner2", email="deploy2@example.com", hashed_password="pwd")
         test_session.add(owner)
         test_session.commit()
-        
+
         project = DBProject(id="proj_deploy2", name="Deploy Project 2", owner_id=owner.id)
         test_session.add(project)
         test_session.commit()
-        
+
         deployment = DBDeployment(
             id="deploy_002",
             project_id=project.id,
@@ -487,10 +485,10 @@ class TestDBDeployment:
             error_message="Container failed to start: OOMKilled",
             steps=[{"name": "build", "status": "success"}, {"name": "deploy", "status": "failed"}]
         )
-        
+
         test_session.add(deployment)
         test_session.commit()
-        
+
         assert deployment.status == "failed"
         assert "OOMKilled" in deployment.error_message
         assert len(deployment.steps) == 2
@@ -500,11 +498,11 @@ class TestDBDeployment:
         owner = DBUser(id="deploy_owner3", username="deploy_owner3", email="deploy3@example.com", hashed_password="pwd")
         test_session.add(owner)
         test_session.commit()
-        
+
         project = DBProject(id="proj_deploy3", name="Deploy Project 3", owner_id=owner.id)
         test_session.add(project)
         test_session.commit()
-        
+
         deployment1 = DBDeployment(
             id="deploy_003",
             project_id=project.id,
@@ -512,10 +510,10 @@ class TestDBDeployment:
             version="1.0.0",
             status="success"
         )
-        
+
         test_session.add(deployment1)
         test_session.commit()
-        
+
         # Try to add duplicate (should fail at DB level due to unique constraint)
         deployment2 = DBDeployment(
             id="deploy_004",
@@ -524,7 +522,7 @@ class TestDBDeployment:
             version="1.0.0",
             status="pending"
         )
-        
+
         test_session.add(deployment2)
         with pytest.raises(Exception):  # IntegrityError or similar
             test_session.commit()
@@ -538,7 +536,7 @@ class TestDBAuditLog:
         owner = DBUser(id="audit_owner", username="audit_owner", email="audit@example.com", hashed_password="pwd")
         test_session.add(owner)
         test_session.commit()
-        
+
         audit_log = DBAuditLog(
             id="audit_001",
             user_id=owner.id,
@@ -549,11 +547,11 @@ class TestDBAuditLog:
             ip_address="192.168.1.100",
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
         )
-        
+
         test_session.add(audit_log)
         test_session.commit()
         test_session.refresh(audit_log)
-        
+
         assert audit_log.id == "audit_001"
         assert audit_log.user_id == owner.id
         assert audit_log.action == "CREATE"
@@ -570,10 +568,10 @@ class TestDBAuditLog:
             resource_id="user_123",
             ip_address="10.0.0.1"
         )
-        
+
         test_session.add(audit_log)
         test_session.commit()
-        
+
         assert audit_log.action == "LOGIN"
         assert audit_log.user_id is None  # Login before authentication
 
@@ -592,10 +590,10 @@ class TestDBAuditLog:
                 "timestamp": datetime.now(UTC).isoformat()
             }
         )
-        
+
         test_session.add(audit_log)
         test_session.commit()
-        
+
         assert audit_log.details["changes"]["status"]["old"] == "pending"
         assert audit_log.details["changes"]["status"]["new"] == "running"
 
@@ -608,11 +606,11 @@ class TestModelRelationships:
         owner = DBUser(id="rel_owner", username="rel_owner", email="rel@example.com", hashed_password="pwd")
         test_session.add(owner)
         test_session.commit()
-        
+
         project = DBProject(id="rel_proj", name="Relationship Project", owner_id=owner.id)
         test_session.add(project)
         test_session.commit()
-        
+
         assert len(owner.projects) == 1
         assert owner.projects[0].id == project.id
         assert project.owner.id == owner.id
@@ -622,11 +620,11 @@ class TestModelRelationships:
         owner = DBUser(id="rel_owner2", username="rel_owner2", email="rel2@example.com", hashed_password="pwd")
         test_session.add(owner)
         test_session.commit()
-        
+
         project = DBProject(id="rel_proj2", name="Relationship Project 2", owner_id=owner.id)
         test_session.add(project)
         test_session.commit()
-        
+
         workflow = DBWorkflow(
             id="rel_wf",
             name="Relationship Workflow",
@@ -635,7 +633,7 @@ class TestModelRelationships:
         )
         test_session.add(workflow)
         test_session.commit()
-        
+
         assert len(project.workflows) == 1
         assert project.workflows[0].id == workflow.id
         assert workflow.project.id == project.id
@@ -645,11 +643,11 @@ class TestModelRelationships:
         owner = DBUser(id="rel_owner3", username="rel_owner3", email="rel3@example.com", hashed_password="pwd")
         test_session.add(owner)
         test_session.commit()
-        
+
         project = DBProject(id="rel_proj3", name="Relationship Project 3", owner_id=owner.id)
         test_session.add(project)
         test_session.commit()
-        
+
         workflow = DBWorkflow(
             id="rel_wf2",
             name="Relationship Workflow 2",
@@ -658,7 +656,7 @@ class TestModelRelationships:
         )
         test_session.add(workflow)
         test_session.commit()
-        
+
         task = DBTask(
             id="rel_task",
             name="Relationship Task",
@@ -668,7 +666,7 @@ class TestModelRelationships:
         )
         test_session.add(task)
         test_session.commit()
-        
+
         assert len(workflow.tasks) == 1
         assert workflow.tasks[0].id == task.id
         assert task.workflow.id == workflow.id

@@ -2,13 +2,12 @@
 Comprehensive tests for projects API routes.
 """
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime
 
 from backend.main import app
-from backend.services.project_service import ProjectService
 
 
 @pytest.fixture

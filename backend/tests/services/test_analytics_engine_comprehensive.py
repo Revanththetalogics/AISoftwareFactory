@@ -2,14 +2,19 @@
 Comprehensive tests for AdvancedAnalyticsEngine to increase coverage.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime, UTC, timedelta
-import statistics
+from datetime import UTC, datetime, timedelta
 
+import pytest
 from backend.services.analytics_engine import (
-    AdvancedAnalyticsEngine, MetricType, TimeGranularity, ReportType,
-    DataPoint, TimeSeries, AnalyticsQuery, AnalyticsReport, PredictionResult
+    AdvancedAnalyticsEngine,
+    AnalyticsQuery,
+    AnalyticsReport,
+    DataPoint,
+    MetricType,
+    PredictionResult,
+    ReportType,
+    TimeGranularity,
+    TimeSeries,
 )
 
 
@@ -41,14 +46,14 @@ class TestAdvancedAnalyticsEngine:
         assert analytics_engine.project_series.name == "Projects Created"
         assert analytics_engine.project_series.metric_type == MetricType.COUNT
         assert len(analytics_engine.project_series.data_points) > 0
-        
+
         # Check user series
         assert analytics_engine.user_series is not None
         assert isinstance(analytics_engine.user_series, TimeSeries)
         assert analytics_engine.user_series.name == "Active Users"
         assert analytics_engine.user_series.metric_type == MetricType.COUNT
         assert len(analytics_engine.user_series.data_points) > 0
-        
+
         # Check data points
         for dp in analytics_engine.project_series.data_points:
             assert isinstance(dp, DataPoint)
@@ -69,7 +74,7 @@ class TestAdvancedAnalyticsEngine:
             },
             granularity=TimeGranularity.DAY
         )
-        
+
         assert result is not None
         assert isinstance(result, AnalyticsQuery)
         assert result.name == "Test Query"
@@ -95,14 +100,14 @@ class TestAdvancedAnalyticsEngine:
             },
             granularity=TimeGranularity.DAY
         )
-        
+
         # Execute the query
         result = await analytics_engine.execute_query(query.id)
-        
+
         assert isinstance(result, dict)
         assert "projects_created" in result
         assert isinstance(result["projects_created"], list)
-        
+
         # Check data structure
         data_point = result["projects_created"][0]
         assert "period" in data_point
@@ -115,7 +120,7 @@ class TestAdvancedAnalyticsEngine:
         """Test executing non-existent query."""
         with pytest.raises(ValueError) as exc_info:
             await analytics_engine.execute_query("nonexistent_query_id")
-        
+
         assert "Query nonexistent_query_id not found" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -133,14 +138,14 @@ class TestAdvancedAnalyticsEngine:
             },
             granularity=TimeGranularity.WEEK
         )
-        
+
         # Generate report
         result = await analytics_engine.generate_report(
             query_id=query.id,
             report_type=ReportType.SUMMARY,
             visualization_type="chart"
         )
-        
+
         assert result is not None
         assert isinstance(result, AnalyticsReport)
         assert result.name == "Report Test Report"
@@ -158,7 +163,7 @@ class TestAdvancedAnalyticsEngine:
                 query_id="nonexistent",
                 report_type=ReportType.SUMMARY
             )
-        
+
         assert "Query nonexistent not found" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -169,7 +174,7 @@ class TestAdvancedAnalyticsEngine:
             periods=5,
             model_type="linear_regression"
         )
-        
+
         assert result is not None
         assert isinstance(result, PredictionResult)
         assert result.metric == "projects_created"
@@ -178,7 +183,7 @@ class TestAdvancedAnalyticsEngine:
         assert isinstance(result.confidence_interval, tuple)
         assert len(result.confidence_interval) == 2
         assert 0 <= result.accuracy_score <= 1
-        
+
         # Check predicted values
         for dp in result.predicted_values:
             assert isinstance(dp, DataPoint)
@@ -194,7 +199,7 @@ class TestAdvancedAnalyticsEngine:
             periods=3,
             model_type="linear_regression"
         )
-        
+
         assert result is not None
         assert result.metric == "active_users"
         assert len(result.predicted_values) == 3
@@ -207,7 +212,7 @@ class TestAdvancedAnalyticsEngine:
                 metric="unknown_metric",
                 periods=5
             )
-        
+
         assert "Unknown metric: unknown_metric" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -220,12 +225,12 @@ class TestAdvancedAnalyticsEngine:
             "start_date": start_date.isoformat(),
             "end_date": end_date.isoformat()
         }
-        
+
         result = await analytics_engine.get_trend_analysis(
             metric="projects_created",
             time_range=time_range
         )
-        
+
         assert isinstance(result, dict)
         assert result["metric"] == "projects_created"
         assert "trend_direction" in result
@@ -247,12 +252,12 @@ class TestAdvancedAnalyticsEngine:
             "start_date": start_date.isoformat(),
             "end_date": end_date.isoformat()
         }
-        
+
         result = await analytics_engine.get_trend_analysis(
             metric="active_users",
             time_range=time_range
         )
-        
+
         assert result["metric"] == "active_users"
 
     @pytest.mark.asyncio
@@ -263,12 +268,12 @@ class TestAdvancedAnalyticsEngine:
             "start_date": "2024-01-01T00:00:00Z",
             "end_date": "2024-01-01T01:00:00Z"  # Only 1 hour
         }
-        
+
         result = await analytics_engine.get_trend_analysis(
             metric="projects_created",
             time_range=time_range
         )
-        
+
         # Should handle gracefully with error message
         assert isinstance(result, dict)
         if "error" in result:
@@ -285,7 +290,7 @@ class TestAdvancedAnalyticsEngine:
                     "end_date": "2024-01-31T23:59:59Z"
                 }
             )
-        
+
         assert "Unknown metric: unknown_metric" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -298,17 +303,17 @@ class TestAdvancedAnalyticsEngine:
             "start_date": start_date.isoformat(),
             "end_date": end_date.isoformat()
         }
-        
+
         result = await analytics_engine.get_correlation_analysis(
             metrics=["projects_created", "active_users"],
             time_range=time_range
         )
-        
+
         assert isinstance(result, dict)
         assert "correlations" in result
         assert "data_points" in result
         assert "metrics_analyzed" in result
-        
+
         correlations = result["correlations"]
         assert "projects_created_vs_active_users" in correlations
         assert isinstance(correlations["projects_created_vs_active_users"], float)
@@ -324,12 +329,12 @@ class TestAdvancedAnalyticsEngine:
             "start_date": start_date.isoformat(),
             "end_date": end_date.isoformat()
         }
-        
+
         result = await analytics_engine.get_correlation_analysis(
             metrics=["projects_created"],
             time_range=time_range
         )
-        
+
         # Should handle gracefully - no correlations possible with single metric
         assert isinstance(result, dict)
         assert "correlations" in result
@@ -345,7 +350,7 @@ class TestAdvancedAnalyticsEngine:
                     "end_date": "2024-01-31T23:59:59Z"
                 }
             )
-        
+
         assert "Unknown metric: unknown_metric" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -353,22 +358,22 @@ class TestAdvancedAnalyticsEngine:
         """Test listing all queries."""
         # Create a few queries
         await analytics_engine.create_analytics_query(
-            name="Query 1", metrics=["projects_created"], dimensions=[], 
-            filters={}, time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-12-31T23:59:59Z"}, 
+            name="Query 1", metrics=["projects_created"], dimensions=[],
+            filters={}, time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-12-31T23:59:59Z"},
             granularity=TimeGranularity.DAY
         )
-        
+
         await analytics_engine.create_analytics_query(
-            name="Query 2", metrics=["active_users"], dimensions=[], 
-            filters={}, time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-12-31T23:59:59Z"}, 
+            name="Query 2", metrics=["active_users"], dimensions=[],
+            filters={}, time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-12-31T23:59:59Z"},
             granularity=TimeGranularity.DAY
         )
-        
+
         result = await analytics_engine.list_queries()
-        
+
         assert isinstance(result, list)
         assert len(result) >= 2
-        
+
         for query in result:
             assert isinstance(query, AnalyticsQuery)
 
@@ -377,18 +382,18 @@ class TestAdvancedAnalyticsEngine:
         """Test listing all reports."""
         # Create a query and generate a report
         query = await analytics_engine.create_analytics_query(
-            name="Report List Test", metrics=["projects_created"], dimensions=[], 
-            filters={}, time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-12-31T23:59:59Z"}, 
+            name="Report List Test", metrics=["projects_created"], dimensions=[],
+            filters={}, time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-12-31T23:59:59Z"},
             granularity=TimeGranularity.DAY
         )
-        
+
         await analytics_engine.generate_report(query.id, ReportType.SUMMARY)
-        
+
         result = await analytics_engine.list_reports()
-        
+
         assert isinstance(result, list)
         assert len(result) >= 1
-        
+
         for report in result:
             assert isinstance(report, AnalyticsReport)
 
@@ -397,12 +402,12 @@ class TestAdvancedAnalyticsEngine:
         """Test listing all predictions."""
         # Generate a prediction
         await analytics_engine.predict_future_values("projects_created", 3)
-        
+
         result = await analytics_engine.list_predictions()
-        
+
         assert isinstance(result, list)
         assert len(result) >= 1
-        
+
         for prediction in result:
             assert isinstance(prediction, PredictionResult)
 
@@ -412,13 +417,13 @@ class TestAdvancedAnalyticsEngine:
             "start_date": "2024-01-01T00:00:00Z",
             "end_date": "2024-01-10T23:59:59Z"
         }
-        
+
         result = analytics_engine._aggregate_time_series(
             analytics_engine.project_series,
             time_range,
             TimeGranularity.DAY
         )
-        
+
         assert isinstance(result, list)
         if result:  # If there's data
             data_point = result[0]
@@ -434,13 +439,13 @@ class TestAdvancedAnalyticsEngine:
             "start_date": "2024-01-01T00:00:00Z",
             "end_date": "2024-03-31T23:59:59Z"
         }
-        
+
         result = analytics_engine._aggregate_time_series(
             analytics_engine.user_series,
             time_range,
             TimeGranularity.MONTH
         )
-        
+
         assert isinstance(result, list)
         if result:
             data_point = result[0]
@@ -452,9 +457,9 @@ class TestAdvancedAnalyticsEngine:
             "start_date": "2024-01-01T00:00:00Z",
             "end_date": "2024-01-31T23:59:59Z"
         }
-        
+
         result = analytics_engine._calculate_conversion_rate(time_range)
-        
+
         assert isinstance(result, float)
         assert 0 <= result <= 1  # Should be between 0 and 1
 
@@ -462,9 +467,9 @@ class TestAdvancedAnalyticsEngine:
         """Test applying filters to data."""
         test_data = {"metric1": 100, "metric2": 200}
         filters = {"status": "active"}
-        
+
         result = analytics_engine._apply_filters(test_data, filters)
-        
+
         # Should return the data unchanged (simplified implementation)
         assert result == test_data
 
@@ -477,14 +482,14 @@ class TestAdvancedAnalyticsEngine:
             DataPoint((now - timedelta(days=2)).isoformat(), 20.0),
             DataPoint((now + timedelta(days=1)).isoformat(), 30.0)
         ]
-        
+
         time_range = {
             "start_date": (now - timedelta(days=3)).isoformat(),
             "end_date": (now + timedelta(days=2)).isoformat()
         }
-        
+
         result = analytics_engine._filter_by_time_range(data_points, time_range)
-        
+
         assert isinstance(result, list)
         # Should include middle and last points (within range)
         assert len(result) >= 2
@@ -500,11 +505,11 @@ class TestAdvancedAnalyticsEngine:
             DataPoint("2024-01-03T00:00:00Z", 20.0),
             DataPoint("2024-01-04T00:00:00Z", 25.0)
         ]
-        
+
         series = TimeSeries("Test Series", data_points, MetricType.COUNT)
-        
+
         result = analytics_engine._linear_regression_predict(series, 3)
-        
+
         assert isinstance(result, list)
         assert len(result) == 3
         for dp in result:
@@ -517,9 +522,9 @@ class TestAdvancedAnalyticsEngine:
         """Test linear trend calculation."""
         x_values = [1, 2, 3, 4, 5]
         y_values = [10, 15, 20, 25, 30]  # Perfect linear relationship
-        
+
         slope, intercept = analytics_engine._calculate_linear_trend(x_values, y_values)
-        
+
         assert isinstance(slope, float)
         assert isinstance(intercept, float)
         # For perfect linear data, slope should be 5 and intercept should be 5
@@ -532,14 +537,14 @@ class TestAdvancedAnalyticsEngine:
             "projects": analytics_engine.project_series,
             "users": analytics_engine.user_series
         }
-        
+
         time_range = {
             "start_date": "2024-01-01T00:00:00Z",
             "end_date": "2024-01-31T23:59:59Z"
         }
-        
+
         result = analytics_engine._align_time_series(series_map, time_range)
-        
+
         assert isinstance(result, list)
         if result:
             row = result[0]
@@ -552,17 +557,17 @@ class TestAdvancedAnalyticsEngine:
         # Perfect positive correlation
         x_values = [1, 2, 3, 4, 5]
         y_values = [2, 4, 6, 8, 10]
-        
+
         result = analytics_engine._calculate_correlation(x_values, y_values)
-        
+
         assert isinstance(result, float)
         assert abs(result - 1.0) < 0.001  # Should be very close to 1.0
-        
+
         # Perfect negative correlation
         y_values_negative = [10, 8, 6, 4, 2]
         result_negative = analytics_engine._calculate_correlation(x_values, y_values_negative)
         assert abs(result_negative - (-1.0)) < 0.001  # Should be very close to -1.0
-        
+
         # No correlation (random data)
         import random
         random.seed(42)

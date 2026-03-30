@@ -2,19 +2,18 @@
 Comprehensive tests for CollaborationService to increase coverage.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime, timedelta
+from unittest.mock import patch
 
+import pytest
 from backend.services.collaboration_service import (
     CollaborationService,
-    EntityType,
-    NotificationType,
-    UserRole,
-    User,
     Comment,
+    EntityType,
     Notification,
-    Team
+    NotificationType,
+    Team,
+    User,
+    UserRole,
 )
 
 
@@ -184,7 +183,7 @@ class TestCollaborationService:
         # Create session
         with patch.object(collaboration_service, '_generate_session_id', return_value="sess123"):
             with patch.object(collaboration_service, '_create_session_token', return_value="token123"):
-                session = await collaboration_service.create_collaboration_session(
+                await collaboration_service.create_collaboration_session(
                     project_id="proj123",
                     creator_id="user123",
                     participants=["user456"],
@@ -209,21 +208,21 @@ class TestCollaborationService:
         with patch.object(collaboration_service, '_generate_session_id') as mock_gen_id:
             with patch.object(collaboration_service, '_create_session_token', return_value="token123"):
                 mock_gen_id.side_effect = ["sess1", "sess2", "sess3"]
-                
+
                 await collaboration_service.create_collaboration_session(
                     project_id="proj123",
                     creator_id="user123",
                     participants=["user456"],
                     session_type="code_review"
                 )
-                
+
                 await collaboration_service.create_collaboration_session(
                     project_id="proj123",
                     creator_id="user789",
                     participants=["user123"],
                     session_type="pair_programming"
                 )
-                
+
                 # Create session for different project
                 await collaboration_service.create_collaboration_session(
                     project_id="proj456",
@@ -420,7 +419,7 @@ class TestCollaborationService:
         # Create session with participants
         with patch.object(collaboration_service, '_generate_session_id', return_value="sess123"):
             with patch.object(collaboration_service, '_create_session_token', return_value="token123"):
-                session = await collaboration_service.create_collaboration_session(
+                await collaboration_service.create_collaboration_session(
                     project_id="proj123",
                     creator_id="user123",
                     participants=["user456", "user789"],
@@ -453,7 +452,7 @@ class TestCollaborationService:
         # Create session
         with patch.object(collaboration_service, '_generate_session_id', return_value="sess123"):
             with patch.object(collaboration_service, '_create_session_token', return_value="token123"):
-                session = await collaboration_service.create_collaboration_session(
+                await collaboration_service.create_collaboration_session(
                     project_id="proj123",
                     creator_id="user123",
                     participants=["user456"],
@@ -481,7 +480,7 @@ class TestCollaborationService:
         # Create session and add some activity
         with patch.object(collaboration_service, '_generate_session_id', return_value="sess123"):
             with patch.object(collaboration_service, '_create_session_token', return_value="token123"):
-                session = await collaboration_service.create_collaboration_session(
+                await collaboration_service.create_collaboration_session(
                     project_id="proj123",
                     creator_id="user123",
                     participants=["user456"],
@@ -564,8 +563,8 @@ class TestCollaborationService:
         assert "user789" in reacted_comment3.reactions["👍"]
 
     @pytest.mark.asyncio
-    async def test_create_notification_success(self, collaboration_service):
-        """Test creating notification."""
+    async def test_create_notification_with_entity_type(self, collaboration_service):
+        """Test creating notification with entity type."""
         notification = await collaboration_service.create_notification(
             user_id="user123",
             type=NotificationType.COMMENT,
@@ -593,7 +592,7 @@ class TestCollaborationService:
     async def test_get_user_notifications_success(self, collaboration_service):
         """Test getting user notifications."""
         # Create multiple notifications
-        notif1 = await collaboration_service.create_notification(
+        await collaboration_service.create_notification(
             user_id="user123",
             type=NotificationType.COMMENT,
             title="Comment 1",
@@ -602,7 +601,7 @@ class TestCollaborationService:
             entity_type=EntityType.PROJECT
         )
 
-        notif2 = await collaboration_service.create_notification(
+        await collaboration_service.create_notification(
             user_id="user123",
             type=NotificationType.MENTION,
             title="Mention 1",
@@ -612,7 +611,7 @@ class TestCollaborationService:
         )
 
         # Create notification for different user
-        notif3 = await collaboration_service.create_notification(
+        await collaboration_service.create_notification(
             user_id="user456",
             type=NotificationType.ASSIGNMENT,
             title="Assignment",
@@ -773,7 +772,7 @@ class TestCollaborationService:
             metadata={}
         )
 
-        activity2 = await collaboration_service.log_activity(
+        await collaboration_service.log_activity(
             user_id="user456",
             action="comment_created",
             entity_id="project456",

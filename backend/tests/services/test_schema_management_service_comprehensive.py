@@ -2,14 +2,21 @@
 Comprehensive tests for SchemaManagementService to increase coverage.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime, UTC
 import json
+from datetime import UTC, datetime
 
+import pytest
 from backend.services.schema_management_service import (
-    SchemaManagementService, ColumnType, ConstraintType, IndexType,
-    Column, Constraint, Index, Table, Schema, Migration
+    Column,
+    ColumnType,
+    Constraint,
+    ConstraintType,
+    Index,
+    IndexType,
+    Migration,
+    Schema,
+    SchemaManagementService,
+    Table,
 )
 
 
@@ -28,7 +35,7 @@ class TestSchemaManagementService:
         assert hasattr(schema_service, 'migrations')
         assert isinstance(schema_service.schemas, dict)
         assert isinstance(schema_service.migrations, dict)
-        
+
         # Should have default schema initialized
         assert len(schema_service.schemas) > 0
         assert "default" in schema_service.schemas
@@ -40,13 +47,13 @@ class TestSchemaManagementService:
         assert isinstance(default_schema, Schema)
         assert default_schema.name == "default"
         assert len(default_schema.tables) >= 2  # Should have users and projects tables
-        
+
         # Check users table
         users_table = next((t for t in default_schema.tables if t.name == "users"), None)
         assert users_table is not None
         assert isinstance(users_table, Table)
         assert len(users_table.columns) > 0
-        
+
         # Check projects table
         projects_table = next((t for t in default_schema.tables if t.name == "projects"), None)
         assert projects_table is not None
@@ -75,30 +82,30 @@ class TestSchemaManagementService:
                 "description": "Test table"
             }
         ]
-        
+
         result = await schema_service.create_schema(
             name="test_schema",
             tables=tables_data,
             description="Test schema description"
         )
-        
+
         assert result is not None
         assert isinstance(result, Schema)
         assert result.name == "test_schema"
         assert result.description == "Test schema description"
         assert len(result.tables) == 1
-        
+
         table = result.tables[0]
         assert isinstance(table, Table)
         assert table.name == "test_table"
         assert len(table.columns) == 2
-        
+
         # Check columns
         id_column = next(c for c in table.columns if c.name == "id")
         assert id_column.type == ColumnType.INTEGER
         assert id_column.primary_key is True
         assert id_column.nullable is False
-        
+
         name_column = next(c for c in table.columns if c.name == "name")
         assert name_column.type == ColumnType.STRING
         assert name_column.nullable is False
@@ -132,12 +139,12 @@ class TestSchemaManagementService:
                 ]
             }
         ]
-        
+
         result = await schema_service.create_schema("orders_schema", tables_data)
-        
+
         table = result.tables[0]
         assert len(table.constraints) == 1
-        
+
         constraint = table.constraints[0]
         assert isinstance(constraint, Constraint)
         assert constraint.name == "fk_orders_user"
@@ -172,12 +179,12 @@ class TestSchemaManagementService:
                 ]
             }
         ]
-        
+
         result = await schema_service.create_schema("indexed_schema", tables_data)
-        
+
         table = result.tables[0]
         assert len(table.indexes) == 1
-        
+
         index = table.indexes[0]
         assert isinstance(index, Index)
         assert index.name == "idx_email"
@@ -191,9 +198,9 @@ class TestSchemaManagementService:
         # Create a schema first
         tables_data = [{"name": "test", "columns": [{"name": "id", "type": "integer"}]}]
         created_schema = await schema_service.create_schema("get_test", tables_data)
-        
+
         result = await schema_service.get_schema("get_test")
-        
+
         assert result is not None
         assert result.name == "get_test"
         assert result.version == created_schema.version
@@ -211,7 +218,7 @@ class TestSchemaManagementService:
         result = await schema_service.list_schemas()
         assert isinstance(result, list)
         assert len(result) >= 1
-        
+
         for schema in result:
             assert isinstance(schema, Schema)
 
@@ -226,7 +233,7 @@ class TestSchemaManagementService:
             }
         ]
         await schema_service.create_schema("update_test", tables_data)
-        
+
         # Update with new tables
         new_tables_data = [
             {
@@ -237,13 +244,13 @@ class TestSchemaManagementService:
                 ]
             }
         ]
-        
+
         result = await schema_service.update_schema(
             schema_name="update_test",
             tables=new_tables_data,
             description="Updated description"
         )
-        
+
         assert result is not None
         assert result.description == "Updated description"
         assert len(result.tables) == 1
@@ -258,13 +265,13 @@ class TestSchemaManagementService:
         tables_data = [{"name": "test", "columns": [{"name": "id", "type": "integer"}]}]
         original = await schema_service.create_schema("partial_update_test", tables_data)
         original_version = original.version
-        
+
         # Update only description
         result = await schema_service.update_schema(
             schema_name="partial_update_test",
             description="New description only"
         )
-        
+
         assert result is not None
         assert result.description == "New description only"
         # Tables should remain unchanged
@@ -285,13 +292,13 @@ class TestSchemaManagementService:
         # Create schema first
         tables_data = [{"name": "test", "columns": [{"name": "id", "type": "integer"}]}]
         await schema_service.create_schema("delete_test", tables_data)
-        
+
         # Verify it exists
         assert "delete_test" in schema_service.schemas
-        
+
         # Delete it
         result = await schema_service.delete_schema("delete_test")
-        
+
         assert result is True
         assert "delete_test" not in schema_service.schemas
 
@@ -310,7 +317,7 @@ class TestSchemaManagementService:
             sql_down="DROP TABLE test;",
             description="Test migration description"
         )
-        
+
         assert result is not None
         assert isinstance(result, Migration)
         assert result.name == "test_migration"
@@ -328,7 +335,7 @@ class TestSchemaManagementService:
             name="one_way_migration",
             sql_up="ALTER TABLE users ADD COLUMN age INTEGER;"
         )
-        
+
         assert result is not None
         assert result.sql_down is None
 
@@ -340,12 +347,12 @@ class TestSchemaManagementService:
             name="apply_test",
             sql_up="SELECT 1;"
         )
-        
+
         # Apply it
         result = await schema_service.apply_migration(migration.id)
-        
+
         assert result is True
-        
+
         # Check that it's marked as applied
         updated_migration = schema_service.migrations[migration.id]
         assert updated_migration.applied_at is not None
@@ -365,15 +372,15 @@ class TestSchemaManagementService:
             sql_up="SELECT 1;",
             sql_down="SELECT 2;"
         )
-        
+
         await schema_service.apply_migration(migration.id)
         assert migration.applied_at is not None
-        
+
         # Roll it back
         result = await schema_service.rollback_migration(migration.id)
-        
+
         assert result is True
-        
+
         # Check that it's marked as not applied
         updated_migration = schema_service.migrations[migration.id]
         assert updated_migration.applied_at is None
@@ -386,12 +393,12 @@ class TestSchemaManagementService:
             name="no_rollback_test",
             sql_up="SELECT 1;"
         )
-        
+
         await schema_service.apply_migration(migration.id)
-        
+
         # Try to rollback
         result = await schema_service.rollback_migration(migration.id)
-        
+
         assert result is False  # Should fail because no rollback SQL
 
     @pytest.mark.asyncio
@@ -406,11 +413,11 @@ class TestSchemaManagementService:
         # Create a few migrations
         await schema_service.create_migration("migration_1", "SELECT 1;")
         await schema_service.create_migration("migration_2", "SELECT 2;")
-        
+
         result = await schema_service.list_migrations()
         assert isinstance(result, list)
         assert len(result) >= 2
-        
+
         for migration in result:
             assert isinstance(migration, Migration)
 
@@ -419,11 +426,11 @@ class TestSchemaManagementService:
         """Test listing only applied migrations."""
         # Create migrations
         mig1 = await schema_service.create_migration("applied_test_1", "SELECT 1;")
-        mig2 = await schema_service.create_migration("applied_test_2", "SELECT 2;")
-        
+        await schema_service.create_migration("applied_test_2", "SELECT 2;")
+
         # Apply one of them
         await schema_service.apply_migration(mig1.id)
-        
+
         result = await schema_service.list_migrations(applied_only=True)
         assert isinstance(result, list)
         assert len(result) == 1
@@ -442,7 +449,7 @@ class TestSchemaManagementService:
                 ]
             }
         ]
-        
+
         schema2_tables = [
             {
                 "name": "users",
@@ -459,17 +466,17 @@ class TestSchemaManagementService:
                 ]
             }
         ]
-        
+
         await schema_service.create_schema("source_schema", schema1_tables)
         await schema_service.create_schema("target_schema", schema2_tables)
-        
+
         # Generate migration
         result = await schema_service.generate_migration_from_diff(
             from_schema="source_schema",
             to_schema="target_schema",
             migration_name="diff_migration_test"
         )
-        
+
         assert result is not None
         assert isinstance(result, Migration)
         assert result.name == "diff_migration_test"
@@ -485,7 +492,7 @@ class TestSchemaManagementService:
                 to_schema="target_schema",
                 migration_name="test"
             )
-        
+
         assert "Source or target schema not found" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -501,11 +508,11 @@ class TestSchemaManagementService:
                 ]
             }
         ]
-        
+
         await schema_service.create_schema("export_schema", tables_data)
-        
+
         result = await schema_service.export_schema("export_schema", "sql")
-        
+
         assert isinstance(result, str)
         assert len(result) > 0
         assert "CREATE TABLE export_test" in result
@@ -524,14 +531,14 @@ class TestSchemaManagementService:
                 ]
             }
         ]
-        
+
         await schema_service.create_schema("json_export_schema", tables_data)
-        
+
         result = await schema_service.export_schema("json_export_schema", "json")
-        
+
         assert isinstance(result, str)
         result_dict = json.loads(result)
-        
+
         assert result_dict["name"] == "json_export_schema"
         assert len(result_dict["tables"]) == 1
         assert result_dict["tables"][0]["name"] == "json_test"
@@ -541,7 +548,7 @@ class TestSchemaManagementService:
         """Test exporting schema with invalid format."""
         with pytest.raises(ValueError) as exc_info:
             await schema_service.export_schema("default", "xml")
-        
+
         assert "Unsupported format: xml" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -549,14 +556,14 @@ class TestSchemaManagementService:
         """Test exporting non-existent schema."""
         with pytest.raises(ValueError) as exc_info:
             await schema_service.export_schema("nonexistent", "sql")
-        
+
         assert "Schema nonexistent not found" in str(exc_info.value)
 
     def test_increment_version(self, schema_service):
         """Test version incrementing."""
         result = schema_service._increment_version("1.0.0")
         assert result == "1.0.1"
-        
+
         result = schema_service._increment_version("2.5.3")
         assert result == "2.5.4"
 
@@ -587,9 +594,9 @@ class TestSchemaManagementService:
                 )
             ]
         )
-        
+
         result = schema_service._generate_create_table_sql(table)
-        
+
         assert isinstance(result, str)
         assert "CREATE TABLE test_table" in result
         assert "id INTEGER NOT NULL PRIMARY KEY" in result
@@ -615,9 +622,9 @@ class TestSchemaManagementService:
             created_at=datetime.now(UTC).isoformat(),
             updated_at=datetime.now(UTC).isoformat()
         )
-        
+
         result = schema_service._to_sql(schema)
-        
+
         assert isinstance(result, str)
         assert "CREATE TABLE table1" in result
         assert "CREATE TABLE table2" in result

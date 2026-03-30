@@ -2,11 +2,9 @@
 Comprehensive tests for ProjectService to increase coverage.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime, UTC
-from uuid import uuid4
+from datetime import datetime
 
+import pytest
 from backend.services.project_service import ProjectService
 
 
@@ -31,9 +29,9 @@ class TestProjectService:
         """Test creating a basic project."""
         name = "Test Project"
         description = "A test project description"
-        
+
         result = await project_service.create_project(name, description)
-        
+
         assert result is not None
         assert isinstance(result, dict)
         assert "id" in result
@@ -46,7 +44,7 @@ class TestProjectService:
         assert "updated_at" in result
         assert "tech_stack" in result
         assert "metadata" in result
-        
+
         # Verify project was stored
         assert len(project_service._projects) == 1
         assert result["id"] in project_service._projects
@@ -59,7 +57,7 @@ class TestProjectService:
             description="Description here",
             requirements="These are the requirements"
         )
-        
+
         assert result["requirements"] == "These are the requirements"
 
     @pytest.mark.asyncio
@@ -71,7 +69,7 @@ class TestProjectService:
             description="Desc",
             created_by=creator_id
         )
-        
+
         assert result["created_by"] == creator_id
 
     @pytest.mark.asyncio
@@ -80,10 +78,10 @@ class TestProjectService:
         # First create a project
         created_project = await project_service.create_project("Test", "Desc")
         project_id = created_project["id"]
-        
+
         # Then get it
         result = await project_service.get_project(project_id)
-        
+
         assert result is not None
         assert result["id"] == project_id
         assert result["name"] == "Test"
@@ -108,12 +106,12 @@ class TestProjectService:
         await project_service.create_project("Project 1", "Desc 1")
         await project_service.create_project("Project 2", "Desc 2")
         await project_service.create_project("Project 3", "Desc 3")
-        
+
         result = await project_service.list_projects()
-        
+
         assert isinstance(result, list)
         assert len(result) == 3
-        
+
         # Should be sorted by created_at descending
         assert result[0]["name"] == "Project 3"
         assert result[1]["name"] == "Project 2"
@@ -125,15 +123,15 @@ class TestProjectService:
         # Create projects with different statuses
         proj1 = await project_service.create_project("Draft Project", "Desc")
         proj2 = await project_service.create_project("Active Project", "Desc")
-        
+
         # Update second project status
         await project_service.update_project(proj2["id"], {"status": "active"})
-        
+
         # Filter by draft status
         drafts = await project_service.list_projects(status="draft")
         assert len(drafts) == 1
         assert drafts[0]["id"] == proj1["id"]
-        
+
         # Filter by active status
         actives = await project_service.list_projects(status="active")
         assert len(actives) == 1
@@ -145,12 +143,12 @@ class TestProjectService:
         # Create projects by different users
         proj1 = await project_service.create_project("User1 Project", "Desc", created_by="user1")
         proj2 = await project_service.create_project("User2 Project", "Desc", created_by="user2")
-        
+
         # Filter by user1
         user1_projects = await project_service.list_projects(created_by="user1")
         assert len(user1_projects) == 1
         assert user1_projects[0]["id"] == proj1["id"]
-        
+
         # Filter by user2
         user2_projects = await project_service.list_projects(created_by="user2")
         assert len(user2_projects) == 1
@@ -162,11 +160,11 @@ class TestProjectService:
         # Create projects with various combinations
         proj1 = await project_service.create_project("Draft by User1", "Desc", created_by="user1")
         proj2 = await project_service.create_project("Active by User1", "Desc", created_by="user1")
-        proj3 = await project_service.create_project("Draft by User2", "Desc", created_by="user2")
-        
+        await project_service.create_project("Draft by User2", "Desc", created_by="user2")
+
         # Update statuses
         await project_service.update_project(proj2["id"], {"status": "active"})
-        
+
         # Filter by both status and creator
         result = await project_service.list_projects(status="draft", created_by="user1")
         assert len(result) == 1
@@ -178,7 +176,7 @@ class TestProjectService:
         # Create project first
         original = await project_service.create_project("Original Name", "Original Desc")
         project_id = original["id"]
-        
+
         # Update it
         updates = {
             "name": "Updated Name",
@@ -186,9 +184,9 @@ class TestProjectService:
             "status": "active",
             "current_phase": "development"
         }
-        
+
         result = await project_service.update_project(project_id, updates)
-        
+
         assert result is not None
         assert result["id"] == project_id
         assert result["name"] == "Updated Name"
@@ -202,10 +200,10 @@ class TestProjectService:
         """Test partial project updates."""
         original = await project_service.create_project("Test", "Desc")
         project_id = original["id"]
-        
+
         # Update only name
         result = await project_service.update_project(project_id, {"name": "New Name"})
-        
+
         assert result["name"] == "New Name"
         # Other fields should remain unchanged
         assert result["description"] == "Desc"
@@ -216,16 +214,16 @@ class TestProjectService:
         """Test that only allowed fields can be updated."""
         original = await project_service.create_project("Test", "Desc")
         project_id = original["id"]
-        
+
         # Try to update disallowed fields
         updates = {
             "name": "Allowed Update",
             "disallowed_field": "Should be ignored",
             "another_disallowed": "Also ignored"
         }
-        
+
         result = await project_service.update_project(project_id, updates)
-        
+
         assert result["name"] == "Allowed Update"
         # Disallowed fields should not be in the project
         assert "disallowed_field" not in result
@@ -243,14 +241,14 @@ class TestProjectService:
         # Create project first
         project = await project_service.create_project("To Delete", "Desc")
         project_id = project["id"]
-        
+
         # Verify it exists
         assert len(project_service._projects) == 1
         assert project_id in project_service._projects
-        
+
         # Delete it
         result = await project_service.delete_project(project_id)
-        
+
         assert result is True
         assert len(project_service._projects) == 0
         assert project_id not in project_service._projects
@@ -270,13 +268,13 @@ class TestProjectService:
         proj1 = await project_service.create_project("Project 1", "Desc")
         proj2 = await project_service.create_project("Project 2", "Desc")
         proj3 = await project_service.create_project("Project 3", "Desc")
-        
+
         assert len(project_service._projects) == 3
-        
+
         # Delete middle project
         result = await project_service.delete_project(proj2["id"])
         assert result is True
-        
+
         # Should have 2 projects left
         assert len(project_service._projects) == 2
         assert proj1["id"] in project_service._projects
@@ -288,10 +286,10 @@ class TestProjectService:
         """Test successful progress update."""
         project = await project_service.create_project("Progress Test", "Desc")
         project_id = project["id"]
-        
+
         # Update progress to 50%
         result = await project_service.update_progress(project_id, 50.0)
-        
+
         assert result is not None
         assert result["id"] == project_id
         assert result["progress_percent"] == 50.0
@@ -302,11 +300,11 @@ class TestProjectService:
         """Test that progress is clamped between 0 and 100."""
         project = await project_service.create_project("Clamping Test", "Desc")
         project_id = project["id"]
-        
+
         # Test values above 100
         result = await project_service.update_progress(project_id, 150.0)
         assert result["progress_percent"] == 100.0
-        
+
         # Test values below 0
         result = await project_service.update_progress(project_id, -25.0)
         assert result["progress_percent"] == 0.0
@@ -316,7 +314,7 @@ class TestProjectService:
         """Test progress updates with decimal values."""
         project = await project_service.create_project("Decimal Test", "Desc")
         project_id = project["id"]
-        
+
         result = await project_service.update_progress(project_id, 75.5)
         assert result["progress_percent"] == 75.5
 
@@ -331,13 +329,13 @@ class TestProjectService:
         """Test that timestamps are properly set."""
         # Create project
         project = await project_service.create_project("Timestamp Test", "Desc")
-        
+
         assert "created_at" in project
         assert "updated_at" in project
-        
+
         created_time = datetime.fromisoformat(project["created_at"].replace('Z', '+00:00'))
         updated_time = datetime.fromisoformat(project["updated_at"].replace('Z', '+00:00'))
-        
+
         # Times should be very close (within a few seconds)
         time_diff = abs((updated_time - created_time).total_seconds())
         assert time_diff < 5
@@ -348,19 +346,19 @@ class TestProjectService:
         # 1. Create project
         project = await project_service.create_project("Sequential Test", "Initial desc")
         project_id = project["id"]
-        
+
         # 2. Update it
         await project_service.update_project(project_id, {
             "description": "Updated desc",
             "status": "active"
         })
-        
+
         # 3. Update progress
         await project_service.update_progress(project_id, 25.0)
-        
+
         # 4. Get final state
         final_project = await project_service.get_project(project_id)
-        
+
         assert final_project["description"] == "Updated desc"
         assert final_project["status"] == "active"
         assert final_project["progress_percent"] == 25.0

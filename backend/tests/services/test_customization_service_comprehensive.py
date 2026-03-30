@@ -2,13 +2,17 @@
 Comprehensive tests for CustomizationService to increase coverage.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime, UTC
 
+import pytest
 from backend.services.customization_service import (
-    CustomizationService, ThemeMode, LayoutType, ColorScheme,
-    Theme, Layout, UserPreferences, CustomComponent
+    ColorScheme,
+    CustomComponent,
+    CustomizationService,
+    Layout,
+    LayoutType,
+    Theme,
+    ThemeMode,
+    UserPreferences,
 )
 
 
@@ -31,12 +35,12 @@ class TestCustomizationService:
         assert isinstance(customization_service.layouts, dict)
         assert isinstance(customization_service.user_preferences, dict)
         assert isinstance(customization_service.custom_components, dict)
-        
+
         # Should have default themes initialized
         assert len(customization_service.themes) > 0
         assert "theme_light" in customization_service.themes
         assert "theme_dark" in customization_service.themes
-        
+
         # Should have default layouts initialized
         assert len(customization_service.layouts) > 0
         assert "layout_default" in customization_service.layouts
@@ -53,7 +57,7 @@ class TestCustomizationService:
         assert light_theme.is_system_default is True
         assert light_theme.primary_color == "#3B82F6"
         assert light_theme.background_color == "#FFFFFF"
-        
+
         # Check dark theme
         dark_theme = customization_service.themes.get("theme_dark")
         assert dark_theme is not None
@@ -62,7 +66,7 @@ class TestCustomizationService:
         assert dark_theme.mode == ThemeMode.DARK
         assert dark_theme.is_system_default is True
         assert dark_theme.background_color == "#111827"
-        
+
         # Check other themes exist
         assert "theme_blue_professional" in customization_service.themes
         assert "theme_green_nature" in customization_service.themes
@@ -78,7 +82,7 @@ class TestCustomizationService:
         assert default_layout.is_system_default is True
         assert default_layout.sidebar_width == 280
         assert default_layout.content_spacing == 24
-        
+
         # Check compact layout
         compact_layout = customization_service.layouts.get("layout_compact")
         assert compact_layout is not None
@@ -87,7 +91,7 @@ class TestCustomizationService:
         assert compact_layout.type == LayoutType.COMPACT
         assert compact_layout.is_system_default is True
         assert compact_layout.sidebar_width == 240
-        
+
         # Check spacious layout
         spacious_layout = customization_service.layouts.get("layout_spacious")
         assert spacious_layout is not None
@@ -111,7 +115,7 @@ class TestCustomizationService:
             border_color="#334155",
             created_by="user123"
         )
-        
+
         assert result is not None
         assert isinstance(result, Theme)
         assert result.name == "Ocean Blue Theme"
@@ -135,7 +139,7 @@ class TestCustomizationService:
         """Test getting existing theme."""
         # Get default theme
         result = await customization_service.get_theme("theme_light")
-        
+
         assert result is not None
         assert isinstance(result, Theme)
         assert result.id == "theme_light"
@@ -151,7 +155,7 @@ class TestCustomizationService:
     async def test_list_themes_all(self, customization_service):
         """Test listing all themes."""
         result = await customization_service.list_themes()
-        
+
         assert isinstance(result, list)
         assert len(result) >= 4  # Should have at least default themes
         for theme in result:
@@ -161,7 +165,7 @@ class TestCustomizationService:
     async def test_list_themes_exclude_system(self, customization_service):
         """Test listing themes excluding system defaults."""
         result = await customization_service.list_themes(include_system=False)
-        
+
         assert isinstance(result, list)
         # Should not include system default themes
         for theme in result:
@@ -176,9 +180,9 @@ class TestCustomizationService:
             primary_color="#000", secondary_color="#111", accent_color="#222",
             background_color="#FFF", text_color="#000", border_color="#333"
         )
-        
+
         result = await customization_service.list_themes(include_custom=False)
-        
+
         assert isinstance(result, list)
         # Should not include custom themes
         for theme in result:
@@ -193,7 +197,7 @@ class TestCustomizationService:
             primary_color="#000", secondary_color="#111", accent_color="#222",
             background_color="#FFF", text_color="#000", border_color="#333"
         )
-        
+
         # Update it
         result = await customization_service.update_theme(
             theme_id=theme.id,
@@ -201,7 +205,7 @@ class TestCustomizationService:
             primary_color="#FF0000",
             background_color="#000000"
         )
-        
+
         assert result is not None
         assert result.name == "Updated Theme Name"
         assert result.primary_color == "#FF0000"
@@ -213,7 +217,7 @@ class TestCustomizationService:
         """Test updating non-existent theme."""
         with pytest.raises(ValueError) as exc_info:
             await customization_service.update_theme("nonexistent", name="Test")
-        
+
         assert "Theme nonexistent not found" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -221,7 +225,7 @@ class TestCustomizationService:
         """Test that system default themes cannot be updated."""
         with pytest.raises(ValueError) as exc_info:
             await customization_service.update_theme("theme_light", name="Modified")
-        
+
         assert "Cannot modify system default themes" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -233,13 +237,13 @@ class TestCustomizationService:
             primary_color="#000", secondary_color="#111", accent_color="#222",
             background_color="#FFF", text_color="#000", border_color="#333"
         )
-        
+
         # Verify it exists
         assert theme.id in customization_service.themes
-        
+
         # Delete it
         result = await customization_service.delete_theme(theme.id)
-        
+
         assert result is True
         assert theme.id not in customization_service.themes
 
@@ -254,7 +258,7 @@ class TestCustomizationService:
         """Test that system default themes cannot be deleted."""
         with pytest.raises(ValueError) as exc_info:
             await customization_service.delete_theme("theme_light")
-        
+
         assert "Cannot delete system default themes" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -266,17 +270,17 @@ class TestCustomizationService:
             primary_color="#000", secondary_color="#111", accent_color="#222",
             background_color="#FFF", text_color="#000", border_color="#333"
         )
-        
+
         # Set user preference to use this theme
         await customization_service.update_user_preferences("user123", theme_id=theme.id)
-        
+
         # Verify user uses this theme
         user_prefs = await customization_service.get_user_preferences("user123")
         assert user_prefs.theme_id == theme.id
-        
+
         # Delete the theme
         await customization_service.delete_theme(theme.id)
-        
+
         # User should now use default theme
         updated_prefs = await customization_service.get_user_preferences("user123")
         assert updated_prefs.theme_id == "theme_light"  # Fallback to default
@@ -293,7 +297,7 @@ class TestCustomizationService:
             font_size="x-large",
             created_by="user456"
         )
-        
+
         assert result is not None
         assert isinstance(result, Layout)
         assert result.name == "Wide Workspace"
@@ -312,7 +316,7 @@ class TestCustomizationService:
     async def test_get_layout_success(self, customization_service):
         """Test getting existing layout."""
         result = await customization_service.get_layout("layout_default")
-        
+
         assert result is not None
         assert isinstance(result, Layout)
         assert result.id == "layout_default"
@@ -328,7 +332,7 @@ class TestCustomizationService:
     async def test_list_layouts_all(self, customization_service):
         """Test listing all layouts."""
         result = await customization_service.list_layouts()
-        
+
         assert isinstance(result, list)
         assert len(result) >= 3  # Should have at least default layouts
         for layout in result:
@@ -338,7 +342,7 @@ class TestCustomizationService:
     async def test_list_layouts_exclude_system(self, customization_service):
         """Test listing layouts excluding system defaults."""
         result = await customization_service.list_layouts(include_system=False)
-        
+
         assert isinstance(result, list)
         for layout in result:
             assert layout.is_system_default is False
@@ -351,9 +355,9 @@ class TestCustomizationService:
             name="Custom Layout", layout_type=LayoutType.CUSTOM,
             sidebar_width=200, content_spacing=10, card_border_radius=4, font_size="small"
         )
-        
+
         result = await customization_service.list_layouts(include_custom=False)
-        
+
         assert isinstance(result, list)
         for layout in result:
             assert layout.is_custom is False
@@ -362,7 +366,7 @@ class TestCustomizationService:
     async def test_get_user_preferences_creates_default(self, customization_service):
         """Test that getting non-existent user preferences creates defaults."""
         result = await customization_service.get_user_preferences("newuser123")
-        
+
         assert result is not None
         assert isinstance(result, UserPreferences)
         assert result.user_id == "newuser123"
@@ -381,17 +385,17 @@ class TestCustomizationService:
         """Test getting existing user preferences."""
         # First get/create preferences
         first_prefs = await customization_service.get_user_preferences("existinguser")
-        
+
         # Update some preferences
         await customization_service.update_user_preferences(
             "existinguser",
             theme_id="theme_dark",
             notifications_enabled=False
         )
-        
+
         # Get again
         result = await customization_service.get_user_preferences("existinguser")
-        
+
         assert result is not None
         assert result.user_id == "existinguser"
         assert result.theme_id == "theme_dark"  # Updated value
@@ -404,7 +408,7 @@ class TestCustomizationService:
         """Test updating user preferences successfully."""
         # First ensure preferences exist
         await customization_service.get_user_preferences("prefuser")
-        
+
         # Update preferences
         result = await customization_service.update_user_preferences(
             user_id="prefuser",
@@ -420,7 +424,7 @@ class TestCustomizationService:
             favorite_themes=["theme_dark", "theme_green_nature"],
             custom_css=".custom { color: red; }"
         )
-        
+
         assert result is not None
         assert isinstance(result, UserPreferences)
         assert result.theme_id == "theme_dark"
@@ -447,7 +451,7 @@ class TestCustomizationService:
             javascript_code='console.log("Custom button loaded");',
             created_by="dev123"
         )
-        
+
         assert result is not None
         assert isinstance(result, CustomComponent)
         assert result.name == "Custom Button"
@@ -471,9 +475,9 @@ class TestCustomizationService:
             name="Test Component", component_type="div",
             html_template="<div>Test</div>", css_styles="", javascript_code="", created_by="test"
         )
-        
+
         result = await customization_service.get_custom_component(component.id)
-        
+
         assert result is not None
         assert result.id == component.id
         assert result.name == "Test Component"
@@ -492,7 +496,7 @@ class TestCustomizationService:
             name="Active Component", component_type="span",
             html_template="<span>Active</span>", css_styles="", javascript_code="", created_by="test"
         )
-        
+
         # Create inactive component
         inactive_component = await customization_service.create_custom_component(
             name="Inactive Component", component_type="p",
@@ -500,9 +504,9 @@ class TestCustomizationService:
         )
         # Make it inactive
         await customization_service.toggle_component_status(inactive_component.id, False)
-        
+
         result = await customization_service.list_custom_components()
-        
+
         assert isinstance(result, list)
         # Should only include active components
         component_ids = [c.id for c in result]
@@ -513,7 +517,7 @@ class TestCustomizationService:
     async def test_list_custom_components_all(self, customization_service):
         """Test listing all custom components including inactive."""
         # Create some components
-        comp1 = await customization_service.create_custom_component(
+        await customization_service.create_custom_component(
             name="Comp1", component_type="div", html_template="", css_styles="", javascript_code="", created_by="test"
         )
         comp2 = await customization_service.create_custom_component(
@@ -521,10 +525,10 @@ class TestCustomizationService:
         )
         # Deactivate one
         await customization_service.toggle_component_status(comp2.id, False)
-        
+
         # Get all components (both active and inactive)
         all_components = list(customization_service.custom_components.values())
-        
+
         assert isinstance(all_components, list)
         assert len(all_components) >= 2
 
@@ -536,20 +540,20 @@ class TestCustomizationService:
             name="Toggle Test", component_type="button",
             html_template="", css_styles="", javascript_code="", created_by="test"
         )
-        
+
         # Verify it's active
         assert component.is_active is True
-        
+
         # Deactivate it
         result = await customization_service.toggle_component_status(component.id, False)
-        
+
         assert result is True
         assert component.is_active is False
         assert component.updated_at != component.created_at
-        
+
         # Activate it again
         result = await customization_service.toggle_component_status(component.id, True)
-        
+
         assert result is True
         assert component.is_active is True
 
@@ -563,38 +567,38 @@ class TestCustomizationService:
     async def test_get_system_defaults(self, customization_service):
         """Test getting system default configurations."""
         result = await customization_service.get_system_defaults()
-        
+
         assert isinstance(result, dict)
         assert "default_theme" in result
         assert "default_layout" in result
         assert "available_modes" in result
         assert "available_layout_types" in result
         assert "color_schemes" in result
-        
+
         # Check default theme
         default_theme = result["default_theme"]
         assert default_theme is not None
         assert "Light Theme" in str(default_theme) or "theme_light" in str(default_theme)
-        
+
         # Check default layout
         default_layout = result["default_layout"]
         assert default_layout is not None
         assert "Default Layout" in str(default_layout) or "layout_default" in str(default_layout)
-        
+
         # Check available modes
         modes = result["available_modes"]
         assert isinstance(modes, list)
         assert "light" in modes
         assert "dark" in modes
         assert "system" in modes
-        
+
         # Check available layout types
         layout_types = result["available_layout_types"]
         assert isinstance(layout_types, list)
         assert "default" in layout_types
         assert "compact" in layout_types
         assert "spacious" in layout_types
-        
+
         # Check color schemes
         color_schemes = result["color_schemes"]
         assert isinstance(color_schemes, list)
@@ -606,12 +610,12 @@ class TestCustomizationService:
     async def test_export_theme_success(self, customization_service):
         """Test exporting theme successfully."""
         result = await customization_service.export_theme("theme_light")
-        
+
         assert isinstance(result, dict)
         assert "theme" in result
         assert "exported_at" in result
         assert "version" in result
-        
+
         theme_data = result["theme"]
         assert isinstance(theme_data, dict)
         assert theme_data["id"] == "theme_light"
@@ -624,7 +628,7 @@ class TestCustomizationService:
         """Test exporting non-existent theme."""
         with pytest.raises(ValueError) as exc_info:
             await customization_service.export_theme("nonexistent")
-        
+
         assert "Theme nonexistent not found" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -644,9 +648,9 @@ class TestCustomizationService:
             "exported_at": "2024-01-01T00:00:00Z",
             "version": "1.0"
         }
-        
+
         result = await customization_service.import_theme(theme_data, "importer123")
-        
+
         assert result is not None
         assert isinstance(result, Theme)
         assert result.name == "Imported Ocean Theme"
@@ -664,9 +668,9 @@ class TestCustomizationService:
                 "name": "Minimal Import"
             }
         }
-        
+
         result = await customization_service.import_theme(theme_data, "importer456")
-        
+
         assert result is not None
         assert isinstance(result, Theme)
         assert result.name == "Minimal Import"
@@ -686,7 +690,7 @@ class TestCustomizationService:
         assert len(theme.updated_at) > 0
         # Timestamps should be very close (within same second)
         assert theme.created_at[:19] == theme.updated_at[:19]
-        
+
         # With timestamps provided
         custom_created = "2024-01-01T00:00:00Z"
         custom_updated = "2024-01-02T00:00:00Z"
@@ -708,7 +712,7 @@ class TestCustomizationService:
         )
         assert len(layout.created_at) > 0
         assert len(layout.updated_at) > 0
-        
+
         # With timestamps provided
         custom_created = "2024-01-01T00:00:00Z"
         layout_with_times = Layout(
@@ -730,7 +734,7 @@ class TestCustomizationService:
         )
         assert len(prefs.created_at) > 0
         assert len(prefs.updated_at) > 0
-        
+
         # With timestamps provided
         custom_created = "2024-01-01T00:00:00Z"
         prefs_with_times = UserPreferences(
@@ -750,13 +754,13 @@ class TestCustomizationService:
         assert ThemeMode.DARK.value == "dark"
         assert ThemeMode.SYSTEM.value == "system"
         assert ThemeMode.AUTO.value == "auto"
-        
+
         # Test LayoutType values
         assert LayoutType.DEFAULT.value == "default"
         assert LayoutType.COMPACT.value == "compact"
         assert LayoutType.SPACIOUS.value == "spacious"
         assert LayoutType.CUSTOM.value == "custom"
-        
+
         # Test ColorScheme values
         assert ColorScheme.BLUE.value == "blue"
         assert ColorScheme.GREEN.value == "green"

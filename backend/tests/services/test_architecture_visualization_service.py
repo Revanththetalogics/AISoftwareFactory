@@ -2,18 +2,17 @@
 Comprehensive tests for ArchitectureVisualizationService to increase coverage.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
 
+import pytest
 from backend.services.architecture_service import (
-    ArchitectureVisualizationService,
     ArchitectureDiagram,
+    ArchitectureVisualizationService,
+    DiagramType,
     Node,
-    Relationship,
     NodeType,
+    Relationship,
     RelationshipType,
-    DiagramType
 )
 
 
@@ -180,7 +179,7 @@ class TestArchitectureVisualizationService:
         # Create multiple diagrams
         nodes = [{"id": "test", "name": "Test", "type": "service", "x": 0, "y": 0}]
         relationships = []
-        
+
         diagram1 = await architecture_service.create_diagram(
             name="Diagram 1", diagram_type=DiagramType.SYSTEM_OVERVIEW, nodes=nodes, relationships=relationships
         )
@@ -200,7 +199,7 @@ class TestArchitectureVisualizationService:
         """Test listing diagrams filtered by type."""
         nodes = [{"id": "test", "name": "Test", "type": "service", "x": 0, "y": 0}]
         relationships = []
-        
+
         # Create diagrams of different types
         system_diag = await architecture_service.create_diagram(
             name="System Diagram", diagram_type=DiagramType.SYSTEM_OVERVIEW, nodes=nodes, relationships=relationships
@@ -321,7 +320,7 @@ class TestArchitectureVisualizationService:
     async def test_get_template_success(self, architecture_service):
         """Test getting existing template."""
         template = await architecture_service.get_template("system-overview")
-        
+
         assert template is not None
         assert isinstance(template, ArchitectureDiagram)
         assert template.name == "System Overview"
@@ -339,7 +338,7 @@ class TestArchitectureVisualizationService:
 
         assert isinstance(templates, list)
         assert len(templates) > 0
-        
+
         # Check that we have the expected templates
         template_names = [t.name for t in templates]
         assert "System Overview" in template_names
@@ -420,7 +419,7 @@ class TestArchitectureVisualizationService:
         relationships = [
             {"id": "rel1", "source_id": "node1", "target_id": "node2", "type": "stores_in"}
         ]
-        
+
         diagram = await architecture_service.create_diagram(
             name="Mermaid Test",
             diagram_type=DiagramType.SYSTEM_OVERVIEW,
@@ -441,7 +440,7 @@ class TestArchitectureVisualizationService:
         """Test exporting non-existent diagram."""
         with pytest.raises(ValueError) as exc_info:
             await architecture_service.export_diagram("non-existent", "json")
-        
+
         assert "not found" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -458,7 +457,7 @@ class TestArchitectureVisualizationService:
 
         with pytest.raises(ValueError) as exc_info:
             await architecture_service.export_diagram(diagram.id, "unsupported-format")
-        
+
         assert "Unsupported format" in str(exc_info.value)
 
     def test_to_mermaid_conversion(self, architecture_service):
@@ -470,7 +469,7 @@ class TestArchitectureVisualizationService:
         relationships = [
             Relationship("rel1", "service1", "db1", RelationshipType.STORES_IN, "stores data")
         ]
-        
+
         diagram = ArchitectureDiagram(
             id="test-diagram",
             name="Test Diagram",
