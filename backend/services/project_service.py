@@ -56,8 +56,8 @@ class ProjectService:
             "progress_percent": 0.0,
             "tech_stack": {},
             "created_by": created_by,
-            "created_at": datetime.utcnow().isoformat(),
-            "updated_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
+            "updated_at": datetime.now(UTC).isoformat(),
             "metadata": {}
         }
 

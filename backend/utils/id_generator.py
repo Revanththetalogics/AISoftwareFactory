@@ -5,7 +5,7 @@ This module provides functions for generating unique identifiers.
 """
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 def generate_uuid() -> str:
@@ -44,7 +44,7 @@ def generate_timestamp_id(prefix: str | None = None) -> str:
     Returns:
         Timestamp-based ID string
     """
-    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    timestamp = datetime.now(UTC).strftime("%Y%m%d%H%M%S")
     unique_id = uuid.uuid4().hex[:8]
     if prefix:
         return f"{prefix}-{timestamp}-{unique_id}"

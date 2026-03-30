@@ -172,9 +172,9 @@ class TestSimulationReportExtendedCoverage:
 
     def test_duration_ms_when_completed_at_set(self):
         """Test duration_ms when completed_at is set."""
-        from datetime import datetime, timedelta
+        from datetime import UTC, datetime, timedelta
 
-        started = datetime.utcnow()
+        started = datetime.now(UTC)
         completed = started + timedelta(seconds=5)  # 5 seconds = 5000ms
 
         report = SimulationReport(

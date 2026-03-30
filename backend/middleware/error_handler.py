@@ -50,8 +50,6 @@ class ErrorHandlerMiddleware:
         try:
             await self.app(scope, receive, send_wrapper)
         except Exception as exc:
-            # Debug print
-            print(f"DEBUG: Caught exception: {type(exc)}, status_code: {getattr(exc, 'status_code', 'N/A')}")
             # Handle the exception
             response = await self.handle_exception(exc, request_id, scope)
             await response(scope, receive, send)
@@ -68,9 +66,7 @@ class ErrorHandlerMiddleware:
         request_info = self._extract_request_info(scope)
 
         # Handle BackendException and AISoftwareFactoryException subclasses
-        print(f"DEBUG: Checking if {type(exc)} is BackendException or AISoftwareFactoryException")
         if isinstance(exc, (BackendException, AISoftwareFactoryException)):
-            print("DEBUG: Handling as backend exception")
             return self._handle_backend_exception(exc, request_id, request_info)
 
         # Handle FastAPI HTTPException
@@ -98,10 +94,6 @@ class ErrorHandlerMiddleware:
 
         # Convert to HTTPException and create response
         http_exc = handle_backend_exception(exc, request_id, logger)
-
-        # Debug print
-        print(f"DEBUG: Exception type: {type(exc)}, status_code: {exc.status_code}")
-        print(f"DEBUG: HTTPException status_code: {http_exc.status_code}")
 
         # Add request_id to top level for test compatibility
         response_content = http_exc.detail.copy()
@@ -265,72 +257,49 @@ class ErrorHandlerMiddleware:
             }
         )
 
-# Decorator for route-specific error handling
-def handle_route_errors(func):
-    """Decorator to wrap route functions with error handling."""
-    async def wrapper(*args, **kwargs):
-        try:
-            return await func(*args, **kwargs)
-        except BackendException:
-            # Re-raise BackendException to be handled by middleware
-            raise
-        except Exception as exc:
-            # Convert generic exceptions to BackendException
-            raise BackendException(
-                message=f"Route error: {str(exc)}",
-                error_code="ROUTE_ERROR",
-                status_code=500
-            ) from exc
-    return wrapper
-
-# Context manager for error handling in business logic
-class ErrorContext:
-    """Context manager for handling errors in business logic."""
-
-    def __init__(self, operation: str, resource: str = None):
-        self.operation = operation
-        self.resource = resource
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_val is not None:
-            # If it's already a BackendException, re-raise
-            if isinstance(exc_val, BackendException):
-                return False
-
-            # Convert other exceptions to appropriate BackendException
-            error_msg = f"Error during {self.operation}"
-            if self.resource:
-                error_msg += f" for {self.resource}"
-
-            raise BackendException(
-                message=f"{error_msg}: {str(exc_val)}",
-                error_code="OPERATION_ERROR",
-                status_code=500
-            ) from exc_val
-
-        return True
-
-# Utility function for safe execution with error handling
-async def safe_execute(operation, *args, **kwargs):
-    """Safely execute an operation with error handling."""
-    try:
-        if callable(operation):
-            return await operation(*args, **kwargs) if hasattr(operation, '__call__') else operation(*args, **kwargs)
-        else:
-            return operation
-    except BackendException:
-        raise
-    except Exception as exc:
-        raise BackendException(
-            message=f"Operation failed: {str(exc)}",
-            error_code="EXECUTION_ERROR",
-            status_code=500
-        ) from exc
-
-
 def setup_exception_handlers(app):
     """Setup exception handlers for the FastAPI app."""
-    pass  # Exception handlers are typically setup elsewhere
+    # Register custom exception handlers
+    app.add_exception_handler(AISoftwareFactoryException, _handle_custom_exception)
+    app.add_exception_handler(Exception, _handle_general_exception)
+
+async def _handle_custom_exception(request, exc: AISoftwareFactoryException):
+    """Handle custom AISoftwareFactoryException."""
+    # Extract request_id from request state if available
+    request_id = getattr(request, 'state', {}).get('request_id', 'unknown')
+    
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "success": False,
+            "error": {
+                "code": exc.error_code,
+                "message": exc.message,
+                "status_code": exc.status_code,
+                "details": getattr(exc, 'details', {}),
+                "timestamp": datetime.now(UTC).isoformat()
+            },
+            "request_id": request_id
+        }
+    )
+
+async def _handle_general_exception(request, exc: Exception):
+    """Handle general exceptions."""
+    logger.error(f"Unhandled exception: {str(exc)}", extra={"traceback": traceback.format_exc()})
+    
+    # Extract request_id from request state if available
+    request_id = getattr(request, 'state', {}).get('request_id', 'unknown')
+    
+    return JSONResponse(
+        status_code=500,
+        content={
+            "success": False,
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": str(exc) if hasattr(exc, '__str__') else "An unexpected error occurred",
+                "status_code": 500,
+                "timestamp": datetime.now(UTC).isoformat()
+            },
+            "request_id": request_id
+        }
+    )

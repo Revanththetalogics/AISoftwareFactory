@@ -13,7 +13,7 @@ import asyncio
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -194,7 +194,7 @@ class SelfHealingTestRunner:
         Returns:
             TestSuiteResult with execution results
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         self._logger.info(
             "Starting test suite execution",
@@ -248,7 +248,7 @@ class SelfHealingTestRunner:
             elif result.status == TestResultStatus.SKIPPED:
                 skipped += 1
 
-        end_time = datetime.utcnow()
+        end_time = datetime.now(UTC)
 
         suite_result = TestSuiteResult(
             suite_name=suite_name,

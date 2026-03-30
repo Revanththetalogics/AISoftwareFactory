@@ -47,7 +47,7 @@ class ReportGenerator:
         Returns:
             Path to generated report
         """
-        filename = filename or f"report_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+        filename = filename or f"report_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
         filepath = self._output_dir / filename
 
         with open(filepath, 'w', encoding='utf-8') as f:
@@ -71,7 +71,7 @@ class ReportGenerator:
         Returns:
             Path to generated report
         """
-        filename = filename or f"report_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.md"
+        filename = filename or f"report_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.md"
         filepath = self._output_dir / filename
 
         lines = [

@@ -8,7 +8,7 @@ for Python backend code and TypeScript/React frontend code.
 import ast
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from backend.agents.base_agent import BaseAgent, Task, TaskResult, TaskStatus
@@ -110,7 +110,7 @@ class TestGeneratorAgent(BaseAgent):
         Returns:
             TaskResult with generated tests
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         try:
             if task.task_type == "generate_tests":
@@ -126,7 +126,7 @@ class TestGeneratorAgent(BaseAgent):
                     error=f"Unknown task type: {task.task_type}",
                 )
 
-            execution_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+            execution_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
             return TaskResult(
                 task_id=task.task_id,
@@ -239,7 +239,7 @@ Return only the test code."""
             test_code = await self._llm.generate(prompt)
 
             return GeneratedTest(
-                id=f"regression_{datetime.utcnow().timestamp()}",
+                id=f"regression_{datetime.now(UTC).timestamp()}",
                 name=f"test_regression_{self._sanitize_name(error_message[:30])}",
                 component_name=file_path,
                 test_code=test_code,
@@ -473,7 +473,7 @@ Generate pytest tests using pytest.raises():""",
             test_code = await self._llm.generate(prompt)
 
             test = GeneratedTest(
-                id=f"unit_{component.name}_{datetime.utcnow().timestamp()}",
+                id=f"unit_{component.name}_{datetime.now(UTC).timestamp()}",
                 name=f"test_{self._sanitize_name(component.name)}",
                 component_name=component.name,
                 test_code=test_code,
@@ -508,7 +508,7 @@ Generate pytest tests using pytest.raises():""",
             test_code = await self._llm.generate(prompt)
 
             test = GeneratedTest(
-                id=f"edge_{component.name}_{datetime.utcnow().timestamp()}",
+                id=f"edge_{component.name}_{datetime.now(UTC).timestamp()}",
                 name=f"test_{self._sanitize_name(component.name)}_edge_cases",
                 component_name=component.name,
                 test_code=test_code,
@@ -546,7 +546,7 @@ Generate pytest tests using pytest.raises():""",
             test_code = await self._llm.generate(prompt)
 
             test = GeneratedTest(
-                id=f"error_{component.name}_{datetime.utcnow().timestamp()}",
+                id=f"error_{component.name}_{datetime.now(UTC).timestamp()}",
                 name=f"test_{self._sanitize_name(component.name)}_errors",
                 component_name=component.name,
                 test_code=test_code,

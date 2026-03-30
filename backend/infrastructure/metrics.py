@@ -12,7 +12,7 @@ This module provides comprehensive metrics collection for:
 import asyncio
 import time
 from collections import defaultdict, deque
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from prometheus_client import Counter, Gauge, Histogram, Summary
@@ -210,7 +210,7 @@ class MetricsCollector:
         """Record an API error."""
         self.api_errors_total.labels(method=method, endpoint=endpoint, error_type=error_type).inc()
         self._recent_errors.append({
-            'timestamp': datetime.utcnow(),
+            'timestamp': datetime.now(UTC),
             'method': method,
             'endpoint': endpoint,
             'error_type': error_type
