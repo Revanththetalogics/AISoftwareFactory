@@ -112,15 +112,26 @@ async def mock_get_db_context():
     yield mock_session
 
 
-# Override the dependencies
-app.dependency_overrides[get_db] = mock_get_db
-app.dependency_overrides[get_current_user] = mock_get_current_user
-app.dependency_overrides[get_workflow_service] = mock_get_workflow_service
+_OVERRIDES = {
+    get_db: mock_get_db,
+    get_current_user: mock_get_current_user,
+    get_workflow_service: mock_get_workflow_service,
+}
 
 # Create authenticated client
 client = TestClient(app)
 # Add default auth headers to pass the global middleware check
 _auth_headers = get_auth_headers()
+
+
+@pytest.fixture(autouse=True)
+def restore_overrides():
+    """Restore dependency overrides before each test — other test modules may clear them."""
+    app.dependency_overrides.update(_OVERRIDES)
+    yield
+    # Clean up only the overrides we own so other tests aren't polluted
+    for key in _OVERRIDES:
+        app.dependency_overrides.pop(key, None)
 
 
 @pytest.fixture

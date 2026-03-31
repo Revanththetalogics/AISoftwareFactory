@@ -29,6 +29,18 @@ class EventFilter(BaseModel):
     severity_levels: list[str] | None = None
     time_range_minutes: int | None = 60
 
+class TriggerAlertRequest(BaseModel):
+    """Request model for triggering an alert event."""
+    alert_name: str
+    severity: str
+    details: dict[str, Any] = {}
+
+class TriggerServiceStatusRequest(BaseModel):
+    """Request model for triggering a service status change event."""
+    service_name: str
+    old_status: str
+    new_status: str
+
 @router.websocket("/monitor")
 async def realtime_monitoring_websocket(websocket: WebSocket, client_id: str = None):
     """
@@ -159,58 +171,46 @@ async def get_recent_events(limit: int = 100, filter: EventFilter = Depends()):
         raise HTTPException(status_code=500, detail=f"Failed to get events: {str(e)}")
 
 @router.post("/events/trigger/alert", response_model=APIResponse)
-async def trigger_alert_event(
-    alert_name: str,
-    severity: str,
-    details: dict[str, Any]
-):
+async def trigger_alert_event(request: TriggerAlertRequest):
     """
     Manually trigger an alert event.
 
     Args:
-        alert_name: Name of the alert
-        severity: Severity level
-        details: Alert details
+        request: Alert trigger request with alert_name, severity, and details
 
     Returns:
         APIResponse confirming alert trigger
     """
     try:
-        await MonitoringEventTrigger.trigger_alert(alert_name, severity, details)
+        await MonitoringEventTrigger.trigger_alert(request.alert_name, request.severity, request.details)
 
         return APIResponse(
             success=True,
-            message=f"Alert '{alert_name}' triggered with severity '{severity}'"
+            message=f"Alert '{request.alert_name}' triggered with severity '{request.severity}'"
         )
     except Exception as e:
         logger.error("Failed to trigger alert", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to trigger alert: {str(e)}")
 
 @router.post("/events/trigger/service-status", response_model=APIResponse)
-async def trigger_service_status_event(
-    service_name: str,
-    old_status: str,
-    new_status: str
-):
+async def trigger_service_status_event(request: TriggerServiceStatusRequest):
     """
     Manually trigger a service status change event.
 
     Args:
-        service_name: Name of the service
-        old_status: Previous status
-        new_status: New status
+        request: Service status trigger request with service_name, old_status, new_status
 
     Returns:
         APIResponse confirming event trigger
     """
     try:
         await MonitoringEventTrigger.trigger_service_status_change(
-            service_name, old_status, new_status
+            request.service_name, request.old_status, request.new_status
         )
 
         return APIResponse(
             success=True,
-            message=f"Service status change triggered for '{service_name}'"
+            message=f"Service status change triggered for '{request.service_name}'"
         )
     except Exception as e:
         logger.error("Failed to trigger service status event", error=str(e))

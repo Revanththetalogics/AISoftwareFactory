@@ -56,50 +56,79 @@ export function useWebSocket({
 
       ws.current.onmessage = (event) => {
         try {
-          const message = JSON.parse(event.data) as WebSocketMessage;
-          setLastMessage(message);
-          
-          // Automatic cache updates for known message types
+          // Backend sends { type, payload } — normalise to the hook's { type, data } shape
+          const raw = JSON.parse(event.data) as { type: string; payload?: unknown; data?: unknown };
+          const normalised: WebSocketMessage = {
+            type: raw.type,
+            data: raw.payload ?? raw.data ?? raw,
+            timestamp: new Date().toISOString(),
+          };
+          setLastMessage(normalised);
+
           if (enableCacheUpdates) {
-            const msgData = message.data as Record<string, unknown>;
-            
-            switch (message.type) {
+            const payload = normalised.data as Record<string, unknown>;
+
+            switch (raw.type) {
+              // ── Backend native types ─────────────────────────────────────
+              case 'status':
+                // Project/workflow status changed — invalidate both caches
+                queryClient.invalidateQueries({ queryKey: ['projects'] });
+                queryClient.invalidateQueries({ queryKey: ['workflows'] });
+                if (payload?.project_id) {
+                  queryClient.invalidateQueries({ queryKey: ['projects', payload.project_id] });
+                }
+                if (payload?.workflow_id) {
+                  queryClient.invalidateQueries({ queryKey: ['workflows', payload.workflow_id] });
+                }
+                break;
+
+              case 'logs':
+                // Workflow logs arrived — refresh the specific workflow
+                if (payload?.workflow_id) {
+                  queryClient.invalidateQueries({ queryKey: ['workflows', payload.workflow_id] });
+                }
+                break;
+
+              case 'connected':
+              case 'pong':
+              case 'subscribed':
+                // Keep-alive / handshake frames — no cache action needed
+                break;
+
+              // ── Legacy / direct-match types ──────────────────────────────
               case 'agent_update':
                 queryClient.setQueryData(['agents'], (old: unknown) => {
-                  if (!old || !Array.isArray(old)) return old;
-                  return old.map((agent: Record<string, unknown>) =>
-                    agent.agent_id === msgData.agent_id
-                      ? { ...agent, ...msgData }
-                      : agent,
+                  if (!Array.isArray(old)) return old;
+                  return old.map((a: Record<string, unknown>) =>
+                    a.agent_id === payload?.agent_id ? { ...a, ...payload } : a,
                   );
                 });
                 break;
-              
+
               case 'project_update':
                 queryClient.setQueryData(['projects'], (old: unknown) => {
-                  if (!old || !Array.isArray(old)) return old;
-                  return old.map((project: Record<string, unknown>) =>
-                    project.id === msgData.id
-                      ? { ...project, ...msgData }
-                      : project,
+                  if (!Array.isArray(old)) return old;
+                  return old.map((p: Record<string, unknown>) =>
+                    p.id === payload?.id ? { ...p, ...payload } : p,
                   );
                 });
                 break;
-              
+
               case 'workflow_update':
                 queryClient.setQueryData(['workflows'], (old: unknown) => {
-                  if (!old || !Array.isArray(old)) return old;
-                  return old.map((wf: Record<string, unknown>) =>
-                    wf.workflow_id === msgData.workflow_id
-                      ? { ...wf, ...msgData }
-                      : wf,
+                  if (!Array.isArray(old)) return old;
+                  return old.map((w: Record<string, unknown>) =>
+                    w.workflow_id === payload?.workflow_id ? { ...w, ...payload } : w,
                   );
                 });
+                break;
+
+              default:
                 break;
             }
           }
-          
-          onMessage?.(message);
+
+          onMessage?.(normalised);
         } catch (error) {
           console.error('Failed to parse WebSocket message:', error);
         }

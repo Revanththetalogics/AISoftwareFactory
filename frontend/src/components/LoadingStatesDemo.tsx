@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   loadingStateService, 
 
@@ -19,25 +19,7 @@ export default function LoadingStatesDemo() {
   const detailLoadingState = useLoadingState('detail-data');
   const networkStatus = useNetworkStatus();
 
-  useEffect(() => {
-    // Simulate initial data loading
-    loadData();
-    
-    // Set up progress simulation
-    const progressInterval = setInterval(() => {
-      setProgressValue(prev => {
-        if (prev >= 100) {
-          clearInterval(progressInterval);
-          return 100;
-        }
-        return prev + Math.random() * 15;
-      });
-    }, 200);
-
-    return () => clearInterval(progressInterval);
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     const controller = loadingStateService.createLoadingController('list-data', {
       timeout: 8000,
       retryAttempts: 2,
@@ -82,7 +64,25 @@ export default function LoadingStatesDemo() {
         console.log('Showing cached data due to network error');
       }
     }
-  };
+  }, [networkStatus]);
+
+  useEffect(() => {
+    // Simulate initial data loading
+    loadData();
+    
+    // Set up progress simulation
+    const progressInterval = setInterval(() => {
+      setProgressValue(prev => {
+        if (prev >= 100) {
+          clearInterval(progressInterval);
+          return 100;
+        }
+        return prev + Math.random() * 15;
+      });
+    }, 200);
+
+    return () => clearInterval(progressInterval);
+  }, [loadData]);
 
   const loadDetailData = async () => {
     const controller = loadingStateService.createLoadingController('detail-data');

@@ -76,11 +76,11 @@ Pop-Location
 Write-Host "`n[5/7] Frontend tests..." -ForegroundColor Yellow
 Push-Location "$workspace/frontend"
 try {
-    $testOutput = npm test 2>&1
+    # Stream directly to avoid pipe buffer issues
+    npm test
     if ($LASTEXITCODE -ne 0) {
         $exitCode = 1
         Write-Host "FAIL" -ForegroundColor Red
-        Write-Host ($testOutput | Select-Object -Last 20) -ForegroundColor Red
     } else {
         Write-Host "PASS" -ForegroundColor Green
     }
@@ -90,15 +90,15 @@ try {
 }
 Pop-Location
 
-# 6. Backend tests
+# 6. Backend tests (API suite only - full suite runs in CI)
 Write-Host "`n[6/7] Backend tests..." -ForegroundColor Yellow
 Push-Location "$workspace"
 try {
-    $pytestOutput = python -m pytest backend/tests/ -x -q --tb=short 2>&1
+    # Stream output directly (no capture) to avoid PowerShell pipe buffer deadlock
+    python -m pytest backend/tests/api/ -x -q --tb=short --no-header -W ignore::DeprecationWarning -W ignore::PendingDeprecationWarning
     if ($LASTEXITCODE -ne 0) {
         $exitCode = 1
         Write-Host "FAIL" -ForegroundColor Red
-        Write-Host ($pytestOutput | Select-Object -Last 20) -ForegroundColor Red
     } else {
         Write-Host "PASS" -ForegroundColor Green
     }

@@ -210,6 +210,25 @@ class DBDeployment(Base):
     )
 
 
+class DBCustomCrew(Base):
+    """Custom crew created dynamically from the agent management UI."""
+    __tablename__ = "custom_crews"
+
+    id = Column(String(50), primary_key=True, index=True)
+    name = Column(String(100), nullable=False)
+    description = Column(Text)
+    agent_ids = Column(JSON, default=list)
+    process = Column(String(20), default="sequential", nullable=False)
+    created_by = Column(String(50), ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    __table_args__ = (
+        Index('ix_custom_crews_id', 'id'),
+        Index('idx_custom_crews_created_by', 'created_by'),
+    )
+
+
 # Audit trail model for tracking changes
 class DBAuditLog(Base):
     """Audit log model for tracking system changes."""
@@ -241,5 +260,6 @@ __all__ = [
     "DBTask",
     "DBAgent",
     "DBDeployment",
+    "DBCustomCrew",
     "DBAuditLog",
 ]

@@ -74,7 +74,7 @@ async def load_plugin(plugin_id: str, config: PluginConfig | None = None):
 
         plugin_dict = plugin_instance.__dict__.copy()
         plugin_dict["manifest"] = plugin_instance.manifest.__dict__
-        del plugin_dict["module"]  # Don't expose the module object
+        plugin_dict.pop("module", None)  # Don't expose the module object
 
         return APIResponse(
             success=True,
@@ -130,7 +130,7 @@ async def list_loaded_plugins():
         for plugin in plugins:
             plugin_dict = plugin.__dict__.copy()
             plugin_dict["manifest"] = plugin.manifest.__dict__
-            del plugin_dict["module"]  # Don't expose the module object
+            plugin_dict.pop("module", None)  # Don't expose the module object
             plugins_data.append(plugin_dict)
 
         return APIResponse(
@@ -162,7 +162,7 @@ async def get_plugin(plugin_id: str):
 
         plugin_dict = plugin.__dict__.copy()
         plugin_dict["manifest"] = plugin.manifest.__dict__
-        del plugin_dict["module"]  # Don't expose the module object
+        plugin_dict.pop("module", None)  # Don't expose the module object
 
         return APIResponse(
             success=True,
@@ -200,7 +200,7 @@ async def update_plugin_config(plugin_id: str, config: PluginConfig):
 
         plugin_dict = updated_plugin.__dict__.copy()
         plugin_dict["manifest"] = updated_plugin.manifest.__dict__
-        del plugin_dict["module"]
+        plugin_dict.pop("module", None)
 
         return APIResponse(
             success=True,

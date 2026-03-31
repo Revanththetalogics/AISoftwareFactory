@@ -166,32 +166,9 @@ export default function SuperEnhancedDashboardPage() {
   };
 
   return (
-    <div className="layout-container">
-      {/* Left Sidebar */}
-      <aside className="sidebar-panel">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-text-primary mb-1">ThetaAI</h1>
-          <p className="text-sm text-text-secondary">Software Factory</p>
-        </div>
-        
-        <nav className="space-y-2">
-          <Button variant="ghost" className="w-full justify-start">
-            <Grid3X3 className="w-4 h-4 mr-2" />
-            Dashboard
-          </Button>
-          <Button variant="ghost" className="w-full justify-start">
-            <Activity className="w-4 h-4 mr-2" />
-            Analytics
-          </Button>
-          <Button variant="ghost" className="w-full justify-start">
-            <Terminal className="w-4 h-4 mr-2" />
-            Console
-          </Button>
-        </nav>
-      </aside>
-
+    <div className="flex h-full overflow-hidden">
       {/* Main Content */}
-      <main className="main-content">
+      <main className="flex-1 flex flex-col overflow-hidden">
         {/* Connection Status Bar */}
         <div className={cn(
           "flex items-center justify-between px-6 py-2 text-sm border-b border-border",
@@ -216,9 +193,9 @@ export default function SuperEnhancedDashboardPage() {
             {(!projectsLoading && !workflowsLoading && !agentsLoading) ? 'Real database connected' : 'Fetching real data...'}
           </div>
         </div>
-        <div className="h-full flex flex-col">
+        <div className="flex-1 flex flex-col overflow-y-auto p-6 gap-6">
           {/* Pipeline Section - TOP PRIORITY */}
-          <section className="mb-6">
+          <section>
             <Card className="card-ai p-6">
               <div className="mb-4">
                 <h2 className="text-xl font-semibold text-text-primary mb-2">
@@ -340,7 +317,7 @@ export default function SuperEnhancedDashboardPage() {
           </div>
 
           {/* Control Panel */}
-          <section className="mt-6">
+          <section>
             <Card className="card-ai p-4">
               <div className="flex items-center justify-between">
                 <div>

@@ -51,8 +51,8 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: async () => {
-      logout();
-      api.setToken(null);
+      // AuthContext.logout awaits api.logout(), clears localStorage and api token
+      await logout();
     },
     onSuccess: () => {
       queryClient.clear();

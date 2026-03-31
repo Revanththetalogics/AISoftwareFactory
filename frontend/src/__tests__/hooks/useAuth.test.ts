@@ -166,7 +166,9 @@ describe('useAuth hooks', () => {
         }
       });
 
-      expect(result.current.isError).toBe(true);
+      await waitFor(() => {
+        expect(result.current.isError).toBe(true);
+      });
       expect(mockLogin).not.toHaveBeenCalled();
     });
 
@@ -327,7 +329,7 @@ describe('useAuth hooks', () => {
       expect(mockLogout).toHaveBeenCalled();
     });
 
-    it('clears API token on logout', async () => {
+    it('clears API token on logout via AuthContext', async () => {
       const { result } = renderHook(() => useLogout(), {
         wrapper: createWrapper(),
       });
@@ -336,7 +338,8 @@ describe('useAuth hooks', () => {
         await result.current.mutateAsync();
       });
 
-      expect(api.setToken).toHaveBeenCalledWith(null);
+      // Token clearing is delegated to AuthContext.logout — verify context logout was invoked
+      expect(mockLogout).toHaveBeenCalled();
     });
 
     it('clears query cache on success', async () => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   securityScanningService, 
   SecurityScanResult, 
@@ -16,14 +16,14 @@ export default function SecurityDashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'vulnerabilities' | 'dependencies'>('overview');
   const [selectedVulnerability, setSelectedVulnerability] = useState<Vulnerability | null>(null);
 
-  const loadSecurityStats = async () => {
+  const loadSecurityStats = useCallback(async () => {
     try {
       // This would load current security statistics
       console.log('Loading security statistics...');
     } catch (error) {
       console.error('Failed to load security stats:', error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     // Load initial security stats

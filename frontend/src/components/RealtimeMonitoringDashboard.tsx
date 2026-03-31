@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { monitoringService, SystemMetrics, ApplicationMetrics, BusinessMetrics, ClusterStatus, AlertInfo } from '@/services/monitoring.service';
 
 export default function RealtimeMonitoringDashboard() {
@@ -12,7 +12,7 @@ export default function RealtimeMonitoringDashboard() {
   const [activeAlerts, setActiveAlerts] = useState<AlertInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const setMetrics = (metrics: {
+  const setMetrics = useCallback((metrics: {
     system?: SystemMetrics | null;
     application?: ApplicationMetrics | null;
     business?: BusinessMetrics | null;
@@ -23,7 +23,7 @@ export default function RealtimeMonitoringDashboard() {
     if (metrics.business) setBusinessMetrics(metrics.business);
     if (metrics.cluster) setClusterStatus(metrics.cluster);
     if (isLoading) setIsLoading(false);
-  };
+  }, [isLoading]);
 
   useEffect(() => {
     // Connect to monitoring service

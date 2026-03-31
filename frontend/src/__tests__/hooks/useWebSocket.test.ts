@@ -182,7 +182,8 @@ describe('useWebSocket', () => {
         MockWebSocket.lastInstance.simulateMessage(testMessage);
       });
 
-      expect(result.current.lastMessage).toEqual(testMessage);
+      // The hook normalises the timestamp to the current time, so only check type and data
+      expect(result.current.lastMessage).toMatchObject({ type: testMessage.type, data: testMessage.data });
     });
 
     it('calls onMessage callback with parsed message', async () => {
@@ -210,7 +211,8 @@ describe('useWebSocket', () => {
         MockWebSocket.lastInstance.simulateMessage(testMessage);
       });
 
-      expect(onMessage).toHaveBeenCalledWith(testMessage);
+      // The hook normalises the timestamp to the current time, so only check type and data
+      expect(onMessage).toHaveBeenCalledWith(expect.objectContaining({ type: testMessage.type, data: testMessage.data }));
     });
 
     it('handles agent_update message type', async () => {

@@ -348,7 +348,6 @@ class TestValidateTokenEndpoint:
             mock_settings.ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
             response = await validate_token(
-                auth_service=mock_auth_service,
                 current_user=mock_user
             )
 
@@ -363,7 +362,6 @@ class TestValidateTokenEndpoint:
             mock_settings.ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
             response = await validate_token(
-                auth_service=mock_auth_service,
                 current_user=None
             )
 

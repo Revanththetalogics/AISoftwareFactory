@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   performanceProfilingService, 
   ProfilingSession, 
@@ -30,11 +30,11 @@ export default function PerformanceDashboard() {
     }
   };
 
-  const updateRealtimeMetrics = () => {
+  const updateRealtimeMetrics = useCallback(() => {
     // Update metrics display
     const currentMetrics = performanceProfilingService.getCurrentMetrics();
     console.log('Current metrics:', currentMetrics);
-  };
+  }, []);
 
   useEffect(() => {
     loadInitialData();

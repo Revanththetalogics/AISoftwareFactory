@@ -16,7 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from backend.api.dependencies import get_auth_service
+from backend.api.dependencies import User, get_auth_service, get_current_user
 from backend.core.config import get_settings
 from backend.core.logging import get_logger
 from backend.services.auth_service import AuthService
@@ -107,6 +107,22 @@ class TokenValidationResponse(BaseModel):
     user_id: str | None = None
     username: str | None = None
     expires_in: int | None = None
+
+
+class RegisterRequest(BaseModel):
+    """User registration request model."""
+    username: str
+    email: str
+    password: str
+
+
+class UserResponse(BaseModel):
+    """Current user response model."""
+    user_id: str
+    username: str
+    email: str
+    permissions: list[str]
+    is_active: bool
 
 
 @router.post(
@@ -297,8 +313,7 @@ async def refresh_token(
     description="Check if JWT token is valid"
 )
 async def validate_token(
-    auth_service: AuthService = Depends(get_auth_service),
-    current_user = Depends(lambda: None),  # Will be set by middleware
+    current_user: User = Depends(get_current_user),
 ) -> TokenValidationResponse:
     """
     Validate JWT token and return user information.
@@ -306,19 +321,113 @@ async def validate_token(
     This endpoint is protected and will only be reached if token is valid.
 
     Args:
-        auth_service: Authentication service instance
-        current_user: Current authenticated user
+        current_user: Current authenticated user from JWT
 
     Returns:
         TokenValidationResponse: Token validity and user info
     """
-    # If we reach here, token is valid
     return TokenValidationResponse(
         valid=True,
         user_id=current_user.user_id if current_user else None,
         username=current_user.username if current_user else None,
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
+
+
+@router.get(
+    "/me",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get current user",
+    description="Return the authenticated user's profile"
+)
+async def get_me(
+    current_user: User = Depends(get_current_user),
+) -> UserResponse:
+    """
+    Return the currently authenticated user's profile.
+
+    Args:
+        current_user: Current authenticated user from JWT
+
+    Returns:
+        UserResponse: Authenticated user data
+    """
+    return UserResponse(
+        user_id=current_user.user_id,
+        username=current_user.username,
+        email=current_user.email,
+        permissions=current_user.permissions,
+        is_active=current_user.is_active,
+    )
+
+
+@router.post(
+    "/register",
+    status_code=status.HTTP_201_CREATED,
+    summary="Register new user",
+    description="Create a new user account"
+)
+async def register(
+    request_data: RegisterRequest,
+    request: Request,
+    auth_service: AuthService = Depends(get_auth_service),
+) -> JSONResponse:
+    """
+    Register a new user account.
+
+    Args:
+        request_data: Registration credentials
+        request: FastAPI Request object
+        auth_service: Authentication service instance
+
+    Returns:
+        JSONResponse: New user info with auth cookies set
+    """
+    logger.info("Registration attempt", username=request_data.username)
+
+    try:
+        new_user = await auth_service.create_user(
+            username=request_data.username,
+            email=request_data.email,
+            password=request_data.password,
+            permissions=["read", "write"],
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
+
+    user_data = {
+        "user_id": new_user.id,
+        "username": new_user.username,
+        "email": new_user.email,
+        "permissions": new_user.permissions or [],
+    }
+    tokens = auth_service.create_user_session(user_data)
+
+    logger.info("Registration successful", user_id=new_user.id, username=new_user.username)
+
+    response_data = {
+        "access_token": tokens["access_token"],
+        "refresh_token": tokens["refresh_token"],
+        "token_type": tokens["token_type"],
+        "user_id": new_user.id,
+        "username": new_user.username,
+        "email": new_user.email,
+        "permissions": new_user.permissions or [],
+        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    }
+
+    response = JSONResponse(content=response_data, status_code=status.HTTP_201_CREATED)
+    set_auth_cookies(
+        response=response,
+        access_token=tokens["access_token"],
+        refresh_token=tokens["refresh_token"],
+        request=request,
+    )
+    return response
 
 
 @router.post(

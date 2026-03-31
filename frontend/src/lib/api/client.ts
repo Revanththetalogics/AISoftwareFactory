@@ -399,7 +399,9 @@ class ApiClient {
     });
   }
 
-  // Testing (see backend.api.routes.testing)
+  // Testing
+
+  /** Full test health report: summary, flaky tests, recent bugs/fixes, coverage trend */
   async getTestStatistics(_projectId?: string) {
     return this.request<{
       summary: Record<string, unknown>;
@@ -410,10 +412,12 @@ class ApiClient {
     }>('/testing/health');
   }
 
+  /** Flaky test list from the self-healing runner */
   async getTestRuns(_projectId?: string) {
     return this.request<{ flaky_tests: unknown[]; count: number }>('/testing/flaky-tests');
   }
 
+  /** Recent bugs extracted from the test health report */
   async getBugs(_filters?: { projectId?: string; status?: string; severity?: string }) {
     const data = await this.getTestStatistics();
     return (data.recent_bugs ?? []) as Array<{
@@ -427,18 +431,27 @@ class ApiClient {
     }>;
   }
 
+  /** Test file statistics derived from the health report summary */
   async getTestFiles(_projectId: string) {
-    return this.request<Array<{ name: string; tests: number; passed: number; failed: number }>>(
-      `/testing/health`
-    ).then(() => []);
+    const health = await this.getTestStatistics();
+    const execution = (health.summary as Record<string, unknown>)?.execution as Record<string, unknown> | undefined;
+    if (!execution) return [];
+    // Return a single aggregate row so the UI has something real to display
+    return [{
+      name: 'All tests',
+      tests: Number(execution.total_tests ?? 0),
+      passed: Number(execution.passed ?? 0),
+      failed: Number(execution.failed ?? 0),
+    }];
   }
 
+  /** Coverage statistics from the health report */
   async getCoverageData(_projectId: string) {
-    return this.request<{ summary: { coverage?: Record<string, unknown> } }>('/testing/health').then(
-      (h) => h.summary?.coverage ?? {}
-    );
+    const health = await this.getTestStatistics();
+    return (health.summary as Record<string, unknown>)?.coverage ?? {};
   }
 
+  /** Manually create a bug report via POST /testing/bugs */
   async createBug(data: {
     projectId: string;
     title: string;
@@ -446,14 +459,23 @@ class ApiClient {
     severity: string;
     filePath?: string;
     lineNumber?: number;
+    component?: string;
   }) {
-    return this.request<{ bug_id: string; message: string }>('/testing/detect-bugs', {
-      method: 'POST',
-      body: JSON.stringify({
-        file_path: data.filePath,
-        directory: data.projectId ? `projects/${data.projectId}` : undefined,
-      }),
-    });
+    return this.request<{ bug_id: string; title: string; severity: string; status: string; message: string }>(
+      '/testing/bugs',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          title: data.title,
+          description: data.description,
+          severity: data.severity,
+          project_id: data.projectId,
+          file_path: data.filePath,
+          line_number: data.lineNumber,
+          component: data.component,
+        }),
+      },
+    );
   }
 
   // Code Generation

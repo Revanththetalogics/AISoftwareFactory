@@ -15,6 +15,22 @@ vi.mock('@/hooks/useFactoryWebSocket', () => ({
   }),
 }));
 
+// useRealtimeSync uses useQueryClient — mock it so tests do not need QueryClientProvider
+vi.mock('@/lib/hooks/useRealtimeSync', () => ({
+  useRealtimeSync: () => {},
+}));
+
+// React Query hooks — mock stable empty data (dashboard is tested without API)
+vi.mock('@/lib/hooks/useProjects', () => ({
+  useProjects: () => ({ data: [], isLoading: false }),
+}));
+vi.mock('@/lib/hooks/useWorkflows', () => ({
+  useWorkflows: () => ({ data: [], isLoading: false }),
+}));
+vi.mock('@/lib/hooks/useAgents', () => ({
+  useAgents: () => ({ data: [], isLoading: false }),
+}));
+
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -77,21 +93,20 @@ describe('SuperEnhancedDashboardPage', () => {
   });
 
   describe('layout structure', () => {
-    it('renders 3-column layout with sidebar, main content, and right panel', () => {
+    it('renders layout with main content and right panel', () => {
       render(<DashboardPage />);
       
-      // Check for layout containers
-      expect(document.querySelector('.layout-container')).toBeInTheDocument();
-      expect(document.querySelector('.sidebar-panel')).toBeInTheDocument();
-      expect(document.querySelector('.main-content')).toBeInTheDocument();
+      // Global layout (Sidebar, TopNav) is provided by the parent layout.tsx.
+      // Dashboard page itself renders a flex wrapper, a <main> element, and a right panel aside.
+      expect(document.querySelector('main')).toBeInTheDocument();
       expect(document.querySelector('.right-panel')).toBeInTheDocument();
     });
 
     it('renders connection status bar in main content', () => {
       render(<DashboardPage />);
       
-      // Should show either connected or disconnected status
-      const statusText = screen.getByText(/Connected to factory backend|Disconnected from factory backend/);
+      // Status bar reflects DB-backed connection (copy updated from legacy "factory backend" string)
+      const statusText = screen.getByText(/Connected to database|Disconnected from factory backend/);
       expect(statusText).toBeInTheDocument();
     });
   });

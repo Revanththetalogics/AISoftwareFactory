@@ -63,9 +63,17 @@ export type WebSocketPayload =
   | LogEntryPayload
   | ConnectionStatusPayload;
 
+// Backend sends these raw message types over /ws/global
+type BackendMessageType = 'connected' | 'pong' | 'subscribed' | 'status' | 'logs' | 'error';
+
+interface BackendMessage {
+  type: BackendMessageType | string;
+  payload?: unknown;
+}
+
 class FactoryWebSocketService {
   private ws: WebSocket | null = null;
-  private url: string;
+  private baseUrl: string;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
@@ -74,8 +82,15 @@ class FactoryWebSocketService {
   private connectionListeners: Set<(connected: boolean) => void> = new Set();
 
   constructor(url?: string) {
-    // Use environment variable or default to localhost
-    this.url = url || process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:8000/ws/factory';
+    // /ws/global is the actual backend endpoint; NEXT_PUBLIC_WEBSOCKET_URL can override
+    this.baseUrl = url || process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:8000/ws/global';
+  }
+
+  private buildUrl(): string {
+    // Append JWT token as query param — backend requires ?token= for WebSocket auth
+    if (typeof window === 'undefined') return this.baseUrl;
+    const token = localStorage.getItem('aifactory_token');
+    return token ? `${this.baseUrl}?token=${encodeURIComponent(token)}` : this.baseUrl;
   }
 
   public connect(): void {
@@ -85,8 +100,9 @@ class FactoryWebSocketService {
     }
 
     try {
-      console.log(`Connecting to WebSocket: ${this.url}`);
-      this.ws = new WebSocket(this.url);
+      const url = this.buildUrl();
+      console.log(`Connecting to WebSocket: ${this.baseUrl}`);
+      this.ws = new WebSocket(url);
       
       this.ws.onopen = this.handleOpen.bind(this);
       this.ws.onmessage = this.handleMessage.bind(this);
@@ -165,38 +181,75 @@ class FactoryWebSocketService {
   private handleOpen(): void {
     console.log('WebSocket connected successfully');
     this.reconnectAttempts = 0;
-    
+
     // Start heartbeat to keep connection alive
     this.startHeartbeat();
-    
+
     // Notify connection listeners
     this.connectionListeners.forEach(listener => listener(true));
-    
-    // Send connection established message
-    this.sendMessage('CONNECTION_STATUS', {
-      connected: true,
-      latency: 0
-    } as ConnectionStatusPayload);
+
+    // Subscribe to all relevant topics on the global channel
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({
+        type: 'subscribe',
+        payload: { topics: ['pipeline', 'agents', 'workflows', 'deployments', 'logs'] },
+      }));
+    }
   }
 
   private handleMessage(event: MessageEvent): void {
     try {
-      const message: WebSocketMessage = JSON.parse(event.data);
-      
-      // Handle special system messages
-      if (message.type === 'CONNECTION_STATUS') {
-        const payload = message.payload as ConnectionStatusPayload;
-        this.connectionListeners.forEach(listener => listener(payload.connected));
+      const raw: BackendMessage = JSON.parse(event.data);
+
+      // Map backend message types to frontend WebSocketMessageType equivalents
+      let frontendType: WebSocketMessageType | null = null;
+      let payload = raw.payload ?? raw;
+
+      switch (raw.type) {
+        case 'connected':
+          // Backend confirmed connection; notify connection listeners
+          this.connectionListeners.forEach(l => l(true));
+          frontendType = 'CONNECTION_STATUS';
+          payload = { connected: true, latency: 0 } as ConnectionStatusPayload;
+          break;
+        case 'status':
+          // Project/workflow status update → treat as pipeline update
+          frontendType = 'PIPELINE_UPDATE';
+          break;
+        case 'logs':
+          // Workflow log batch → treat as log entry
+          frontendType = 'LOG_ENTRY';
+          break;
+        case 'pong':
+          // Keep-alive response; no dispatch needed
+          return;
+        case 'subscribed':
+          // Subscription confirmed; no dispatch needed
+          return;
+        case 'error':
+          console.error('WebSocket server error:', (raw.payload as Record<string, unknown>)?.message ?? raw.payload);
+          return;
+        case 'CONNECTION_STATUS':
+          // Legacy/self-originated message — handle normally
+          frontendType = 'CONNECTION_STATUS';
+          break;
+        default:
+          // Forward any other types that happen to match frontend types directly
+          if (['PIPELINE_UPDATE','AGENT_STATUS','WORKFLOW_STEP','SYSTEM_METRIC','LOG_ENTRY','FACTORY_RESET'].includes(raw.type)) {
+            frontendType = raw.type as WebSocketMessageType;
+          } else {
+            return;
+          }
       }
-      
-      // Route to appropriate listeners
-      const listeners = this.listeners.get(message.type);
+
+      // Dispatch to registered listeners
+      const listeners = this.listeners.get(frontendType);
       if (listeners) {
         listeners.forEach(listener => {
           try {
-            listener(message.payload);
+            listener(payload);
           } catch (error) {
-            console.error(`Error in WebSocket listener for ${message.type}:`, error);
+            console.error(`Error in WebSocket listener for ${frontendType}:`, error);
           }
         });
       }
@@ -253,10 +306,8 @@ class FactoryWebSocketService {
 
     this.heartbeatInterval = setInterval(() => {
       if (this.ws?.readyState === WebSocket.OPEN) {
-        // Send ping message to keep connection alive
-        this.sendMessage('CONNECTION_STATUS', {
-          connected: true
-        } as ConnectionStatusPayload);
+        // Backend expects a "ping" text frame to keep the connection alive
+        this.ws.send(JSON.stringify({ type: 'ping' }));
       }
     }, 30000); // 30 seconds
   }

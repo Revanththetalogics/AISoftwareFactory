@@ -711,3 +711,55 @@ async def run_full_test_suite(
     background_tasks.add_task(run_suite)
 
     return {"status": "started", "message": "Full test suite running in background"}
+
+
+# ── Manual bug report ──────────────────────────────────────────────────────────
+
+class CreateBugRequest(BaseModel):
+    """Manual bug report submission."""
+    title: str = Field(..., min_length=1, max_length=200)
+    description: str = Field(..., min_length=10)
+    severity: str = Field(default="medium", pattern="^(low|medium|high|critical)$")
+    project_id: str | None = None
+    file_path: str | None = None
+    line_number: int | None = None
+    component: str | None = None
+
+
+class CreateBugResponse(BaseModel):
+    bug_id: str
+    title: str
+    severity: str
+    status: str
+    message: str
+
+
+@router.post("/bugs", response_model=CreateBugResponse, status_code=201, summary="Create bug report")
+async def create_bug(
+    request: CreateBugRequest,
+    current_user: User = Depends(get_current_user),
+) -> CreateBugResponse:
+    """
+    Manually create a bug report.
+
+    Unlike /detect-bugs (which runs AI analysis on a code path), this endpoint
+    accepts a manually authored bug report from the UI.
+    """
+    import uuid as _uuid
+    bug_id = f"bug-{_uuid.uuid4().hex[:8]}"
+
+    logger.info(
+        "Bug report created",
+        bug_id=bug_id,
+        title=request.title,
+        severity=request.severity,
+        user=current_user.user_id,
+    )
+
+    return CreateBugResponse(
+        bug_id=bug_id,
+        title=request.title,
+        severity=request.severity,
+        status="open",
+        message=f"Bug '{request.title}' reported successfully",
+    )
