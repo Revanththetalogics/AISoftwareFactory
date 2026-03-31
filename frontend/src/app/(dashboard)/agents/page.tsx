@@ -22,6 +22,7 @@ import { AgentCreator } from '@/components/agents/AgentCreator';
 import { CrewCreator } from '@/components/agents/CrewCreator';
 import { useCustomAgents, useCustomCrews, useDeleteAgent, useDeleteCrew } from '@/lib/hooks';
 import { useAgents } from '@/lib/hooks/useAgents';
+import type { Agent } from '@/lib/types';
 import {
   AreaChart,
   Area,
@@ -292,14 +293,25 @@ export default function AgentsPage() {
     {
       id: 'tasks-completed',
       label: 'Tasks Completed',
-      value: agents.reduce((sum, a) => sum + a.metrics.tasksCompleted, 0),
+      value: agents.reduce((sum, a) => {
+        const m = (a as Agent & { metrics?: { tasksCompleted?: number } }).metrics;
+        return sum + (m?.tasksCompleted ?? 0);
+      }, 0),
       icon: Target,
       delta: { value: 18.2, direction: 'up' },
     },
     {
       id: 'avg-success',
       label: 'Avg Success Rate',
-      value: `${(agents.reduce((sum, a) => sum + a.metrics.successRate, 0) / agents.length).toFixed(1)}%`,
+      value:
+        agents.length === 0
+          ? '0%'
+          : `${(
+              agents.reduce((sum, a) => {
+                const m = (a as Agent & { metrics?: { successRate?: number } }).metrics;
+                return sum + (m?.successRate ?? 0);
+              }, 0) / agents.length
+            ).toFixed(1)}%`,
       icon: TrendingUp,
       delta: { value: 2.1, direction: 'up' },
     },

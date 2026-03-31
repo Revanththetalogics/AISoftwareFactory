@@ -26,6 +26,9 @@ export interface Agent {
 export interface Workflow {
   workflow_id: string;
   project_id: string;
+  /** Display name when returned from API */
+  name?: string;
+  description?: string;
   status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
   current_phase?: string;
   progress_percent: number;

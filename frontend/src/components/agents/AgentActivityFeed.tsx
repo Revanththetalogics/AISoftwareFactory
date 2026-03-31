@@ -78,7 +78,6 @@ function ActivityItem({ activity, isLatest }: ActivityItemProps) {
   const StatusIcon = status.icon;
 
   const timeAgo = (timestamp: string) => {
-    // eslint-disable-next-line react-hooks/purity -- Time display requires current time
     const now = typeof window !== 'undefined' ? Date.now() : 0;
     const seconds = Math.floor((now - new Date(timestamp).getTime()) / 1000);
     if (seconds < 60) return 'just now';
@@ -207,7 +206,6 @@ export function AgentActivityFeed({
         timestamp: new Date(Date.now() - 1000 * 30).toISOString(),
       },
     ];
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- Initial mock data load
     setActivities(mockActivities);
   }, []);
 
@@ -215,7 +213,6 @@ export function AgentActivityFeed({
   useEffect(() => {
     if (lastMessage?.type === 'agent_status') {
       const activity = lastMessage.data as AgentActivity;
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Handling external SSE events
       setActivities(prev => {
         // Update existing or add new
         const exists = prev.find(a => a.id === activity.id);
@@ -283,7 +280,6 @@ export function AgentActivityFeedCompact({ className }: { className?: string }) 
   useEffect(() => {
     if (lastMessage?.type === 'agent_status') {
       const activity = lastMessage.data as AgentActivity;
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Handling external SSE events
       setActivities(prev => [activity, ...prev].slice(0, 5));
     }
   }, [lastMessage]);

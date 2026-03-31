@@ -399,6 +399,63 @@ class ApiClient {
     });
   }
 
+  // Testing (see backend.api.routes.testing)
+  async getTestStatistics(_projectId?: string) {
+    return this.request<{
+      summary: Record<string, unknown>;
+      flaky_tests: unknown[];
+      recent_bugs: unknown[];
+      recent_fixes: unknown[];
+      coverage_trend: unknown[];
+    }>('/testing/health');
+  }
+
+  async getTestRuns(_projectId?: string) {
+    return this.request<{ flaky_tests: unknown[]; count: number }>('/testing/flaky-tests');
+  }
+
+  async getBugs(_filters?: { projectId?: string; status?: string; severity?: string }) {
+    const data = await this.getTestStatistics();
+    return (data.recent_bugs ?? []) as Array<{
+      id: string;
+      title: string;
+      severity: string;
+      status: string;
+      component: string;
+      reportedAt: Date;
+      aiFixAvailable?: boolean;
+    }>;
+  }
+
+  async getTestFiles(_projectId: string) {
+    return this.request<Array<{ name: string; tests: number; passed: number; failed: number }>>(
+      `/testing/health`
+    ).then(() => []);
+  }
+
+  async getCoverageData(_projectId: string) {
+    return this.request<{ summary: { coverage?: Record<string, unknown> } }>('/testing/health').then(
+      (h) => h.summary?.coverage ?? {}
+    );
+  }
+
+  async createBug(data: {
+    projectId: string;
+    title: string;
+    description: string;
+    severity: string;
+    filePath?: string;
+    lineNumber?: number;
+  }) {
+    return this.request<{ bug_id: string; message: string }>('/testing/detect-bugs', {
+      method: 'POST',
+      body: JSON.stringify({
+        file_path: data.filePath,
+        directory: data.projectId ? `projects/${data.projectId}` : undefined,
+      }),
+    });
+  }
+
   // Code Generation
   async generateCode(data: {
     prompt: string;

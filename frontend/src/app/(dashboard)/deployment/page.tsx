@@ -161,9 +161,14 @@ export default function DeploymentPage() {
   const [selectedEnvironment, setSelectedEnvironment] = useState<DeploymentEnvironment | 'all'>('all');
 
   // Use real deployments if available, otherwise use mock for display
-  const deployments = dbDeployments || mockDeployments;
-  
-  const filteredDeployments = deployments.filter((dep: any) => dep.environment === selectedEnvironment);
+  const deployments = dbDeployments ?? mockDeployments;
+
+  const activeDeployment =
+    selectedEnvironment === 'all'
+      ? null
+      : (deployments as typeof mockDeployments).find((d) => d.environment === selectedEnvironment) ?? null;
+
+  const filteredDeployments = deployments.filter((dep: { environment: string }) => dep.environment === selectedEnvironment);
 
   return (
     <motion.div
@@ -193,10 +198,14 @@ export default function DeploymentPage() {
       <motion.div variants={itemVariants} className="grid gap-4 md:grid-cols-3">
         {deployments.map((deployment) => (
           <button
-            key={deployment.id}
-            onClick={() => setSelectedEnv(deployment.environment)}
+            key={
+              'deployment_id' in deployment
+                ? deployment.deployment_id
+                : (deployment as (typeof mockDeployments)[number]).id
+            }
+            onClick={() => setSelectedEnvironment(deployment.environment as DeploymentEnvironment)}
             className={`text-left p-4 rounded-xl border transition-all ${
-              selectedEnv === deployment.environment
+              selectedEnvironment === deployment.environment
                 ? 'border-state-running bg-state-running-dim'
                 : 'border-border-default bg-bg-panel hover:border-emphasis'
             }`}
@@ -229,9 +238,11 @@ export default function DeploymentPage() {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-text-secondary">Commit</span>
-                <span className="font-mono text-text-code">{deployment.commitHash}</span>
+                <span className="font-mono text-text-code">
+                  {'commitHash' in deployment ? deployment.commitHash : '—'}
+                </span>
               </div>
-              {deployment.deployedAt && (
+              {'deployedAt' in deployment && deployment.deployedAt && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-text-secondary">Deployed</span>
                   <span className="text-text-primary">

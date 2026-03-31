@@ -47,6 +47,7 @@ import { useTestStatistics, useBugs } from '@/lib/hooks/useTesting';
 // Mock test data
 const mockTestStats = {
   total: 1248,
+  total_tests: 1248,
   passed: 1189,
   failed: 32,
   skipped: 27,
@@ -103,6 +104,8 @@ const mockBugs = [
     aiFixAvailable: true,
   },
 ];
+
+type BugRow = (typeof mockBugs)[number];
 
 // Mock test files
 const testFiles = [
@@ -190,10 +193,10 @@ export default function TestingPage() {
   const { data: bugsData, isLoading: bugsLoading } = useBugs();
 
   // Use real data if available, otherwise use mock for display
-  const testStats = testStatsData?.summary || mockTestStats;
+  const testStats = (testStatsData?.summary || mockTestStats) as typeof mockTestStats;
   const bugs = bugsData || mockBugs;
 
-  const filteredBugs = bugs.filter((bug: any) => {
+  const filteredBugs = (bugs as BugRow[]).filter((bug) => {
     const matchesSearch =
       bug.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       bug.id.toLowerCase().includes(searchQuery.toLowerCase());
@@ -484,7 +487,7 @@ export default function TestingPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {filteredBugs.map((bug) => (
+                  {filteredBugs.map((bug: BugRow) => (
                     <div
                       key={bug.id}
                       className="flex items-center justify-between p-4 rounded-lg border border-border-subtle bg-bg-elevated hover:border-emphasis transition-all"

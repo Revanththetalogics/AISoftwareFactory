@@ -91,13 +91,11 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
 
   const { isConnected, lastMessage } = useEventStream();
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (lastMessage) {
       handleMessage(lastMessage);
     }
   }, [lastMessage, handleMessage]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const value: RealtimeContextType = {
     isConnected,

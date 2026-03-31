@@ -207,7 +207,6 @@ function MessageFlow({ message, agents }: MessageFlowProps) {
   
   if (!fromAgent || !toAgent) return null;
 
-  // eslint-disable-next-line react-hooks/purity -- Time comparison for UI highlighting
   const isRecent = new Date(message.timestamp).getTime() > Date.now() - 1000 * 60 * 2;
 
   return (
@@ -242,7 +241,6 @@ export function AgentCollaborationView({ className }: AgentCollaborationViewProp
   useEffect(() => {
     if (lastMessage?.type === 'agent_message') {
       const msg = lastMessage.data as Message;
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Handling external SSE events
       setMessages(prev => [msg, ...prev].slice(0, 50));
        
       setActiveAgents([msg.from, msg.to]);

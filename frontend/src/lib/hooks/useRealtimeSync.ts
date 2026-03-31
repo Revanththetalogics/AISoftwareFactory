@@ -2,38 +2,40 @@
 
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useFactoryWebSocket } from '@/hooks/useFactoryWebSocket';
+import { factoryWebSocket } from '@/services/websocket.service';
 
+/**
+ * Subscribes to factory WebSocket events and invalidates React Query caches.
+ * Uses the shared {@link factoryWebSocket} client (same as useFactoryWebSocket).
+ */
 export function useRealtimeSync() {
   const queryClient = useQueryClient();
-  const { subscribe } = useFactoryWebSocket();
 
   useEffect(() => {
+    factoryWebSocket.connect();
+
     const unsubscribers = [
-      subscribe('PIPELINE_UPDATE', () => {
+      factoryWebSocket.subscribe('PIPELINE_UPDATE', () => {
         queryClient.invalidateQueries({ queryKey: ['projects'] });
         queryClient.invalidateQueries({ queryKey: ['workflows'] });
       }),
-      
-      subscribe('AGENT_STATUS', () => {
+
+      factoryWebSocket.subscribe('AGENT_STATUS', () => {
         queryClient.invalidateQueries({ queryKey: ['agents'] });
       }),
-      
-      subscribe('WORKFLOW_STEP', () => {
+
+      factoryWebSocket.subscribe('WORKFLOW_STEP', () => {
         queryClient.invalidateQueries({ queryKey: ['workflows'] });
-      }),
-      
-      subscribe('DEPLOYMENT_UPDATE', () => {
         queryClient.invalidateQueries({ queryKey: ['deployments'] });
       }),
-      
-      subscribe('TEST_COMPLETE', () => {
+
+      factoryWebSocket.subscribe('LOG_ENTRY', () => {
         queryClient.invalidateQueries({ queryKey: ['testing'] });
       }),
     ];
 
     return () => {
-      unsubscribers.forEach(unsub => unsub());
+      unsubscribers.forEach((unsub) => unsub());
     };
-  }, [subscribe, queryClient]);
+  }, [queryClient]);
 }

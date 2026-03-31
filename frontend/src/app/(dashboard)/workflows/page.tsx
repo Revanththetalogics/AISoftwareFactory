@@ -245,7 +245,7 @@ export default function WorkflowsPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const activeWorkflow = workflows?.find((w: any) => w.id === selectedWorkflow);
+  const activeWorkflow = workflows?.find((w: { workflow_id: string }) => w.workflow_id === selectedWorkflow);
 
   const statusCounts = (workflows || []).reduce((acc: any, wf: any) => {
     const status = wf.status || 'pending';
@@ -352,10 +352,10 @@ export default function WorkflowsPage() {
             ) : (
               filteredWorkflows.map((workflow) => (
                 <button
-                  key={workflow.id}
-                  onClick={() => setSelectedWorkflow(workflow.id)}
+                  key={workflow.workflow_id}
+                  onClick={() => setSelectedWorkflow(workflow.workflow_id)}
                   className={`w-full text-left p-3 rounded-lg border transition-all ${
-                    selectedWorkflow === workflow.id
+                    selectedWorkflow === workflow.workflow_id
                       ? 'border-state-running bg-state-running-dim'
                       : 'border-border-subtle bg-bg-elevated hover:border-emphasis'
                   }`}
@@ -363,7 +363,9 @@ export default function WorkflowsPage() {
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <Workflow className="h-4 w-4 text-text-secondary" />
-                      <span className="font-medium text-text-primary text-sm">{workflow.name}</span>
+                      <span className="font-medium text-text-primary text-sm">
+                        {workflow.name ?? workflow.workflow_id}
+                      </span>
                     </div>
                     <Badge variant="outline" className={`text-xs ${getStatusColor(workflow.status)}`}>
                       {getStatusIcon(workflow.status)}
@@ -376,7 +378,8 @@ export default function WorkflowsPage() {
                 </div>
                 <Progress value={50} className="h-1 mt-2 bg-bg-base" />
               </button>
-            ))}
+              ))
+            )}
           </CardContent>
         </Card>
 
@@ -390,7 +393,9 @@ export default function WorkflowsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-3 mb-2">
-                        <h2 className="text-xl font-bold text-text-primary">{activeWorkflow.name}</h2>
+                        <h2 className="text-xl font-bold text-text-primary">
+                          {activeWorkflow.name ?? activeWorkflow.workflow_id}
+                        </h2>
                         <Badge variant="outline" className={getStatusColor(activeWorkflow.status)}>
                           {getStatusIcon(activeWorkflow.status)}
                           <span className="ml-1 capitalize">{activeWorkflow.status}</span>
