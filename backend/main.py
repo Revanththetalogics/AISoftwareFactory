@@ -460,7 +460,7 @@ async def _startup_logic() -> None:
 
     logger.info("Application startup complete")
 
-def _shutdown_logic() -> None:
+async def _shutdown_logic() -> None:
     """
     Handle graceful application shutdown.
 

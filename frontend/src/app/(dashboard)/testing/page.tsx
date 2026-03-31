@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
+import { BugReportDialog } from '@/components/testing/BugReportDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   PieChart,
@@ -41,9 +42,10 @@ import {
   AreaChart,
   Area,
 } from 'recharts';
+import { useTestStatistics, useBugs } from '@/lib/hooks/useTesting';
 
 // Mock test data
-const testStats = {
+const mockTestStats = {
   total: 1248,
   passed: 1189,
   failed: 32,
@@ -53,7 +55,7 @@ const testStats = {
 };
 
 // Mock bug data
-const bugs = [
+const mockBugs = [
   {
     id: 'BUG-001',
     title: 'Memory leak in WebSocket connection handler',
@@ -183,7 +185,15 @@ export default function TestingPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSeverity, setSelectedSeverity] = useState<string | null>(null);
 
-  const filteredBugs = bugs.filter((bug) => {
+  // Fetch real testing data from database
+  const { data: testStatsData, isLoading: statsLoading } = useTestStatistics();
+  const { data: bugsData, isLoading: bugsLoading } = useBugs();
+
+  // Use real data if available, otherwise use mock for display
+  const testStats = testStatsData?.summary || mockTestStats;
+  const bugs = bugsData || mockBugs;
+
+  const filteredBugs = bugs.filter((bug: any) => {
     const matchesSearch =
       bug.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       bug.id.toLowerCase().includes(searchQuery.toLowerCase());
@@ -201,12 +211,13 @@ export default function TestingPage() {
       {/* Header */}
       <motion.div variants={itemVariants} className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary">Testing & QA</h1>
-          <p className="mt-1 text-text-secondary">
-            AI-powered testing, bug detection, and quality assurance
+          <h1 className="text-2xl font-bold text-text-primary">Testing & QA</h1>
+          <p className="text-text-secondary">
+            {statsLoading ? 'Loading test data...' : `${testStats.total_tests || 0} tests tracked`}
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <BugReportDialog />
           <Button variant="outline" className="border-border-default text-text-secondary">
             <RotateCcw className="mr-2 h-4 w-4" />
             Regenerate Tests

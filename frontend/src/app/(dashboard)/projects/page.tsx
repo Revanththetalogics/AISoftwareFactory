@@ -36,8 +36,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { ProjectEditDialog } from '@/components/project/ProjectEditDialog';
+import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog';
+import { BulkActions } from '@/components/shared/BulkActions';
 import { useState } from 'react';
 import { useProjects, useCreateProject, useDeleteProject, useExecuteWorkflow } from '@/lib/hooks';
+import { exportToCSV, exportToJSON } from '@/lib/utils/export';
+import { debounce } from '@/lib/utils/performance';
 import { toast } from 'sonner';
 import type { Project } from '@/lib/types';
 
@@ -94,11 +99,34 @@ export default function ProjectsPage() {
   const [newProjectDescription, setNewProjectDescription] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [executingProjectId, setExecutingProjectId] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const { data: projects = [], isLoading } = useProjects();
   const createProject = useCreateProject();
   const deleteProject = useDeleteProject();
   const executeWorkflow = useExecuteWorkflow();
+
+  const handleBulkDelete = async () => {
+    try {
+      await Promise.all(selectedIds.map(id => deleteProject.mutateAsync(id)));
+      toast.success(`${selectedIds.length} projects deleted`);
+      setSelectedIds([]);
+    } catch {
+      toast.error('Failed to delete projects');
+    }
+  };
+
+  const handleBulkExport = () => {
+    const selectedProjects = projects.filter(p => selectedIds.includes(p.id));
+    exportToCSV(selectedProjects, 'projects.csv');
+    toast.success('Projects exported');
+  };
+
+  const debouncedSearch = debounce((query: string) => {
+    setSearchQuery(query);
+  }, 300);
 
   const filteredProjects = projects.filter(
     (p) =>
@@ -126,11 +154,15 @@ export default function ProjectsPage() {
     }
   };
 
-  const handleDeleteProject = async (id: string) => {
+  const handleDeleteProject = async () => {
+    if (!projectToDelete) return;
+    
     try {
-      await deleteProject.mutateAsync(id);
+      await deleteProject.mutateAsync(projectToDelete);
       toast.success('Project deleted successfully');
       setSelectedProject(null);
+      setDeleteConfirmOpen(false);
+      setProjectToDelete(null);
     } catch {
       toast.error('Failed to delete project');
     }
@@ -224,12 +256,20 @@ export default function ProjectsPage() {
 
       {/* Filters */}
       <motion.div variants={itemVariants} className="flex items-center gap-4">
+        <BulkActions
+          selectedIds={selectedIds}
+          totalCount={filteredProjects.length}
+          onSelectAll={() => setSelectedIds(filteredProjects.map(p => p.id))}
+          onClearSelection={() => setSelectedIds([])}
+          onDelete={handleBulkDelete}
+          onExport={handleBulkExport}
+        />
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
           <Input
             placeholder="Search projects..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            defaultValue={searchQuery}
+            onChange={(e) => debouncedSearch(e.target.value)}
             className="border-border-default bg-bg-input pl-10 text-text-primary placeholder:text-text-tertiary"
           />
         </div>
@@ -273,12 +313,24 @@ export default function ProjectsPage() {
                     <DropdownMenuItem className="text-text-secondary focus:bg-bg-hover">
                       View Details
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-text-secondary focus:bg-bg-hover">
-                      Edit Project
-                    </DropdownMenuItem>
+                    <ProjectEditDialog 
+                      project={project}
+                      trigger={
+                        <DropdownMenuItem 
+                          className="text-text-secondary focus:bg-bg-hover"
+                          onSelect={(e) => e.preventDefault()}
+                        >
+                          Edit Project
+                        </DropdownMenuItem>
+                      }
+                    />
                     <DropdownMenuItem 
                       className="text-state-error focus:bg-bg-hover"
-                      onClick={() => handleDeleteProject(project.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setProjectToDelete(project.id);
+                        setDeleteConfirmOpen(true);
+                      }}
                     >
                       Delete
                     </DropdownMenuItem>
@@ -408,6 +460,16 @@ export default function ProjectsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        onConfirm={handleDeleteProject}
+        title="Delete Project?"
+        description="This will permanently delete this project and all associated data."
+        entityName={projects.find(p => p.id === projectToDelete)?.name}
+      />
     </motion.div>
   );
 }

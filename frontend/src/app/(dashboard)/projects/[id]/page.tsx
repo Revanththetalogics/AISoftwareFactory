@@ -22,6 +22,9 @@ import {
   Activity,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { useProject } from '@/lib/hooks/useProjects';
+import { useWorkflow } from '@/lib/hooks/useWorkflows';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -45,17 +48,7 @@ const projectPhases = [
   { id: 'complete', name: 'Complete', icon: CheckCircle2 },
 ];
 
-// Mock project data
-const mockProject = {
-  id: 'proj-001',
-  name: 'SaaS Analytics Dashboard',
-  description: 'AI-powered analytics platform with real-time data visualization and predictive insights.',
-  status: 'active',
-  currentPhase: 'implementation',
-  progress: 65,
-  createdAt: '2024-01-15T09:00:00',
-  estimatedCompletion: '2024-02-01T18:00:00',
-};
+// Project phases will be mapped from real data
 
 // Mock timeline phases
 const timelinePhases: TimelinePhase[] = [
@@ -271,12 +264,39 @@ const itemVariants = {
 };
 
 export default function ProjectDetailPage() {
+  const params = useParams();
+  const projectId = params.id as string;
+  
+  // Fetch real project data from database
+  const { data: project, isLoading, error } = useProject(projectId);
+  
   const [isWorkflowRunning, setIsWorkflowRunning] = useState(true);
-  // Project ID available via useParams().id when needed
+  
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <span className="ml-2 text-text-secondary">Loading project...</span>
+      </div>
+    );
+  }
+  
+  // Show error state
+  if (error || !project) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <p className="text-error mb-4">Project not found or error loading data</p>
+        <Link href="/projects">
+          <Button variant="outline">Back to Projects</Button>
+        </Link>
+      </div>
+    );
+  }
 
   const getPhaseStatus = (phaseId: string) => {
     const phaseIndex = projectPhases.findIndex((p) => p.id === phaseId);
-    const currentIndex = projectPhases.findIndex((p) => p.id === mockProject.currentPhase);
+    const currentIndex = projectPhases.findIndex((p) => p.id === project.current_phase);
     
     if (phaseIndex < currentIndex) return 'completed';
     if (phaseIndex === currentIndex) return 'running';
@@ -310,7 +330,7 @@ export default function ProjectDetailPage() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
-            <h1 className="text-2xl font-bold text-text-primary">{mockProject.name}</h1>
+            <h1 className="text-2xl font-bold text-text-primary">{project.name}</h1>
             <Badge
               variant="outline"
               className="bg-state-success-dim text-state-success border-state-success/30"
@@ -318,7 +338,7 @@ export default function ProjectDetailPage() {
               Active
             </Badge>
           </div>
-          <p className="text-text-secondary pl-10">{mockProject.description}</p>
+          <p className="text-text-secondary pl-10">{project.description || 'No description available'}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -358,23 +378,23 @@ export default function ProjectDetailPage() {
                 <div className="flex items-center gap-3 mb-1">
                   <h2 className="text-lg font-semibold text-text-primary">Project Progress</h2>
                   <span className="text-2xl font-bold text-state-running font-mono">
-                    {mockProject.progress}%
+                    {project.progress_percent || 0}%
                   </span>
                 </div>
                 <p className="text-sm text-text-secondary">
-                  Current Phase: <span className="text-state-running font-medium capitalize">{mockProject.currentPhase}</span>
+                  Current Phase: <span className="text-state-running font-medium capitalize">{project.current_phase || 'Not started'}</span>
                   <span className="mx-2">•</span>
                   <span className="text-text-tertiary">
-                    Est. completion: {new Date(mockProject.estimatedCompletion).toLocaleDateString()}
+                    Status: {project.status}
                   </span>
                 </p>
               </div>
               <div className="flex items-center gap-2 text-sm text-text-secondary">
                 <Clock className="h-4 w-4" />
-                <span>Started {new Date(mockProject.createdAt).toLocaleDateString()}</span>
+                <span>Created {new Date(project.created_at).toLocaleDateString()}</span>
               </div>
             </div>
-            <Progress value={mockProject.progress} className="h-3 bg-bg-base" />
+            <Progress value={project.progress_percent || 0} className="h-3 bg-bg-base" />
           </CardContent>
         </Card>
       </motion.div>

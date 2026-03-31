@@ -26,6 +26,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { type DeploymentEnvironment, type DeploymentStatus } from '@/components/system/deployment-status-card';
+import { useDeployments } from '@/lib/hooks/useDeployments';
+import { DeploymentCreateDialog } from '@/components/deployment/DeploymentCreateDialog';
 import {
   AreaChart,
   Area,
@@ -36,8 +38,8 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-// Mock deployment data
-const deployments = [
+// Deployment data will be fetched from database
+const mockDeployments = [
   {
     id: 'dep-001',
     environment: 'production' as DeploymentEnvironment,
@@ -153,9 +155,15 @@ const getStatusColor = (status: string) => {
 };
 
 export default function DeploymentPage() {
-  const [selectedEnv, setSelectedEnv] = useState<DeploymentEnvironment>('production');
+  // Fetch real deployments from database
+  const { data: dbDeployments, isLoading, error } = useDeployments();
+  
+  const [selectedEnvironment, setSelectedEnvironment] = useState<DeploymentEnvironment | 'all'>('all');
 
-  const activeDeployment = deployments.find((d) => d.environment === selectedEnv);
+  // Use real deployments if available, otherwise use mock for display
+  const deployments = dbDeployments || mockDeployments;
+  
+  const filteredDeployments = deployments.filter((dep: any) => dep.environment === selectedEnvironment);
 
   return (
     <motion.div
@@ -167,9 +175,9 @@ export default function DeploymentPage() {
       {/* Header */}
       <motion.div variants={itemVariants} className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary">Deployment</h1>
-          <p className="mt-1 text-text-secondary">
-            Manage deployments across environments
+          <h1 className="text-2xl font-bold text-text-primary">Deployments</h1>
+          <p className="text-text-secondary">
+            {isLoading ? 'Loading deployments...' : `${deployments.length} deployments tracked`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -177,10 +185,7 @@ export default function DeploymentPage() {
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
-          <Button variant="ai-action">
-            <Rocket className="mr-2 h-4 w-4" />
-            Deploy
-          </Button>
+          <DeploymentCreateDialog />
         </div>
       </motion.div>
 

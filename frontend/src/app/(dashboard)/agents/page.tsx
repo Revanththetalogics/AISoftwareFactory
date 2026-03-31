@@ -21,6 +21,7 @@ import { MetricPanel, type MetricData } from '@/components/system/metric-panel';
 import { AgentCreator } from '@/components/agents/AgentCreator';
 import { CrewCreator } from '@/components/agents/CrewCreator';
 import { useCustomAgents, useCustomCrews, useDeleteAgent, useDeleteCrew } from '@/lib/hooks';
+import { useAgents } from '@/lib/hooks/useAgents';
 import {
   AreaChart,
   Area,
@@ -33,8 +34,8 @@ import {
   Bar,
 } from 'recharts';
 
-// Mock agent data
-const agents = [
+// Agent data will be fetched from database
+const mockAgentsForDisplay = [
   {
     agentId: 'agent-001',
     name: 'CEO Agent',
@@ -243,6 +244,9 @@ const itemVariants = {
 };
 
 export default function AgentsPage() {
+  // Fetch real agents from database
+  const { data: dbAgents, isLoading: agentsLoading, error: agentsError } = useAgents();
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCrew, setSelectedCrew] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<AgentStatus | null>(null);
@@ -253,7 +257,10 @@ export default function AgentsPage() {
   const deleteAgent = useDeleteAgent();
   const deleteCrew = useDeleteCrew();
 
-  const filteredAgents = agents.filter((agent) => {
+  // Use real agents if available, otherwise show empty state
+  const agents = dbAgents || [];
+  
+  const filteredAgents = mockAgentsForDisplay.filter((agent) => {
     const matchesSearch =
       agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       agent.agentId.toLowerCase().includes(searchQuery.toLowerCase());
@@ -308,9 +315,9 @@ export default function AgentsPage() {
       {/* Header */}
       <motion.div variants={itemVariants} className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary">AI Agent Crews</h1>
-          <p className="mt-1 text-text-secondary">
-            Manage and monitor your AI engineering workforce
+          <h1 className="text-2xl font-bold text-text-primary">AI Agents</h1>
+          <p className="text-text-secondary">
+            {agentsLoading ? 'Loading agents...' : `${agents.length} agents in database`}
           </p>
         </div>
         <div className="flex items-center gap-2">

@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Wifi, WifiOff } from 'lucide-react';
+import { Search, Settings, User, Wifi, WifiOff } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ThemeToggle, UserProfile } from './user-profile';
 import { NotificationCenter } from './notification-center';
+import { ThemeToggle, UserProfile } from './user-profile';
 import { useRealtime } from './realtime-provider';
 
 export function TopNav() {

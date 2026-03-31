@@ -13,9 +13,21 @@ import { LiveLogConsole, type LiveLogEntry, type LogLevel } from '@/components/f
 import { SystemHealthMonitor, DEFAULT_SYSTEM_METRICS, type SystemMetric } from '@/components/factory/SystemHealthMonitor';
 import { useFactoryState } from '@/hooks/useFactoryState';
 import { useFactoryWebSocket } from '@/hooks/useFactoryWebSocket';
+import { useRealtimeSync } from '@/lib/hooks/useRealtimeSync';
+import { useProjects } from '@/lib/hooks/useProjects';
+import { useWorkflows } from '@/lib/hooks/useWorkflows';
+import { useAgents } from '@/lib/hooks/useAgents';
 import { cn } from '@/lib/utils';
 
 export default function SuperEnhancedDashboardPage() {
+  useRealtimeSync();
+
+  // Fetch real data from API
+  const { data: projects = [], isLoading: projectsLoading } = useProjects();
+  const { data: workflows = [], isLoading: workflowsLoading } = useWorkflows();
+  const { data: agents = [], isLoading: agentsLoading } = useAgents();
+  
+  // Keep factory state for UI interactions (will be removed in future refactor)
   const { state, dispatch, actions } = useFactoryState(); // Get both dispatch and actions
   const [isPlaying, setIsPlaying] = useState(true);
   const [agentView, setAgentView] = useState<'grid' | 'graph'>('grid');
@@ -183,25 +195,25 @@ export default function SuperEnhancedDashboardPage() {
         {/* Connection Status Bar */}
         <div className={cn(
           "flex items-center justify-between px-6 py-2 text-sm border-b border-border",
-          isConnected() 
+          (!projectsLoading && !workflowsLoading && !agentsLoading)
             ? "bg-success/10 text-success" 
-            : "bg-error/10 text-error"
+            : "bg-warning/10 text-warning"
         )}>
           <div className="flex items-center gap-2">
-            {isConnected() ? (
+            {(!projectsLoading && !workflowsLoading && !agentsLoading) ? (
               <>
                 <Wifi className="w-4 h-4" />
-                <span>Connected to factory backend</span>
+                <span>Connected to database - {projects?.length || 0} projects, {workflows?.length || 0} workflows, {agents?.length || 0} agents</span>
               </>
             ) : (
               <>
                 <WifiOff className="w-4 h-4" />
-                <span>Disconnected from factory backend</span>
+                <span>Loading data from database...</span>
               </>
             )}
           </div>
           <div className="text-xs text-text-secondary">
-            {isConnected() ? 'Real-time updates enabled' : 'Using mock data'}
+            {(!projectsLoading && !workflowsLoading && !agentsLoading) ? 'Real database connected' : 'Fetching real data...'}
           </div>
         </div>
         <div className="h-full flex flex-col">

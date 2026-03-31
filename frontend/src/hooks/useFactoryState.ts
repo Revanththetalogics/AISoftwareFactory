@@ -378,27 +378,8 @@ export function useFactoryState() {
   };
 }
 
-// Mock WebSocket simulation hook
+// Hook for real-time updates
 export function useFactoryWebSocket(factoryActions: ReturnType<typeof useFactoryState>['actions']) {
-  useEffect(() => {
-    // Simulate real-time updates
-    const interval = setInterval(() => {
-      // Randomly update agent statuses
-      const agents = ['1', '2', '3', '4', '5', '6'];
-      const statuses: AgentStatus[] = ['idle', 'running', 'success', 'error'];
-      const randomAgent = agents[Math.floor(Math.random() * agents.length)];
-      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-      
-      factoryActions.updateAgentStatus(randomAgent, randomStatus);
-      
-      // Update system metrics
-      const cpu = Math.floor(Math.random() * 30) + 30;
-      const memory = Math.floor(Math.random() * 40) + 40;
-      const storage = Math.floor(Math.random() * 30) + 20;
-      
-      factoryActions.updateSystemMetrics(cpu, memory, storage);
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [factoryActions]);
+// Real-time updates are now handled by useFactoryWebSocket hook
+// Mock WebSocket simulator removed - using real backend WebSocket connection
 }

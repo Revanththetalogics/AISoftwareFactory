@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useWorkflows } from '@/lib/hooks/useWorkflows';
 import { ExecutionTimeline, type TimelinePhase } from '@/components/system/execution-timeline';
 import { MiniLogViewer } from '@/components/system/log-stream';
 import type { LogEntry, LogLevel } from '@/components/system/log-stream';
@@ -41,71 +42,7 @@ import {
   Bar,
 } from 'recharts';
 
-// Mock workflow data
-const workflows = [
-  {
-    id: 'wf-001',
-    name: 'SaaS Platform Build',
-    description: 'Full-stack application development pipeline',
-    status: 'running',
-    progress: 65,
-    currentPhase: 'Implementation',
-    startedAt: new Date('2024-01-15T09:00:00'),
-    estimatedDuration: '48h',
-    projectId: 'proj-001',
-    projectName: 'SaaS Analytics Dashboard',
-  },
-  {
-    id: 'wf-002',
-    name: 'API Development',
-    description: 'RESTful API with authentication and documentation',
-    status: 'completed',
-    progress: 100,
-    currentPhase: 'Complete',
-    startedAt: new Date('2024-01-10T08:00:00'),
-    completedAt: new Date('2024-01-12T18:30:00'),
-    duration: '58h 30m',
-    projectId: 'proj-002',
-    projectName: 'E-commerce API',
-  },
-  {
-    id: 'wf-003',
-    name: 'Mobile App Generation',
-    description: 'React Native cross-platform mobile application',
-    status: 'failed',
-    progress: 45,
-    currentPhase: 'Testing',
-    startedAt: new Date('2024-01-14T10:00:00'),
-    failedAt: new Date('2024-01-16T14:20:00'),
-    error: 'Build timeout exceeded',
-    projectId: 'proj-003',
-    projectName: 'Mobile Banking App',
-  },
-  {
-    id: 'wf-004',
-    name: 'Legacy Migration',
-    description: 'Monolith to microservices migration',
-    status: 'queued',
-    progress: 0,
-    currentPhase: 'Idea',
-    startedAt: null,
-    estimatedDuration: '120h',
-    projectId: 'proj-004',
-    projectName: 'Enterprise CRM',
-  },
-  {
-    id: 'wf-005',
-    name: 'AI Model Integration',
-    description: 'ML pipeline with model training and deployment',
-    status: 'running',
-    progress: 32,
-    currentPhase: 'Architecture',
-    startedAt: new Date('2024-01-16T11:00:00'),
-    estimatedDuration: '72h',
-    projectId: 'proj-005',
-    projectName: 'Recommendation Engine',
-  },
-];
+// Workflow data will be fetched from database
 
 // Mock timeline phases for active workflow
 const activeWorkflowPhases: TimelinePhase[] = [
@@ -293,22 +230,26 @@ const getStatusIcon = (status: string) => {
 };
 
 export default function WorkflowsPage() {
+  // Fetch real workflows from database
+  const { data: workflows, isLoading, error } = useWorkflows();
+  
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedWorkflow, setSelectedWorkflow] = useState<string | null>('wf-001');
+  const [selectedWorkflow, setSelectedWorkflow] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
-  const filteredWorkflows = workflows.filter((wf) => {
+  const filteredWorkflows = (workflows || []).filter((workflow: any) => {
     const matchesSearch =
-      wf.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      wf.projectName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = !statusFilter || wf.status === statusFilter;
+      workflow.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      workflow.project_id?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = !statusFilter || workflow.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const activeWorkflow = workflows.find((w) => w.id === selectedWorkflow);
+  const activeWorkflow = workflows?.find((w: any) => w.id === selectedWorkflow);
 
-  const statusCounts = workflows.reduce((acc, wf) => {
-    acc[wf.status] = (acc[wf.status] || 0) + 1;
+  const statusCounts = (workflows || []).reduce((acc: any, wf: any) => {
+    const status = wf.status || 'pending';
+    acc[status] = (acc[status] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
@@ -322,9 +263,9 @@ export default function WorkflowsPage() {
       {/* Header */}
       <motion.div variants={itemVariants} className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary">Workflows</h1>
-          <p className="mt-1 text-text-secondary">
-            Manage and monitor AI-driven development pipelines
+          <h1 className="text-2xl font-bold text-text-primary">Workflows</h1>
+          <p className="text-text-secondary">
+            {isLoading ? 'Loading workflows...' : `${workflows?.length || 0} workflows in database`}
           </p>
         </div>
         <Button variant="ai-action">
@@ -394,31 +335,46 @@ export default function WorkflowsPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-2">
-            {filteredWorkflows.map((workflow) => (
-              <button
-                key={workflow.id}
-                onClick={() => setSelectedWorkflow(workflow.id)}
-                className={`w-full text-left p-3 rounded-lg border transition-all ${
-                  selectedWorkflow === workflow.id
-                    ? 'border-state-running bg-state-running-dim'
-                    : 'border-border-subtle bg-bg-elevated hover:border-emphasis'
-                }`}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Workflow className="h-4 w-4 text-text-secondary" />
-                    <span className="font-medium text-text-primary text-sm">{workflow.name}</span>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <span className="ml-2 text-text-secondary">Loading workflows...</span>
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center py-12">
+                <p className="text-error">Error loading workflows</p>
+              </div>
+            ) : filteredWorkflows.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Workflow className="w-12 h-12 text-text-tertiary mb-2" />
+                <p className="text-text-secondary">No workflows found</p>
+              </div>
+            ) : (
+              filteredWorkflows.map((workflow) => (
+                <button
+                  key={workflow.id}
+                  onClick={() => setSelectedWorkflow(workflow.id)}
+                  className={`w-full text-left p-3 rounded-lg border transition-all ${
+                    selectedWorkflow === workflow.id
+                      ? 'border-state-running bg-state-running-dim'
+                      : 'border-border-subtle bg-bg-elevated hover:border-emphasis'
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Workflow className="h-4 w-4 text-text-secondary" />
+                      <span className="font-medium text-text-primary text-sm">{workflow.name}</span>
+                    </div>
+                    <Badge variant="outline" className={`text-xs ${getStatusColor(workflow.status)}`}>
+                      {getStatusIcon(workflow.status)}
+                    </Badge>
                   </div>
-                  <Badge variant="outline" className={`text-xs ${getStatusColor(workflow.status)}`}>
-                    {getStatusIcon(workflow.status)}
-                  </Badge>
-                </div>
-                <p className="text-xs text-text-secondary mb-2 line-clamp-1">{workflow.description}</p>
+                <p className="text-xs text-text-secondary mb-2 line-clamp-1">{workflow.description || 'No description'}</p>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-text-tertiary">{workflow.projectName}</span>
-                  <span className="font-mono text-text-code">{workflow.progress}%</span>
+                  <span className="text-text-tertiary">{workflow.project_id || 'Unknown'}</span>
+                  <span className="font-mono text-text-code">{workflow.status}</span>
                 </div>
-                <Progress value={workflow.progress} className="h-1 mt-2 bg-bg-base" />
+                <Progress value={50} className="h-1 mt-2 bg-bg-base" />
               </button>
             ))}
           </CardContent>
@@ -440,7 +396,7 @@ export default function WorkflowsPage() {
                           <span className="ml-1 capitalize">{activeWorkflow.status}</span>
                         </Badge>
                       </div>
-                      <p className="text-text-secondary">{activeWorkflow.description}</p>
+                      <p className="text-text-secondary">{activeWorkflow.description || 'No description available'}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       {activeWorkflow.status === 'running' ? (
@@ -466,26 +422,26 @@ export default function WorkflowsPage() {
                     <div className="flex items-center gap-6 text-sm">
                       <div>
                         <span className="text-text-tertiary">Project</span>
-                        <p className="font-medium text-text-primary">{activeWorkflow.projectName}</p>
+                        <p className="font-medium text-text-primary">{activeWorkflow.project_id || 'Unknown'}</p>
                       </div>
                       <div>
                         <span className="text-text-tertiary">Started</span>
                         <p className="font-medium text-text-primary">
-                          {activeWorkflow.startedAt?.toLocaleDateString()}
+                          {activeWorkflow.started_at ? new Date(activeWorkflow.started_at).toLocaleDateString() : 'Not started'}
                         </p>
                       </div>
                       <div>
-                        <span className="text-text-tertiary">Phase</span>
-                        <p className="font-medium text-state-running">{activeWorkflow.currentPhase}</p>
+                        <span className="text-text-tertiary">Status</span>
+                        <p className="font-medium text-state-running">{activeWorkflow.status}</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <span className="text-2xl font-bold text-text-primary font-mono">
-                        {activeWorkflow.progress}%
+                        {activeWorkflow.status}
                       </span>
                     </div>
                   </div>
-                  <Progress value={activeWorkflow.progress} className="h-2 bg-bg-base" />
+                  <Progress value={50} className="h-2 bg-bg-base" />
                 </CardContent>
               </Card>
 

@@ -32,8 +32,21 @@ export function useCreateProject() {
   return useMutation({
     mutationFn: (data: { name: string; description: string; requirements?: string }) =>
       api.createProject(data),
+    onMutate: async (newProject) => {
+      await queryClient.cancelQueries({ queryKey: [PROJECTS_KEY] });
+      const previousProjects = queryClient.getQueryData([PROJECTS_KEY]);
+      
+      queryClient.setQueryData([PROJECTS_KEY], (old: any) => [
+        ...(old || []),
+        { ...newProject, id: `temp-${Date.now()}`, status: 'draft', created_at: new Date().toISOString() }
+      ]);
+      
+      return { previousProjects };
+    },
+    onError: (err, newProject, context: any) => {
+      queryClient.setQueryData([PROJECTS_KEY], context?.previousProjects);
+    },
     onSuccess: () => {
-      // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: [PROJECTS_KEY] });
     },
   });
@@ -58,8 +71,20 @@ export function useDeleteProject() {
 
   return useMutation({
     mutationFn: (id: string) => api.deleteProject(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: [PROJECTS_KEY] });
+      const previousProjects = queryClient.getQueryData([PROJECTS_KEY]);
+      
+      queryClient.setQueryData([PROJECTS_KEY], (old: any) => 
+        (old || []).filter((p: any) => p.id !== id)
+      );
+      
+      return { previousProjects };
+    },
+    onError: (err, id, context: any) => {
+      queryClient.setQueryData([PROJECTS_KEY], context?.previousProjects);
+    },
     onSuccess: () => {
-      // Invalidate all project queries
       queryClient.invalidateQueries({ queryKey: [PROJECTS_KEY] });
     },
   });

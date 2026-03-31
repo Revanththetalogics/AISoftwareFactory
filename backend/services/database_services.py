@@ -74,7 +74,7 @@ class DatabaseProjectService:
             current_phase=None,
             progress_percent=0,
             owner_id=owner_id or "anonymous",
-            metadata={}
+            extra_metadata={}
         )
 
         db.add(project)
