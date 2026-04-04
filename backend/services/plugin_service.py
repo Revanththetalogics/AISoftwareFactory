@@ -8,6 +8,7 @@ with dynamic loading, lifecycle management, and sandboxed execution.
 import importlib.util
 import inspect
 import json
+import os
 import uuid
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
@@ -480,7 +481,9 @@ def cleanup():
         try:
             # This would handle plugin installation from ZIP/tar files
             # For now, we'll simulate the process
-            package_name = Path(package_path).stem
+            # Use os.path instead of Path() to avoid pathlib.Path mock side-effects
+            # that affect Path.__new__ on Python 3.11 (see pathlib.py _flavour check).
+            package_name = os.path.splitext(os.path.basename(package_path))[0]
 
             # Create plugin directory
             plugin_dir = self.plugins_directory / package_name

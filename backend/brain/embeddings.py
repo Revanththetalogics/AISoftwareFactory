@@ -57,9 +57,9 @@ class EmbeddingEngine:
     async def _embed_local(self, texts: list[str]) -> list[list[float]]:
         """Generate embeddings using local model."""
         try:
-            from sentence_transformers import SentenceTransformer
-
             if self._model is None:
+                from sentence_transformers import SentenceTransformer
+
                 self._logger.info("Loading local embedding model", model=self._model_name)
                 self._model = SentenceTransformer(self._model_name)
 
