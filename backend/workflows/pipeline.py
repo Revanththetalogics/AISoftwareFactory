@@ -19,6 +19,7 @@ logger = get_logger(__name__)
 
 class StepStatus(Enum):
     """Pipeline step status."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -29,6 +30,7 @@ class StepStatus(Enum):
 @dataclass
 class PipelineStep:
     """A step in the pipeline."""
+
     name: str
     action: Callable
     dependencies: list[str] = field(default_factory=list)
@@ -58,12 +60,7 @@ class Pipeline:
         self._steps: dict[str, PipelineStep] = {}
         self._logger = get_logger(__name__)
 
-    def add_step(
-        self,
-        name: str,
-        action: Callable,
-        dependencies: list[str] | None = None
-    ) -> 'Pipeline':
+    def add_step(self, name: str, action: Callable, dependencies: list[str] | None = None) -> "Pipeline":
         """
         Add a step to the pipeline.
 
@@ -75,11 +72,7 @@ class Pipeline:
         Returns:
             Self for chaining
         """
-        self._steps[name] = PipelineStep(
-            name=name,
-            action=action,
-            dependencies=dependencies or []
-        )
+        self._steps[name] = PipelineStep(name=name, action=action, dependencies=dependencies or [])
 
         self._logger.info("Step added", pipeline=self._name, step=name)
         return self
@@ -103,7 +96,8 @@ class Pipeline:
         while len(completed) + len(failed) < len(self._steps):
             # Find ready steps (all dependencies completed)
             ready_steps = [
-                name for name, step in self._steps.items()
+                name
+                for name, step in self._steps.items()
                 if step.status == StepStatus.PENDING
                 and all(dep in completed for dep in step.dependencies)
                 and not any(dep in failed for dep in step.dependencies)
@@ -111,10 +105,7 @@ class Pipeline:
 
             if not ready_steps:
                 # Check if we're stuck due to failed dependencies
-                pending_steps = [
-                    name for name, step in self._steps.items()
-                    if step.status == StepStatus.PENDING
-                ]
+                pending_steps = [name for name, step in self._steps.items() if step.status == StepStatus.PENDING]
 
                 if pending_steps:
                     for name in pending_steps:
@@ -124,17 +115,12 @@ class Pipeline:
                             step.status = StepStatus.SKIPPED
                             step.error = f"Dependencies failed: {failed_deps}"
                             self._logger.warning(
-                                "Step skipped due to failed dependencies",
-                                step=name,
-                                failed_deps=failed_deps
+                                "Step skipped due to failed dependencies", step=name, failed_deps=failed_deps
                             )
                 break
 
             # Execute ready steps in parallel
-            tasks = [
-                self._execute_step(name, context)
-                for name in ready_steps
-            ]
+            tasks = [self._execute_step(name, context) for name in ready_steps]
 
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -147,32 +133,19 @@ class Pipeline:
                 else:
                     completed.add(name)
 
-        self._logger.info(
-            "Pipeline completed",
-            pipeline=self._name,
-            completed=len(completed),
-            failed=len(failed)
-        )
+        self._logger.info("Pipeline completed", pipeline=self._name, completed=len(completed), failed=len(failed))
 
         return {
             "pipeline": self._name,
             "completed": list(completed),
             "failed": list(failed),
             "steps": {
-                name: {
-                    "status": step.status.value,
-                    "result": step.result,
-                    "error": step.error
-                }
+                name: {"status": step.status.value, "result": step.result, "error": step.error}
                 for name, step in self._steps.items()
-            }
+            },
         }
 
-    async def _execute_step(
-        self,
-        name: str,
-        context: dict[str, Any]
-    ):
+    async def _execute_step(self, name: str, context: dict[str, Any]):
         """Execute a single step."""
         step = self._steps[name]
         step.status = StepStatus.RUNNING
@@ -208,5 +181,5 @@ class Pipeline:
             "completed": sum(1 for s in self._steps.values() if s.status == StepStatus.COMPLETED),
             "failed": sum(1 for s in self._steps.values() if s.status == StepStatus.FAILED),
             "running": sum(1 for s in self._steps.values() if s.status == StepStatus.RUNNING),
-            "pending": sum(1 for s in self._steps.values() if s.status == StepStatus.PENDING)
+            "pending": sum(1 for s in self._steps.values() if s.status == StepStatus.PENDING),
         }

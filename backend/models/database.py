@@ -20,6 +20,7 @@ from backend.models.workflow import WorkflowStatus, WorkflowTrigger
 
 class DBUser(Base):
     """User model for authentication and authorization."""
+
     __tablename__ = "users"
 
     id = Column(String(50), primary_key=True, index=True)
@@ -41,14 +42,15 @@ class DBUser(Base):
     tasks = relationship("DBTask", back_populates="created_by_user")
 
     __table_args__ = (
-        Index('idx_users_username', 'username'),
-        Index('idx_users_email', 'email'),
-        Index('idx_users_active', 'is_active'),
+        Index("idx_users_username", "username"),
+        Index("idx_users_email", "email"),
+        Index("idx_users_active", "is_active"),
     )
 
 
 class DBProject(Base):
     """Project model representing a software development project."""
+
     __tablename__ = "projects"
 
     id = Column(String(50), primary_key=True, index=True)
@@ -71,15 +73,18 @@ class DBProject(Base):
     tasks = relationship("DBTask", back_populates="project")
 
     __table_args__ = (
-        Index('idx_projects_owner', 'owner_id'),
-        Index('idx_projects_status', 'status'),
-        Index('idx_projects_created', 'created_at'),
-        Index('idx_projects_name_trgm', 'name', postgresql_using='gin', postgresql_ops={'name': 'gin_trgm_ops'}),  # For text search
+        Index("idx_projects_owner", "owner_id"),
+        Index("idx_projects_status", "status"),
+        Index("idx_projects_created", "created_at"),
+        Index(
+            "idx_projects_name_trgm", "name", postgresql_using="gin", postgresql_ops={"name": "gin_trgm_ops"}
+        ),  # For text search
     )
 
 
 class DBWorkflow(Base):
     """Workflow model representing an automated process."""
+
     __tablename__ = "workflows"
 
     id = Column(String(50), primary_key=True, index=True)
@@ -107,15 +112,16 @@ class DBWorkflow(Base):
     tasks = relationship("DBTask", back_populates="workflow")
 
     __table_args__ = (
-        Index('idx_workflows_project', 'project_id'),
-        Index('idx_workflows_status', 'status'),
-        Index('idx_workflows_created_by', 'created_by'),
-        Index('idx_workflows_created', 'created_at'),
+        Index("idx_workflows_project", "project_id"),
+        Index("idx_workflows_status", "status"),
+        Index("idx_workflows_created_by", "created_by"),
+        Index("idx_workflows_created", "created_at"),
     )
 
 
 class DBTask(Base):
     """Task model representing a unit of work."""
+
     __tablename__ = "tasks"
 
     id = Column(String(50), primary_key=True, index=True)
@@ -148,18 +154,19 @@ class DBTask(Base):
     created_by_user = relationship("DBUser", back_populates="tasks")
 
     __table_args__ = (
-        Index('idx_tasks_project', 'project_id'),
-        Index('idx_tasks_workflow', 'workflow_id'),
-        Index('idx_tasks_status', 'status'),
-        Index('idx_tasks_priority', 'priority'),
-        Index('idx_tasks_created_by', 'created_by'),
-        Index('idx_tasks_scheduled', 'scheduled_at'),
-        Index('idx_tasks_created', 'created_at'),
+        Index("idx_tasks_project", "project_id"),
+        Index("idx_tasks_workflow", "workflow_id"),
+        Index("idx_tasks_status", "status"),
+        Index("idx_tasks_priority", "priority"),
+        Index("idx_tasks_created_by", "created_by"),
+        Index("idx_tasks_scheduled", "scheduled_at"),
+        Index("idx_tasks_created", "created_at"),
     )
 
 
 class DBAgent(Base):
     """Agent model representing an AI agent."""
+
     __tablename__ = "agents"
 
     id = Column(String(50), primary_key=True, index=True)
@@ -176,14 +183,15 @@ class DBAgent(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     __table_args__ = (
-        Index('idx_agents_role', 'role'),
-        Index('idx_agents_status', 'status'),
-        Index('idx_agents_current_task', 'current_task_id'),
+        Index("idx_agents_role", "role"),
+        Index("idx_agents_status", "status"),
+        Index("idx_agents_current_task", "current_task_id"),
     )
 
 
 class DBDeployment(Base):
     """Deployment model representing application deployments."""
+
     __tablename__ = "deployments"
 
     id = Column(String(50), primary_key=True, index=True)
@@ -202,16 +210,17 @@ class DBDeployment(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     __table_args__ = (
-        Index('idx_deployments_project', 'project_id'),
-        Index('idx_deployments_environment', 'environment'),
-        Index('idx_deployments_status', 'status'),
-        Index('idx_deployments_created', 'created_at'),
-        UniqueConstraint('project_id', 'environment', 'version', name='uq_project_env_version'),
+        Index("idx_deployments_project", "project_id"),
+        Index("idx_deployments_environment", "environment"),
+        Index("idx_deployments_status", "status"),
+        Index("idx_deployments_created", "created_at"),
+        UniqueConstraint("project_id", "environment", "version", name="uq_project_env_version"),
     )
 
 
 class DBCustomCrew(Base):
     """Custom crew created dynamically from the agent management UI."""
+
     __tablename__ = "custom_crews"
 
     id = Column(String(50), primary_key=True, index=True)
@@ -223,15 +232,13 @@ class DBCustomCrew(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    __table_args__ = (
-        Index('ix_custom_crews_id', 'id'),
-        Index('idx_custom_crews_created_by', 'created_by'),
-    )
+    __table_args__ = (Index("idx_custom_crews_created_by", "created_by"),)
 
 
 # Audit trail model for tracking changes
 class DBAuditLog(Base):
     """Audit log model for tracking system changes."""
+
     __tablename__ = "audit_logs"
 
     id = Column(String(50), primary_key=True, index=True)
@@ -245,10 +252,10 @@ class DBAuditLog(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     __table_args__ = (
-        Index('idx_auditlogs_user', 'user_id'),
-        Index('idx_auditlogs_resource', 'resource_type', 'resource_id'),
-        Index('idx_auditlogs_action', 'action'),
-        Index('idx_auditlogs_created', 'created_at'),
+        Index("idx_auditlogs_user", "user_id"),
+        Index("idx_auditlogs_resource", "resource_type", "resource_id"),
+        Index("idx_auditlogs_action", "action"),
+        Index("idx_auditlogs_created", "created_at"),
     )
 
 

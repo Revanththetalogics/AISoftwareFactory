@@ -67,7 +67,7 @@ class TestEmbeddingEngineFull:
 
         engine = EmbeddingEngine(provider="openai")
 
-        with patch.object(engine, '_embed_openai', new_callable=AsyncMock) as mock:
+        with patch.object(engine, "_embed_openai", new_callable=AsyncMock) as mock:
             mock.return_value = [[0.1, 0.2, 0.3]]
             await engine.embed(["test"])
             mock.assert_called_once_with(["test"])
@@ -79,7 +79,7 @@ class TestEmbeddingEngineFull:
 
         engine = EmbeddingEngine(provider="local")
 
-        with patch.object(engine, '_embed_local', new_callable=AsyncMock) as mock:
+        with patch.object(engine, "_embed_local", new_callable=AsyncMock) as mock:
             mock.return_value = [[0.1, 0.2, 0.3]]
             await engine.embed(["test"])
             mock.assert_called_once_with(["test"])
@@ -102,7 +102,7 @@ class TestEmbeddingEngineFull:
         mock_st_module = Mock()
         mock_st_module.SentenceTransformer = Mock(return_value=mock_model)
 
-        with patch.dict(sys.modules, {'sentence_transformers': mock_st_module}):
+        with patch.dict(sys.modules, {"sentence_transformers": mock_st_module}):
             result = await engine._embed_local(["text1", "text2"])
 
             assert len(result) == 2
@@ -118,7 +118,7 @@ class TestEmbeddingEngineFull:
         engine = EmbeddingEngine(provider="local")
 
         # Simulate ImportError by removing the module
-        with patch.dict(sys.modules, {'sentence_transformers': None}):
+        with patch.dict(sys.modules, {"sentence_transformers": None}):
             with pytest.raises(ImportError):
                 await engine._embed_local(["text"])
 
@@ -140,7 +140,7 @@ class TestEmbeddingEngineFull:
         mock_st_module = Mock()
         mock_st_module.SentenceTransformer = mock_st_class
 
-        with patch.dict(sys.modules, {'sentence_transformers': mock_st_module}):
+        with patch.dict(sys.modules, {"sentence_transformers": mock_st_module}):
             await engine._embed_local(["text1"])
             await engine._embed_local(["text2"])
 
@@ -166,7 +166,7 @@ class TestEmbeddingEngineFull:
         mock_openai_module = Mock()
         mock_openai_module.AsyncOpenAI = Mock(return_value=mock_client)
 
-        with patch.dict(sys.modules, {'openai': mock_openai_module}):
+        with patch.dict(sys.modules, {"openai": mock_openai_module}):
             result = await engine._embed_openai(["test text"])
 
             assert result == [[0.1, 0.2, 0.3]]
@@ -180,7 +180,7 @@ class TestEmbeddingEngineFull:
 
         engine = EmbeddingEngine(provider="openai")
 
-        with patch.dict(sys.modules, {'openai': None}):
+        with patch.dict(sys.modules, {"openai": None}):
             with pytest.raises(ImportError):
                 await engine._embed_openai(["text"])
 
@@ -195,20 +195,14 @@ class TestEmbeddingEngineFull:
         """Test getting dimension for OpenAI small model."""
         from backend.brain.embeddings import EmbeddingEngine
 
-        engine = EmbeddingEngine(
-            provider="openai",
-            model_name="text-embedding-3-small"
-        )
+        engine = EmbeddingEngine(provider="openai", model_name="text-embedding-3-small")
         assert engine.get_dimension() == 1536
 
     def test_get_dimension_openai_large(self):
         """Test getting dimension for OpenAI large model."""
         from backend.brain.embeddings import EmbeddingEngine
 
-        engine = EmbeddingEngine(
-            provider="openai",
-            model_name="text-embedding-3-large"
-        )
+        engine = EmbeddingEngine(provider="openai", model_name="text-embedding-3-large")
         assert engine.get_dimension() == 3072
 
     def test_get_dimension_unknown_model(self):
@@ -236,9 +230,9 @@ class TestRAGPipelineFull:
 
     def test_init_with_defaults(self, mock_knowledge_base):
         """Test initialization with defaults."""
-        with patch('backend.brain.rag_pipeline.RetrievalEngine'):
-            with patch('backend.brain.rag_pipeline.ContextManager'):
-                with patch('backend.brain.rag_pipeline.LLMFactory'):
+        with patch("backend.brain.rag_pipeline.RetrievalEngine"):
+            with patch("backend.brain.rag_pipeline.ContextManager"):
+                with patch("backend.brain.rag_pipeline.LLMFactory"):
                     from backend.brain.rag_pipeline import RAGPipeline
 
                     pipeline = RAGPipeline(knowledge_base=mock_knowledge_base)
@@ -246,32 +240,26 @@ class TestRAGPipelineFull:
 
     def test_init_with_custom_context_manager(self, mock_knowledge_base, mock_context_manager):
         """Test initialization with custom context manager."""
-        with patch('backend.brain.rag_pipeline.RetrievalEngine'):
-            with patch('backend.brain.rag_pipeline.LLMFactory'):
+        with patch("backend.brain.rag_pipeline.RetrievalEngine"):
+            with patch("backend.brain.rag_pipeline.LLMFactory"):
                 from backend.brain.rag_pipeline import RAGPipeline
 
-                pipeline = RAGPipeline(
-                    knowledge_base=mock_knowledge_base,
-                    context_manager=mock_context_manager
-                )
+                pipeline = RAGPipeline(knowledge_base=mock_knowledge_base, context_manager=mock_context_manager)
                 assert pipeline._context == mock_context_manager
 
     @pytest.mark.asyncio
     async def test_query_success(self, mock_knowledge_base):
         """Test successful RAG query."""
-        with patch('backend.brain.rag_pipeline.RetrievalEngine') as mock_re:
-            with patch('backend.brain.rag_pipeline.ContextManager') as mock_cm:
-                with patch('backend.brain.rag_pipeline.LLMFactory') as mock_llm:
+        with patch("backend.brain.rag_pipeline.RetrievalEngine") as mock_re:
+            with patch("backend.brain.rag_pipeline.ContextManager") as mock_cm:
+                with patch("backend.brain.rag_pipeline.LLMFactory") as mock_llm:
                     from backend.brain.rag_pipeline import RAGPipeline
                     from backend.brain.retrieval import RetrievalResult
 
                     # Setup mocks
                     mock_retrieval = Mock()
                     mock_result = RetrievalResult(
-                        text="relevant text",
-                        score=0.9,
-                        metadata={"key": "value"},
-                        source="test"
+                        text="relevant text", score=0.9, metadata={"key": "value"}, source="test"
                     )
                     mock_retrieval.retrieve = AsyncMock(return_value=[mock_result])
                     mock_re.return_value = mock_retrieval
@@ -298,9 +286,9 @@ class TestRAGPipelineFull:
     @pytest.mark.asyncio
     async def test_query_with_existing_conversation(self, mock_knowledge_base):
         """Test query with existing conversation ID."""
-        with patch('backend.brain.rag_pipeline.RetrievalEngine') as mock_re:
-            with patch('backend.brain.rag_pipeline.ContextManager') as mock_cm:
-                with patch('backend.brain.rag_pipeline.LLMFactory') as mock_llm:
+        with patch("backend.brain.rag_pipeline.RetrievalEngine") as mock_re:
+            with patch("backend.brain.rag_pipeline.ContextManager") as mock_cm:
+                with patch("backend.brain.rag_pipeline.LLMFactory") as mock_llm:
                     from backend.brain.rag_pipeline import RAGPipeline
 
                     mock_retrieval = Mock()
@@ -318,10 +306,7 @@ class TestRAGPipelineFull:
 
                     pipeline = RAGPipeline(knowledge_base=mock_knowledge_base)
 
-                    result = await pipeline.query(
-                        "Question?",
-                        conversation_id="existing-conv-456"
-                    )
+                    result = await pipeline.query("Question?", conversation_id="existing-conv-456")
 
                     assert result["conversation_id"] == "existing-conv-456"
                     mock_context.create_conversation.assert_not_called()
@@ -329,9 +314,9 @@ class TestRAGPipelineFull:
     @pytest.mark.asyncio
     async def test_query_with_system_prompt(self, mock_knowledge_base):
         """Test query with custom system prompt."""
-        with patch('backend.brain.rag_pipeline.RetrievalEngine') as mock_re:
-            with patch('backend.brain.rag_pipeline.ContextManager') as mock_cm:
-                with patch('backend.brain.rag_pipeline.LLMFactory') as mock_llm:
+        with patch("backend.brain.rag_pipeline.RetrievalEngine") as mock_re:
+            with patch("backend.brain.rag_pipeline.ContextManager") as mock_cm:
+                with patch("backend.brain.rag_pipeline.LLMFactory") as mock_llm:
                     from backend.brain.rag_pipeline import RAGPipeline
 
                     mock_retrieval = Mock()
@@ -350,10 +335,7 @@ class TestRAGPipelineFull:
 
                     pipeline = RAGPipeline(knowledge_base=mock_knowledge_base)
 
-                    await pipeline.query(
-                        "Question?",
-                        system_prompt="You are a helpful AI."
-                    )
+                    await pipeline.query("Question?", system_prompt="You are a helpful AI.")
 
                     # Verify the prompt was built with custom system prompt
                     call_args = mock_llm_instance.generate.call_args[0][0]
@@ -362,9 +344,9 @@ class TestRAGPipelineFull:
     @pytest.mark.asyncio
     async def test_query_llm_failure(self, mock_knowledge_base):
         """Test query handles LLM failure."""
-        with patch('backend.brain.rag_pipeline.RetrievalEngine') as mock_re:
-            with patch('backend.brain.rag_pipeline.ContextManager') as mock_cm:
-                with patch('backend.brain.rag_pipeline.LLMFactory') as mock_llm:
+        with patch("backend.brain.rag_pipeline.RetrievalEngine") as mock_re:
+            with patch("backend.brain.rag_pipeline.ContextManager") as mock_cm:
+                with patch("backend.brain.rag_pipeline.LLMFactory") as mock_llm:
                     from backend.brain.rag_pipeline import RAGPipeline
 
                     mock_retrieval = Mock()
@@ -378,9 +360,7 @@ class TestRAGPipelineFull:
                     mock_cm.return_value = mock_context
 
                     mock_llm_instance = Mock()
-                    mock_llm_instance.generate = AsyncMock(
-                        side_effect=Exception("LLM error")
-                    )
+                    mock_llm_instance.generate = AsyncMock(side_effect=Exception("LLM error"))
                     mock_llm.create_llm.return_value = mock_llm_instance
 
                     pipeline = RAGPipeline(knowledge_base=mock_knowledge_base)
@@ -392,23 +372,16 @@ class TestRAGPipelineFull:
 
     def test_build_prompt_with_history(self, mock_knowledge_base):
         """Test building prompt with conversation history."""
-        with patch('backend.brain.rag_pipeline.RetrievalEngine'):
-            with patch('backend.brain.rag_pipeline.ContextManager'):
-                with patch('backend.brain.rag_pipeline.LLMFactory'):
+        with patch("backend.brain.rag_pipeline.RetrievalEngine"):
+            with patch("backend.brain.rag_pipeline.ContextManager"):
+                with patch("backend.brain.rag_pipeline.LLMFactory"):
                     from backend.brain.rag_pipeline import RAGPipeline
 
                     pipeline = RAGPipeline(knowledge_base=mock_knowledge_base)
 
-                    history = [
-                        {"role": "user", "content": "Hi"},
-                        {"role": "assistant", "content": "Hello!"}
-                    ]
+                    history = [{"role": "user", "content": "Hi"}, {"role": "assistant", "content": "Hello!"}]
 
-                    prompt = pipeline._build_prompt(
-                        query="How are you?",
-                        context="Context text",
-                        history=history
-                    )
+                    prompt = pipeline._build_prompt(query="How are you?", context="Context text", history=history)
 
                     assert "Conversation History:" in prompt
                     assert "user: Hi" in prompt
@@ -416,32 +389,26 @@ class TestRAGPipelineFull:
 
     def test_build_prompt_without_history(self, mock_knowledge_base):
         """Test building prompt without history."""
-        with patch('backend.brain.rag_pipeline.RetrievalEngine'):
-            with patch('backend.brain.rag_pipeline.ContextManager'):
-                with patch('backend.brain.rag_pipeline.LLMFactory'):
+        with patch("backend.brain.rag_pipeline.RetrievalEngine"):
+            with patch("backend.brain.rag_pipeline.ContextManager"):
+                with patch("backend.brain.rag_pipeline.LLMFactory"):
                     from backend.brain.rag_pipeline import RAGPipeline
 
                     pipeline = RAGPipeline(knowledge_base=mock_knowledge_base)
 
-                    prompt = pipeline._build_prompt(
-                        query="Question?",
-                        context="Context",
-                        history=[]
-                    )
+                    prompt = pipeline._build_prompt(query="Question?", context="Context", history=[])
 
                     assert "Conversation History:" not in prompt
 
     def test_get_conversation_history(self, mock_knowledge_base):
         """Test getting conversation history."""
-        with patch('backend.brain.rag_pipeline.RetrievalEngine'):
-            with patch('backend.brain.rag_pipeline.ContextManager') as mock_cm:
-                with patch('backend.brain.rag_pipeline.LLMFactory'):
+        with patch("backend.brain.rag_pipeline.RetrievalEngine"):
+            with patch("backend.brain.rag_pipeline.ContextManager") as mock_cm:
+                with patch("backend.brain.rag_pipeline.LLMFactory"):
                     from backend.brain.rag_pipeline import RAGPipeline
 
                     mock_context = Mock()
-                    mock_context.get_context = Mock(return_value=[
-                        {"role": "user", "content": "test"}
-                    ])
+                    mock_context.get_context = Mock(return_value=[{"role": "user", "content": "test"}])
                     mock_cm.return_value = mock_context
 
                     pipeline = RAGPipeline(knowledge_base=mock_knowledge_base)
@@ -459,9 +426,7 @@ class TestKnowledgeBaseFull:
         """Create mock vector store."""
         store = Mock()
         store.add = AsyncMock(return_value=["chunk-1", "chunk-2"])
-        store.search = AsyncMock(return_value=[
-            {"id": "1", "text": "result", "metadata": {}, "score": 0.9}
-        ])
+        store.search = AsyncMock(return_value=[{"id": "1", "text": "result", "metadata": {}, "score": 0.9}])
         store.delete = AsyncMock(return_value=2)
         store.get_count = Mock(return_value=10)
         return store
@@ -477,8 +442,8 @@ class TestKnowledgeBaseFull:
         """Test initialization with defaults."""
         from backend.brain.knowledge_base import KnowledgeBase
 
-        with patch('backend.brain.knowledge_base.VectorStore'):
-            with patch('backend.brain.knowledge_base.EmbeddingEngine'):
+        with patch("backend.brain.knowledge_base.VectorStore"):
+            with patch("backend.brain.knowledge_base.EmbeddingEngine"):
                 kb = KnowledgeBase(name="test_kb")
                 assert kb._name == "test_kb"
 
@@ -486,11 +451,7 @@ class TestKnowledgeBaseFull:
         """Test initialization with custom stores."""
         from backend.brain.knowledge_base import KnowledgeBase
 
-        kb = KnowledgeBase(
-            name="test_kb",
-            vector_store=mock_vector_store,
-            embedding_engine=mock_embedding_engine
-        )
+        kb = KnowledgeBase(name="test_kb", vector_store=mock_vector_store, embedding_engine=mock_embedding_engine)
         assert kb._vector_store == mock_vector_store
         assert kb._embedding_engine == mock_embedding_engine
 
@@ -499,20 +460,13 @@ class TestKnowledgeBaseFull:
         """Test adding a document."""
         from backend.brain.knowledge_base import KnowledgeBase
 
-        mock_embedding_engine.embed = AsyncMock(
-            return_value=[[0.1, 0.2], [0.3, 0.4]]
-        )
+        mock_embedding_engine.embed = AsyncMock(return_value=[[0.1, 0.2], [0.3, 0.4]])
         mock_vector_store.add = AsyncMock(return_value=["c1", "c2"])
 
-        kb = KnowledgeBase(
-            name="test_kb",
-            vector_store=mock_vector_store,
-            embedding_engine=mock_embedding_engine
-        )
+        kb = KnowledgeBase(name="test_kb", vector_store=mock_vector_store, embedding_engine=mock_embedding_engine)
 
         doc_id = await kb.add_document(
-            content="This is test content that is long enough to chunk",
-            metadata={"source": "test"}
+            content="This is test content that is long enough to chunk", metadata={"source": "test"}
         )
 
         assert doc_id is not None
@@ -524,37 +478,20 @@ class TestKnowledgeBaseFull:
         """Test adding document with custom ID."""
         from backend.brain.knowledge_base import KnowledgeBase
 
-        kb = KnowledgeBase(
-            name="test_kb",
-            vector_store=mock_vector_store,
-            embedding_engine=mock_embedding_engine
-        )
+        kb = KnowledgeBase(name="test_kb", vector_store=mock_vector_store, embedding_engine=mock_embedding_engine)
 
-        doc_id = await kb.add_document(
-            content="Content",
-            doc_id="custom-doc-id"
-        )
+        doc_id = await kb.add_document(content="Content", doc_id="custom-doc-id")
 
         assert doc_id == "custom-doc-id"
 
     @pytest.mark.asyncio
-    async def test_add_document_custom_chunk_params(
-        self, mock_vector_store, mock_embedding_engine
-    ):
+    async def test_add_document_custom_chunk_params(self, mock_vector_store, mock_embedding_engine):
         """Test adding document with custom chunk parameters."""
         from backend.brain.knowledge_base import KnowledgeBase
 
-        kb = KnowledgeBase(
-            name="test_kb",
-            vector_store=mock_vector_store,
-            embedding_engine=mock_embedding_engine
-        )
+        kb = KnowledgeBase(name="test_kb", vector_store=mock_vector_store, embedding_engine=mock_embedding_engine)
 
-        doc_id = await kb.add_document(
-            content="A" * 1000,
-            chunk_size=100,
-            chunk_overlap=10
-        )
+        doc_id = await kb.add_document(content="A" * 1000, chunk_size=100, chunk_overlap=10)
 
         assert doc_id is not None
 
@@ -563,11 +500,7 @@ class TestKnowledgeBaseFull:
         """Test searching the knowledge base."""
         from backend.brain.knowledge_base import KnowledgeBase
 
-        kb = KnowledgeBase(
-            name="test_kb",
-            vector_store=mock_vector_store,
-            embedding_engine=mock_embedding_engine
-        )
+        kb = KnowledgeBase(name="test_kb", vector_store=mock_vector_store, embedding_engine=mock_embedding_engine)
 
         results = await kb.search("query text", top_k=5)
 
@@ -580,16 +513,9 @@ class TestKnowledgeBaseFull:
         """Test searching with metadata filter."""
         from backend.brain.knowledge_base import KnowledgeBase
 
-        kb = KnowledgeBase(
-            name="test_kb",
-            vector_store=mock_vector_store,
-            embedding_engine=mock_embedding_engine
-        )
+        kb = KnowledgeBase(name="test_kb", vector_store=mock_vector_store, embedding_engine=mock_embedding_engine)
 
-        await kb.search(
-            "query",
-            filter_metadata={"category": "test"}
-        )
+        await kb.search("query", filter_metadata={"category": "test"})
 
         call_args = mock_vector_store.search.call_args
         assert call_args.kwargs["filter_metadata"] == {"category": "test"}
@@ -599,11 +525,7 @@ class TestKnowledgeBaseFull:
         """Test deleting existing document."""
         from backend.brain.knowledge_base import KnowledgeBase
 
-        kb = KnowledgeBase(
-            name="test_kb",
-            vector_store=mock_vector_store,
-            embedding_engine=mock_embedding_engine
-        )
+        kb = KnowledgeBase(name="test_kb", vector_store=mock_vector_store, embedding_engine=mock_embedding_engine)
 
         # Add a document first
         doc_id = await kb.add_document(content="Test content")
@@ -618,11 +540,7 @@ class TestKnowledgeBaseFull:
         """Test deleting nonexistent document."""
         from backend.brain.knowledge_base import KnowledgeBase
 
-        kb = KnowledgeBase(
-            name="test_kb",
-            vector_store=mock_vector_store,
-            embedding_engine=mock_embedding_engine
-        )
+        kb = KnowledgeBase(name="test_kb", vector_store=mock_vector_store, embedding_engine=mock_embedding_engine)
 
         result = await kb.delete_document("nonexistent")
 
@@ -632,11 +550,7 @@ class TestKnowledgeBaseFull:
         """Test text chunking."""
         from backend.brain.knowledge_base import KnowledgeBase
 
-        kb = KnowledgeBase(
-            name="test_kb",
-            vector_store=mock_vector_store,
-            embedding_engine=mock_embedding_engine
-        )
+        kb = KnowledgeBase(name="test_kb", vector_store=mock_vector_store, embedding_engine=mock_embedding_engine)
 
         text = "A" * 100
         chunks = kb._chunk_text(text, chunk_size=30, chunk_overlap=10)
@@ -648,11 +562,7 @@ class TestKnowledgeBaseFull:
         """Test chunking text smaller than chunk size."""
         from backend.brain.knowledge_base import KnowledgeBase
 
-        kb = KnowledgeBase(
-            name="test_kb",
-            vector_store=mock_vector_store,
-            embedding_engine=mock_embedding_engine
-        )
+        kb = KnowledgeBase(name="test_kb", vector_store=mock_vector_store, embedding_engine=mock_embedding_engine)
 
         chunks = kb._chunk_text("Small text", chunk_size=100, chunk_overlap=10)
 
@@ -662,11 +572,7 @@ class TestKnowledgeBaseFull:
         """Test getting knowledge base stats."""
         from backend.brain.knowledge_base import KnowledgeBase
 
-        kb = KnowledgeBase(
-            name="test_kb",
-            vector_store=mock_vector_store,
-            embedding_engine=mock_embedding_engine
-        )
+        kb = KnowledgeBase(name="test_kb", vector_store=mock_vector_store, embedding_engine=mock_embedding_engine)
 
         stats = kb.get_stats()
 
@@ -688,12 +594,7 @@ class TestMemoryStoreFull:
         """Test storing first memory for an agent."""
         store = MemoryStore()
 
-        memory_id = store.store(
-            agent_id="agent-1",
-            content="Important fact",
-            memory_type="fact",
-            importance=0.8
-        )
+        memory_id = store.store(agent_id="agent-1", content="Important fact", memory_type="fact", importance=0.8)
 
         assert memory_id is not None
         assert memory_id in store._memories
@@ -845,10 +746,7 @@ class TestContextManagerFull:
         """Test creating conversation with custom ID."""
         manager = ContextManager()
 
-        conv_id = manager.create_conversation(
-            conversation_id="custom-id",
-            metadata={"key": "value"}
-        )
+        conv_id = manager.create_conversation(conversation_id="custom-id", metadata={"key": "value"})
 
         assert conv_id == "custom-id"
         assert manager._conversations[conv_id].metadata == {"key": "value"}
@@ -876,10 +774,7 @@ class TestContextManagerFull:
         manager = ContextManager()
         conv_id = manager.create_conversation()
 
-        manager.add_message(
-            conv_id, "user", "Hello",
-            metadata={"timestamp": "2024-01-01"}
-        )
+        manager.add_message(conv_id, "user", "Hello", metadata={"timestamp": "2024-01-01"})
 
         msg = manager._conversations[conv_id].messages[0]
         assert msg.metadata == {"timestamp": "2024-01-01"}
@@ -993,12 +888,7 @@ class TestMemoryDataclass:
 
     def test_memory_creation(self):
         """Test memory creation with defaults."""
-        memory = Memory(
-            memory_id="m-123",
-            agent_id="a-456",
-            content="Test content",
-            memory_type="fact"
-        )
+        memory = Memory(memory_id="m-123", agent_id="a-456", content="Test content", memory_type="fact")
         assert memory.importance == 1.0
         assert memory.access_count == 0
         assert memory.last_accessed is None

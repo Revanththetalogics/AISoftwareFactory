@@ -49,11 +49,7 @@ async def list_agents(
     """
     List all registered agents and their status.
     """
-    agents = await agent_service.list_agents(
-        role=role,
-        status=agent_status,
-        db=db
-    )
+    agents = await agent_service.list_agents(role=role, status=agent_status, db=db)
 
     logger.info(
         "Agents listed",
@@ -106,12 +102,7 @@ async def register_agent(
     """
     Register a new agent in the system.
     """
-    agent = await agent_service.register_agent(
-        name=name,
-        role=role,
-        capabilities=capabilities or [],
-        db=db
-    )
+    agent = await agent_service.register_agent(name=name, role=role, capabilities=capabilities or [], db=db)
 
     logger.info(
         "Agent registered",

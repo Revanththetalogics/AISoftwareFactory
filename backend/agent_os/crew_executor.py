@@ -28,11 +28,7 @@ class CrewExecutor:
         self._logger = get_logger(__name__)
 
     async def execute_crew(
-        self,
-        crew_name: str,
-        crew_factory: Callable,
-        inputs: dict[str, Any] | None = None,
-        task_id: str | None = None
+        self, crew_name: str, crew_factory: Callable, inputs: dict[str, Any] | None = None, task_id: str | None = None
     ) -> dict[str, Any]:
         """
         Execute a CrewAI crew.
@@ -49,12 +45,7 @@ class CrewExecutor:
         execution_id = str(uuid4())
         task_id = task_id or execution_id
 
-        self._logger.info(
-            "Starting crew execution",
-            crew_name=crew_name,
-            execution_id=execution_id,
-            task_id=task_id
-        )
+        self._logger.info("Starting crew execution", crew_name=crew_name, execution_id=execution_id, task_id=task_id)
 
         try:
             # Create the crew
@@ -64,33 +55,14 @@ class CrewExecutor:
             # Execute the crew
             result = crew.kickoff(inputs=inputs or {})
 
-            self._logger.info(
-                "Crew execution completed",
-                crew_name=crew_name,
-                execution_id=execution_id
-            )
+            self._logger.info("Crew execution completed", crew_name=crew_name, execution_id=execution_id)
 
-            return {
-                "success": True,
-                "execution_id": execution_id,
-                "result": result,
-                "crew_name": crew_name
-            }
+            return {"success": True, "execution_id": execution_id, "result": result, "crew_name": crew_name}
 
         except Exception as e:
-            self._logger.error(
-                "Crew execution failed",
-                crew_name=crew_name,
-                execution_id=execution_id,
-                error=str(e)
-            )
+            self._logger.error("Crew execution failed", crew_name=crew_name, execution_id=execution_id, error=str(e))
 
-            return {
-                "success": False,
-                "execution_id": execution_id,
-                "error": str(e),
-                "crew_name": crew_name
-            }
+            return {"success": False, "execution_id": execution_id, "error": str(e), "crew_name": crew_name}
 
         finally:
             # Cleanup
@@ -105,11 +77,7 @@ class CrewExecutor:
             List of active crew information
         """
         return [
-            {
-                "execution_id": exec_id,
-                "crew_type": type(crew).__name__
-            }
-            for exec_id, crew in self._active_crews.items()
+            {"execution_id": exec_id, "crew_type": type(crew).__name__} for exec_id, crew in self._active_crews.items()
         ]
 
     async def stop_crew(self, execution_id: str) -> bool:

@@ -38,7 +38,7 @@ def intelligence_engine(mock_llm):
 @pytest.fixture
 def temp_python_file():
     """Create a temporary Python file for testing."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write('''def add(a: int, b: int) -> int:
     """Add two numbers."""
     return a + b
@@ -274,8 +274,10 @@ class TestTestIntelligenceEngine:
     @pytest.mark.asyncio
     async def test_analyze_module(self, intelligence_engine, temp_python_file):
         """Test analyzing a module."""
-        intelligence_engine._llm.generate = AsyncMock(return_value="""def test_add():
-    assert add(1, 2) == 3""")
+        intelligence_engine._llm.generate = AsyncMock(
+            return_value="""def test_add():
+    assert add(1, 2) == 3"""
+        )
 
         suite = await intelligence_engine.analyze_module(
             file_path=temp_python_file,
@@ -408,9 +410,11 @@ class TestTestIntelligenceEngine:
     @pytest.mark.asyncio
     async def test_generate_test_from_failure(self, intelligence_engine):
         """Test generating test from failure."""
-        intelligence_engine._llm.generate = AsyncMock(return_value="""def test_regression():
+        intelligence_engine._llm.generate = AsyncMock(
+            return_value="""def test_regression():
     with pytest.raises(ZeroDivisionError):
-        divide(10, 0)""")
+        divide(10, 0)"""
+        )
 
         tc = await intelligence_engine.generate_test_from_failure(
             error_message="ZeroDivisionError: division by zero",
@@ -445,14 +449,21 @@ class TestTestIntelligenceEngine:
         """Test health report with data."""
         # Add test suite
         tc1 = TestCase(
-            id="test_1", name="test1", test_type=TestType.UNIT,
-            target_file="/path/file.py", code="code",
-            priority=TestPriority.MEDIUM, is_flaky=True
+            id="test_1",
+            name="test1",
+            test_type=TestType.UNIT,
+            target_file="/path/file.py",
+            code="code",
+            priority=TestPriority.MEDIUM,
+            is_flaky=True,
         )
         tc2 = TestCase(
-            id="test_2", name="test2", test_type=TestType.UNIT,
-            target_file="/path/file.py", code="code",
-            priority=TestPriority.MEDIUM
+            id="test_2",
+            name="test2",
+            test_type=TestType.UNIT,
+            target_file="/path/file.py",
+            code="code",
+            priority=TestPriority.MEDIUM,
         )
 
         suite = TestSuite(
@@ -465,10 +476,15 @@ class TestTestIntelligenceEngine:
 
         # Add bugs
         bug = BugReport(
-            id="bug_1", severity="critical", category="security",
-            file_path="/path/file.py", line_number=10,
-            description="Bug", root_cause="Cause",
-            suggested_fix="Fix", confidence=0.9
+            id="bug_1",
+            severity="critical",
+            category="security",
+            file_path="/path/file.py",
+            line_number=10,
+            description="Bug",
+            root_cause="Cause",
+            suggested_fix="Fix",
+            confidence=0.9,
         )
         intelligence_engine._bug_reports["bug_1"] = bug
 
@@ -554,9 +570,7 @@ class TestTestIntelligenceEngine:
 
         intelligence_engine._llm.generate = AsyncMock(return_value="def test_add(): pass")
 
-        tests = await intelligence_engine._generate_tests_for_gaps(
-            temp_python_file, code, gaps
-        )
+        tests = await intelligence_engine._generate_tests_for_gaps(temp_python_file, code, gaps)
 
         assert len(tests) == 1
 
@@ -570,9 +584,7 @@ class TestTestIntelligenceEngine:
 
         gaps = [{"type": "function", "name": "add", "line": 1}]
 
-        tests = await intelligence_engine._generate_tests_for_gaps(
-            temp_python_file, code, gaps
-        )
+        tests = await intelligence_engine._generate_tests_for_gaps(temp_python_file, code, gaps)
 
         assert tests == []
 
@@ -595,10 +607,12 @@ class TestTestIntelligenceEngine:
     @pytest.mark.asyncio
     async def test_llm_code_review(self, intelligence_engine, temp_python_file):
         """Test _llm_code_review method."""
-        intelligence_engine._llm.generate = AsyncMock(return_value="""[
+        intelligence_engine._llm.generate = AsyncMock(
+            return_value="""[
             {"severity": "high", "category": "logic", "line": 5,
              "description": "Issue", "suggestion": "Fix it"}
-        ]""")
+        ]"""
+        )
 
         bugs = await intelligence_engine._llm_code_review(temp_python_file)
 
@@ -618,10 +632,15 @@ class TestTestIntelligenceEngine:
     async def test_generate_fix(self, intelligence_engine, temp_python_file):
         """Test _generate_fix method."""
         bug = BugReport(
-            id="bug_1", severity="high", category="logic",
-            file_path=temp_python_file, line_number=5,
-            description="Bug", root_cause="Cause",
-            suggested_fix="Fix", confidence=0.9
+            id="bug_1",
+            severity="high",
+            category="logic",
+            file_path=temp_python_file,
+            line_number=5,
+            description="Bug",
+            root_cause="Cause",
+            suggested_fix="Fix",
+            confidence=0.9,
         )
 
         intelligence_engine._llm.generate = AsyncMock(return_value="fixed code")
@@ -635,10 +654,15 @@ class TestTestIntelligenceEngine:
     async def test_generate_fix_error(self, intelligence_engine, temp_python_file):
         """Test _generate_fix when LLM fails."""
         bug = BugReport(
-            id="bug_1", severity="high", category="logic",
-            file_path=temp_python_file, line_number=5,
-            description="Bug", root_cause="Cause",
-            suggested_fix="Fix", confidence=0.9
+            id="bug_1",
+            severity="high",
+            category="logic",
+            file_path=temp_python_file,
+            line_number=5,
+            description="Bug",
+            root_cause="Cause",
+            suggested_fix="Fix",
+            confidence=0.9,
         )
 
         intelligence_engine._llm.generate = AsyncMock(side_effect=Exception("LLM error"))
@@ -652,9 +676,12 @@ class TestTestIntelligenceEngine:
     async def test_run_test_with_healing(self, intelligence_engine):
         """Test _run_test_with_healing method."""
         tc = TestCase(
-            id="test_1", name="test_func", test_type=TestType.UNIT,
-            target_file="/path/file.py", code="code",
-            priority=TestPriority.MEDIUM
+            id="test_1",
+            name="test_func",
+            test_type=TestType.UNIT,
+            target_file="/path/file.py",
+            code="code",
+            priority=TestPriority.MEDIUM,
         )
 
         result = await intelligence_engine._run_test_with_healing(tc, 3)
@@ -663,6 +690,7 @@ class TestTestIntelligenceEngine:
 
     def test_register_callback(self, intelligence_engine):
         """Test register_callback method."""
+
         async def callback(data):
             pass
 
@@ -710,6 +738,7 @@ class TestIntelligenceEngineExtendedCoverage:
     def mock_llm(self):
         """Fixture for mocked LLM provider."""
         from unittest.mock import AsyncMock, Mock
+
         llm = Mock()
         llm.generate = AsyncMock(return_value="def test(): pass")
         return llm
@@ -718,6 +747,7 @@ class TestIntelligenceEngineExtendedCoverage:
     def intelligence_engine(self, mock_llm):
         """Fixture for TestIntelligenceEngine with mocked LLM."""
         from backend.testing.intelligence_engine import TestIntelligenceEngine
+
         engine = TestIntelligenceEngine(llm_provider=mock_llm)
         return engine
 
@@ -729,7 +759,7 @@ class TestIntelligenceEngineExtendedCoverage:
 
         from backend.testing.intelligence_engine import TestSuite
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write("def func():\n    return 1\n")
             f.flush()
             file_path = f.name
@@ -779,6 +809,7 @@ class TestIntelligenceEngineExtendedCoverage:
         # Mock _generate_fix to return a successful fix
         async def mock_generate_fix(bug):
             from backend.testing.intelligence_engine import FixResult
+
             return FixResult(
                 bug_id=bug.id,
                 success=True,
@@ -804,10 +835,38 @@ class TestIntelligenceEngineExtendedCoverage:
 
         # Create test cases
         test_cases = [
-            TestCase(id="passed", name="test_passed", test_type=TestType.UNIT, target_file="/f.py", code="", priority=TestPriority.HIGH),
-            TestCase(id="healed", name="test_healed", test_type=TestType.UNIT, target_file="/f.py", code="", priority=TestPriority.HIGH),
-            TestCase(id="flaky", name="test_flaky", test_type=TestType.UNIT, target_file="/f.py", code="", priority=TestPriority.HIGH),
-            TestCase(id="failed", name="test_failed", test_type=TestType.UNIT, target_file="/f.py", code="", priority=TestPriority.HIGH),
+            TestCase(
+                id="passed",
+                name="test_passed",
+                test_type=TestType.UNIT,
+                target_file="/f.py",
+                code="",
+                priority=TestPriority.HIGH,
+            ),
+            TestCase(
+                id="healed",
+                name="test_healed",
+                test_type=TestType.UNIT,
+                target_file="/f.py",
+                code="",
+                priority=TestPriority.HIGH,
+            ),
+            TestCase(
+                id="flaky",
+                name="test_flaky",
+                test_type=TestType.UNIT,
+                target_file="/f.py",
+                code="",
+                priority=TestPriority.HIGH,
+            ),
+            TestCase(
+                id="failed",
+                name="test_failed",
+                test_type=TestType.UNIT,
+                target_file="/f.py",
+                code="",
+                priority=TestPriority.HIGH,
+            ),
         ]
 
         test_suite = TestSuite(
@@ -844,7 +903,7 @@ class TestIntelligenceEngineExtendedCoverage:
         from unittest.mock import patch
 
         # Create a temp file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write("def func(): pass")
             f.flush()
             source_path = f.name
@@ -857,7 +916,7 @@ class TestIntelligenceEngineExtendedCoverage:
                     return True
                 return False
 
-            with patch.object(Path, 'exists', mock_exists):
+            with patch.object(Path, "exists", mock_exists):
                 existing = await intelligence_engine._find_existing_tests(source_path)
 
                 # Line 573: should find the test file
@@ -881,9 +940,7 @@ class TestIntelligenceEngineExtendedCoverage:
         # Mock LLM to return test code
         intelligence_engine._llm.generate = AsyncMock(return_value="def test_gap(): assert True")
 
-        gaps = [
-            {"type": "function", "name": "my_func", "line": 10}
-        ]
+        gaps = [{"type": "function", "name": "my_func", "line": 10}]
 
         await intelligence_engine._generate_tests_for_gaps(
             file_path="/path/to/file.py",
@@ -923,19 +980,21 @@ class TestCoverageGapsIntelligenceEngine:
         # Mock LLM to return a bug
         engine._llm.generate = AsyncMock(return_value='[{"severity": "medium", "description": "Potential bug"}]')
         engine._analyze_test_failures = AsyncMock(return_value=[])
-        engine._llm_code_review = AsyncMock(return_value=[
-            BugReport(
-                id="bug_detected",
-                severity="medium",
-                category="logic",
-                file_path=temp_python_file,
-                line_number=1,
-                description="Found potential issue",
-                root_cause="Logic error",
-                suggested_fix="Fix the logic",
-                confidence=0.9,
-            )
-        ])
+        engine._llm_code_review = AsyncMock(
+            return_value=[
+                BugReport(
+                    id="bug_detected",
+                    severity="medium",
+                    category="logic",
+                    file_path=temp_python_file,
+                    line_number=1,
+                    description="Found potential issue",
+                    root_cause="Logic error",
+                    suggested_fix="Fix the logic",
+                    confidence=0.9,
+                )
+            ]
+        )
 
         bugs = await engine.detect_bugs(suite, run_tests=False)
 
@@ -970,14 +1029,16 @@ class TestCoverageGapsIntelligenceEngine:
         )
 
         # Mock _generate_fix to return a successful result
-        engine._generate_fix = AsyncMock(return_value=FixResult(
-            bug_id=bug.id,
-            success=True,
-            file_path=bug.file_path,
-            original_code="old code",
-            fixed_code="new code",
-            explanation="Fixed the issue",
-        ))
+        engine._generate_fix = AsyncMock(
+            return_value=FixResult(
+                bug_id=bug.id,
+                success=True,
+                file_path=bug.file_path,
+                original_code="old code",
+                fixed_code="new code",
+                explanation="Fixed the issue",
+            )
+        )
 
         await engine.apply_fixes([bug], auto_apply=False, confidence_threshold=0.5)
 
@@ -992,18 +1053,27 @@ class TestCoverageGapsIntelligenceEngine:
 
         # Create test cases
         tc_healed = TestCase(
-            id="tc_healed", name="test_healed", test_type=TestType.UNIT,
-            target_file="/test.py", code="def test(): pass",
+            id="tc_healed",
+            name="test_healed",
+            test_type=TestType.UNIT,
+            target_file="/test.py",
+            code="def test(): pass",
             priority=TestPriority.MEDIUM,
         )
         tc_flaky = TestCase(
-            id="tc_flaky", name="test_flaky", test_type=TestType.UNIT,
-            target_file="/test.py", code="def test(): pass",
+            id="tc_flaky",
+            name="test_flaky",
+            test_type=TestType.UNIT,
+            target_file="/test.py",
+            code="def test(): pass",
             priority=TestPriority.MEDIUM,
         )
         tc_failed = TestCase(
-            id="tc_failed", name="test_failed", test_type=TestType.UNIT,
-            target_file="/test.py", code="def test(): pass",
+            id="tc_failed",
+            name="test_failed",
+            test_type=TestType.UNIT,
+            target_file="/test.py",
+            code="def test(): pass",
             priority=TestPriority.MEDIUM,
         )
 
@@ -1059,14 +1129,14 @@ class TestCoverageGapsIntelligenceEngine:
 
             def mock_exists(self):
                 # Return True for any path containing 'test_'
-                if 'test_' in str(self):
+                if "test_" in str(self):
                     return True
                 return original_exists(self)
 
             from unittest.mock import patch
-            with patch.object(Path, 'exists', mock_exists):
+
+            with patch.object(Path, "exists", mock_exists):
                 existing = await engine._find_existing_tests(str(source_file))
 
                 # Line 573 should be hit - existing should contain at least one entry
                 assert len(existing) >= 1
-

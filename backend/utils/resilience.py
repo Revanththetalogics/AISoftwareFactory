@@ -15,11 +15,12 @@ from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class CircuitBreakerOpenError(Exception):
     """Raised when circuit breaker is open and call is rejected."""
+
     pass
 
 
@@ -45,12 +46,7 @@ class CircuitBreaker:
         >>> result = await cb.call(some_async_func, arg1, arg2)
     """
 
-    def __init__(
-        self,
-        name: str,
-        failure_threshold: int = 5,
-        recovery_timeout: float = 30.0
-    ):
+    def __init__(self, name: str, failure_threshold: int = 5, recovery_timeout: float = 30.0):
         """
         Initialize circuit breaker.
 
@@ -87,14 +83,9 @@ class CircuitBreaker:
             if self.state == "open":
                 if (time.time() - self.last_failure_time) > self.recovery_timeout:
                     self.state = "half-open"
-                    logger.info(
-                        "Circuit breaker entering half-open state",
-                        circuit_name=self.name
-                    )
+                    logger.info("Circuit breaker entering half-open state", circuit_name=self.name)
                 else:
-                    raise CircuitBreakerOpenError(
-                        f"Circuit breaker '{self.name}' is open"
-                    )
+                    raise CircuitBreakerOpenError(f"Circuit breaker '{self.name}' is open")
 
         try:
             result = await func(*args, **kwargs)
@@ -103,10 +94,7 @@ class CircuitBreaker:
                 if self.state == "half-open":
                     self.state = "closed"
                     self.failure_count = 0
-                    logger.info(
-                        "Circuit breaker closed (recovered)",
-                        circuit_name=self.name
-                    )
+                    logger.info("Circuit breaker closed (recovered)", circuit_name=self.name)
 
             return result
 
@@ -118,10 +106,7 @@ class CircuitBreaker:
                 if self.failure_count >= self.failure_threshold:
                     self.state = "open"
                     logger.warning(
-                        "Circuit breaker opened",
-                        circuit_name=self.name,
-                        failure_count=self.failure_count,
-                        error=str(e)
+                        "Circuit breaker opened", circuit_name=self.name, failure_count=self.failure_count, error=str(e)
                     )
             raise
 
@@ -144,30 +129,14 @@ class CircuitBreaker:
 
 
 # Pre-configured circuit breakers for external services
-llm_circuit_breaker = CircuitBreaker(
-    "llm_provider",
-    failure_threshold=3,
-    recovery_timeout=60.0
-)
+llm_circuit_breaker = CircuitBreaker("llm_provider", failure_threshold=3, recovery_timeout=60.0)
 
-db_circuit_breaker = CircuitBreaker(
-    "database",
-    failure_threshold=5,
-    recovery_timeout=30.0
-)
+db_circuit_breaker = CircuitBreaker("database", failure_threshold=5, recovery_timeout=30.0)
 
-external_http_circuit_breaker = CircuitBreaker(
-    "external_http",
-    failure_threshold=5,
-    recovery_timeout=45.0
-)
+external_http_circuit_breaker = CircuitBreaker("external_http", failure_threshold=5, recovery_timeout=45.0)
 
 
-async def with_timeout(
-    coro,
-    timeout_seconds: float,
-    operation_name: str = "operation"
-) -> Any:
+async def with_timeout(coro, timeout_seconds: float, operation_name: str = "operation") -> Any:
     """
     Execute a coroutine with timeout.
 
@@ -192,11 +161,7 @@ async def with_timeout(
     try:
         return await asyncio.wait_for(coro, timeout=timeout_seconds)
     except TimeoutError as exc:
-        logger.error(
-            "Operation timed out",
-            operation=operation_name,
-            timeout_seconds=timeout_seconds
-        )
+        logger.error("Operation timed out", operation=operation_name, timeout_seconds=timeout_seconds)
         raise TimeoutError(f"{operation_name} timed out after {timeout_seconds}s") from exc
 
 
@@ -206,7 +171,7 @@ async def with_resilience(
     timeout_seconds: float | None = None,
     operation_name: str = "operation",
     *args,
-    **kwargs
+    **kwargs,
 ) -> Any:
     """
     Execute a function with circuit breaker and optional timeout.
@@ -239,6 +204,7 @@ async def with_resilience(
         ...     prompt="Hello"
         ... )
     """
+
     async def wrapped():
         return await func(*args, **kwargs)
 
@@ -248,20 +214,12 @@ async def with_resilience(
 
     # Apply timeout if specified
     if timeout_seconds is not None:
-        return await with_timeout(
-            cb_wrapped(),
-            timeout_seconds,
-            operation_name
-        )
+        return await with_timeout(cb_wrapped(), timeout_seconds, operation_name)
     else:
         return await cb_wrapped()
 
 
-def resilient(
-    circuit_breaker: CircuitBreaker,
-    timeout_seconds: float | None = None,
-    operation_name: str | None = None
-):
+def resilient(circuit_breaker: CircuitBreaker, timeout_seconds: float | None = None, operation_name: str | None = None):
     """
     Decorator to add resilience to async functions.
 
@@ -278,17 +236,13 @@ def resilient(
         ... async def call_llm(prompt: str) -> str:
         ...     return await llm_client.generate(prompt)
     """
+
     def decorator(func: Callable):
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
             op_name = operation_name or func.__name__
-            return await with_resilience(
-                func,
-                circuit_breaker,
-                timeout_seconds,
-                op_name,
-                *args,
-                **kwargs
-            )
+            return await with_resilience(func, circuit_breaker, timeout_seconds, op_name, *args, **kwargs)
+
         return wrapper
+
     return decorator

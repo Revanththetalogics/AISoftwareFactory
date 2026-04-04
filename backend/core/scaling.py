@@ -23,23 +23,29 @@ from backend.core.resources import resource_manager
 logger = get_logger(__name__)
 settings = get_settings()
 
+
 class ScalingPolicy(str, Enum):
     """Scaling policy types."""
+
     LEADER_ELECTION = "leader_election"
     ROUND_ROBIN = "round_robin"
     CONSISTENT_HASH = "consistent_hash"
     WEIGHTED_ROUND_ROBIN = "weighted_round_robin"
 
+
 class NodeStatus(str, Enum):
     """Node status states."""
+
     HEALTHY = "healthy"
     UNHEALTHY = "unhealthy"
     DRAINING = "draining"
     MAINTENANCE = "maintenance"
 
+
 @dataclass
 class ClusterNode:
     """Represents a node in the cluster."""
+
     node_id: str
     host: str
     port: int
@@ -59,8 +65,8 @@ class ClusterNode:
 
     def is_healthy(self) -> bool:
         """Check if node is healthy."""
-        return (self.status == NodeStatus.HEALTHY and
-                time.time() - self.last_heartbeat < settings.HEARTBEAT_TIMEOUT)
+        return self.status == NodeStatus.HEALTHY and time.time() - self.last_heartbeat < settings.HEARTBEAT_TIMEOUT
+
 
 class LoadBalancer:
     """Distributed load balancer with multiple algorithms."""
@@ -180,11 +186,12 @@ class LoadBalancer:
                     "status": node.status.value,
                     "weight": node.weight,
                     "last_heartbeat": node.last_heartbeat,
-                    "metrics": node.metrics
+                    "metrics": node.metrics,
                 }
                 for node in self.nodes.values()
-            ]
+            ],
         }
+
 
 class ClusterManager:
     """Manages cluster membership and coordination."""
@@ -201,10 +208,7 @@ class ClusterManager:
         """Initialize cluster manager."""
         # Register this node
         local_node = ClusterNode(
-            node_id=settings.NODE_ID,
-            host=settings.HOST,
-            port=settings.PORT,
-            weight=settings.NODE_WEIGHT
+            node_id=settings.NODE_ID, host=settings.HOST, port=settings.PORT, weight=settings.NODE_WEIGHT
         )
         await self.load_balancer.add_node(local_node)
 
@@ -258,7 +262,7 @@ class ClusterManager:
                 "port": settings.PORT,
                 "weight": settings.NODE_WEIGHT,
                 "timestamp": time.time(),
-                "status": NodeStatus.HEALTHY.value
+                "status": NodeStatus.HEALTHY.value,
             }
 
             # Publish heartbeat to Redis
@@ -270,7 +274,7 @@ class ClusterManager:
             await redis.setex(
                 key,
                 settings.HEARTBEAT_TIMEOUT * 2,  # Double timeout for safety
-                json.dumps(node_info)
+                json.dumps(node_info),
             )
 
             # Update local node heartbeat
@@ -308,7 +312,7 @@ class ClusterManager:
                             port=node_info["port"],
                             weight=node_info.get("weight", 1),
                             last_heartbeat=node_info["timestamp"],
-                            status=NodeStatus(node_info["status"])
+                            status=NodeStatus(node_info["status"]),
                         )
 
                         await self.load_balancer.add_node(node)
@@ -334,7 +338,7 @@ class ClusterManager:
                     lock_key,
                     lock_value,
                     nx=True,  # Only set if not exists
-                    ex=lock_ttl
+                    ex=lock_ttl,
                 )
 
                 if acquired:
@@ -360,8 +364,10 @@ class ClusterManager:
         """Get the load balancer instance."""
         return self.load_balancer
 
+
 # Global cluster manager instance
 cluster_manager = ClusterManager()
+
 
 # Middleware for request routing
 class ClusterRoutingMiddleware:
@@ -399,29 +405,31 @@ class ClusterRoutingMiddleware:
         # HTTP client or reverse proxy
 
         response = Response(
-            content=json.dumps({
-                "error": "Request routed to another node",
-                "target_node": target_node.address
-            }),
-            status_code=503
+            content=json.dumps({"error": "Request routed to another node", "target_node": target_node.address}),
+            status_code=503,
         )
 
         await response(scope, receive, send)
 
+
 # API Models
 class ClusterStats(BaseModel):
     """Cluster statistics response model."""
+
     total_nodes: int
     healthy_nodes: int
     unhealthy_nodes: int
     policy: str
     nodes: list[dict[str, Any]]
 
+
 class LeaderInfo(BaseModel):
     """Leader information response model."""
+
     is_leader: bool
     leader_id: str
     node_id: str
+
 
 # Dependency for getting cluster stats
 async def get_cluster_stats() -> ClusterStats:
@@ -429,11 +437,8 @@ async def get_cluster_stats() -> ClusterStats:
     stats = cluster_manager.load_balancer.get_cluster_stats()
     return ClusterStats(**stats)
 
+
 async def get_leader_info() -> LeaderInfo:
     """Get leader information."""
     leader_id = await cluster_manager.elect_leader()
-    return LeaderInfo(
-        is_leader=cluster_manager.is_leader(),
-        leader_id=leader_id,
-        node_id=settings.NODE_ID
-    )
+    return LeaderInfo(is_leader=cluster_manager.is_leader(), leader_id=leader_id, node_id=settings.NODE_ID)

@@ -2,7 +2,6 @@
 Tests for Task Manager.
 """
 
-
 from backend.workflows.task_manager import (
     TaskManager,
     TaskPriority,

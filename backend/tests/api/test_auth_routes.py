@@ -25,7 +25,9 @@ def mock_auth_service():
         yield service_instance
 
 
-@pytest.mark.skip(reason="Tests use /auth/* paths and success/data response format that do not match the actual /api/v1/auth/* API; needs rewrite")
+@pytest.mark.skip(
+    reason="Tests use /auth/* paths and success/data response format that do not match the actual /api/v1/auth/* API; needs rewrite"
+)
 class TestAuthRoutes:
     """Tests for authentication API routes."""
 
@@ -33,23 +35,12 @@ class TestAuthRoutes:
         """Test successful user login."""
         # Mock successful authentication
         mock_auth_service.authenticate_user.return_value = {
-            "user": {
-                "id": "user123",
-                "email": "test@example.com",
-                "username": "testuser",
-                "role": "user"
-            },
+            "user": {"id": "user123", "email": "test@example.com", "username": "testuser", "role": "user"},
             "token": "fake-jwt-token",
-            "expires_in": 3600
+            "expires_in": 3600,
         }
 
-        response = client.post(
-            "/auth/login",
-            json={
-                "email": "test@example.com",
-                "password": "password123"
-            }
-        )
+        response = client.post("/auth/login", json={"email": "test@example.com", "password": "password123"})
 
         assert response.status_code == 200
         data = response.json()
@@ -62,13 +53,7 @@ class TestAuthRoutes:
         # Mock authentication failure
         mock_auth_service.authenticate_user.return_value = None
 
-        response = client.post(
-            "/auth/login",
-            json={
-                "email": "wrong@example.com",
-                "password": "wrongpassword"
-            }
-        )
+        response = client.post("/auth/login", json={"email": "wrong@example.com", "password": "wrongpassword"})
 
         assert response.status_code == 401
         data = response.json()
@@ -82,7 +67,7 @@ class TestAuthRoutes:
             "email": "newuser@example.com",
             "username": "newuser",
             "role": "user",
-            "created_at": "2024-01-01T00:00:00Z"
+            "created_at": "2024-01-01T00:00:00Z",
         }
 
         response = client.post(
@@ -91,8 +76,8 @@ class TestAuthRoutes:
                 "email": "newuser@example.com",
                 "username": "newuser",
                 "password": "securepassword123",
-                "full_name": "New User"
-            }
+                "full_name": "New User",
+            },
         )
 
         assert response.status_code == 201
@@ -104,6 +89,7 @@ class TestAuthRoutes:
     def test_register_duplicate_email(self, client, mock_auth_service):
         """Test registration with duplicate email."""
         from backend.core.exceptions import ConflictError
+
         mock_auth_service.register_user.side_effect = ConflictError("Email already exists")
 
         response = client.post(
@@ -112,8 +98,8 @@ class TestAuthRoutes:
                 "email": "existing@example.com",
                 "username": "newuser",
                 "password": "password123",
-                "full_name": "New User"
-            }
+                "full_name": "New User",
+            },
         )
 
         assert response.status_code == 409
@@ -123,15 +109,9 @@ class TestAuthRoutes:
 
     def test_refresh_token_success(self, client, mock_auth_service):
         """Test successful token refresh."""
-        mock_auth_service.refresh_token.return_value = {
-            "token": "new-fake-jwt-token",
-            "expires_in": 3600
-        }
+        mock_auth_service.refresh_token.return_value = {"token": "new-fake-jwt-token", "expires_in": 3600}
 
-        response = client.post(
-            "/auth/refresh",
-            headers={"Authorization": "Bearer old-token"}
-        )
+        response = client.post("/auth/refresh", headers={"Authorization": "Bearer old-token"})
 
         assert response.status_code == 200
         data = response.json()
@@ -141,12 +121,10 @@ class TestAuthRoutes:
     def test_refresh_token_invalid(self, client, mock_auth_service):
         """Test refresh with invalid token."""
         from backend.core.exceptions import AuthenticationError
+
         mock_auth_service.refresh_token.side_effect = AuthenticationError("Invalid token")
 
-        response = client.post(
-            "/auth/refresh",
-            headers={"Authorization": "Bearer invalid-token"}
-        )
+        response = client.post("/auth/refresh", headers={"Authorization": "Bearer invalid-token"})
 
         assert response.status_code == 401
         data = response.json()
@@ -156,10 +134,7 @@ class TestAuthRoutes:
         """Test successful logout."""
         mock_auth_service.logout_user.return_value = True
 
-        response = client.post(
-            "/auth/logout",
-            headers={"Authorization": "Bearer valid-token"}
-        )
+        response = client.post("/auth/logout", headers={"Authorization": "Bearer valid-token"})
 
         assert response.status_code == 200
         data = response.json()
@@ -170,10 +145,7 @@ class TestAuthRoutes:
         """Test forgot password request."""
         mock_auth_service.initiate_password_reset.return_value = True
 
-        response = client.post(
-            "/auth/forgot-password",
-            json={"email": "user@example.com"}
-        )
+        response = client.post("/auth/forgot-password", json={"email": "user@example.com"})
 
         assert response.status_code == 200
         data = response.json()
@@ -185,11 +157,7 @@ class TestAuthRoutes:
         mock_auth_service.reset_password.return_value = True
 
         response = client.post(
-            "/auth/reset-password",
-            json={
-                "token": "valid-reset-token",
-                "new_password": "newsecurepassword123"
-            }
+            "/auth/reset-password", json={"token": "valid-reset-token", "new_password": "newsecurepassword123"}
         )
 
         assert response.status_code == 200
@@ -200,14 +168,11 @@ class TestAuthRoutes:
     def test_reset_password_invalid_token(self, client, mock_auth_service):
         """Test password reset with invalid token."""
         from backend.core.exceptions import ValidationError
+
         mock_auth_service.reset_password.side_effect = ValidationError("Invalid reset token")
 
         response = client.post(
-            "/auth/reset-password",
-            json={
-                "token": "invalid-token",
-                "new_password": "newpassword123"
-            }
+            "/auth/reset-password", json={"token": "invalid-token", "new_password": "newpassword123"}
         )
 
         assert response.status_code == 400
@@ -226,10 +191,7 @@ class TestAuthRoutes:
 
         mock_auth_service.get_current_user.return_value = mock_user
 
-        response = client.get(
-            "/auth/me",
-            headers={"Authorization": "Bearer valid-token"}
-        )
+        response = client.get("/auth/me", headers={"Authorization": "Bearer valid-token"})
 
         assert response.status_code == 200
         data = response.json()
@@ -250,10 +212,7 @@ class TestAuthRoutes:
         response = client.put(
             "/auth/me",
             headers={"Authorization": "Bearer valid-token"},
-            json={
-                "full_name": "Updated User",
-                "username": "updateduser"
-            }
+            json={"full_name": "Updated User", "username": "updateduser"},
         )
 
         assert response.status_code == 200
@@ -268,10 +227,7 @@ class TestAuthRoutes:
         response = client.put(
             "/auth/change-password",
             headers={"Authorization": "Bearer valid-token"},
-            json={
-                "current_password": "oldpassword123",
-                "new_password": "newpassword123"
-            }
+            json={"current_password": "oldpassword123", "new_password": "newpassword123"},
         )
 
         assert response.status_code == 200
@@ -282,15 +238,13 @@ class TestAuthRoutes:
     def test_change_password_wrong_current(self, client, mock_auth_service):
         """Test changing password with wrong current password."""
         from backend.core.exceptions import AuthenticationError
+
         mock_auth_service.change_password.side_effect = AuthenticationError("Current password is incorrect")
 
         response = client.put(
             "/auth/change-password",
             headers={"Authorization": "Bearer valid-token"},
-            json={
-                "current_password": "wrongpassword",
-                "new_password": "newpassword123"
-            }
+            json={"current_password": "wrongpassword", "new_password": "newpassword123"},
         )
 
         assert response.status_code == 401
@@ -301,14 +255,11 @@ class TestAuthRoutes:
         """Test listing users (admin only)."""
         mock_users = [
             {"id": "user1", "email": "user1@example.com", "username": "user1"},
-            {"id": "user2", "email": "user2@example.com", "username": "user2"}
+            {"id": "user2", "email": "user2@example.com", "username": "user2"},
         ]
         mock_auth_service.list_users.return_value = mock_users
 
-        response = client.get(
-            "/auth/users",
-            headers={"Authorization": "Bearer admin-token"}
-        )
+        response = client.get("/auth/users", headers={"Authorization": "Bearer admin-token"})
 
         assert response.status_code == 200
         data = response.json()
@@ -323,14 +274,11 @@ class TestAuthRoutes:
             "username": "testuser",
             "full_name": "Test User",
             "role": "user",
-            "created_at": "2024-01-01T00:00:00Z"
+            "created_at": "2024-01-01T00:00:00Z",
         }
         mock_auth_service.get_user_by_id.return_value = mock_user
 
-        response = client.get(
-            "/auth/users/user123",
-            headers={"Authorization": "Bearer admin-token"}
-        )
+        response = client.get("/auth/users/user123", headers={"Authorization": "Bearer admin-token"})
 
         assert response.status_code == 200
         data = response.json()
@@ -343,17 +291,14 @@ class TestAuthRoutes:
             "id": "user123",
             "email": "updated@example.com",
             "username": "updateduser",
-            "role": "admin"
+            "role": "admin",
         }
         mock_auth_service.update_user.return_value = mock_updated_user
 
         response = client.put(
             "/auth/users/user123",
             headers={"Authorization": "Bearer admin-token"},
-            json={
-                "role": "admin",
-                "is_active": True
-            }
+            json={"role": "admin", "is_active": True},
         )
 
         assert response.status_code == 200
@@ -365,10 +310,7 @@ class TestAuthRoutes:
         """Test admin deleting user."""
         mock_auth_service.delete_user.return_value = True
 
-        response = client.delete(
-            "/auth/users/user123",
-            headers={"Authorization": "Bearer admin-token"}
-        )
+        response = client.delete("/auth/users/user123", headers={"Authorization": "Bearer admin-token"})
 
         assert response.status_code == 200
         data = response.json()

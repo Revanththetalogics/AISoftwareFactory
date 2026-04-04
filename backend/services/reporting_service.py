@@ -21,6 +21,7 @@ logger = get_logger(__name__)
 
 class ReportType(str, Enum):
     """Types of reports available."""
+
     SYSTEM_HEALTH = "system_health"
     PERFORMANCE = "performance"
     SECURITY = "security"
@@ -32,6 +33,7 @@ class ReportType(str, Enum):
 
 class ReportFormat(str, Enum):
     """Supported report formats."""
+
     PDF = "pdf"
     CSV = "csv"
     JSON = "json"
@@ -41,6 +43,7 @@ class ReportFormat(str, Enum):
 
 class ReportFrequency(str, Enum):
     """Report scheduling frequencies."""
+
     ONCE = "once"
     HOURLY = "hourly"
     DAILY = "daily"
@@ -51,6 +54,7 @@ class ReportFrequency(str, Enum):
 
 class ReportStatus(str, Enum):
     """Report generation statuses."""
+
     PENDING = "pending"
     GENERATING = "generating"
     COMPLETED = "completed"
@@ -61,6 +65,7 @@ class ReportStatus(str, Enum):
 @dataclass
 class ReportTemplate:
     """Report template definition."""
+
     id: str
     name: str
     type: ReportType
@@ -76,6 +81,7 @@ class ReportTemplate:
 @dataclass
 class ReportDefinition:
     """Report generation definition."""
+
     id: str
     name: str
     template_id: str
@@ -92,6 +98,7 @@ class ReportDefinition:
 @dataclass
 class GeneratedReport:
     """Generated report instance."""
+
     id: str
     definition_id: str
     name: str
@@ -111,6 +118,7 @@ class GeneratedReport:
 @dataclass
 class ReportSchedule:
     """Report scheduling configuration."""
+
     id: str
     definition_id: str
     frequency: ReportFrequency
@@ -140,12 +148,7 @@ class ReportingService:
             type=ReportType.SYSTEM_HEALTH,
             description="Comprehensive system health and status overview",
             format=ReportFormat.PDF,
-            parameters={
-                "include_metrics": True,
-                "include_alerts": True,
-                "include_services": True,
-                "time_range": "24h"
-            },
+            parameters={"include_metrics": True, "include_alerts": True, "include_services": True, "time_range": "24h"},
             query_template="""
                 SELECT
                     service_name,
@@ -159,7 +162,7 @@ class ReportingService:
             """,
             created_by="system",
             created_at=datetime.now(UTC).isoformat(),
-            is_system_default=True
+            is_system_default=True,
         )
 
         # Performance Report Template
@@ -172,7 +175,7 @@ class ReportingService:
             parameters={
                 "metrics": ["cpu_usage", "memory_usage", "response_time"],
                 "aggregation": "hourly",
-                "include_charts": True
+                "include_charts": True,
             },
             query_template="""
                 SELECT
@@ -187,7 +190,7 @@ class ReportingService:
             """,
             created_by="system",
             created_at=datetime.now(UTC).isoformat(),
-            is_system_default=True
+            is_system_default=True,
         )
 
         # Security Report Template
@@ -200,7 +203,7 @@ class ReportingService:
             parameters={
                 "scan_types": ["vulnerability", "compliance"],
                 "severity_levels": ["high", "critical"],
-                "include_recommendations": True
+                "include_recommendations": True,
             },
             query_template="""
                 SELECT
@@ -216,7 +219,7 @@ class ReportingService:
             """,
             created_by="system",
             created_at=datetime.now(UTC).isoformat(),
-            is_system_default=True
+            is_system_default=True,
         )
 
         # Usage Report Template
@@ -229,7 +232,7 @@ class ReportingService:
             parameters={
                 "metrics": ["active_users", "sessions", "feature_usage"],
                 "group_by": "user_role",
-                "time_range": "30d"
+                "time_range": "30d",
             },
             query_template="""
                 SELECT
@@ -245,14 +248,14 @@ class ReportingService:
             """,
             created_by="system",
             created_at=datetime.now(UTC).isoformat(),
-            is_system_default=True
+            is_system_default=True,
         )
 
         self.templates = {
             health_template.id: health_template,
             perf_template.id: perf_template,
             security_template.id: security_template,
-            usage_template.id: usage_template
+            usage_template.id: usage_template,
         }
 
     def _initialize_sample_definitions(self):
@@ -262,18 +265,14 @@ class ReportingService:
             id="def_daily_health",
             name="Daily System Health Report",
             template_id="template_health",
-            parameters={
-                "include_metrics": True,
-                "include_alerts": True,
-                "time_range": "24h"
-            },
+            parameters={"include_metrics": True, "include_alerts": True, "time_range": "24h"},
             recipients=["admin@thetaai.com", "ops@thetaai.com"],
             schedule_frequency=ReportFrequency.DAILY,
             schedule_time="09:00:00",
             is_active=True,
             created_by="admin_1",
             created_at=datetime.now(UTC).isoformat(),
-            updated_at=datetime.now(UTC).isoformat()
+            updated_at=datetime.now(UTC).isoformat(),
         )
 
         # Weekly Performance Report Definition
@@ -281,24 +280,17 @@ class ReportingService:
             id="def_weekly_perf",
             name="Weekly Performance Analysis",
             template_id="template_performance",
-            parameters={
-                "metrics": ["cpu_usage", "memory_usage"],
-                "aggregation": "daily",
-                "include_charts": True
-            },
+            parameters={"metrics": ["cpu_usage", "memory_usage"], "aggregation": "daily", "include_charts": True},
             recipients=["admin@thetaai.com", "engineering@thetaai.com"],
             schedule_frequency=ReportFrequency.WEEKLY,
             schedule_time="10:00:00",
             is_active=True,
             created_by="admin_1",
             created_at=datetime.now(UTC).isoformat(),
-            updated_at=datetime.now(UTC).isoformat()
+            updated_at=datetime.now(UTC).isoformat(),
         )
 
-        self.definitions = {
-            daily_health_def.id: daily_health_def,
-            weekly_perf_def.id: weekly_perf_def
-        }
+        self.definitions = {daily_health_def.id: daily_health_def, weekly_perf_def.id: weekly_perf_def}
 
     async def create_report_template(
         self,
@@ -308,7 +300,7 @@ class ReportingService:
         format: ReportFormat,
         parameters: dict[str, Any],
         query_template: str,
-        created_by: str
+        created_by: str,
     ) -> ReportTemplate:
         """Create a new report template."""
         try:
@@ -323,7 +315,7 @@ class ReportingService:
                 parameters=parameters,
                 query_template=query_template,
                 created_by=created_by,
-                created_at=datetime.now(UTC).isoformat()
+                created_at=datetime.now(UTC).isoformat(),
             )
 
             self.templates[template_id] = template
@@ -340,9 +332,7 @@ class ReportingService:
         return self.templates.get(template_id)
 
     async def list_templates(
-        self,
-        report_type: ReportType | None = None,
-        include_system: bool = True
+        self, report_type: ReportType | None = None, include_system: bool = True
     ) -> list[ReportTemplate]:
         """List available report templates."""
         templates = list(self.templates.values())
@@ -363,7 +353,7 @@ class ReportingService:
         recipients: list[str],
         schedule_frequency: ReportFrequency,
         schedule_time: str | None,
-        created_by: str
+        created_by: str,
     ) -> ReportDefinition:
         """Create a new report definition."""
         try:
@@ -384,7 +374,7 @@ class ReportingService:
                 is_active=True,
                 created_by=created_by,
                 created_at=datetime.now(UTC).isoformat(),
-                updated_at=datetime.now(UTC).isoformat()
+                updated_at=datetime.now(UTC).isoformat(),
             )
 
             self.definitions[definition_id] = definition
@@ -408,15 +398,21 @@ class ReportingService:
             # Calculate next run time
             now = datetime.now(UTC)
             if definition.schedule_frequency == ReportFrequency.DAILY:
-                next_run = now.replace(hour=int(definition.schedule_time.split(':')[0]),
-                                     minute=int(definition.schedule_time.split(':')[1]),
-                                     second=0, microsecond=0)
+                next_run = now.replace(
+                    hour=int(definition.schedule_time.split(":")[0]),
+                    minute=int(definition.schedule_time.split(":")[1]),
+                    second=0,
+                    microsecond=0,
+                )
                 if next_run <= now:
                     next_run += timedelta(days=1)
             elif definition.schedule_frequency == ReportFrequency.WEEKLY:
-                next_run = now.replace(hour=int(definition.schedule_time.split(':')[0]),
-                                     minute=int(definition.schedule_time.split(':')[1]),
-                                     second=0, microsecond=0)
+                next_run = now.replace(
+                    hour=int(definition.schedule_time.split(":")[0]),
+                    minute=int(definition.schedule_time.split(":")[1]),
+                    second=0,
+                    microsecond=0,
+                )
                 # Add days to reach next occurrence
                 days_ahead = 7 - now.weekday()  # Next Monday
                 if days_ahead <= 0:
@@ -432,7 +428,7 @@ class ReportingService:
                 next_run_time=next_run.isoformat(),
                 last_run_time=None,
                 is_active=definition.is_active,
-                created_at=datetime.now(UTC).isoformat()
+                created_at=datetime.now(UTC).isoformat(),
             )
 
             self.schedules[schedule_id] = schedule
@@ -443,9 +439,7 @@ class ReportingService:
             logger.error("Failed to create report schedule", error=str(e))
 
     async def generate_report(
-        self,
-        definition_id: str,
-        override_parameters: dict[str, Any] | None = None
+        self, definition_id: str, override_parameters: dict[str, Any] | None = None
     ) -> GeneratedReport:
         """Generate a report based on definition."""
         try:
@@ -480,7 +474,7 @@ class ReportingService:
                 generated_at=datetime.now(UTC).isoformat(),
                 completed_at=None,
                 error_message=None,
-                recipient_emails=definition.recipients
+                recipient_emails=definition.recipients,
             )
 
             self.generated_reports[report_id] = report
@@ -528,67 +522,60 @@ class ReportingService:
                     {"name": "API Gateway", "status": "healthy", "response_time_ms": 45},
                     {"name": "Authentication", "status": "healthy", "response_time_ms": 62},
                     {"name": "Database", "status": "degraded", "response_time_ms": 180},
-                    {"name": "Cache", "status": "healthy", "response_time_ms": 12}
+                    {"name": "Cache", "status": "healthy", "response_time_ms": 12},
                 ],
-                "metrics": {
-                    "uptime_percentage": 99.8,
-                    "average_response_time": 72.3,
-                    "error_rate": 0.02
-                },
+                "metrics": {"uptime_percentage": 99.8, "average_response_time": 72.3, "error_rate": 0.02},
                 "alerts": [
-                    {"severity": "warning", "message": "Database response time elevated", "timestamp": (now - timedelta(hours=2)).isoformat()}
-                ]
+                    {
+                        "severity": "warning",
+                        "message": "Database response time elevated",
+                        "timestamp": (now - timedelta(hours=2)).isoformat(),
+                    }
+                ],
             }
 
         elif report_type == ReportType.PERFORMANCE:
             # Generate time series data
             data_points = []
             for i in range(24):
-                timestamp = (now - timedelta(hours=23-i)).isoformat()
-                data_points.append({
-                    "timestamp": timestamp,
-                    "cpu_usage": 25 + (i % 8) + (20 * (i/24)),  # Increasing trend
-                    "memory_usage": 45 + (i % 5) + (15 * (i/24)),
-                    "response_time": 80 + (i % 10) + (40 * (i/24))
-                })
+                timestamp = (now - timedelta(hours=23 - i)).isoformat()
+                data_points.append(
+                    {
+                        "timestamp": timestamp,
+                        "cpu_usage": 25 + (i % 8) + (20 * (i / 24)),  # Increasing trend
+                        "memory_usage": 45 + (i % 5) + (15 * (i / 24)),
+                        "response_time": 80 + (i % 10) + (40 * (i / 24)),
+                    }
+                )
 
             return {
                 "report_period": f"Last 24 hours ({now.strftime('%Y-%m-%d')})",
                 "metrics": parameters.get("metrics", ["cpu_usage", "memory_usage"]),
                 "data_points": data_points,
-                "statistics": {
-                    "cpu_avg": 45.2,
-                    "memory_avg": 62.8,
-                    "response_time_avg": 120.5
-                }
+                "statistics": {"cpu_avg": 45.2, "memory_avg": 62.8, "response_time_avg": 120.5},
             }
 
         elif report_type == ReportType.SECURITY:
             return {
                 "report_period": f"Last 30 days ({(now - timedelta(days=30)).strftime('%Y-%m-%d')} to {now.strftime('%Y-%m-%d')})",
                 "total_vulnerabilities": 12,
-                "by_severity": {
-                    "critical": 2,
-                    "high": 5,
-                    "medium": 3,
-                    "low": 2
-                },
+                "by_severity": {"critical": 2, "high": 5, "medium": 3, "low": 2},
                 "vulnerabilities": [
                     {
                         "id": "CVE-2024-12345",
                         "severity": "high",
                         "description": "SQL injection vulnerability in user authentication",
                         "detected_date": (now - timedelta(days=15)).isoformat(),
-                        "status": "open"
+                        "status": "open",
                     },
                     {
                         "id": "CVE-2024-12346",
                         "severity": "medium",
                         "description": "Cross-site scripting vulnerability",
                         "detected_date": (now - timedelta(days=8)).isoformat(),
-                        "status": "patched"
-                    }
-                ]
+                        "status": "patched",
+                    },
+                ],
             }
 
         elif report_type == ReportType.USAGE:
@@ -596,17 +583,12 @@ class ReportingService:
                 "report_period": f"Last 30 days ({(now - timedelta(days=30)).strftime('%Y-%m-%d')} to {now.strftime('%Y-%m-%d')})",
                 "total_users": 1250,
                 "active_users": 892,
-                "by_role": {
-                    "admin": 5,
-                    "developer": 420,
-                    "analyst": 180,
-                    "viewer": 287
-                },
+                "by_role": {"admin": 5, "developer": 420, "analyst": 180, "viewer": 287},
                 "engagement_metrics": {
                     "avg_sessions_per_user": 3.2,
                     "avg_session_duration_min": 28.5,
-                    "feature_adoption_rate": 78.3
-                }
+                    "feature_adoption_rate": 78.3,
+                },
             }
 
         else:  # CUSTOM
@@ -614,14 +596,11 @@ class ReportingService:
                 "report_type": report_type.value,
                 "generated_at": now.isoformat(),
                 "parameters": parameters,
-                "data": {"sample": "custom_report_data"}
+                "data": {"sample": "custom_report_data"},
             }
 
     async def get_generated_reports(
-        self,
-        definition_id: str | None = None,
-        status: ReportStatus | None = None,
-        limit: int = 50
+        self, definition_id: str | None = None, status: ReportStatus | None = None, limit: int = 50
     ) -> list[GeneratedReport]:
         """Get generated reports with optional filtering."""
         try:
@@ -691,13 +670,13 @@ class ReportingService:
                     "name": report.name,
                     "type": report.type.value,
                     "generated_at": report.generated_at,
-                    "completed_at": report.completed_at
+                    "completed_at": report.completed_at,
                 },
-                "data": report.data
+                "data": report.data,
             }
 
             if format == ReportFormat.JSON:
-                return json.dumps(export_data, indent=2).encode('utf-8')
+                return json.dumps(export_data, indent=2).encode("utf-8")
             elif format == ReportFormat.CSV:
                 # Convert to CSV format
                 csv_content = "Report Data Export\n"
@@ -705,10 +684,10 @@ class ReportingService:
                 csv_content += f"Name: {report.name}\n"
                 csv_content += f"Generated: {report.generated_at}\n\n"
                 csv_content += json.dumps(report.data, indent=2)
-                return csv_content.encode('utf-8')
+                return csv_content.encode("utf-8")
             else:
                 # For other formats, return JSON as fallback
-                return json.dumps(export_data, indent=2).encode('utf-8')
+                return json.dumps(export_data, indent=2).encode("utf-8")
 
         except Exception as e:
             logger.error("Failed to export report", error=str(e), report_id=report_id)
@@ -734,22 +713,23 @@ class ReportingService:
                 "templates": {
                     "total": len(templates),
                     "system_default": len([t for t in templates if t.is_system_default]),
-                    "custom": len([t for t in templates if not t.is_system_default])
+                    "custom": len([t for t in templates if not t.is_system_default]),
                 },
-                "definitions": {
-                    "total": len(definitions),
-                    "active": len([d for d in definitions if d.is_active])
-                },
+                "definitions": {"total": len(definitions), "active": len([d for d in definitions if d.is_active])},
                 "reports": {
                     "total": len(reports),
                     "by_status": dict(status_counts),
                     "by_type": dict(type_counts),
-                    "recent_24h": len([r for r in reports if "T" in r.generated_at and r.generated_at.split("T")[0] == datetime.now(UTC).strftime("%Y-%m-%d")])
+                    "recent_24h": len(
+                        [
+                            r
+                            for r in reports
+                            if "T" in r.generated_at
+                            and r.generated_at.split("T")[0] == datetime.now(UTC).strftime("%Y-%m-%d")
+                        ]
+                    ),
                 },
-                "schedules": {
-                    "total": len(schedules),
-                    "active": len([s for s in schedules if s.is_active])
-                }
+                "schedules": {"total": len(schedules), "active": len([s for s in schedules if s.is_active])},
             }
 
             return stats

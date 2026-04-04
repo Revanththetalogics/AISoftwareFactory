@@ -19,6 +19,7 @@ logger = get_logger(__name__)
 
 class CircuitState(Enum):
     """Circuit breaker states."""
+
     CLOSED = "closed"
     OPEN = "open"
     HALF_OPEN = "half_open"
@@ -27,6 +28,7 @@ class CircuitState(Enum):
 @dataclass
 class RetryConfig:
     """Retry configuration."""
+
     max_retries: int = 3
     backoff_base: float = 1.0
     backoff_max: float = 60.0
@@ -36,11 +38,7 @@ class RetryConfig:
 class CircuitBreaker:
     """Circuit breaker for fault tolerance."""
 
-    def __init__(
-        self,
-        failure_threshold: int = 5,
-        recovery_timeout: float = 60.0
-    ):
+    def __init__(self, failure_threshold: int = 5, recovery_timeout: float = 60.0):
         self._failure_threshold = failure_threshold
         self._recovery_timeout = recovery_timeout
         self._state = CircuitState.CLOSED
@@ -53,8 +51,7 @@ class CircuitBreaker:
             return True
 
         if self._state == CircuitState.OPEN:
-            if self._last_failure and \
-               (datetime.now(UTC) - self._last_failure).total_seconds() > self._recovery_timeout:
+            if self._last_failure and (datetime.now(UTC) - self._last_failure).total_seconds() > self._recovery_timeout:
                 self._state = CircuitState.HALF_OPEN
                 return True
             return False
@@ -90,12 +87,7 @@ class ErrorHandler:
         self._logger = get_logger(__name__)
 
     async def execute_with_retry(
-        self,
-        operation: Callable,
-        config: RetryConfig | None = None,
-        circuit_name: str | None = None,
-        *args,
-        **kwargs
+        self, operation: Callable, config: RetryConfig | None = None, circuit_name: str | None = None, *args, **kwargs
     ) -> Any:
         """
         Execute an operation with retry logic.
@@ -139,19 +131,13 @@ class ErrorHandler:
             except Exception as e:
                 last_exception = e
                 self._logger.warning(
-                    "Operation failed",
-                    attempt=attempt + 1,
-                    max_retries=config.max_retries,
-                    error=str(e)
+                    "Operation failed", attempt=attempt + 1, max_retries=config.max_retries, error=str(e)
                 )
 
                 if attempt < config.max_retries:
                     # Calculate backoff
                     if config.exponential:
-                        delay = min(
-                            config.backoff_base * (2 ** attempt),
-                            config.backoff_max
-                        )
+                        delay = min(config.backoff_base * (2**attempt), config.backoff_max)
                     else:
                         delay = config.backoff_base
 
@@ -163,12 +149,7 @@ class ErrorHandler:
 
         raise last_exception
 
-    def escalate_to_human(
-        self,
-        task_id: str,
-        error: Exception,
-        context: dict[str, Any] | None = None
-    ):
+    def escalate_to_human(self, task_id: str, error: Exception, context: dict[str, Any] | None = None):
         """
         Escalate an error to human-in-the-loop.
 
@@ -177,17 +158,13 @@ class ErrorHandler:
             error: Exception that occurred
             context: Additional context
         """
-        self._logger.error(
-            "Escalating to human",
-            task_id=task_id,
-            error=str(error),
-            context=context
-        )
+        self._logger.error("Escalating to human", task_id=task_id, error=str(error), context=context)
         # Write to structured escalation log
         try:
             import json
             from datetime import datetime
             from pathlib import Path
+
             log_entry = {
                 "task_id": task_id,
                 "error": str(error),
@@ -203,14 +180,17 @@ class ErrorHandler:
         # Attempt webhook if configured
         try:
             from backend.core.config import get_settings
+
             webhook_url = getattr(get_settings(), "ESCALATION_WEBHOOK_URL", None)
             if webhook_url:
                 import asyncio
 
                 import httpx
+
                 async def _send():
                     async with httpx.AsyncClient() as client:
                         await client.post(webhook_url, json=log_entry, timeout=5.0)
+
                 asyncio.get_event_loop().create_task(_send())
         except Exception as we:
             self._logger.warning("Webhook escalation failed", error=str(we))

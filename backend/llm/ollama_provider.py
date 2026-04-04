@@ -50,13 +50,7 @@ class OllamaProvider(BaseLLMProvider):
             self._session = aiohttp.ClientSession()
         return self._session
 
-    async def generate(
-        self,
-        prompt: str,
-        temperature: float = 0.7,
-        max_tokens: int | None = None,
-        **kwargs
-    ) -> str:
+    async def generate(self, prompt: str, temperature: float = 0.7, max_tokens: int | None = None, **kwargs) -> str:
         """
         Generate text using Ollama with circuit breaker and timeout.
 
@@ -81,41 +75,26 @@ class OllamaProvider(BaseLLMProvider):
                 "stream": False,
                 "options": {
                     "temperature": temperature,
-                }
+                },
             }
 
             if max_tokens:
                 payload["options"]["num_predict"] = max_tokens
 
-            async with session.post(
-                f"{self.base_url}/api/generate",
-                json=payload
-            ) as response:
+            async with session.post(f"{self.base_url}/api/generate", json=payload) as response:
                 response.raise_for_status()
                 data = await response.json()
                 return data.get("response", "")
 
         try:
             result = await llm_circuit_breaker.call(
-                lambda: with_timeout(
-                    _do_generate(),
-                    settings.LLM_TIMEOUT_SECONDS,
-                    f"Ollama generate ({self.model})"
-                )
+                lambda: with_timeout(_do_generate(), settings.LLM_TIMEOUT_SECONDS, f"Ollama generate ({self.model})")
             )
 
             duration = time.time() - start_time
-            metrics.record_llm_call(
-                provider="ollama",
-                operation="generate",
-                duration=duration,
-                status="success"
-            )
+            metrics.record_llm_call(provider="ollama", operation="generate", duration=duration, status="success")
             metrics.record_circuit_breaker_success(llm_circuit_breaker.name)
-            metrics.record_circuit_breaker_state(
-                llm_circuit_breaker.name,
-                llm_circuit_breaker.get_state_value()
-            )
+            metrics.record_circuit_breaker_state(llm_circuit_breaker.name, llm_circuit_breaker.get_state_value())
 
             return result
 
@@ -126,30 +105,18 @@ class OllamaProvider(BaseLLMProvider):
         except TimeoutError:
             metrics.record_timeout(f"ollama_generate_{self.model}")
             metrics.record_llm_call(
-                provider="ollama",
-                operation="generate",
-                duration=time.time() - start_time,
-                status="timeout"
+                provider="ollama", operation="generate", duration=time.time() - start_time, status="timeout"
             )
             raise
         except Exception as e:
             duration = time.time() - start_time
-            metrics.record_llm_call(
-                provider="ollama",
-                operation="generate",
-                duration=duration,
-                status="error"
-            )
+            metrics.record_llm_call(provider="ollama", operation="generate", duration=duration, status="error")
             metrics.record_circuit_breaker_failure(llm_circuit_breaker.name)
             logger.error(f"Ollama generation error: {e}")
             raise
 
     async def generate_stream(
-        self,
-        prompt: str,
-        temperature: float = 0.7,
-        max_tokens: int | None = None,
-        **kwargs
+        self, prompt: str, temperature: float = 0.7, max_tokens: int | None = None, **kwargs
     ) -> AsyncIterator[str]:
         """
         Generate text with streaming.
@@ -171,21 +138,19 @@ class OllamaProvider(BaseLLMProvider):
             "stream": True,
             "options": {
                 "temperature": temperature,
-            }
+            },
         }
 
         if max_tokens:
             payload["options"]["num_predict"] = max_tokens
 
         try:
-            async with session.post(
-                f"{self.base_url}/api/generate",
-                json=payload
-            ) as response:
+            async with session.post(f"{self.base_url}/api/generate", json=payload) as response:
                 response.raise_for_status()
                 async for line in response.content:
                     if line:
                         import json
+
                         try:
                             data = json.loads(line)
                             if "response" in data:
@@ -197,11 +162,7 @@ class OllamaProvider(BaseLLMProvider):
             raise
 
     async def chat(
-        self,
-        messages: list[dict[str, str]],
-        temperature: float = 0.7,
-        max_tokens: int | None = None,
-        **kwargs
+        self, messages: list[dict[str, str]], temperature: float = 0.7, max_tokens: int | None = None, **kwargs
     ) -> str:
         """
         Generate chat response with circuit breaker and timeout.
@@ -227,36 +188,24 @@ class OllamaProvider(BaseLLMProvider):
                 "stream": False,
                 "options": {
                     "temperature": temperature,
-                }
+                },
             }
 
             if max_tokens:
                 payload["options"]["num_predict"] = max_tokens
 
-            async with session.post(
-                f"{self.base_url}/api/chat",
-                json=payload
-            ) as response:
+            async with session.post(f"{self.base_url}/api/chat", json=payload) as response:
                 response.raise_for_status()
                 data = await response.json()
                 return data.get("message", {}).get("content", "")
 
         try:
             result = await llm_circuit_breaker.call(
-                lambda: with_timeout(
-                    _do_chat(),
-                    settings.LLM_TIMEOUT_SECONDS,
-                    f"Ollama chat ({self.model})"
-                )
+                lambda: with_timeout(_do_chat(), settings.LLM_TIMEOUT_SECONDS, f"Ollama chat ({self.model})")
             )
 
             duration = time.time() - start_time
-            metrics.record_llm_call(
-                provider="ollama",
-                operation="chat",
-                duration=duration,
-                status="success"
-            )
+            metrics.record_llm_call(provider="ollama", operation="chat", duration=duration, status="success")
             metrics.record_circuit_breaker_success(llm_circuit_breaker.name)
 
             return result
@@ -268,29 +217,19 @@ class OllamaProvider(BaseLLMProvider):
         except TimeoutError:
             metrics.record_timeout(f"ollama_chat_{self.model}")
             metrics.record_llm_call(
-                provider="ollama",
-                operation="chat",
-                duration=time.time() - start_time,
-                status="timeout"
+                provider="ollama", operation="chat", duration=time.time() - start_time, status="timeout"
             )
             raise
         except Exception as e:
             metrics.record_llm_call(
-                provider="ollama",
-                operation="chat",
-                duration=time.time() - start_time,
-                status="error"
+                provider="ollama", operation="chat", duration=time.time() - start_time, status="error"
             )
             metrics.record_circuit_breaker_failure(llm_circuit_breaker.name)
             logger.error(f"Ollama chat error: {e}")
             raise
 
     async def chat_stream(
-        self,
-        messages: list[dict[str, str]],
-        temperature: float = 0.7,
-        max_tokens: int | None = None,
-        **kwargs
+        self, messages: list[dict[str, str]], temperature: float = 0.7, max_tokens: int | None = None, **kwargs
     ) -> AsyncIterator[str]:
         """
         Generate chat response with streaming.
@@ -312,21 +251,19 @@ class OllamaProvider(BaseLLMProvider):
             "stream": True,
             "options": {
                 "temperature": temperature,
-            }
+            },
         }
 
         if max_tokens:
             payload["options"]["num_predict"] = max_tokens
 
         try:
-            async with session.post(
-                f"{self.base_url}/api/chat",
-                json=payload
-            ) as response:
+            async with session.post(f"{self.base_url}/api/chat", json=payload) as response:
                 response.raise_for_status()
                 async for line in response.content:
                     if line:
                         import json
+
                         try:
                             data = json.loads(line)
                             if "message" in data and "content" in data["message"]:
@@ -349,16 +286,10 @@ class OllamaProvider(BaseLLMProvider):
         """
         session = await self._get_session()
 
-        payload = {
-            "model": self.model,
-            "prompt": text
-        }
+        payload = {"model": self.model, "prompt": text}
 
         try:
-            async with session.post(
-                f"{self.base_url}/api/embeddings",
-                json=payload
-            ) as response:
+            async with session.post(f"{self.base_url}/api/embeddings", json=payload) as response:
                 response.raise_for_status()
                 data = await response.json()
                 return data.get("embedding", [])

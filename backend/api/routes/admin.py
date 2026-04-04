@@ -20,12 +20,14 @@ logger = get_logger(__name__)
 
 class AdminAuth(BaseModel):
     """Admin authentication request model."""
+
     username: str
     password: str
 
 
 class AdminUserCreate(BaseModel):
     """Admin user creation request model."""
+
     username: str
     email: str
     role: str
@@ -34,6 +36,7 @@ class AdminUserCreate(BaseModel):
 
 class AdminUserUpdate(BaseModel):
     """Admin user update request model."""
+
     username: str | None = None
     email: str | None = None
     role: str | None = None
@@ -43,6 +46,7 @@ class AdminUserUpdate(BaseModel):
 
 class MaintenanceScheduleCreate(BaseModel):
     """Maintenance schedule creation request model."""
+
     title: str
     description: str
     start_time: str
@@ -63,23 +67,20 @@ async def admin_login(auth_data: AdminAuth):
         APIResponse with authentication result
     """
     try:
-        user = await admin_panel_service.authenticate_admin(
-            auth_data.username,
-            auth_data.password
-        )
+        user = await admin_panel_service.authenticate_admin(auth_data.username, auth_data.password)
 
         if user:
             user_dict = user.__dict__.copy()
-            del user_dict['password']  # Don't expose password hash
+            del user_dict["password"]  # Don't expose password hash
 
             return APIResponse(
                 success=True,
                 data={
                     "user": user_dict,
                     "token": "admin_session_token_example",  # In real implementation, return JWT
-                    "expires_in": 3600
+                    "expires_in": 3600,
                 },
-                message="Authentication successful"
+                message="Authentication successful",
             )
         else:
             raise HTTPException(status_code=401, detail="Invalid credentials")
@@ -100,11 +101,7 @@ async def get_system_metrics():
     try:
         metrics = await admin_panel_service.get_system_metrics()
 
-        return APIResponse(
-            success=True,
-            data=metrics.__dict__,
-            message="Retrieved system metrics"
-        )
+        return APIResponse(success=True, data=metrics.__dict__, message="Retrieved system metrics")
     except Exception as e:
         logger.error("Failed to get system metrics", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get system metrics: {str(e)}")
@@ -121,11 +118,7 @@ async def get_system_health():
     try:
         health = await admin_panel_service.get_system_health()
 
-        return APIResponse(
-            success=True,
-            data=health.__dict__,
-            message="Retrieved system health status"
-        )
+        return APIResponse(success=True, data=health.__dict__, message="Retrieved system health status")
     except Exception as e:
         logger.error("Failed to get system health", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get system health: {str(e)}")
@@ -142,11 +135,7 @@ async def get_system_statistics():
     try:
         stats = await admin_panel_service.get_system_statistics()
 
-        return APIResponse(
-            success=True,
-            data=stats,
-            message="Retrieved system statistics"
-        )
+        return APIResponse(success=True, data=stats, message="Retrieved system statistics")
     except Exception as e:
         logger.error("Failed to get system statistics", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get system statistics: {str(e)}")
@@ -167,11 +156,7 @@ async def get_admin_users(active_only: bool = True):
         users = await admin_panel_service.get_admin_users(active_only)
         users_data = [user.__dict__ for user in users]
 
-        return APIResponse(
-            success=True,
-            data=users_data,
-            message=f"Retrieved {len(users_data)} admin users"
-        )
+        return APIResponse(success=True, data=users_data, message=f"Retrieved {len(users_data)} admin users")
     except Exception as e:
         logger.error("Failed to get admin users", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get admin users: {str(e)}")
@@ -197,17 +182,13 @@ async def create_admin_user(user_data: AdminUserCreate):
             email=user_data.email,
             role=UserRole(user_data.role),
             permissions=user_data.permissions,
-            created_by=created_by
+            created_by=created_by,
         )
 
         user_dict = user.__dict__.copy()
-        del user_dict['password']  # Don't expose password hash
+        del user_dict["password"]  # Don't expose password hash
 
-        return APIResponse(
-            success=True,
-            data=user_dict,
-            message=f"Admin user '{user.username}' created successfully"
-        )
+        return APIResponse(success=True, data=user_dict, message=f"Admin user '{user.username}' created successfully")
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -229,19 +210,15 @@ async def update_admin_user(user_id: str, update_data: AdminUserUpdate):
     """
     try:
         updates = update_data.dict(exclude_unset=True)
-        if 'role' in updates:
-            updates['role'] = UserRole(updates['role'])
+        if "role" in updates:
+            updates["role"] = UserRole(updates["role"])
 
         user = await admin_panel_service.update_admin_user(user_id, **updates)
 
         user_dict = user.__dict__.copy()
-        del user_dict['password']  # Don't expose password hash
+        del user_dict["password"]  # Don't expose password hash
 
-        return APIResponse(
-            success=True,
-            data=user_dict,
-            message=f"Admin user '{user.username}' updated successfully"
-        )
+        return APIResponse(success=True, data=user_dict, message=f"Admin user '{user.username}' updated successfully")
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -250,11 +227,7 @@ async def update_admin_user(user_id: str, update_data: AdminUserUpdate):
 
 
 @router.get("/audit/logs/", response_model=APIResponse)
-async def get_audit_logs(
-    limit: int = 50,
-    user_id: str | None = None,
-    action: str | None = None
-):
+async def get_audit_logs(limit: int = 50, user_id: str | None = None, action: str | None = None):
     """
     Get administrative audit logs.
 
@@ -270,11 +243,7 @@ async def get_audit_logs(
         logs = await admin_panel_service.get_audit_logs(limit, user_id, action)
         logs_data = [log.__dict__ for log in logs]
 
-        return APIResponse(
-            success=True,
-            data=logs_data,
-            message=f"Retrieved {len(logs_data)} audit logs"
-        )
+        return APIResponse(success=True, data=logs_data, message=f"Retrieved {len(logs_data)} audit logs")
     except Exception as e:
         logger.error("Failed to get audit logs", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get audit logs: {str(e)}")
@@ -300,14 +269,10 @@ async def log_admin_action(log_data: dict[str, Any]):
             resource_id=log_data.get("resource_id", "unknown"),
             details=log_data.get("details", {}),
             ip_address=log_data.get("ip_address", "127.0.0.1"),
-            user_agent=log_data.get("user_agent", "admin_panel")
+            user_agent=log_data.get("user_agent", "admin_panel"),
         )
 
-        return APIResponse(
-            success=True,
-            data=log_entry.__dict__,
-            message="Action logged successfully"
-        )
+        return APIResponse(success=True, data=log_entry.__dict__, message="Action logged successfully")
     except Exception as e:
         logger.error("Failed to log admin action", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to log admin action: {str(e)}")
@@ -329,9 +294,7 @@ async def get_maintenance_schedules(active_only: bool = True):
         schedules_data = [schedule.__dict__ for schedule in schedules]
 
         return APIResponse(
-            success=True,
-            data=schedules_data,
-            message=f"Retrieved {len(schedules_data)} maintenance schedules"
+            success=True, data=schedules_data, message=f"Retrieved {len(schedules_data)} maintenance schedules"
         )
     except Exception as e:
         logger.error("Failed to get maintenance schedules", error=str(e))
@@ -360,13 +323,13 @@ async def create_maintenance_schedule(schedule_data: MaintenanceScheduleCreate):
             end_time=schedule_data.end_time,
             mode=MaintenanceMode(schedule_data.mode),
             affected_services=schedule_data.affected_services,
-            created_by=created_by
+            created_by=created_by,
         )
 
         return APIResponse(
             success=True,
             data=schedule.__dict__,
-            message=f"Maintenance schedule '{schedule.title}' created successfully"
+            message=f"Maintenance schedule '{schedule.title}' created successfully",
         )
     except Exception as e:
         logger.error("Failed to create maintenance schedule", error=str(e))
@@ -389,10 +352,7 @@ async def update_maintenance_mode(mode: str):
         success = await admin_panel_service.update_maintenance_mode(maintenance_mode)
 
         if success:
-            return APIResponse(
-                success=True,
-                message=f"Maintenance mode updated to: {mode}"
-            )
+            return APIResponse(success=True, message=f"Maintenance mode updated to: {mode}")
         else:
             raise HTTPException(status_code=500, detail="Failed to update maintenance mode")
 
@@ -414,11 +374,7 @@ async def get_current_maintenance_mode():
     try:
         mode = await admin_panel_service.get_current_maintenance_mode()
 
-        return APIResponse(
-            success=True,
-            data={"mode": mode.value},
-            message="Retrieved current maintenance mode"
-        )
+        return APIResponse(success=True, data={"mode": mode.value}, message="Retrieved current maintenance mode")
     except Exception as e:
         logger.error("Failed to get maintenance mode", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get maintenance mode: {str(e)}")
@@ -439,9 +395,7 @@ async def perform_system_backup(backup_type: str = "full"):
         backup_info = await admin_panel_service.perform_system_backup(backup_type)
 
         return APIResponse(
-            success=True,
-            data=backup_info,
-            message=f"System backup '{backup_type}' completed successfully"
+            success=True, data=backup_info, message=f"System backup '{backup_type}' completed successfully"
         )
     except Exception as e:
         logger.error("Failed to perform system backup", error=str(e))
@@ -463,10 +417,7 @@ async def restart_service(service_name: str):
         success = await admin_panel_service.restart_service(service_name)
 
         if success:
-            return APIResponse(
-                success=True,
-                message=f"Service '{service_name}' restarted successfully"
-            )
+            return APIResponse(success=True, message=f"Service '{service_name}' restarted successfully")
         else:
             raise HTTPException(status_code=500, detail="Failed to restart service")
 
@@ -493,27 +444,19 @@ async def get_admin_dashboard():
         mode = await admin_panel_service.get_current_maintenance_mode()
 
         dashboard_data = {
-            "system_status": {
-                "metrics": metrics.__dict__,
-                "health": health.__dict__,
-                "maintenance_mode": mode.value
-            },
+            "system_status": {"metrics": metrics.__dict__, "health": health.__dict__, "maintenance_mode": mode.value},
             "administrative": {
                 "total_users": len(users),
                 "active_users": len([u for u in users if u.is_active]),
-                "recent_logs": [log.__dict__ for log in logs]
+                "recent_logs": [log.__dict__ for log in logs],
             },
             "maintenance": {
                 "active_schedules": len([s for s in schedules if s.is_active]),
-                "upcoming_schedules": [s.__dict__ for s in schedules[:3]]
-            }
+                "upcoming_schedules": [s.__dict__ for s in schedules[:3]],
+            },
         }
 
-        return APIResponse(
-            success=True,
-            data=dashboard_data,
-            message="Retrieved admin dashboard data"
-        )
+        return APIResponse(success=True, data=dashboard_data, message="Retrieved admin dashboard data")
     except Exception as e:
         logger.error("Failed to get admin dashboard", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get admin dashboard: {str(e)}")
@@ -530,11 +473,7 @@ async def get_available_roles():
     try:
         roles = [{"name": role.name, "value": role.value} for role in UserRole]
 
-        return APIResponse(
-            success=True,
-            data=roles,
-            message="Retrieved available roles"
-        )
+        return APIResponse(success=True, data=roles, message="Retrieved available roles")
     except Exception as e:
         logger.error("Failed to get roles", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get roles: {str(e)}")
@@ -557,14 +496,10 @@ async def get_available_permissions():
             {"name": "perform_maintenance", "description": "Execute maintenance operations"},
             {"name": "moderate_content", "description": "Moderate user-generated content"},
             {"name": "access_reports", "description": "Access system reports and analytics"},
-            {"name": "manage_security", "description": "Configure security settings"}
+            {"name": "manage_security", "description": "Configure security settings"},
         ]
 
-        return APIResponse(
-            success=True,
-            data=permissions,
-            message="Retrieved available permissions"
-        )
+        return APIResponse(success=True, data=permissions, message="Retrieved available permissions")
     except Exception as e:
         logger.error("Failed to get permissions", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get permissions: {str(e)}")

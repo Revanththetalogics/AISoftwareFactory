@@ -687,13 +687,9 @@ def hello():
             runner._sandbox,
             "execute",
             new_callable=AsyncMock,
-            return_value=SandboxResult(
-                success=True, stdout="Hello", stderr="", exit_code=0, execution_time=0.1
-            ),
+            return_value=SandboxResult(success=True, stdout="Hello", stderr="", exit_code=0, execution_time=0.1),
         ):
-            with patch.object(
-                runner._security, "scan_code", new_callable=AsyncMock, return_value=[]
-            ):
+            with patch.object(runner._security, "scan_code", new_callable=AsyncMock, return_value=[]):
                 result = await runner.run_full_suite(code, "python")
 
         assert result.passed >= 2
@@ -709,13 +705,9 @@ def hello():
             runner._sandbox,
             "execute",
             new_callable=AsyncMock,
-            return_value=SandboxResult(
-                success=False, stdout="", stderr="Error", exit_code=1, execution_time=0.1
-            ),
+            return_value=SandboxResult(success=False, stdout="", stderr="Error", exit_code=1, execution_time=0.1),
         ):
-            with patch.object(
-                runner._security, "scan_code", new_callable=AsyncMock, return_value=[]
-            ):
+            with patch.object(runner._security, "scan_code", new_callable=AsyncMock, return_value=[]):
                 result = await runner.run_full_suite(code, "python")
 
         assert result.failed >= 1
@@ -730,19 +722,13 @@ def hello():
             runner._sandbox,
             "execute",
             new_callable=AsyncMock,
-            return_value=SandboxResult(
-                success=True, stdout="", stderr="", exit_code=0, execution_time=0.1
-            ),
+            return_value=SandboxResult(success=True, stdout="", stderr="", exit_code=0, execution_time=0.1),
         ):
             with patch.object(
                 runner._security,
                 "scan_code",
                 new_callable=AsyncMock,
-                return_value=[
-                    SecurityIssue(
-                        severity="critical", category="eval", message="Dangerous eval"
-                    )
-                ],
+                return_value=[SecurityIssue(severity="critical", category="eval", message="Dangerous eval")],
             ):
                 result = await runner.run_full_suite(code, "python")
 
@@ -759,13 +745,9 @@ def hello():
             runner._sandbox,
             "execute",
             new_callable=AsyncMock,
-            return_value=SandboxResult(
-                success=True, stdout="", stderr="", exit_code=0, execution_time=0.1
-            ),
+            return_value=SandboxResult(success=True, stdout="", stderr="", exit_code=0, execution_time=0.1),
         ):
-            with patch.object(
-                runner._security, "scan_code", new_callable=AsyncMock, return_value=[]
-            ):
+            with patch.object(runner._security, "scan_code", new_callable=AsyncMock, return_value=[]):
                 with patch.object(
                     runner._security,
                     "scan_dependencies",
@@ -796,13 +778,9 @@ def hello():
             runner._sandbox,
             "execute",
             new_callable=AsyncMock,
-            return_value=SandboxResult(
-                success=True, stdout="", stderr="", exit_code=0, execution_time=0.1
-            ),
+            return_value=SandboxResult(success=True, stdout="", stderr="", exit_code=0, execution_time=0.1),
         ):
-            with patch.object(
-                runner._security, "scan_code", new_callable=AsyncMock, return_value=[]
-            ):
+            with patch.object(runner._security, "scan_code", new_callable=AsyncMock, return_value=[]):
                 with patch.object(
                     runner._security,
                     "scan_dependencies",
@@ -879,9 +857,7 @@ class TestSandboxExtended:
         sandbox = Sandbox()
 
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(
-                returncode=0, stdout="Hello JS", stderr=""
-            )
+            mock_run.return_value = MagicMock(returncode=0, stdout="Hello JS", stderr="")
 
             result = await sandbox.execute('console.log("Hello JS")', language="javascript")
 
@@ -911,9 +887,7 @@ with open("data/config.json") as f:
         files = {"data/config.json": '{"key": "value"}'}
 
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(
-                returncode=0, stdout='{"key": "value"}', stderr=""
-            )
+            mock_run.return_value = MagicMock(returncode=0, stdout='{"key": "value"}', stderr="")
 
             await sandbox.execute(code, language="python", files=files)
 
@@ -1032,18 +1006,10 @@ def broken(
         """Test security report generation."""
         scanner = SecurityScanner()
         issues = [
-            SecurityIssue(
-                severity="critical", category="eval", message="Eval found", line=10
-            ),
-            SecurityIssue(
-                severity="high", category="sql", message="SQL injection", line=20
-            ),
-            SecurityIssue(
-                severity="medium", category="pickle", message="Pickle load", line=30
-            ),
-            SecurityIssue(
-                severity="low", category="info", message="Info disclosure", line=40
-            ),
+            SecurityIssue(severity="critical", category="eval", message="Eval found", line=10),
+            SecurityIssue(severity="high", category="sql", message="SQL injection", line=20),
+            SecurityIssue(severity="medium", category="pickle", message="Pickle load", line=30),
+            SecurityIssue(severity="low", category="info", message="Info disclosure", line=40),
         ]
 
         report = scanner.generate_report(issues)
@@ -1073,18 +1039,12 @@ class TestValidationEngineExtended:
         async def failing_rule(code, context):
             raise RuntimeError("Rule execution failed")
 
-        engine.add_rule(
-            ValidationRule(
-                name="failing_rule", check=failing_rule, required=True, weight=1.0
-            )
-        )
+        engine.add_rule(ValidationRule(name="failing_rule", check=failing_rule, required=True, weight=1.0))
 
         result = await engine.validate("valid code")
 
         # Should have the failed rule in results
-        failed_results = [
-            r for r in result["results"] if r["rule"] == "failing_rule"
-        ]
+        failed_results = [r for r in result["results"] if r["rule"] == "failing_rule"]
         assert len(failed_results) == 1
         assert failed_results[0]["status"] == "fail"
         assert "Rule execution failed" in failed_results[0]["message"]
@@ -1101,9 +1061,7 @@ result = eval(user_input)
         result = await engine.validate(code)
 
         assert result["overall_status"] == "fail"
-        vuln_results = [
-            r for r in result["results"] if r["rule"] == "no_critical_vulnerabilities"
-        ]
+        vuln_results = [r for r in result["results"] if r["rule"] == "no_critical_vulnerabilities"]
         assert len(vuln_results) == 1
         assert vuln_results[0]["status"] == "fail"
 
@@ -1128,11 +1086,7 @@ result = eval(user_input)
                 score=0.5,
             )
 
-        engine.add_rule(
-            ValidationRule(
-                name="docstring_check", check=custom_rule, required=False, weight=0.5
-            )
-        )
+        engine.add_rule(ValidationRule(name="docstring_check", check=custom_rule, required=False, weight=0.5))
 
         code_with_docstring = '''
 def hello():
@@ -1142,7 +1096,5 @@ def hello():
 
         result = await engine.validate(code_with_docstring)
 
-        docstring_results = [
-            r for r in result["results"] if r["rule"] == "docstring_check"
-        ]
+        docstring_results = [r for r in result["results"] if r["rule"] == "docstring_check"]
         assert len(docstring_results) == 1

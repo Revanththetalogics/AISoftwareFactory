@@ -10,6 +10,21 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def _clear_settings_cache():
+    """Clear the get_settings LRU cache before every test.
+
+    This prevents cached Settings objects created inside @patch.dict(os.environ, ...)
+    blocks (e.g. TestEnvironmentVariables.test_settings_from_environment) from
+    leaking into subsequent tests and causing hard-to-debug failures.
+    """
+    from backend.core.config import get_settings
+
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+
+
 @pytest.fixture
 def mock_llm():
     """Fixture for mocked LLM provider."""
@@ -24,9 +39,7 @@ def mock_vector_store():
     """Fixture for mocked vector store."""
     store = Mock()
     store.add = AsyncMock(return_value=["id1", "id2"])
-    store.search = AsyncMock(return_value=[
-        {"id": "1", "text": "test", "score": 0.9}
-    ])
+    store.search = AsyncMock(return_value=[{"id": "1", "text": "test", "score": 0.9}])
     return store
 
 
@@ -41,21 +54,13 @@ def event_loop():
 @pytest.fixture
 def sample_project_data():
     """Fixture for sample project data."""
-    return {
-        "name": "Test Project",
-        "description": "A test project",
-        "tech_stack": ["python", "fastapi"]
-    }
+    return {"name": "Test Project", "description": "A test project", "tech_stack": ["python", "fastapi"]}
 
 
 @pytest.fixture
 def sample_workflow_data():
     """Fixture for sample workflow data."""
-    return {
-        "name": "Test Workflow",
-        "steps": ["step1", "step2"],
-        "status": "pending"
-    }
+    return {"name": "Test Workflow", "steps": ["step1", "step2"], "status": "pending"}
 
 
 @pytest.fixture
@@ -80,7 +85,7 @@ def mock_db_user():
 @pytest.fixture
 def mock_auth_service(mock_db_user):
     """Fixture for mocked auth service with database user support."""
-    with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_local:
+    with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_local:
         # Create a mock session context manager
         mock_session = AsyncMock()
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
@@ -104,6 +109,7 @@ def test_client():
     from fastapi.testclient import TestClient
 
     from backend.main import app
+
     return TestClient(app)
 
 
@@ -117,7 +123,7 @@ def auth_headers(mock_db_user):
     test_user_data = {
         "sub": mock_db_user.id,
         "username": mock_db_user.username,
-        "permissions": mock_db_user.permissions
+        "permissions": mock_db_user.permissions,
     }
     token = auth_service.create_access_token(test_user_data)
 
@@ -132,8 +138,9 @@ def authenticated_client(auth_headers, mock_auth_service, mock_db_user):
     from backend.main import app
 
     # Patch the auth service methods to use our mock
-    with patch('backend.api.dependencies.get_auth_service') as mock_get_auth:
+    with patch("backend.api.dependencies.get_auth_service") as mock_get_auth:
         from backend.services.auth_service import AuthService
+
         auth_service = AuthService()
 
         # Mock the get_user_by_id method
@@ -179,7 +186,7 @@ def mock_project_service(mock_db_session):
     mock_project.updated_at = datetime.utcnow()
 
     # Mock the service
-    with patch('backend.services.database_services.get_project_service') as mock_get_service:
+    with patch("backend.services.database_services.get_project_service") as mock_get_service:
         service = AsyncMock()
         service.create_project = AsyncMock(return_value=mock_project)
         service.get_project = AsyncMock(return_value=mock_project)

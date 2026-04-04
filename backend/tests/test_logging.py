@@ -86,6 +86,7 @@ class TestCorrelationIdFilter:
     def test_filter_handles_tracing_import_error(self):
         """Test filter handles import error for tracing module (lines 76-78)."""
         import sys
+
         filter_instance = CorrelationIdFilter()
         record = MagicMock()
 
@@ -97,17 +98,17 @@ class TestCorrelationIdFilter:
                 raise ImportError("Simulated tracing import failure")
 
         # Replace the module to trigger the exception
-        original_module = sys.modules.get('backend.infrastructure.tracing')
-        sys.modules['backend.infrastructure.tracing'] = FailingModule()
+        original_module = sys.modules.get("backend.infrastructure.tracing")
+        sys.modules["backend.infrastructure.tracing"] = FailingModule()
 
         try:
             result = filter_instance.filter(record)
         finally:
             # Restore the original module
             if original_module:
-                sys.modules['backend.infrastructure.tracing'] = original_module
+                sys.modules["backend.infrastructure.tracing"] = original_module
             else:
-                sys.modules.pop('backend.infrastructure.tracing', None)
+                sys.modules.pop("backend.infrastructure.tracing", None)
 
         assert result is True
         assert record.correlation_id == ""
@@ -231,9 +232,7 @@ class TestCustomJsonFormatter:
         formatter = CustomJsonFormatter()
 
         # Create a record without correlation_id, trace_id, span_id
-        record = MagicMock(spec=[
-            'created', 'levelname', 'name', 'pathname', 'lineno', 'funcName'
-        ])
+        record = MagicMock(spec=["created", "levelname", "name", "pathname", "lineno", "funcName"])
         record.created = 1234567890.123
         record.levelname = "WARNING"
         record.name = "test.logger"
@@ -242,15 +241,9 @@ class TestCustomJsonFormatter:
         record.funcName = "another_function"
 
         # Make getattr return default for missing attributes
-        type(record).correlation_id = property(
-            lambda self: getattr(self, '_correlation_id', '')
-        )
-        type(record).trace_id = property(
-            lambda self: getattr(self, '_trace_id', '')
-        )
-        type(record).span_id = property(
-            lambda self: getattr(self, '_span_id', '')
-        )
+        type(record).correlation_id = property(lambda self: getattr(self, "_correlation_id", ""))
+        type(record).trace_id = property(lambda self: getattr(self, "_trace_id", ""))
+        type(record).span_id = property(lambda self: getattr(self, "_span_id", ""))
 
         log_record = {}
         message_dict = {}
@@ -276,7 +269,7 @@ class TestCustomJsonFormatter:
             lineno=42,
             msg="Test log message",
             args=(),
-            exc_info=None
+            exc_info=None,
         )
         record.correlation_id = ""
         record.trace_id = ""
@@ -302,7 +295,7 @@ class TestCustomJsonFormatter:
             lineno=1,
             msg="Log message",
             args=(),
-            exc_info=None
+            exc_info=None,
         )
         record.correlation_id = "corr-id"
         record.trace_id = ""
@@ -342,4 +335,3 @@ class TestCustomJsonFormatter:
         assert source["file"] == "/home/user/project/module.py"
         assert source["line"] == 999
         assert source["function"] == "error_handler"
-

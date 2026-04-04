@@ -26,11 +26,7 @@ class AgentService:
         self._registry = AgentRegistry()
         self._logger = get_logger(__name__)
 
-    async def list_agents(
-        self,
-        status: str | None = None,
-        role: str | None = None
-    ) -> list[dict[str, Any]]:
+    async def list_agents(self, status: str | None = None, role: str | None = None) -> list[dict[str, Any]]:
         """
         List all registered agents.
 
@@ -53,7 +49,7 @@ class AgentService:
                 "status": agent.status.value,
                 "capabilities": agent.capabilities,
                 "current_task": agent.current_task,
-                "last_active": agent.last_active.isoformat() if agent.last_active else None
+                "last_active": agent.last_active.isoformat() if agent.last_active else None,
             }
 
             # Apply filters
@@ -88,15 +84,10 @@ class AgentService:
             "capabilities": agent.capabilities,
             "current_task": agent.current_task,
             "last_active": agent.last_active.isoformat() if agent.last_active else None,
-            "config": agent.config
+            "config": agent.config,
         }
 
-    async def assign_task(
-        self,
-        agent_id: str,
-        task_id: str,
-        task_data: dict[str, Any]
-    ) -> bool:
+    async def assign_task(self, agent_id: str, task_id: str, task_data: dict[str, Any]) -> bool:
         """
         Assign a task to an agent.
 
@@ -113,21 +104,13 @@ class AgentService:
             return False
 
         if agent.status == AgentStatus.BUSY:
-            self._logger.warning(
-                "Agent is busy",
-                agent_id=agent_id,
-                current_task=agent.current_task
-            )
+            self._logger.warning("Agent is busy", agent_id=agent_id, current_task=agent.current_task)
             return False
 
         agent.current_task = task_id
         agent.status = AgentStatus.BUSY
 
-        self._logger.info(
-            "Task assigned to agent",
-            agent_id=agent_id,
-            task_id=task_id
-        )
+        self._logger.info("Task assigned to agent", agent_id=agent_id, task_id=task_id)
         return True
 
     async def release_agent(self, agent_id: str) -> bool:
@@ -163,16 +146,8 @@ class AgentService:
                 "id": agent.agent_id,
                 "agent_name": agent.name,
                 "agent_role": agent.role,
-                "action": (
-                    agent.current_task.task_type
-                    if getattr(agent, "current_task", None)
-                    else "idle"
-                ),
-                "target": (
-                    agent.current_task.description[:80]
-                    if getattr(agent, "current_task", None)
-                    else None
-                ),
+                "action": (agent.current_task.task_type if getattr(agent, "current_task", None) else "idle"),
+                "target": (agent.current_task.description[:80] if getattr(agent, "current_task", None) else None),
                 "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
                 "status": agent.status.value if hasattr(agent, "status") else "unknown",
             }

@@ -163,22 +163,22 @@ class TestValidateUrlSafe:
 
     def test_safe_public_url(self):
         """Test safe public URL."""
-        with patch('socket.getaddrinfo') as mock_dns:
-            mock_dns.return_value = [(2, 1, 6, '', ('93.184.216.34', 0))]
+        with patch("socket.getaddrinfo") as mock_dns:
+            mock_dns.return_value = [(2, 1, 6, "", ("93.184.216.34", 0))]
             result = validate_url_safe("https://example.com")
             assert result is True
 
     def test_blocked_private_ip(self):
         """Test blocked private IP."""
-        with patch('socket.getaddrinfo') as mock_dns:
-            mock_dns.return_value = [(2, 1, 6, '', ('10.0.0.1', 0))]
+        with patch("socket.getaddrinfo") as mock_dns:
+            mock_dns.return_value = [(2, 1, 6, "", ("10.0.0.1", 0))]
             result = validate_url_safe("https://internal.example.com")
             assert result is False
 
     def test_blocked_loopback(self):
         """Test blocked loopback IP."""
-        with patch('socket.getaddrinfo') as mock_dns:
-            mock_dns.return_value = [(2, 1, 6, '', ('127.0.0.1', 0))]
+        with patch("socket.getaddrinfo") as mock_dns:
+            mock_dns.return_value = [(2, 1, 6, "", ("127.0.0.1", 0))]
             result = validate_url_safe("https://localhost.example.com")
             assert result is False
 
@@ -205,7 +205,8 @@ class TestValidateUrlSafe:
     def test_dns_resolution_failure(self):
         """Test DNS resolution failure (covers lines 177-180)."""
         import socket
-        with patch('socket.getaddrinfo') as mock_dns:
+
+        with patch("socket.getaddrinfo") as mock_dns:
             mock_dns.side_effect = socket.gaierror("DNS resolution failed")
             # DNS failure should still allow URL to pass (validation at connection time)
             result = validate_url_safe("https://nonexistent.example.com")
@@ -213,7 +214,7 @@ class TestValidateUrlSafe:
 
     def test_dns_timeout(self):
         """Test DNS timeout (covers lines 181-183)."""
-        with patch('socket.getaddrinfo') as mock_dns:
+        with patch("socket.getaddrinfo") as mock_dns:
             mock_dns.side_effect = TimeoutError("DNS timeout")
             # DNS timeout should still allow URL to pass
             result = validate_url_safe("https://slow.example.com")
@@ -221,9 +222,9 @@ class TestValidateUrlSafe:
 
     def test_invalid_ip_format_in_resolution(self):
         """Test invalid IP format during resolution (covers lines 173-175)."""
-        with patch('socket.getaddrinfo') as mock_dns:
+        with patch("socket.getaddrinfo") as mock_dns:
             # Return invalid IP format that can't be parsed
-            mock_dns.return_value = [(2, 1, 6, '', ('not-an-ip', 0))]
+            mock_dns.return_value = [(2, 1, 6, "", ("not-an-ip", 0))]
             # Should handle gracefully
             result = validate_url_safe("https://weird.example.com")
             assert result is True
@@ -238,11 +239,11 @@ class TestValidateUrlSafe:
 
     def test_multiple_ips_some_blocked(self):
         """Test URL resolving to multiple IPs with some blocked."""
-        with patch('socket.getaddrinfo') as mock_dns:
+        with patch("socket.getaddrinfo") as mock_dns:
             # One public, one private IP
             mock_dns.return_value = [
-                (2, 1, 6, '', ('93.184.216.34', 0)),
-                (2, 1, 6, '', ('10.0.0.1', 0)),  # Private
+                (2, 1, 6, "", ("93.184.216.34", 0)),
+                (2, 1, 6, "", ("10.0.0.1", 0)),  # Private
             ]
             result = validate_url_safe("https://dual.example.com")
             assert result is False
@@ -298,19 +299,14 @@ class TestSecureProjectCreate:
     def test_valid_project(self):
         """Test valid project creation."""
         project = SecureProjectCreate(
-            name="My Project",
-            description="A test project",
-            requirements="Build something cool"
+            name="My Project", description="A test project", requirements="Build something cool"
         )
         assert project.name == "My Project"
 
     def test_name_with_dangerous_chars(self):
         """Test name validation removes dangerous characters."""
         # Note: The validator sanitizes and then validates pattern
-        project = SecureProjectCreate(
-            name="My_Project-1.0",
-            description="Test"
-        )
+        project = SecureProjectCreate(name="My_Project-1.0", description="Test")
         assert project.name == "My_Project-1.0"
 
     def test_name_invalid_characters(self):
@@ -318,15 +314,12 @@ class TestSecureProjectCreate:
         with pytest.raises(Exception):  # Pydantic ValidationError
             SecureProjectCreate(
                 name="My@Project!",  # @ and ! are invalid after sanitization
-                description="Test"
+                description="Test",
             )
 
     def test_description_sanitized(self):
         """Test description is sanitized."""
-        project = SecureProjectCreate(
-            name="My Project",
-            description="A test project with <script>evil</script>"
-        )
+        project = SecureProjectCreate(name="My Project", description="A test project with <script>evil</script>")
         # Dangerous characters should be removed
         assert "<" not in project.description
         assert ">" not in project.description
@@ -334,20 +327,14 @@ class TestSecureProjectCreate:
     def test_requirements_sanitized(self):
         """Test requirements are sanitized (covers line 251)."""
         project = SecureProjectCreate(
-            name="My Project",
-            description="A test project",
-            requirements="Build something; DROP TABLE users;"
+            name="My Project", description="A test project", requirements="Build something; DROP TABLE users;"
         )
         # Semicolon should be removed
         assert ";" not in project.requirements
 
     def test_requirements_none(self):
         """Test requirements can be None."""
-        project = SecureProjectCreate(
-            name="My Project",
-            description="A test project",
-            requirements=None
-        )
+        project = SecureProjectCreate(name="My Project", description="A test project", requirements=None)
         assert project.requirements is None
 
 
@@ -356,11 +343,7 @@ class TestSecureDeploymentRequest:
 
     def test_valid_deployment(self):
         """Test valid deployment request."""
-        deployment = SecureDeploymentRequest(
-            project_id="my-project-123",
-            environment="dev",
-            version="1.0.0"
-        )
+        deployment = SecureDeploymentRequest(project_id="my-project-123", environment="dev", version="1.0.0")
         assert deployment.project_id == "my-project-123"
 
     def test_invalid_project_id_format(self):
@@ -369,56 +352,37 @@ class TestSecureDeploymentRequest:
             SecureDeploymentRequest(
                 project_id="my@project!invalid",  # Invalid characters
                 environment="dev",
-                version="1.0.0"
+                version="1.0.0",
             )
 
     def test_valid_environments(self):
         """Test all valid environments."""
         for env in ["dev", "staging", "production"]:
-            deployment = SecureDeploymentRequest(
-                project_id="project-123",
-                environment=env,
-                version="1.0.0"
-            )
+            deployment = SecureDeploymentRequest(project_id="project-123", environment=env, version="1.0.0")
             assert deployment.environment == env
 
     def test_invalid_environment(self):
         """Test invalid environment."""
         with pytest.raises(Exception):  # Pydantic ValidationError
-            SecureDeploymentRequest(
-                project_id="project-123",
-                environment="invalid",
-                version="1.0.0"
-            )
+            SecureDeploymentRequest(project_id="project-123", environment="invalid", version="1.0.0")
 
     def test_valid_versions(self):
         """Test valid version formats."""
         valid_versions = ["1.0.0", "10.20.30", "1.0.0-alpha", "1.0.0-beta1"]
         for version in valid_versions:
-            deployment = SecureDeploymentRequest(
-                project_id="project-123",
-                environment="dev",
-                version=version
-            )
+            deployment = SecureDeploymentRequest(project_id="project-123", environment="dev", version=version)
             assert deployment.version == version
 
     def test_invalid_version(self):
         """Test invalid version format."""
         with pytest.raises(Exception):  # Pydantic ValidationError
-            SecureDeploymentRequest(
-                project_id="project-123",
-                environment="dev",
-                version="invalid-version"
-            )
+            SecureDeploymentRequest(project_id="project-123", environment="dev", version="invalid-version")
 
     def test_config_with_sensitive_key_password(self):
         """Test config with sensitive key 'password' (covers lines 275-279)."""
         with pytest.raises(Exception) as exc_info:  # Pydantic ValidationError
             SecureDeploymentRequest(
-                project_id="project-123",
-                environment="dev",
-                version="1.0.0",
-                config={"password": "secret123"}
+                project_id="project-123", environment="dev", version="1.0.0", config={"password": "secret123"}
             )
         assert "sensitive" in str(exc_info.value).lower()
 
@@ -426,10 +390,7 @@ class TestSecureDeploymentRequest:
         """Test config with sensitive key containing 'secret'."""
         with pytest.raises(Exception) as exc_info:
             SecureDeploymentRequest(
-                project_id="project-123",
-                environment="dev",
-                version="1.0.0",
-                config={"db_secret": "myvalue"}
+                project_id="project-123", environment="dev", version="1.0.0", config={"db_secret": "myvalue"}
             )
         assert "sensitive" in str(exc_info.value).lower()
 
@@ -437,10 +398,7 @@ class TestSecureDeploymentRequest:
         """Test config with sensitive key containing 'token'."""
         with pytest.raises(Exception) as exc_info:
             SecureDeploymentRequest(
-                project_id="project-123",
-                environment="dev",
-                version="1.0.0",
-                config={"auth_token": "mytoken"}
+                project_id="project-123", environment="dev", version="1.0.0", config={"auth_token": "mytoken"}
             )
         assert "sensitive" in str(exc_info.value).lower()
 
@@ -448,10 +406,7 @@ class TestSecureDeploymentRequest:
         """Test config with sensitive key containing 'api_key'."""
         with pytest.raises(Exception) as exc_info:
             SecureDeploymentRequest(
-                project_id="project-123",
-                environment="dev",
-                version="1.0.0",
-                config={"my_api_key": "key123"}
+                project_id="project-123", environment="dev", version="1.0.0", config={"my_api_key": "key123"}
             )
         assert "sensitive" in str(exc_info.value).lower()
 
@@ -461,22 +416,13 @@ class TestSecureDeploymentRequest:
             project_id="project-123",
             environment="dev",
             version="1.0.0",
-            config={
-                "debug": True,
-                "max_workers": 4,
-                "log_level": "INFO"
-            }
+            config={"debug": True, "max_workers": 4, "log_level": "INFO"},
         )
         assert deployment.config["debug"] is True
 
     def test_config_none(self):
         """Test config can be None."""
-        deployment = SecureDeploymentRequest(
-            project_id="project-123",
-            environment="dev",
-            version="1.0.0",
-            config=None
-        )
+        deployment = SecureDeploymentRequest(project_id="project-123", environment="dev", version="1.0.0", config=None)
         assert deployment.config is None
 
 
@@ -528,32 +474,16 @@ class TestBatchValidateFields:
 
     def test_all_valid(self):
         """Test all fields valid."""
-        data = {
-            "project_name": "My Project",
-            "version": "1.0.0",
-            "environment": "dev"
-        }
-        validations = {
-            "project_name": "project_name",
-            "version": "version",
-            "environment": "environment"
-        }
+        data = {"project_name": "My Project", "version": "1.0.0", "environment": "dev"}
+        validations = {"project_name": "project_name", "version": "version", "environment": "environment"}
 
         errors = batch_validate_fields(data, validations)
         assert errors == []
 
     def test_some_invalid(self):
         """Test some fields invalid."""
-        data = {
-            "project_name": "My@Invalid!",
-            "version": "not-a-version",
-            "environment": "dev"
-        }
-        validations = {
-            "project_name": "project_name",
-            "version": "version",
-            "environment": "environment"
-        }
+        data = {"project_name": "My@Invalid!", "version": "not-a-version", "environment": "dev"}
+        validations = {"project_name": "project_name", "version": "version", "environment": "environment"}
 
         errors = batch_validate_fields(data, validations)
         assert len(errors) == 2
@@ -562,12 +492,10 @@ class TestBatchValidateFields:
 
     def test_missing_field(self):
         """Test missing field is skipped."""
-        data = {
-            "project_name": "My Project"
-        }
+        data = {"project_name": "My Project"}
         validations = {
             "project_name": "project_name",
-            "version": "version"  # Not in data
+            "version": "version",  # Not in data
         }
 
         errors = batch_validate_fields(data, validations)
@@ -577,12 +505,9 @@ class TestBatchValidateFields:
         """Test non-string field is skipped."""
         data = {
             "project_name": "My Project",
-            "count": 123  # Not a string
+            "count": 123,  # Not a string
         }
-        validations = {
-            "project_name": "project_name",
-            "count": "identifier"
-        }
+        validations = {"project_name": "project_name", "count": "identifier"}
 
         errors = batch_validate_fields(data, validations)
         assert errors == []
@@ -603,12 +528,6 @@ class TestValidationPatterns:
 
     def test_patterns_exist(self):
         """Test all expected patterns exist."""
-        expected_patterns = [
-            'project_name',
-            'version',
-            'identifier',
-            'environment',
-            'email'
-        ]
+        expected_patterns = ["project_name", "version", "identifier", "environment", "email"]
         for pattern_name in expected_patterns:
             assert pattern_name in VALIDATION_PATTERNS

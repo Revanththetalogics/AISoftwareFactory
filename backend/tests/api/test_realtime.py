@@ -44,10 +44,7 @@ class TestRealtimeRoutes:
 
     def test_subscribe_to_monitoring(self, client, mock_realtime_monitor):
         """Test subscribing to monitoring topics."""
-        subscription_data = {
-            "topics": ["cpu", "memory", "disk"],
-            "client_id": "test-client-123"
-        }
+        subscription_data = {"topics": ["cpu", "memory", "disk"], "client_id": "test-client-123"}
 
         response = client.post("/realtime/subscribe", json=subscription_data)
 
@@ -58,9 +55,7 @@ class TestRealtimeRoutes:
 
     def test_subscribe_to_monitoring_no_client_id(self, client, mock_realtime_monitor):
         """Test subscribing without client ID."""
-        subscription_data = {
-            "topics": ["cpu", "memory"]
-        }
+        subscription_data = {"topics": ["cpu", "memory"]}
 
         response = client.post("/realtime/subscribe", json=subscription_data)
 
@@ -70,10 +65,7 @@ class TestRealtimeRoutes:
 
     def test_unsubscribe_from_monitoring(self, client, mock_realtime_monitor):
         """Test unsubscribing from monitoring topics."""
-        subscription_data = {
-            "topics": ["cpu", "memory"],
-            "client_id": "test-client-123"
-        }
+        subscription_data = {"topics": ["cpu", "memory"], "client_id": "test-client-123"}
 
         response = client.post("/realtime/unsubscribe", json=subscription_data)
 
@@ -88,7 +80,7 @@ class TestRealtimeRoutes:
             "cpu_percent": 45.2,
             "memory_percent": 67.8,
             "disk_percent": 23.1,
-            "timestamp": "2026-03-29T10:30:00Z"
+            "timestamp": "2026-03-29T10:30:00Z",
         }
         mock_realtime_monitor._collect_system_snapshot = AsyncMock(return_value=mock_snapshot)
 
@@ -117,14 +109,14 @@ class TestRealtimeRoutes:
                 event_type=MonitorEventType.METRIC_UPDATE,
                 timestamp=MagicMock(isoformat=lambda: "2026-03-29T10:30:00Z"),
                 data={"usage": 85.5},
-                severity="warning"
+                severity="warning",
             ),
             MagicMock(
                 event_type=MonitorEventType.ALERT_TRIGGERED,
                 timestamp=MagicMock(isoformat=lambda: "2026-03-29T10:31:00Z"),
                 data={"usage": 92.1},
-                severity="critical"
-            )
+                severity="critical",
+            ),
         ]
         mock_realtime_monitor.get_recent_events.return_value = mock_events
 
@@ -143,7 +135,7 @@ class TestRealtimeRoutes:
                 event_type=MonitorEventType.METRIC_UPDATE,
                 timestamp=MagicMock(isoformat=lambda: "2026-03-29T10:30:00Z"),
                 data={"usage": 85.5},
-                severity="warning"
+                severity="warning",
             )
         ]
         mock_realtime_monitor.get_recent_events.return_value = mock_events
@@ -152,12 +144,8 @@ class TestRealtimeRoutes:
             "/realtime/events/recent",
             params={
                 "limit": 10,
-                "filter": {
-                    "event_types": ["metric_update"],
-                    "severity_levels": ["warning"],
-                    "time_range_minutes": 30
-                }
-            }
+                "filter": {"event_types": ["metric_update"], "severity_levels": ["warning"], "time_range_minutes": 30},
+            },
         )
 
         assert response.status_code == 200
@@ -173,8 +161,8 @@ class TestRealtimeRoutes:
                 json={
                     "alert_name": "High CPU Usage",
                     "severity": "warning",
-                    "details": {"threshold": 80, "current": 85.5}
-                }
+                    "details": {"threshold": 80, "current": 85.5},
+                },
             )
 
             assert response.status_code == 200
@@ -185,14 +173,12 @@ class TestRealtimeRoutes:
 
     def test_trigger_service_status_event(self, client, mock_realtime_monitor):
         """Test manually triggering a service status change event."""
-        with patch("backend.api.routes.realtime.MonitoringEventTrigger.trigger_service_status_change", new=AsyncMock()) as mock_trigger:
+        with patch(
+            "backend.api.routes.realtime.MonitoringEventTrigger.trigger_service_status_change", new=AsyncMock()
+        ) as mock_trigger:
             response = client.post(
                 "/realtime/events/trigger/service-status",
-                json={
-                    "service_name": "database",
-                    "old_status": "healthy",
-                    "new_status": "degraded"
-                }
+                json={"service_name": "database", "old_status": "healthy", "new_status": "degraded"},
             )
 
             assert response.status_code == 200
@@ -249,7 +235,9 @@ class TestRealtimeRoutes:
         assert "available_metrics" in data["data"]
         assert "broadcast_status" in data["data"]
 
-    @pytest.mark.skip(reason="WebSocket test calls real realtime_monitoring_endpoint which has an infinite message loop; needs proper mock of the endpoint function itself")
+    @pytest.mark.skip(
+        reason="WebSocket test calls real realtime_monitoring_endpoint which has an infinite message loop; needs proper mock of the endpoint function itself"
+    )
     def test_websocket_connection(self, client, mock_realtime_monitor):
         """Test WebSocket connection endpoint."""
         mock_realtime_monitor.connect = AsyncMock()
@@ -260,7 +248,9 @@ class TestRealtimeRoutes:
 
         mock_realtime_monitor.connect.assert_called()
 
-    @pytest.mark.skip(reason="WebSocket test calls real realtime_monitoring_endpoint which has an infinite message loop; needs proper mock of the endpoint function itself")
+    @pytest.mark.skip(
+        reason="WebSocket test calls real realtime_monitoring_endpoint which has an infinite message loop; needs proper mock of the endpoint function itself"
+    )
     def test_websocket_connection_auto_client_id(self, client, mock_realtime_monitor):
         """Test WebSocket connection with auto-generated client ID."""
         mock_realtime_monitor.connect = AsyncMock()
@@ -293,10 +283,7 @@ class TestRealtimeErrorHandling:
         with patch("backend.api.routes.realtime.logger") as mock_logger:
             mock_logger.info.side_effect = Exception("Internal logging error")
 
-            response = client.post(
-                "/realtime/subscribe",
-                json={"topics": ["cpu"]}
-            )
+            response = client.post("/realtime/subscribe", json={"topics": ["cpu"]})
 
             assert response.status_code == 500
             assert "subscription failed" in response.json()["detail"].lower()
@@ -306,10 +293,7 @@ class TestRealtimeErrorHandling:
         with patch("backend.api.routes.realtime.logger") as mock_logger:
             mock_logger.info.side_effect = Exception("Internal logging error")
 
-            response = client.post(
-                "/realtime/unsubscribe",
-                json={"topics": ["cpu"]}
-            )
+            response = client.post("/realtime/unsubscribe", json={"topics": ["cpu"]})
 
             assert response.status_code == 500
             assert "unsubscription failed" in response.json()["detail"].lower()
@@ -320,12 +304,7 @@ class TestRealtimeErrorHandling:
             mock_trigger.trigger_alert = AsyncMock(side_effect=Exception("Trigger failed"))
 
             response = client.post(
-                "/realtime/events/trigger/alert",
-                json={
-                    "alert_name": "Test Alert",
-                    "severity": "info",
-                    "details": {}
-                }
+                "/realtime/events/trigger/alert", json={"alert_name": "Test Alert", "severity": "info", "details": {}}
             )
 
             assert response.status_code == 500
@@ -338,11 +317,7 @@ class TestRealtimeErrorHandling:
 
             response = client.post(
                 "/realtime/events/trigger/service-status",
-                json={
-                    "service_name": "test-service",
-                    "old_status": "unknown",
-                    "new_status": "healthy"
-                }
+                json={"service_name": "test-service", "old_status": "unknown", "new_status": "healthy"},
             )
 
             assert response.status_code == 500
@@ -368,7 +343,9 @@ class TestRealtimeErrorHandling:
             assert response.status_code == 500
             assert "failed to stop monitoring" in response.json()["detail"].lower()
 
-    @pytest.mark.skip(reason="MagicMock is not a property descriptor; type(mock).attr = MagicMock(side_effect=...) does not reliably raise on attribute access")
+    @pytest.mark.skip(
+        reason="MagicMock is not a property descriptor; type(mock).attr = MagicMock(side_effect=...) does not reliably raise on attribute access"
+    )
     def test_get_connections_error(self, client):
         """Test getting connections when error occurs."""
         with patch("backend.api.routes.realtime.realtime_monitor") as mock_monitor:
@@ -379,7 +356,9 @@ class TestRealtimeErrorHandling:
             assert response.status_code == 500
             assert "failed to get connections" in response.json()["detail"].lower()
 
-    @pytest.mark.skip(reason="MagicMock is not a property descriptor; type(mock).attr = MagicMock(side_effect=...) does not reliably raise on attribute access")
+    @pytest.mark.skip(
+        reason="MagicMock is not a property descriptor; type(mock).attr = MagicMock(side_effect=...) does not reliably raise on attribute access"
+    )
     def test_get_metrics_error(self, client):
         """Test getting metrics when error occurs."""
         with patch("backend.api.routes.realtime.realtime_monitor") as mock_monitor:

@@ -2,7 +2,6 @@
 Tests for Quality Checker.
 """
 
-
 from backend.codegen.quality_checker import (
     CodeIssue,
     IssueCategory,
@@ -52,7 +51,9 @@ class TestQualityReport:
         report = QualityReport(
             file_path="test.py",
             issues=[
-                CodeIssue(rule_id="1", message="Critical", severity=IssueSeverity.CRITICAL, category=IssueCategory.SECURITY),
+                CodeIssue(
+                    rule_id="1", message="Critical", severity=IssueSeverity.CRITICAL, category=IssueCategory.SECURITY
+                ),
                 CodeIssue(rule_id="2", message="High", severity=IssueSeverity.HIGH, category=IssueCategory.STYLE),
                 CodeIssue(rule_id="3", message="Low", severity=IssueSeverity.LOW, category=IssueCategory.STYLE),
             ],
@@ -114,12 +115,12 @@ def hello():
 
     def test_check_python_bare_except(self):
         """Test detecting bare except."""
-        code = '''
+        code = """
 try:
     something()
 except:
     pass
-'''
+"""
 
         report = self.checker.check_code(code, "python", "test.py")
 
@@ -148,7 +149,7 @@ except:
 
     def test_check_python_todo(self):
         """Test detecting TODO comments."""
-        code = '# TODO: Fix this later\n'
+        code = "# TODO: Fix this later\n"
 
         report = self.checker.check_code(code, "python", "test.py")
 
@@ -180,7 +181,9 @@ except:
     def test_calculate_score(self):
         """Test score calculation."""
         issues = [
-            CodeIssue(rule_id="1", message="Critical", severity=IssueSeverity.CRITICAL, category=IssueCategory.SECURITY),
+            CodeIssue(
+                rule_id="1", message="Critical", severity=IssueSeverity.CRITICAL, category=IssueCategory.SECURITY
+            ),
             CodeIssue(rule_id="2", message="High", severity=IssueSeverity.HIGH, category=IssueCategory.STYLE),
         ]
 
@@ -191,7 +194,7 @@ except:
 
     def test_calculate_metrics(self):
         """Test metrics calculation."""
-        code = '''
+        code = """
 # Comment
 
 def foo():
@@ -199,7 +202,7 @@ def foo():
 
 class Bar:
     pass
-'''
+"""
 
         metrics = self.checker._calculate_metrics(code, "python")
 

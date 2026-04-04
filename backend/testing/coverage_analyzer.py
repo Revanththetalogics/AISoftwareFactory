@@ -25,16 +25,18 @@ logger = get_logger(__name__)
 
 class CoverageLevel(Enum):
     """Coverage quality levels."""
+
     EXCELLENT = "excellent"  # >= 90%
-    GOOD = "good"            # >= 80%
-    ACCEPTABLE = "acceptable" # >= 70%
-    POOR = "poor"            # >= 50%
-    CRITICAL = "critical"    # < 50%
+    GOOD = "good"  # >= 80%
+    ACCEPTABLE = "acceptable"  # >= 70%
+    POOR = "poor"  # >= 50%
+    CRITICAL = "critical"  # < 50%
 
 
 @dataclass
 class LineCoverage:
     """Coverage information for a single line."""
+
     line_number: int
     code: str
     is_executable: bool
@@ -53,6 +55,7 @@ class LineCoverage:
 @dataclass
 class FunctionCoverage:
     """Coverage for a function."""
+
     name: str
     line_start: int
     line_end: int
@@ -81,6 +84,7 @@ class FunctionCoverage:
 @dataclass
 class FileCoverage:
     """Coverage for a single file."""
+
     file_path: str
     total_lines: int
     executable_lines: int
@@ -118,10 +122,7 @@ class FileCoverage:
 
     def get_uncovered_lines(self) -> list[int]:
         """Get list of uncovered line numbers."""
-        return [
-            lc.line_number for lc in self.line_coverage
-            if lc.is_executable and not lc.is_covered
-        ]
+        return [lc.line_number for lc in self.line_coverage if lc.is_executable and not lc.is_covered]
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -140,6 +141,7 @@ class FileCoverage:
 @dataclass
 class Mutation:
     """Represents a code mutation for mutation testing."""
+
     id: str
     file_path: str
     line_number: int
@@ -163,6 +165,7 @@ class Mutation:
 @dataclass
 class MutationResult:
     """Result of a mutation test."""
+
     mutation: Mutation
     killed: bool  # True if test caught the mutation
     test_output: str = ""
@@ -179,6 +182,7 @@ class MutationResult:
 @dataclass
 class CoverageReport:
     """Complete coverage report."""
+
     timestamp: datetime
     overall_coverage: float
     overall_branch_coverage: float
@@ -233,10 +237,7 @@ class CoverageAnalyzer:
         self._mutation_operators = self._load_mutation_operators()
 
     async def analyze_coverage(
-        self,
-        source_path: str,
-        test_path: str | None = None,
-        exclude_patterns: list[str] = None
+        self, source_path: str, test_path: str | None = None, exclude_patterns: list[str] = None
     ) -> CoverageReport:
         """
         Analyze test coverage for a source directory.
@@ -292,11 +293,7 @@ class CoverageAnalyzer:
 
         return report
 
-    async def run_mutation_testing(
-        self,
-        file_path: str,
-        max_mutations: int = 50
-    ) -> list[MutationResult]:
+    async def run_mutation_testing(self, file_path: str, max_mutations: int = 50) -> list[MutationResult]:
         """
         Run mutation testing on a file.
 
@@ -336,10 +333,7 @@ class CoverageAnalyzer:
 
         return results
 
-    async def identify_coverage_gaps(
-        self,
-        coverage_report: CoverageReport
-    ) -> list[dict[str, Any]]:
+    async def identify_coverage_gaps(self, coverage_report: CoverageReport) -> list[dict[str, Any]]:
         """
         Identify coverage gaps and recommend tests.
 
@@ -368,33 +362,32 @@ class CoverageAnalyzer:
             context_lines = []
             for line_num in uncovered_lines[:10]:  # Limit to first 10
                 if line_num <= len(lines):
-                    context_lines.append({
-                        "line": line_num,
-                        "code": lines[line_num - 1].strip(),
-                    })
+                    context_lines.append(
+                        {
+                            "line": line_num,
+                            "code": lines[line_num - 1].strip(),
+                        }
+                    )
 
             # Use LLM to recommend tests
             recommendation = await self._recommend_tests_for_gap(
-                file_coverage.file_path,
-                context_lines,
-                file_coverage.coverage_percentage
+                file_coverage.file_path, context_lines, file_coverage.coverage_percentage
             )
 
-            gaps.append({
-                "file_path": file_coverage.file_path,
-                "coverage_percentage": file_coverage.coverage_percentage,
-                "uncovered_lines_count": len(uncovered_lines),
-                "uncovered_lines": uncovered_lines[:20],
-                "context": context_lines,
-                "recommendation": recommendation,
-            })
+            gaps.append(
+                {
+                    "file_path": file_coverage.file_path,
+                    "coverage_percentage": file_coverage.coverage_percentage,
+                    "uncovered_lines_count": len(uncovered_lines),
+                    "uncovered_lines": uncovered_lines[:20],
+                    "context": context_lines,
+                    "recommendation": recommendation,
+                }
+            )
 
         return gaps
 
-    async def get_coverage_trend(
-        self,
-        days: int = 30
-    ) -> list[dict[str, Any]]:
+    async def get_coverage_trend(self, days: int = 30) -> list[dict[str, Any]]:
         """
         Get coverage trend over time.
 
@@ -409,11 +402,13 @@ class CoverageAnalyzer:
         trend = []
         for report in self._coverage_history:
             if report.timestamp >= cutoff:
-                trend.append({
-                    "timestamp": report.timestamp.isoformat(),
-                    "overall_coverage": report.overall_coverage,
-                    "mutation_score": report.mutation_score,
-                })
+                trend.append(
+                    {
+                        "timestamp": report.timestamp.isoformat(),
+                        "overall_coverage": report.overall_coverage,
+                        "mutation_score": report.mutation_score,
+                    }
+                )
 
         return trend
 
@@ -436,9 +431,7 @@ class CoverageAnalyzer:
             "latest_branch_coverage": round(latest.overall_branch_coverage, 2),
             "latest_mutation_score": round(latest.mutation_score, 2),
             "files_analyzed": len(latest.files),
-            "files_by_coverage_level": {
-                level: len(files) for level, files in files_by_level.items()
-            },
+            "files_by_coverage_level": {level: len(files) for level, files in files_by_level.items()},
             "critical_files": files_by_level.get(CoverageLevel.CRITICAL.value, []),
             "poor_files": files_by_level.get(CoverageLevel.POOR.value, []),
             "excellent_files": files_by_level.get(CoverageLevel.EXCELLENT.value, []),
@@ -476,11 +469,7 @@ class CoverageAnalyzer:
             },
         }
 
-    async def _run_coverage_py(
-        self,
-        source_path: str,
-        test_path: str | None
-    ) -> dict[str, Any]:
+    async def _run_coverage_py(self, source_path: str, test_path: str | None) -> dict[str, Any]:
         """Run coverage.py via subprocess and parse the JSON output."""
         import asyncio
         import json
@@ -494,10 +483,17 @@ class CoverageAnalyzer:
         try:
             test_target = test_path or "backend/tests"
             run_cmd = [
-                sys.executable, "-m", "coverage", "run",
+                sys.executable,
+                "-m",
+                "coverage",
+                "run",
                 f"--source={source_path}",
-                "-m", "pytest", test_target,
-                "-q", "--tb=no", "--no-header",
+                "-m",
+                "pytest",
+                test_target,
+                "-q",
+                "--tb=no",
+                "--no-header",
             ]
             run_proc = await asyncio.create_subprocess_exec(
                 *run_cmd,
@@ -511,7 +507,10 @@ class CoverageAnalyzer:
                 await run_proc.communicate()
 
             export_cmd = [
-                sys.executable, "-m", "coverage", "json",
+                sys.executable,
+                "-m",
+                "coverage",
+                "json",
                 f"-o={json_out}",
             ]
             export_proc = await asyncio.create_subprocess_exec(
@@ -528,10 +527,7 @@ class CoverageAnalyzer:
                     file_key: {
                         "executable_lines": info.get("num_statements", 0),
                         "covered_lines": info.get("num_statements", 0) - info.get("missing_lines", 0),
-                        "lines": {
-                            str(ln): True
-                            for ln in info.get("executed_lines", [])
-                        },
+                        "lines": {str(ln): True for ln in info.get("executed_lines", [])},
                     }
                     for file_key, info in data.get("files", {}).items()
                 }
@@ -550,18 +546,16 @@ class CoverageAnalyzer:
         # Fallback: parse source files statically and estimate coverage from AST
         coverage_data: dict[str, Any] = {}
         source = Path(source_path)
-        files = [source] if source.is_file() else [
-            f for f in source.rglob("*.py")
-            if "test" not in str(f) and "__pycache__" not in str(f)
-        ]
+        files = (
+            [source]
+            if source.is_file()
+            else [f for f in source.rglob("*.py") if "test" not in str(f) and "__pycache__" not in str(f)]
+        )
         for file in files:
             try:
                 with open(file) as fh:
                     lines = fh.readlines()
-                executable = len([
-                    line for line in lines
-                    if line.strip() and not line.strip().startswith("#")
-                ])
+                executable = len([line for line in lines if line.strip() and not line.strip().startswith("#")])
                 # Conservative estimate: mark all executable lines as covered
                 coverage_data[str(file)] = {
                     "executable_lines": executable,
@@ -572,26 +566,24 @@ class CoverageAnalyzer:
                 pass
         return coverage_data
 
-    async def _analyze_file_coverage(
-        self,
-        file_path: str,
-        data: dict[str, Any]
-    ) -> FileCoverage:
+    async def _analyze_file_coverage(self, file_path: str, data: dict[str, Any]) -> FileCoverage:
         """Analyze coverage for a single file."""
         with open(file_path) as f:
             lines = f.readlines()
 
         line_coverage = []
         for i, line in enumerate(lines, 1):
-            is_executable = line.strip() and not line.strip().startswith('#')
+            is_executable = line.strip() and not line.strip().startswith("#")
             is_covered = data.get("lines", {}).get(i, False)
 
-            line_coverage.append(LineCoverage(
-                line_number=i,
-                code=line.rstrip(),
-                is_executable=is_executable,
-                is_covered=is_covered,
-            ))
+            line_coverage.append(
+                LineCoverage(
+                    line_number=i,
+                    code=line.rstrip(),
+                    is_executable=is_executable,
+                    is_covered=is_covered,
+                )
+            )
 
         executable = sum(1 for lc in line_coverage if lc.is_executable)
         covered = sum(1 for lc in line_coverage if lc.is_executable and lc.is_covered)
@@ -645,12 +637,7 @@ class CoverageAnalyzer:
                 complexity += len(child.values) - 1
         return complexity
 
-    async def _generate_mutations(
-        self,
-        file_path: str,
-        source_code: str,
-        max_mutations: int
-    ) -> list[Mutation]:
+    async def _generate_mutations(self, file_path: str, source_code: str, max_mutations: int) -> list[Mutation]:
         """Generate mutations for the source code."""
         mutations = []
         lines = source_code.splitlines()
@@ -683,19 +670,15 @@ class CoverageAnalyzer:
 
         return mutations
 
-    async def _test_mutation(
-        self,
-        mutation: Mutation,
-        original_code: str
-    ) -> MutationResult:
+    async def _test_mutation(self, mutation: Mutation, original_code: str) -> MutationResult:
         """Test if a mutation is caught by tests."""
         # Apply mutation
         lines = original_code.splitlines()
         lines[mutation.line_number - 1] = mutation.mutated_code
-        mutated_code = '\n'.join(lines)
+        mutated_code = "\n".join(lines)
 
         # Write mutated code
-        with open(mutation.file_path, 'w') as f:
+        with open(mutation.file_path, "w") as f:
             f.write(mutated_code)
 
         try:
@@ -724,14 +707,11 @@ class CoverageAnalyzer:
             )
         finally:
             # Restore original code
-            with open(mutation.file_path, 'w') as f:
+            with open(mutation.file_path, "w") as f:
                 f.write(original_code)
 
     async def _recommend_tests_for_gap(
-        self,
-        file_path: str,
-        uncovered_context: list[dict],
-        coverage_percentage: float
+        self, file_path: str, uncovered_context: list[dict], coverage_percentage: float
     ) -> str:
         """Use LLM to recommend tests for uncovered code."""
         prompt = f"""Recommend tests to improve coverage for this file:

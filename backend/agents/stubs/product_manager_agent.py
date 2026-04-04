@@ -140,7 +140,8 @@ class ProductManagerAgent(BaseAgent):
         try:
             import json
             import re
-            match = re.search(r'\{.*\}', raw, re.DOTALL)
+
+            match = re.search(r"\{.*\}", raw, re.DOTALL)
             if match:
                 return json.loads(match.group())
         except Exception:  # noqa: S110
@@ -166,12 +167,24 @@ class ProductManagerAgent(BaseAgent):
         try:
             import json
             import re
-            match = re.search(r'\{.*\}', raw, re.DOTALL)
+
+            match = re.search(r"\{.*\}", raw, re.DOTALL)
             if match:
                 return json.loads(match.group())
         except Exception:  # noqa: S110
             pass
-        return {"user_stories": [{"id": "US-001", "story": raw, "acceptance_criteria": ["Task completed"], "priority": "medium", "estimated_points": 3}], "raw_output": raw}
+        return {
+            "user_stories": [
+                {
+                    "id": "US-001",
+                    "story": raw,
+                    "acceptance_criteria": ["Task completed"],
+                    "priority": "medium",
+                    "estimated_points": 3,
+                }
+            ],
+            "raw_output": raw,
+        }
 
     async def _handle_feature_prioritization(self, task: Task, llm: Any = None) -> dict[str, Any]:
         """Handle feature prioritization tasks."""
@@ -188,7 +201,8 @@ class ProductManagerAgent(BaseAgent):
         try:
             import json
             import re
-            match = re.search(r'\{.*\}', raw, re.DOTALL)
+
+            match = re.search(r"\{.*\}", raw, re.DOTALL)
             if match:
                 return json.loads(match.group())
         except Exception:  # noqa: S110
@@ -219,7 +233,8 @@ class ProductManagerAgent(BaseAgent):
         try:
             import json
             import re
-            match = re.search(r'\{.*\}', raw, re.DOTALL)
+
+            match = re.search(r"\{.*\}", raw, re.DOTALL)
             if match:
                 return json.loads(match.group())
         except Exception:  # noqa: S110
@@ -249,7 +264,8 @@ class ProductManagerAgent(BaseAgent):
         try:
             import json
             import re
-            match = re.search(r'\{.*\}', raw, re.DOTALL)
+
+            match = re.search(r"\{.*\}", raw, re.DOTALL)
             if match:
                 return json.loads(match.group())
         except Exception:  # noqa: S110

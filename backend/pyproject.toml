@@ -4,12 +4,21 @@ line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "S", "B"]
-ignore = ["E501", "S101", "S105", "B008"]  # Allow long lines, assert, hardcoded passwords, FastAPI Depends()
+ignore = [
+    "E501",   # long lines — project uses 120-char limit in formatter
+    "S101",   # assert — standard in tests and FastAPI guards
+    "S105",   # hardcoded password — test secrets, env-var defaults
+    "B008",   # function call in default arg — FastAPI Depends()
+    "B904",   # raise-without-from-inside-except — 200+ legacy raise patterns
+    "UP042",  # replace-str-enum — StrEnum migration deferred
+]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["S101", "S105", "S106", "S104", "S110", "B017"]  # Allow assert, test passwords, 0.0.0.0, try-except-pass, broad pytest.raises
+"tests/**/*.py" = ["S101", "S105", "S106", "S104", "S110", "B017", "S311"]  # Allow assert, test passwords, 0.0.0.0, try-except-pass, broad pytest.raises, random in tests
 "simulation/**/*.py" = ["S603", "S607", "S311"]  # Sandbox intentionally runs subprocesses, uses random for testing
 "testing/**/*.py" = ["S607", "S311"]  # Test runner needs subprocess, random for demo
+"services/git_service.py" = ["S603", "S607"]  # git subprocess calls use fixed, trusted command lists
+"infrastructure/docker_compose.py" = ["S603", "S607"]  # docker-compose subprocess calls are intentional
 "main.py" = ["S310", "S608"]  # URL open for Ollama health check, hardcoded table names (not user input)
 "core/config.py" = ["S104"]  # 0.0.0.0 binding is intentional for server
 "core/exceptions.py" = ["N818"]  # Base exception class doesn't need Error suffix

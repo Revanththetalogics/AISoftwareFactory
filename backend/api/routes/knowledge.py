@@ -20,29 +20,37 @@ logger = get_logger(__name__)
 # Global knowledge base instance (in production, use dependency injection)
 knowledge_base = KnowledgeBase("main_kb")
 
+
 class DocumentCreateRequest(BaseModel):
     """Request model for creating a document."""
+
     content: str
     title: str
     tags: list[str] | None = None
     source: str | None = None
     metadata: dict[str, Any] | None = None
 
+
 class DocumentUpdateRequest(BaseModel):
     """Request model for updating a document."""
+
     content: str | None = None
     title: str | None = None
     tags: list[str] | None = None
     metadata: dict[str, Any] | None = None
 
+
 class SearchRequest(BaseModel):
     """Request model for searching documents."""
+
     query: str
     top_k: int = 5
     filter_tags: list[str] | None = None
 
+
 class DocumentResponse(BaseModel):
     """Response model for document operations."""
+
     id: str
     title: str
     content_preview: str
@@ -51,6 +59,7 @@ class DocumentResponse(BaseModel):
     created_at: str
     updated_at: str | None
     chunk_count: int
+
 
 @router.get("/stats", response_model=APIResponse)
 async def get_knowledge_stats():
@@ -62,14 +71,11 @@ async def get_knowledge_stats():
     """
     try:
         stats = knowledge_base.get_stats()
-        return APIResponse(
-            success=True,
-            data=stats,
-            message="Knowledge base statistics retrieved successfully"
-        )
+        return APIResponse(success=True, data=stats, message="Knowledge base statistics retrieved successfully")
     except Exception as e:
         logger.error("Failed to get knowledge stats", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get statistics: {str(e)}")
+
 
 @router.post("/documents", response_model=APIResponse)
 async def add_document(request: DocumentCreateRequest):
@@ -85,28 +91,20 @@ async def add_document(request: DocumentCreateRequest):
     try:
         # Prepare metadata
         metadata = request.metadata or {}
-        metadata.update({
-            "title": request.title,
-            "tags": request.tags or [],
-            "source": request.source
-        })
+        metadata.update({"title": request.title, "tags": request.tags or [], "source": request.source})
 
         # Add document to knowledge base
-        doc_id = await knowledge_base.add_document(
-            content=request.content,
-            metadata=metadata
-        )
+        doc_id = await knowledge_base.add_document(content=request.content, metadata=metadata)
 
         logger.info("Document added successfully", doc_id=doc_id, title=request.title)
 
         return APIResponse(
-            success=True,
-            data={"document_id": doc_id},
-            message=f"Document '{request.title}' added successfully"
+            success=True, data={"document_id": doc_id}, message=f"Document '{request.title}' added successfully"
         )
     except Exception as e:
         logger.error("Failed to add document", error=str(e), title=request.title)
         raise HTTPException(status_code=500, detail=f"Failed to add document: {str(e)}")
+
 
 @router.get("/documents/{doc_id}", response_model=APIResponse)
 async def get_document(doc_id: str):
@@ -133,14 +131,10 @@ async def get_document(doc_id: str):
                 "tags": doc_data["metadata"].get("tags", []),
                 "source": doc_data["metadata"].get("source"),
                 "created_at": doc_data["created_at"],
-                "chunk_count": doc_data["chunk_count"]
+                "chunk_count": doc_data["chunk_count"],
             }
 
-            return APIResponse(
-                success=True,
-                data=response_data,
-                message="Document retrieved successfully"
-            )
+            return APIResponse(success=True, data=response_data, message="Document retrieved successfully")
         else:
             raise HTTPException(status_code=404, detail="Document not found")
     except HTTPException:
@@ -148,6 +142,7 @@ async def get_document(doc_id: str):
     except Exception as e:
         logger.error("Failed to get document", error=str(e), doc_id=doc_id)
         raise HTTPException(status_code=500, detail=f"Failed to get document: {str(e)}")
+
 
 @router.put("/documents/{doc_id}", response_model=APIResponse)
 async def update_document(doc_id: str, request: DocumentUpdateRequest):
@@ -187,21 +182,18 @@ async def update_document(doc_id: str, request: DocumentUpdateRequest):
         new_doc_id = await knowledge_base.add_document(
             content=content,
             metadata=metadata,
-            doc_id=doc_id  # Reuse same ID
+            doc_id=doc_id,  # Reuse same ID
         )
 
         logger.info("Document updated successfully", doc_id=doc_id)
 
-        return APIResponse(
-            success=True,
-            data={"document_id": new_doc_id},
-            message="Document updated successfully"
-        )
+        return APIResponse(success=True, data={"document_id": new_doc_id}, message="Document updated successfully")
     except HTTPException:
         raise
     except Exception as e:
         logger.error("Failed to update document", error=str(e), doc_id=doc_id)
         raise HTTPException(status_code=500, detail=f"Failed to update document: {str(e)}")
+
 
 @router.delete("/documents/{doc_id}", response_model=APIResponse)
 async def delete_document(doc_id: str):
@@ -218,10 +210,7 @@ async def delete_document(doc_id: str):
         success = await knowledge_base.delete_document(doc_id)
         if success:
             logger.info("Document deleted successfully", doc_id=doc_id)
-            return APIResponse(
-                success=True,
-                message="Document deleted successfully"
-            )
+            return APIResponse(success=True, message="Document deleted successfully")
         else:
             raise HTTPException(status_code=404, detail="Document not found")
     except HTTPException:
@@ -229,6 +218,7 @@ async def delete_document(doc_id: str):
     except Exception as e:
         logger.error("Failed to delete document", error=str(e), doc_id=doc_id)
         raise HTTPException(status_code=500, detail=f"Failed to delete document: {str(e)}")
+
 
 @router.post("/search", response_model=APIResponse)
 async def search_documents(request: SearchRequest):
@@ -248,45 +238,40 @@ async def search_documents(request: SearchRequest):
             filter_metadata = {"tags": {"$in": request.filter_tags}}
 
         # Perform search
-        results = await knowledge_base.search(
-            query=request.query,
-            top_k=request.top_k,
-            filter_metadata=filter_metadata
-        )
+        results = await knowledge_base.search(query=request.query, top_k=request.top_k, filter_metadata=filter_metadata)
 
         # Format results for response
         formatted_results = []
         for result in results:
             # Extract document info from metadata
             metadata = result.get("metadata", {})
-            formatted_results.append({
-                "id": metadata.get("doc_id", "unknown"),
-                "score": result.get("score", 0),
-                "content": result.get("text", "")[:200] + "..." if len(result.get("text", "")) > 200 else result.get("text", ""),
-                "title": metadata.get("title", "Untitled"),
-                "tags": metadata.get("tags", [])
-            })
+            formatted_results.append(
+                {
+                    "id": metadata.get("doc_id", "unknown"),
+                    "score": result.get("score", 0),
+                    "content": result.get("text", "")[:200] + "..."
+                    if len(result.get("text", "")) > 200
+                    else result.get("text", ""),
+                    "title": metadata.get("title", "Untitled"),
+                    "tags": metadata.get("tags", []),
+                }
+            )
 
         logger.info("Search completed", query=request.query, results_count=len(formatted_results))
 
         return APIResponse(
             success=True,
-            data={
-                "results": formatted_results,
-                "total_results": len(formatted_results),
-                "query": request.query
-            },
-            message=f"Found {len(formatted_results)} results for query: {request.query}"
+            data={"results": formatted_results, "total_results": len(formatted_results), "query": request.query},
+            message=f"Found {len(formatted_results)} results for query: {request.query}",
         )
     except Exception as e:
         logger.error("Search failed", error=str(e), query=request.query)
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
+
 @router.get("/documents", response_model=APIResponse)
 async def list_documents(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=100),
-    tags: str | None = Query(None)
+    skip: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100), tags: str | None = Query(None)
 ):
     """
     List all documents in the knowledge base.
@@ -314,29 +299,26 @@ async def list_documents(
                 if not any(tag in doc_tags for tag in tag_list):
                     continue
 
-            all_docs.append({
-                "id": doc_id,
-                "title": doc_data["metadata"].get("title", "Untitled"),
-                "tags": doc_data["metadata"].get("tags", []),
-                "source": doc_data["metadata"].get("source"),
-                "created_at": doc_data["created_at"],
-                "chunk_count": doc_data["chunk_count"]
-            })
+            all_docs.append(
+                {
+                    "id": doc_id,
+                    "title": doc_data["metadata"].get("title", "Untitled"),
+                    "tags": doc_data["metadata"].get("tags", []),
+                    "source": doc_data["metadata"].get("source"),
+                    "created_at": doc_data["created_at"],
+                    "chunk_count": doc_data["chunk_count"],
+                }
+            )
 
         # Apply pagination
-        paginated_docs = all_docs[skip:skip + limit]
+        paginated_docs = all_docs[skip : skip + limit]
 
         logger.info("Documents listed", count=len(paginated_docs), total=len(all_docs))
 
         return APIResponse(
             success=True,
-            data={
-                "documents": paginated_docs,
-                "total_count": len(all_docs),
-                "skip": skip,
-                "limit": limit
-            },
-            message=f"Retrieved {len(paginated_docs)} documents"
+            data={"documents": paginated_docs, "total_count": len(all_docs), "skip": skip, "limit": limit},
+            message=f"Retrieved {len(paginated_docs)} documents",
         )
     except Exception as e:
         logger.error("Failed to list documents", error=str(e))

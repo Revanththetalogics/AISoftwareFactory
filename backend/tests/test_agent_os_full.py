@@ -49,10 +49,7 @@ class TestCrewExecutorFull:
             return mock_crew
 
         result = await executor.execute_crew(
-            crew_name="test_crew",
-            crew_factory=crew_factory,
-            inputs={"input_key": "input_value"},
-            task_id="task-123"
+            crew_name="test_crew", crew_factory=crew_factory, inputs={"input_key": "input_value"}, task_id="task-123"
         )
 
         assert result["success"] is True
@@ -70,10 +67,7 @@ class TestCrewExecutorFull:
         mock_crew = Mock()
         mock_crew.kickoff = Mock(return_value="result")
 
-        result = await executor.execute_crew(
-            crew_name="test_crew",
-            crew_factory=lambda: mock_crew
-        )
+        result = await executor.execute_crew(crew_name="test_crew", crew_factory=lambda: mock_crew)
 
         assert result["success"] is True
         assert result["execution_id"] is not None
@@ -86,10 +80,7 @@ class TestCrewExecutorFull:
         def failing_factory():
             raise ValueError("Crew creation failed")
 
-        result = await executor.execute_crew(
-            crew_name="failing_crew",
-            crew_factory=failing_factory
-        )
+        result = await executor.execute_crew(crew_name="failing_crew", crew_factory=failing_factory)
 
         assert result["success"] is False
         assert "error" in result
@@ -104,10 +95,7 @@ class TestCrewExecutorFull:
         mock_crew = Mock()
         mock_crew.kickoff = Mock(side_effect=RuntimeError("Kickoff failed"))
 
-        result = await executor.execute_crew(
-            crew_name="test_crew",
-            crew_factory=lambda: mock_crew
-        )
+        result = await executor.execute_crew(crew_name="test_crew", crew_factory=lambda: mock_crew)
 
         assert result["success"] is False
         assert "Kickoff failed" in result["error"]
@@ -311,10 +299,7 @@ class TestErrorHandlerFull:
         async def successful_op():
             return "success"
 
-        result = await handler.execute_with_retry(
-            successful_op,
-            circuit_name="test_circuit"
-        )
+        result = await handler.execute_with_retry(successful_op, circuit_name="test_circuit")
 
         assert result == "success"
         assert "test_circuit" in handler._circuit_breakers
@@ -334,10 +319,7 @@ class TestErrorHandlerFull:
             return "should not reach"
 
         with pytest.raises(Exception, match="Circuit breaker open"):
-            await handler.execute_with_retry(
-                should_not_run,
-                circuit_name="test_circuit"
-            )
+            await handler.execute_with_retry(should_not_run, circuit_name="test_circuit")
 
     @pytest.mark.asyncio
     async def test_execute_with_retry_records_failure_on_circuit(self):
@@ -350,11 +332,7 @@ class TestErrorHandlerFull:
         config = RetryConfig(max_retries=1, backoff_base=0.01)
 
         with pytest.raises(ValueError):
-            await handler.execute_with_retry(
-                always_fails,
-                config=config,
-                circuit_name="failure_circuit"
-            )
+            await handler.execute_with_retry(always_fails, config=config, circuit_name="failure_circuit")
 
         assert handler._circuit_breakers["failure_circuit"]._failures > 0
 
@@ -371,12 +349,7 @@ class TestErrorHandlerFull:
                 raise ValueError("Fail")
             return "ok"
 
-        config = RetryConfig(
-            max_retries=5,
-            backoff_base=0.01,
-            backoff_max=0.02,
-            exponential=True
-        )
+        config = RetryConfig(max_retries=5, backoff_base=0.01, backoff_max=0.02, exponential=True)
         result = await handler.execute_with_retry(fails_many, config=config)
         assert result == "ok"
 
@@ -385,19 +358,12 @@ class TestErrorHandlerFull:
         handler = ErrorHandler()
 
         # Should not raise, just logs
-        handler.escalate_to_human(
-            task_id="task-123",
-            error=ValueError("Test error"),
-            context={"key": "value"}
-        )
+        handler.escalate_to_human(task_id="task-123", error=ValueError("Test error"), context={"key": "value"})
 
     def test_escalate_to_human_without_context(self):
         """Test escalate_to_human without context."""
         handler = ErrorHandler()
-        handler.escalate_to_human(
-            task_id="task-456",
-            error=RuntimeError("Another error")
-        )
+        handler.escalate_to_human(task_id="task-456", error=RuntimeError("Another error"))
 
 
 class TestWorkerPoolFull:
@@ -616,10 +582,7 @@ class TestSchedulerFull:
         async def test_exec():
             pass
 
-        task_id = await scheduler.schedule_task(
-            name="test_task",
-            execute=test_exec
-        )
+        task_id = await scheduler.schedule_task(name="test_task", execute=test_exec)
 
         assert task_id is not None
         assert task_id in scheduler._scheduled_tasks
@@ -634,10 +597,7 @@ class TestSchedulerFull:
             pass
 
         task_id = await scheduler.schedule_task(
-            name="dependent_task",
-            execute=test_exec,
-            dependencies=["dep-1", "dep-2"],
-            metadata={"key": "value"}
+            name="dependent_task", execute=test_exec, dependencies=["dep-1", "dep-2"], metadata={"key": "value"}
         )
 
         task = scheduler._scheduled_tasks[task_id]
@@ -686,9 +646,7 @@ class TestSchedulerFull:
             pass
 
         await scheduler.schedule_task(
-            name="ready_task",
-            execute=test_exec,
-            scheduled_at=datetime.now(UTC) - timedelta(seconds=10)
+            name="ready_task", execute=test_exec, scheduled_at=datetime.now(UTC) - timedelta(seconds=10)
         )
 
         ready = await scheduler.get_ready_tasks()
@@ -705,9 +663,7 @@ class TestSchedulerFull:
             pass
 
         await scheduler.schedule_task(
-            name="future_task",
-            execute=test_exec,
-            scheduled_at=datetime.now(UTC) + timedelta(hours=1)
+            name="future_task", execute=test_exec, scheduled_at=datetime.now(UTC) + timedelta(hours=1)
         )
 
         ready = await scheduler.get_ready_tasks()
@@ -723,17 +679,10 @@ class TestSchedulerFull:
             pass
 
         # Create dependency task
-        dep_id = await scheduler.schedule_task(
-            name="dependency",
-            execute=test_exec
-        )
+        dep_id = await scheduler.schedule_task(name="dependency", execute=test_exec)
 
         # Create task that depends on it
-        await scheduler.schedule_task(
-            name="dependent",
-            execute=test_exec,
-            dependencies=[dep_id]
-        )
+        await scheduler.schedule_task(name="dependent", execute=test_exec, dependencies=[dep_id])
 
         ready = await scheduler.get_ready_tasks()
 
@@ -749,17 +698,9 @@ class TestSchedulerFull:
         async def test_exec():
             pass
 
-        await scheduler.schedule_task(
-            name="low_priority",
-            execute=test_exec,
-            priority=10
-        )
+        await scheduler.schedule_task(name="low_priority", execute=test_exec, priority=10)
 
-        await scheduler.schedule_task(
-            name="high_priority",
-            execute=test_exec,
-            priority=1
-        )
+        await scheduler.schedule_task(name="high_priority", execute=test_exec, priority=1)
 
         ready = await scheduler.get_ready_tasks()
 
@@ -829,7 +770,7 @@ class TestSchedulerFull:
         scheduler.get_ready_tasks = failing_get_ready
 
         # Mock asyncio.sleep to speed up test
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             mock_sleep.return_value = None
 
             # Run the scheduler (it will handle the exception and continue)
@@ -881,7 +822,7 @@ class TestResourceManagerFull:
 
         result = manager.allocate(
             task_id="task1",
-            memory_mb=999999  # More than available
+            memory_mb=999999,  # More than available
         )
 
         assert result is False
@@ -892,7 +833,7 @@ class TestResourceManagerFull:
 
         result = manager.allocate(
             task_id="task1",
-            gpu_count=100  # More than available
+            gpu_count=100,  # More than available
         )
 
         assert result is False
@@ -903,7 +844,7 @@ class TestResourceManagerFull:
 
         result = manager.allocate(
             task_id="task1",
-            storage_mb=999999999  # More than available
+            storage_mb=999999999,  # More than available
         )
 
         assert result is False
@@ -922,12 +863,7 @@ class TestRetryConfig:
 
     def test_custom_values(self):
         """Test custom values."""
-        config = RetryConfig(
-            max_retries=5,
-            backoff_base=2.0,
-            backoff_max=120.0,
-            exponential=False
-        )
+        config = RetryConfig(max_retries=5, backoff_base=2.0, backoff_max=120.0, exponential=False)
         assert config.max_retries == 5
         assert config.backoff_base == 2.0
 
@@ -937,10 +873,7 @@ class TestWorkerDataclass:
 
     def test_worker_creation(self):
         """Test worker creation with defaults."""
-        worker = Worker(
-            worker_id="w-123",
-            name="test-worker"
-        )
+        worker = Worker(worker_id="w-123", name="test-worker")
         assert worker.status == "idle"
         assert worker.current_task is None
         assert worker.total_tasks == 0
@@ -952,16 +885,11 @@ class TestScheduledTaskDataclass:
 
     def test_scheduled_task_creation(self):
         """Test scheduled task creation."""
+
         async def exec_fn():
             pass
 
-        task = ScheduledTask(
-            task_id="t-123",
-            name="test",
-            scheduled_at=datetime.now(UTC),
-            priority=5,
-            execute=exec_fn
-        )
+        task = ScheduledTask(task_id="t-123", name="test", scheduled_at=datetime.now(UTC), priority=5, execute=exec_fn)
         assert task.dependencies == []
         assert task.metadata == {}
 
@@ -973,18 +901,15 @@ class TestTaskQueueFull:
     def task_queue(self):
         """Create a TaskQueue instance."""
         from backend.agent_os.task_queue import TaskQueue
+
         return TaskQueue()
 
     @pytest.fixture
     def mock_task(self):
         """Create a mock task."""
         from backend.models.task import Task, TaskPriority
-        task = Task(
-            task_id="test-task-123",
-            name="Test Task",
-            description="Test task",
-            priority=TaskPriority.MEDIUM
-        )
+
+        task = Task(task_id="test-task-123", name="Test Task", description="Test task", priority=TaskPriority.MEDIUM)
         return task
 
     @pytest.mark.asyncio
@@ -1112,17 +1037,9 @@ class TestTaskQueueFull:
         from backend.models.task import Task, TaskPriority
 
         high_task = Task(
-            task_id="high",
-            name="High Priority Task",
-            description="High priority",
-            priority=TaskPriority.HIGH
+            task_id="high", name="High Priority Task", description="High priority", priority=TaskPriority.HIGH
         )
-        low_task = Task(
-            task_id="low",
-            name="Low Priority Task",
-            description="Low priority",
-            priority=TaskPriority.LOW
-        )
+        low_task = Task(task_id="low", name="Low Priority Task", description="Low priority", priority=TaskPriority.LOW)
 
         await task_queue.enqueue(low_task)
         await task_queue.enqueue(high_task)
@@ -1130,4 +1047,3 @@ class TestTaskQueueFull:
         # High priority should be first after sorting
         dequeued = await task_queue.dequeue()
         assert dequeued.task_id == "high"
-

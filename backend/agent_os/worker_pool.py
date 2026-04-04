@@ -19,6 +19,7 @@ logger = get_logger(__name__)
 @dataclass
 class Worker:
     """A worker process."""
+
     worker_id: str
     name: str
     status: str = "idle"  # idle, busy, unhealthy
@@ -53,14 +54,11 @@ class WorkerPool:
 
         # Initialize minimum workers
         for i in range(min_workers):
-            self._create_worker(f"worker-{i+1}")
+            self._create_worker(f"worker-{i + 1}")
 
     def _create_worker(self, name: str) -> Worker:
         """Create a new worker."""
-        worker = Worker(
-            worker_id=str(uuid4()),
-            name=name
-        )
+        worker = Worker(worker_id=str(uuid4()), name=name)
         self._workers[worker.worker_id] = worker
         self._logger.info("Worker created", worker_id=worker.worker_id, name=name)
         return worker
@@ -84,11 +82,7 @@ class WorkerPool:
             worker = self._create_worker(f"worker-{current_count + i + 1}")
             new_workers.append(worker)
 
-        self._logger.info(
-            "Worker pool scaled up",
-            added=len(new_workers),
-            total=len(self._workers)
-        )
+        self._logger.info("Worker pool scaled up", added=len(new_workers), total=len(self._workers))
         return new_workers
 
     async def scale_down(self, count: int = 1) -> int:
@@ -102,10 +96,7 @@ class WorkerPool:
             Number of workers removed
         """
         removed = 0
-        idle_workers = [
-            w for w in self._workers.values()
-            if w.status == "idle"
-        ]
+        idle_workers = [w for w in self._workers.values() if w.status == "idle"]
 
         for worker in idle_workers[:count]:
             if len(self._workers) <= self._min_workers:
@@ -113,11 +104,7 @@ class WorkerPool:
             del self._workers[worker.worker_id]
             removed += 1
 
-        self._logger.info(
-            "Worker pool scaled down",
-            removed=removed,
-            total=len(self._workers)
-        )
+        self._logger.info("Worker pool scaled down", removed=removed, total=len(self._workers))
         return removed
 
     def get_available_worker(self) -> Worker | None:
@@ -180,7 +167,7 @@ class WorkerPool:
             "busy_workers": sum(1 for w in self._workers.values() if w.status == "busy"),
             "unhealthy_workers": sum(1 for w in self._workers.values() if w.status == "unhealthy"),
             "min_workers": self._min_workers,
-            "max_workers": self._max_workers
+            "max_workers": self._max_workers,
         }
         return status
 

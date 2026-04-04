@@ -16,6 +16,7 @@ logger = get_logger(__name__)
 
 class DeploymentStatus(StrEnum):
     """Deployment status."""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     SUCCESS = "success"
@@ -25,6 +26,7 @@ class DeploymentStatus(StrEnum):
 
 class DeploymentEnvironment(StrEnum):
     """Deployment environments."""
+
     DEVELOPMENT = "dev"
     STAGING = "staging"
     PRODUCTION = "prod"
@@ -42,6 +44,7 @@ class DeploymentStep:
         started_at: Start timestamp
         completed_at: Completion timestamp
     """
+
     name: str
     status: DeploymentStatus = DeploymentStatus.PENDING
     message: str = ""
@@ -74,6 +77,7 @@ class DeploymentResult:
         completed_at: Completion timestamp
         metadata: Additional metadata
     """
+
     deployment_id: str
     project_name: str
     environment: DeploymentEnvironment

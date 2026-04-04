@@ -42,8 +42,8 @@ CSRF_EXEMPT_PATHS: set[str] = {
     "/api/v1/auth/register",
     "/api/v1/codegen/generate",  # Temporarily exempt for development
     "/api/v1/codegen/validate",  # Temporarily exempt for development
-    "/api/v1/codegen/history",   # Temporarily exempt for development
-    "/api/v1/codegen/languages", # Temporarily exempt for development
+    "/api/v1/codegen/history",  # Temporarily exempt for development
+    "/api/v1/codegen/languages",  # Temporarily exempt for development
 }
 
 # Path prefixes exempt from CSRF protection
@@ -132,7 +132,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                     content={
                         "detail": "CSRF validation failed",
                         "error_code": "CSRF_INVALID",
-                    }
+                    },
                 )
 
         # Process request
@@ -217,7 +217,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             secure=is_secure,
             samesite="lax",
             max_age=3600,  # 1 hour
-            path="/"
+            path="/",
         )
 
         # Set token in response header

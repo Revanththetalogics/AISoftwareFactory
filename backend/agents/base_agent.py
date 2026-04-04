@@ -19,6 +19,7 @@ logger = get_logger(__name__)
 
 class TaskStatus(StrEnum):
     """Task execution status."""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -28,6 +29,7 @@ class TaskStatus(StrEnum):
 
 class AgentStatus(StrEnum):
     """Agent status."""
+
     IDLE = "idle"
     BUSY = "busy"
     OFFLINE = "offline"
@@ -46,6 +48,7 @@ class AgentIdentity:
         capabilities: List of capabilities this agent has
         description: Detailed description of the agent
     """
+
     agent_id: str
     name: str
     role: str
@@ -77,6 +80,7 @@ class Task:
         deadline: Optional deadline for task completion
         parent_task_id: Optional parent task ID for subtasks
     """
+
     task_id: str = field(default_factory=lambda: str(uuid4()))
     task_type: str = ""
     description: str = ""
@@ -111,6 +115,7 @@ class TaskResult:
         execution_time_ms: Execution time in milliseconds
         metadata: Additional metadata about the execution
     """
+
     task_id: str
     status: TaskStatus
     output: dict[str, Any] = field(default_factory=dict)
@@ -239,6 +244,7 @@ class BaseAgent(ABC):
         self._logger.debug("Querying memory", query=query)
         try:
             from backend.brain.memory_store import MemoryStore
+
             store = MemoryStore()
             memories = store.retrieve(agent_id=self.agent_id, query=query, limit=10)
             results = [

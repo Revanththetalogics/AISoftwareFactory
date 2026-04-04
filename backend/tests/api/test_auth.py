@@ -37,14 +37,14 @@ class TestAuthCookies:
         mock_request = Mock()
         mock_request.url.scheme = "https"
 
-        with patch('backend.api.routes.auth.settings') as mock_settings:
+        with patch("backend.api.routes.auth.settings") as mock_settings:
             mock_settings.ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
             set_auth_cookies(
                 response=response,
                 access_token="access-token-123",
                 refresh_token="refresh-token-456",
-                request=mock_request
+                request=mock_request,
             )
 
         # Verify cookies are set (check response headers)
@@ -57,14 +57,14 @@ class TestAuthCookies:
         mock_request = Mock()
         mock_request.url.scheme = "http"
 
-        with patch('backend.api.routes.auth.settings') as mock_settings:
+        with patch("backend.api.routes.auth.settings") as mock_settings:
             mock_settings.ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
             set_auth_cookies(
                 response=response,
                 access_token="access-token-123",
                 refresh_token="refresh-token-456",
-                request=mock_request
+                request=mock_request,
             )
 
     def test_clear_auth_cookies(self):
@@ -102,27 +102,19 @@ class TestLoginEndpoint:
             "user_id": "user-123",
             "username": "testuser",
             "email": "test@example.com",
-            "permissions": ["read", "write"]
+            "permissions": ["read", "write"],
         }
-        tokens = {
-            "access_token": "access-123",
-            "refresh_token": "refresh-456",
-            "token_type": "bearer"
-        }
+        tokens = {"access_token": "access-123", "refresh_token": "refresh-456", "token_type": "bearer"}
 
         mock_auth_service.authenticate_user.return_value = user_data
         mock_auth_service.create_user_session.return_value = tokens
 
         request_data = LoginRequest(username="testuser", password="password123")
 
-        with patch('backend.api.routes.auth.settings') as mock_settings:
+        with patch("backend.api.routes.auth.settings") as mock_settings:
             mock_settings.ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-            response = await login(
-                request_data=request_data,
-                request=mock_request,
-                auth_service=mock_auth_service
-            )
+            response = await login(request_data=request_data, request=mock_request, auth_service=mock_auth_service)
 
         assert isinstance(response, JSONResponse)
         mock_auth_service.authenticate_user.assert_called_once_with("testuser", "password123")
@@ -136,11 +128,7 @@ class TestLoginEndpoint:
         request_data = LoginRequest(username="testuser", password="wrongpass")
 
         with pytest.raises(HTTPException) as exc_info:
-            await login(
-                request_data=request_data,
-                request=mock_request,
-                auth_service=mock_auth_service
-            )
+            await login(request_data=request_data, request=mock_request, auth_service=mock_auth_service)
 
         assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
         assert "Invalid username or password" in exc_info.value.detail
@@ -187,25 +175,19 @@ class TestRefreshTokenEndpoint:
     @pytest.mark.asyncio
     async def test_refresh_from_cookie(self, mock_request_with_cookie, mock_auth_service, mock_user):
         """Test refresh token from cookie."""
-        mock_auth_service.decode_token.return_value = {
-            "type": "refresh",
-            "sub": "user-123",
-            "username": "testuser"
-        }
+        mock_auth_service.decode_token.return_value = {"type": "refresh", "sub": "user-123", "username": "testuser"}
         mock_auth_service.get_user_by_id.return_value = mock_user
         mock_auth_service.create_user_session.return_value = {
             "access_token": "new-access",
             "refresh_token": "new-refresh",
-            "token_type": "bearer"
+            "token_type": "bearer",
         }
 
-        with patch('backend.api.routes.auth.settings') as mock_settings:
+        with patch("backend.api.routes.auth.settings") as mock_settings:
             mock_settings.ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
             response = await refresh_token(
-                request=mock_request_with_cookie,
-                request_data=None,
-                auth_service=mock_auth_service
+                request=mock_request_with_cookie, request_data=None, auth_service=mock_auth_service
             )
 
         assert isinstance(response, JSONResponse)
@@ -214,27 +196,21 @@ class TestRefreshTokenEndpoint:
     @pytest.mark.asyncio
     async def test_refresh_from_body(self, mock_request_without_cookie, mock_auth_service, mock_user):
         """Test refresh token from request body."""
-        mock_auth_service.decode_token.return_value = {
-            "type": "refresh",
-            "sub": "user-123",
-            "username": "testuser"
-        }
+        mock_auth_service.decode_token.return_value = {"type": "refresh", "sub": "user-123", "username": "testuser"}
         mock_auth_service.get_user_by_id.return_value = mock_user
         mock_auth_service.create_user_session.return_value = {
             "access_token": "new-access",
             "refresh_token": "new-refresh",
-            "token_type": "bearer"
+            "token_type": "bearer",
         }
 
         request_data = RefreshTokenRequest(refresh_token="body-refresh-token")
 
-        with patch('backend.api.routes.auth.settings') as mock_settings:
+        with patch("backend.api.routes.auth.settings") as mock_settings:
             mock_settings.ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
             response = await refresh_token(
-                request=mock_request_without_cookie,
-                request_data=request_data,
-                auth_service=mock_auth_service
+                request=mock_request_without_cookie, request_data=request_data, auth_service=mock_auth_service
             )
 
         assert isinstance(response, JSONResponse)
@@ -244,11 +220,7 @@ class TestRefreshTokenEndpoint:
     async def test_refresh_no_token(self, mock_request_without_cookie, mock_auth_service):
         """Test refresh without any token."""
         with pytest.raises(HTTPException) as exc_info:
-            await refresh_token(
-                request=mock_request_without_cookie,
-                request_data=None,
-                auth_service=mock_auth_service
-            )
+            await refresh_token(request=mock_request_without_cookie, request_data=None, auth_service=mock_auth_service)
 
         assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
         assert "Refresh token not provided" in exc_info.value.detail
@@ -259,15 +231,11 @@ class TestRefreshTokenEndpoint:
         mock_auth_service.decode_token.return_value = {
             "type": "access",  # Wrong type
             "sub": "user-123",
-            "username": "testuser"
+            "username": "testuser",
         }
 
         with pytest.raises(HTTPException) as exc_info:
-            await refresh_token(
-                request=mock_request_with_cookie,
-                request_data=None,
-                auth_service=mock_auth_service
-            )
+            await refresh_token(request=mock_request_with_cookie, request_data=None, auth_service=mock_auth_service)
 
         # All refresh errors are wrapped in 401 by the exception handler
         assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
@@ -281,11 +249,7 @@ class TestRefreshTokenEndpoint:
         }
 
         with pytest.raises(HTTPException) as exc_info:
-            await refresh_token(
-                request=mock_request_with_cookie,
-                request_data=None,
-                auth_service=mock_auth_service
-            )
+            await refresh_token(request=mock_request_with_cookie, request_data=None, auth_service=mock_auth_service)
 
         # All refresh errors are wrapped in 401 by the exception handler
         assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
@@ -293,19 +257,11 @@ class TestRefreshTokenEndpoint:
     @pytest.mark.asyncio
     async def test_refresh_user_not_found(self, mock_request_with_cookie, mock_auth_service):
         """Test refresh when user no longer exists."""
-        mock_auth_service.decode_token.return_value = {
-            "type": "refresh",
-            "sub": "user-123",
-            "username": "testuser"
-        }
+        mock_auth_service.decode_token.return_value = {"type": "refresh", "sub": "user-123", "username": "testuser"}
         mock_auth_service.get_user_by_id.return_value = None
 
         with pytest.raises(HTTPException) as exc_info:
-            await refresh_token(
-                request=mock_request_with_cookie,
-                request_data=None,
-                auth_service=mock_auth_service
-            )
+            await refresh_token(request=mock_request_with_cookie, request_data=None, auth_service=mock_auth_service)
 
         # All refresh errors are wrapped in 401 by the exception handler
         assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
@@ -316,11 +272,7 @@ class TestRefreshTokenEndpoint:
         mock_auth_service.decode_token.side_effect = Exception("Token expired")
 
         with pytest.raises(HTTPException) as exc_info:
-            await refresh_token(
-                request=mock_request_with_cookie,
-                request_data=None,
-                auth_service=mock_auth_service
-            )
+            await refresh_token(request=mock_request_with_cookie, request_data=None, auth_service=mock_auth_service)
 
         assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -344,12 +296,10 @@ class TestValidateTokenEndpoint:
     @pytest.mark.asyncio
     async def test_validate_with_user(self, mock_auth_service, mock_user):
         """Test validate token with authenticated user."""
-        with patch('backend.api.routes.auth.settings') as mock_settings:
+        with patch("backend.api.routes.auth.settings") as mock_settings:
             mock_settings.ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-            response = await validate_token(
-                current_user=mock_user
-            )
+            response = await validate_token(current_user=mock_user)
 
         assert response.valid is True
         assert response.user_id == "user-123"
@@ -358,12 +308,10 @@ class TestValidateTokenEndpoint:
     @pytest.mark.asyncio
     async def test_validate_without_user(self, mock_auth_service):
         """Test validate token without user (should still return valid=True)."""
-        with patch('backend.api.routes.auth.settings') as mock_settings:
+        with patch("backend.api.routes.auth.settings") as mock_settings:
             mock_settings.ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-            response = await validate_token(
-                current_user=None
-            )
+            response = await validate_token(current_user=None)
 
         assert response.valid is True
         assert response.user_id is None
@@ -413,7 +361,7 @@ class TestGetTestCredentials:
     @pytest.mark.asyncio
     async def test_get_credentials_development_mode(self):
         """Test getting test credentials in development mode."""
-        with patch('backend.api.routes.auth.settings') as mock_settings:
+        with patch("backend.api.routes.auth.settings") as mock_settings:
             mock_settings.is_development = True
             mock_settings.DEBUG = True
 
@@ -427,7 +375,7 @@ class TestGetTestCredentials:
     @pytest.mark.asyncio
     async def test_get_credentials_production_mode(self):
         """Test test credentials endpoint returns 404 in production."""
-        with patch('backend.api.routes.auth.settings') as mock_settings:
+        with patch("backend.api.routes.auth.settings") as mock_settings:
             mock_settings.is_development = False
             mock_settings.DEBUG = False
 
@@ -439,7 +387,7 @@ class TestGetTestCredentials:
     @pytest.mark.asyncio
     async def test_get_credentials_dev_without_debug(self):
         """Test test credentials endpoint returns 404 when DEBUG is False."""
-        with patch('backend.api.routes.auth.settings') as mock_settings:
+        with patch("backend.api.routes.auth.settings") as mock_settings:
             mock_settings.is_development = True
             mock_settings.DEBUG = False  # DEBUG must also be True
 
@@ -455,23 +403,22 @@ class TestAuthIntegration:
     @pytest.fixture
     def mock_auth_service_factory(self):
         """Create mock auth service for dependency override."""
+
         def create_mock():
             service = Mock()
-            service.authenticate_user = AsyncMock(return_value={
-                "user_id": "user-123",
-                "username": "testuser",
-                "email": "test@example.com",
-                "permissions": ["read", "write"]
-            })
-            service.create_user_session = Mock(return_value={
-                "access_token": "test-access",
-                "refresh_token": "test-refresh",
-                "token_type": "bearer"
-            })
-            service.decode_token = Mock(return_value={
-                "sub": "user-123",
-                "username": "testuser"
-            })
+            service.authenticate_user = AsyncMock(
+                return_value={
+                    "user_id": "user-123",
+                    "username": "testuser",
+                    "email": "test@example.com",
+                    "permissions": ["read", "write"],
+                }
+            )
+            service.create_user_session = Mock(
+                return_value={"access_token": "test-access", "refresh_token": "test-refresh", "token_type": "bearer"}
+            )
+            service.decode_token = Mock(return_value={"sub": "user-123", "username": "testuser"})
             service.get_user_by_id = AsyncMock()
             return service
+
         return create_mock

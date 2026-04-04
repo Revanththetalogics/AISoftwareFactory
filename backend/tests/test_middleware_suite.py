@@ -225,10 +225,7 @@ class TestCSRFMiddleware:
         """Test POST with Bearer token bypasses CSRF validation."""
         client = TestClient(csrf_app)
 
-        response = client.post(
-            "/submit",
-            headers={"Authorization": "Bearer valid_token_here"}
-        )
+        response = client.post("/submit", headers={"Authorization": "Bearer valid_token_here"})
 
         assert response.status_code == 200
 
@@ -240,10 +237,7 @@ class TestCSRFMiddleware:
         client.get("/page")
 
         # POST without CSRF token should fail for cookie-based auth
-        response = client.post(
-            "/submit",
-            cookies={CSRF_COOKIE_NAME: "some_token"}
-        )
+        response = client.post("/submit", cookies={CSRF_COOKIE_NAME: "some_token"})
 
         assert response.status_code == 403
 
@@ -257,9 +251,7 @@ class TestCSRFMiddleware:
 
         # POST with valid CSRF token
         response = client.post(
-            "/submit",
-            headers={CSRF_HEADER_NAME: csrf_token},
-            cookies={CSRF_COOKIE_NAME: csrf_token}
+            "/submit", headers={CSRF_HEADER_NAME: csrf_token}, cookies={CSRF_COOKIE_NAME: csrf_token}
         )
 
         assert response.status_code == 200
@@ -274,9 +266,7 @@ class TestCSRFMiddleware:
 
         # POST with mismatched CSRF token
         response = client.post(
-            "/submit",
-            headers={CSRF_HEADER_NAME: "wrong_token"},
-            cookies={CSRF_COOKIE_NAME: csrf_token}
+            "/submit", headers={CSRF_HEADER_NAME: "wrong_token"}, cookies={CSRF_COOKIE_NAME: csrf_token}
         )
 
         assert response.status_code == 403
@@ -289,9 +279,7 @@ class TestCSRFMiddleware:
         csrf_token = get_response.cookies.get(CSRF_COOKIE_NAME)
 
         response = client.post(
-            "/submit",
-            headers={CSRF_HEADER_NAME: "wrong_token"},
-            cookies={CSRF_COOKIE_NAME: csrf_token}
+            "/submit", headers={CSRF_HEADER_NAME: "wrong_token"}, cookies={CSRF_COOKIE_NAME: csrf_token}
         )
 
         body = response.json()
@@ -449,10 +437,7 @@ class TestAuthenticationMiddleware:
         """Test protected endpoint with Bearer token passes."""
         client = TestClient(auth_app)
 
-        response = client.get(
-            "/api/v1/projects",
-            headers={"Authorization": "Bearer valid_token_here"}
-        )
+        response = client.get("/api/v1/projects", headers={"Authorization": "Bearer valid_token_here"})
 
         assert response.status_code == 200
 
@@ -460,10 +445,7 @@ class TestAuthenticationMiddleware:
         """Test protected endpoint with auth cookie passes."""
         client = TestClient(auth_app)
 
-        response = client.get(
-            "/api/v1/projects",
-            cookies={"auth_token": "valid_cookie_token"}
-        )
+        response = client.get("/api/v1/projects", cookies={"auth_token": "valid_cookie_token"})
 
         assert response.status_code == 200
 
@@ -473,7 +455,7 @@ class TestAuthenticationMiddleware:
 
         response = client.get(
             "/api/v1/projects",
-            headers={"Authorization": "Basic user:pass"}  # Wrong format
+            headers={"Authorization": "Basic user:pass"},  # Wrong format
         )
 
         assert response.status_code == 401
@@ -484,7 +466,7 @@ class TestAuthenticationMiddleware:
 
         response = client.get(
             "/api/v1/projects",
-            headers={"Authorization": "Bearer "}  # Empty token
+            headers={"Authorization": "Bearer "},  # Empty token
         )
 
         assert response.status_code == 401
@@ -495,7 +477,7 @@ class TestAuthenticationMiddleware:
 
         response = client.get(
             "/api/v1/projects",
-            cookies={"auth_token": "   "}  # Whitespace only
+            cookies={"auth_token": "   "},  # Whitespace only
         )
 
         assert response.status_code == 401
@@ -530,7 +512,7 @@ class TestPrometheusMetricsMiddleware:
         app = FastAPI()
 
         # Mock the metrics collector
-        with patch('backend.middleware.metrics_middleware.get_metrics_collector') as mock_get:
+        with patch("backend.middleware.metrics_middleware.get_metrics_collector") as mock_get:
             mock_collector = Mock()
             mock_collector._active_request_count = 0
             mock_collector.concurrent_requests = Mock()
@@ -662,10 +644,7 @@ class TestAuthMiddlewareExtended:
         client = TestClient(auth_app_extended)
 
         # Simulate WebSocket upgrade header
-        response = client.get(
-            "/api/v1/data",
-            headers={"Upgrade": "websocket", "Connection": "Upgrade"}
-        )
+        response = client.get("/api/v1/data", headers={"Upgrade": "websocket", "Connection": "Upgrade"})
         # WebSocket upgrades should bypass auth middleware
         assert response.status_code == 200
 
@@ -675,7 +654,7 @@ class TestAuthMiddlewareExtended:
 
         response = client.get(
             "/api/v1/data",
-            cookies={"auth_token": "   \t\n  "}  # Whitespace only
+            cookies={"auth_token": "   \t\n  "},  # Whitespace only
         )
         assert response.status_code == 401
 
@@ -727,7 +706,7 @@ class TestCorrelationIdMiddlewareExtended:
         from backend.middleware.correlation_id import _get_otel_trace_id
 
         # The function imports get_current_trace_id from backend.infrastructure.tracing
-        with patch('backend.infrastructure.tracing.get_current_trace_id', side_effect=Exception("OTEL error")):
+        with patch("backend.infrastructure.tracing.get_current_trace_id", side_effect=Exception("OTEL error")):
             result = _get_otel_trace_id()
             assert result == ""
 
@@ -749,7 +728,7 @@ class TestCorrelationIdMiddlewareExtended:
         """Test X-Trace-ID header added when OTEL trace ID available (line 91)."""
         client = TestClient(correlation_app)
 
-        with patch('backend.middleware.correlation_id._get_otel_trace_id', return_value="trace-123-abc"):
+        with patch("backend.middleware.correlation_id._get_otel_trace_id", return_value="trace-123-abc"):
             response = client.get("/test")
 
             assert response.status_code == 200
@@ -759,7 +738,7 @@ class TestCorrelationIdMiddlewareExtended:
         """Test no X-Trace-ID header when OTEL unavailable."""
         client = TestClient(correlation_app)
 
-        with patch('backend.middleware.correlation_id._get_otel_trace_id', return_value=""):
+        with patch("backend.middleware.correlation_id._get_otel_trace_id", return_value=""):
             response = client.get("/test")
 
             assert response.status_code == 200
@@ -794,10 +773,7 @@ class TestCSRFMiddlewareExtended:
         """Test WebSocket upgrade bypasses CSRF (line 108)."""
         client = TestClient(csrf_app_extended)
 
-        response = client.get(
-            "/page",
-            headers={"Upgrade": "websocket", "Connection": "Upgrade"}
-        )
+        response = client.get("/page", headers={"Upgrade": "websocket", "Connection": "Upgrade"})
         assert response.status_code == 200
 
     def test_prefix_exempt_path(self, csrf_app_extended):
@@ -815,7 +791,7 @@ class TestCSRFMiddlewareExtended:
         # POST without CSRF cookie should fail
         response = client.post(
             "/api/v1/data",
-            headers={CSRF_HEADER_NAME: "some-token"}
+            headers={CSRF_HEADER_NAME: "some-token"},
             # No cookies
         )
         assert response.status_code == 403
@@ -831,11 +807,8 @@ class TestCSRFMiddlewareExtended:
         # POST with wrong token and X-Forwarded-For
         response = client.post(
             "/api/v1/data",
-            headers={
-                CSRF_HEADER_NAME: "wrong-token",
-                "X-Forwarded-For": "10.0.0.1, 192.168.1.1"
-            },
-            cookies={CSRF_COOKIE_NAME: csrf_token}
+            headers={CSRF_HEADER_NAME: "wrong-token", "X-Forwarded-For": "10.0.0.1, 192.168.1.1"},
+            cookies={CSRF_COOKIE_NAME: csrf_token},
         )
         assert response.status_code == 403
 
@@ -1063,7 +1036,7 @@ class TestRateLimitMiddlewareBucketCleanup:
         # Now find the middleware instance and inject many buckets
         # Access middleware through app's middleware_stack
         for middleware in app.middleware_stack.app.__dict__.values():
-            if hasattr(middleware, 'buckets'):
+            if hasattr(middleware, "buckets"):
                 # Inject 10001 buckets to trigger cleanup
                 old_time = time.time() - 200  # Expired buckets
                 for i in range(10001):

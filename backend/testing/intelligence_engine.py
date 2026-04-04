@@ -22,6 +22,7 @@ logger = get_logger(__name__)
 
 class TestPriority(Enum):
     """Test priority levels."""
+
     CRITICAL = 1
     HIGH = 2
     MEDIUM = 3
@@ -30,6 +31,7 @@ class TestPriority(Enum):
 
 class TestType(Enum):
     """Types of tests that can be generated."""
+
     UNIT = "unit"
     INTEGRATION = "integration"
     E2E = "e2e"
@@ -42,6 +44,7 @@ class TestType(Enum):
 @dataclass
 class TestCase:
     """Represents a generated or existing test case."""
+
     id: str
     name: str
     test_type: TestType
@@ -78,6 +81,7 @@ class TestCase:
 @dataclass
 class BugReport:
     """Represents a detected bug with analysis."""
+
     id: str
     severity: str  # critical, high, medium, low
     category: str  # syntax, logic, security, performance
@@ -110,6 +114,7 @@ class BugReport:
 @dataclass
 class FixResult:
     """Result of an automatic fix attempt."""
+
     bug_id: str
     success: bool
     file_path: str
@@ -133,6 +138,7 @@ class FixResult:
 @dataclass
 class TestSuite:
     """Collection of test cases for a module or feature."""
+
     name: str
     target_module: str
     test_cases: list[TestCase] = field(default_factory=list)
@@ -211,10 +217,11 @@ class TestIntelligenceEngine:
         from pathlib import Path as _Path
 
         p = _Path(source_path)
-        files = [p] if p.is_file() else [
-            f for f in p.rglob("*.py")
-            if "test" not in f.parts and "__pycache__" not in f.parts
-        ]
+        files = (
+            [p]
+            if p.is_file()
+            else [f for f in p.rglob("*.py") if "test" not in f.parts and "__pycache__" not in f.parts]
+        )
 
         all_bugs: list[BugReport] = []
         all_tests: list[TestCase] = []
@@ -235,9 +242,7 @@ class TestIntelligenceEngine:
                     error=str(exc),
                 )
 
-        avg_coverage = (
-            sum(coverage_values) / len(coverage_values) if coverage_values else 0.0
-        )
+        avg_coverage = sum(coverage_values) / len(coverage_values) if coverage_values else 0.0
 
         return {
             "bugs": [b.to_dict() for b in all_bugs],
@@ -252,11 +257,7 @@ class TestIntelligenceEngine:
             ),
         }
 
-    async def analyze_module(
-        self,
-        file_path: str,
-        generate_missing_tests: bool = True
-    ) -> TestSuite:
+    async def analyze_module(self, file_path: str, generate_missing_tests: bool = True) -> TestSuite:
         """
         Analyze a code module for testing gaps.
 
@@ -289,9 +290,7 @@ class TestIntelligenceEngine:
 
         # Generate missing tests if requested
         if generate_missing_tests and gaps:
-            generated_tests = await self._generate_tests_for_gaps(
-                file_path, code_content, gaps
-            )
+            generated_tests = await self._generate_tests_for_gaps(file_path, code_content, gaps)
             suite.test_cases.extend(generated_tests)
 
         # Calculate coverage
@@ -308,11 +307,7 @@ class TestIntelligenceEngine:
 
         return suite
 
-    async def detect_bugs(
-        self,
-        test_suite: TestSuite,
-        run_tests: bool = True
-    ) -> list[BugReport]:
+    async def detect_bugs(self, test_suite: TestSuite, run_tests: bool = True) -> list[BugReport]:
         """
         Detect bugs in code using multiple strategies.
 
@@ -353,10 +348,7 @@ class TestIntelligenceEngine:
         return bugs
 
     async def apply_fixes(
-        self,
-        bugs: list[BugReport],
-        auto_apply: bool = False,
-        confidence_threshold: float = 0.85
+        self, bugs: list[BugReport], auto_apply: bool = False, confidence_threshold: float = 0.85
     ) -> list[FixResult]:
         """
         Apply automatic fixes to detected bugs.
@@ -401,11 +393,7 @@ class TestIntelligenceEngine:
 
         return results
 
-    async def run_self_healing_tests(
-        self,
-        test_suite: TestSuite,
-        max_retries: int = 3
-    ) -> dict[str, Any]:
+    async def run_self_healing_tests(self, test_suite: TestSuite, max_retries: int = 3) -> dict[str, Any]:
         """
         Run tests with self-healing capabilities.
 
@@ -430,9 +418,7 @@ class TestIntelligenceEngine:
 
         for test_case in test_suite.test_cases:
             # Run test with retry logic
-            run_result = await self._run_test_with_healing(
-                test_case, max_retries
-            )
+            run_result = await self._run_test_with_healing(test_case, max_retries)
 
             if run_result["status"] == "passed":
                 results["passed"].append(test_case.id)
@@ -463,10 +449,7 @@ class TestIntelligenceEngine:
         return results
 
     async def generate_test_from_failure(
-        self,
-        error_message: str,
-        stack_trace: str,
-        code_context: str
+        self, error_message: str, stack_trace: str, code_context: str
     ) -> TestCase | None:
         """
         Generate a new test case from a production failure.
@@ -533,23 +516,17 @@ Return only the test code."""
         Returns:
             Test health metrics
         """
-        total_tests = sum(
-            len(suite.test_cases) for suite in self._test_suites.values()
-        )
+        total_tests = sum(len(suite.test_cases) for suite in self._test_suites.values())
 
-        flaky_tests = [
-            tc for suite in self._test_suites.values()
-            for tc in suite.test_cases if tc.is_flaky
-        ]
+        flaky_tests = [tc for suite in self._test_suites.values() for tc in suite.test_cases if tc.is_flaky]
 
         total_bugs = len(self._bug_reports)
-        critical_bugs = len([
-            b for b in self._bug_reports.values() if b.severity == "critical"
-        ])
+        critical_bugs = len([b for b in self._bug_reports.values() if b.severity == "critical"])
 
         avg_coverage = (
-            sum(s.coverage_percentage for s in self._test_suites.values()) /
-            len(self._test_suites) if self._test_suites else 0
+            sum(s.coverage_percentage for s in self._test_suites.values()) / len(self._test_suites)
+            if self._test_suites
+            else 0
         )
 
         return {
@@ -563,12 +540,8 @@ Return only the test code."""
                 "fixes_applied": len(self._fix_history),
             },
             "flaky_tests": [tc.to_dict() for tc in flaky_tests],
-            "recent_bugs": [
-                b.to_dict() for b in list(self._bug_reports.values())[-10:]
-            ],
-            "recent_fixes": [
-                f.to_dict() for f in self._fix_history[-10:]
-            ],
+            "recent_bugs": [b.to_dict() for b in list(self._bug_reports.values())[-10:]],
+            "recent_fixes": [f.to_dict() for f in self._fix_history[-10:]],
         }
 
     # Private helper methods
@@ -594,21 +567,22 @@ Return only the test code."""
 
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
-                    functions.append({
-                        "name": node.name,
-                        "line": node.lineno,
-                        "args": [arg.arg for arg in node.args.args],
-                    })
+                    functions.append(
+                        {
+                            "name": node.name,
+                            "line": node.lineno,
+                            "args": [arg.arg for arg in node.args.args],
+                        }
+                    )
                 elif isinstance(node, ast.ClassDef):
-                    methods = [
-                        n.name for n in node.body
-                        if isinstance(n, ast.FunctionDef)
-                    ]
-                    classes.append({
-                        "name": node.name,
-                        "line": node.lineno,
-                        "methods": methods,
-                    })
+                    methods = [n.name for n in node.body if isinstance(n, ast.FunctionDef)]
+                    classes.append(
+                        {
+                            "name": node.name,
+                            "line": node.lineno,
+                            "methods": methods,
+                        }
+                    )
 
             return {
                 "functions": functions,
@@ -634,45 +608,40 @@ Return only the test code."""
 
         return existing
 
-    def _identify_test_gaps(
-        self,
-        analysis: dict[str, Any],
-        existing_tests: list[str]
-    ) -> list[dict[str, Any]]:
+    def _identify_test_gaps(self, analysis: dict[str, Any], existing_tests: list[str]) -> list[dict[str, Any]]:
         """Identify gaps in test coverage."""
         gaps = []
 
         # Check for untested functions
         for func in analysis.get("functions", []):
             if not func["name"].startswith("_"):  # Skip private
-                gaps.append({
-                    "type": "function",
-                    "name": func["name"],
-                    "line": func["line"],
-                })
+                gaps.append(
+                    {
+                        "type": "function",
+                        "name": func["name"],
+                        "line": func["line"],
+                    }
+                )
 
         # Check for untested classes
         for cls in analysis.get("classes", []):
-            gaps.append({
-                "type": "class",
-                "name": cls["name"],
-                "line": cls["line"],
-                "methods": cls["methods"],
-            })
+            gaps.append(
+                {
+                    "type": "class",
+                    "name": cls["name"],
+                    "line": cls["line"],
+                    "methods": cls["methods"],
+                }
+            )
 
         return gaps
 
-    async def _generate_tests_for_gaps(
-        self,
-        file_path: str,
-        code: str,
-        gaps: list[dict[str, Any]]
-    ) -> list[TestCase]:
+    async def _generate_tests_for_gaps(self, file_path: str, code: str, gaps: list[dict[str, Any]]) -> list[TestCase]:
         """Generate test cases for identified gaps."""
         test_cases = []
 
         for gap in gaps:
-            prompt = f"""Generate pytest test cases for this {gap['type']}:
+            prompt = f"""Generate pytest test cases for this {gap["type"]}:
 
 File: {file_path}
 
@@ -681,7 +650,7 @@ Code:
 {code}
 ```
 
-Target: {gap['name']} ({gap['type']})
+Target: {gap["name"]} ({gap["type"]})
 
 Generate comprehensive tests including:
 1. Happy path tests
@@ -713,7 +682,7 @@ Return only the test code."""
             except Exception as e:
                 self._logger.error(
                     "Failed to generate test",
-                    target=gap['name'],
+                    target=gap["name"],
                     error=str(e),
                 )
 
@@ -723,25 +692,23 @@ Return only the test code."""
         """Calculate test coverage for a file using the CoverageAnalyzer."""
         try:
             from backend.testing.coverage_analyzer import CoverageAnalyzer
+
             analyzer = CoverageAnalyzer()
             report = await analyzer.analyze_coverage(source_path=file_path)
             return report.overall_coverage
         except Exception as exc:
-            self._logger.warning(
-                "Coverage calculation failed", file_path=file_path, error=str(exc)
-            )
+            self._logger.warning("Coverage calculation failed", file_path=file_path, error=str(exc))
             return 0.0
 
     async def _static_analysis(self, file_path: str) -> list[BugReport]:
         """Run static analysis using the BugDetectorAgent pattern matcher."""
         try:
             from backend.testing.agents.bug_detector import BugDetectorAgent
+
             detector = BugDetectorAgent()
             return await detector.detect_bugs(file_path, use_llm_review=False)
         except Exception as exc:
-            self._logger.warning(
-                "Static analysis failed", file_path=file_path, error=str(exc)
-            )
+            self._logger.warning("Static analysis failed", file_path=file_path, error=str(exc))
             return []
 
     async def _analyze_test_failures(self, test_suite: TestSuite) -> list[BugReport]:
@@ -775,6 +742,7 @@ If no issues found, return empty array []."""
 
             # Parse JSON response
             import json
+
             findings = json.loads(response)
 
             bugs = []
@@ -839,14 +807,11 @@ Provide the fixed code section only."""
                 error_message=str(e),
             )
 
-    async def _run_test_with_healing(
-        self,
-        test_case: TestCase,
-        max_retries: int
-    ) -> dict[str, Any]:
+    async def _run_test_with_healing(self, test_case: TestCase, max_retries: int) -> dict[str, Any]:
         """Run a test with self-healing capabilities via SelfHealingTestRunner."""
         try:
             from backend.testing.self_healing_runner import SelfHealingTestRunner
+
             runner = SelfHealingTestRunner(max_retries=max_retries)
             result = await runner.run_single_test(test_case)
             return {

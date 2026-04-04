@@ -2,7 +2,6 @@
 Tests for Environment Manager.
 """
 
-
 from backend.deployment.environment import (
     EnvironmentConfig,
     EnvironmentManager,
@@ -260,15 +259,11 @@ class TestEnvironmentConfigAdditional:
     def test_to_env_file_with_descriptions(self):
         """Test to_env_file with variable descriptions (line 85)."""
         variables = [
-            EnvironmentVariable(
-                name="DEBUG",
-                value="true",
-                description="Enable debug mode"
-            ),
+            EnvironmentVariable(name="DEBUG", value="true", description="Enable debug mode"),
             EnvironmentVariable(
                 name="PORT",
                 value="8000",
-                description=""  # No description
+                description="",  # No description
             ),
         ]
         config = EnvironmentConfig(
@@ -396,11 +391,7 @@ class TestEnvironmentManagerAdditional:
         self.manager.add_secret("prod", "DB_PASSWORD", "dbpass")
         # Add a variable marked as is_secret=True (but stored in variables list)
         env = self.manager.get_environment("prod")
-        env.variables.append(EnvironmentVariable(
-            name="API_TOKEN",
-            value="tokenvalue",
-            is_secret=True
-        ))
+        env.variables.append(EnvironmentVariable(name="API_TOKEN", value="tokenvalue", is_secret=True))
 
         yaml_content = self.manager.generate_kubernetes_secret("prod")
 
@@ -408,6 +399,7 @@ class TestEnvironmentManagerAdditional:
         assert "Secret" in yaml_content
         # Check base64 encoded values are present
         import base64
+
         db_encoded = base64.b64encode(b"dbpass").decode()
         token_encoded = base64.b64encode(b"tokenvalue").decode()
         assert db_encoded in yaml_content
@@ -416,18 +408,14 @@ class TestEnvironmentManagerAdditional:
     def test_clone_environment(self):
         """Test clone_environment method (lines 409-437)."""
         self.manager.create_environment("source", EnvironmentType.DEVELOPMENT)
-        self.manager.add_variable(
-            "source", "DEBUG", "true", description="Debug mode"
-        )
+        self.manager.add_variable("source", "DEBUG", "true", description="Debug mode")
         self.manager.add_secret("source", "SECRET_KEY", "secretvalue")
         # Add metadata
         source_env = self.manager.get_environment("source")
         source_env.metadata["version"] = "1.0"
 
         target = self.manager.clone_environment(
-            source_name="source",
-            target_name="target",
-            target_type=EnvironmentType.STAGING
+            source_name="source", target_name="target", target_type=EnvironmentType.STAGING
         )
 
         assert target is not None
@@ -446,20 +434,13 @@ class TestEnvironmentManagerAdditional:
         """Test clone_environment preserves source type when target_type is None."""
         self.manager.create_environment("source", EnvironmentType.PRODUCTION)
 
-        target = self.manager.clone_environment(
-            source_name="source",
-            target_name="target",
-            target_type=None
-        )
+        target = self.manager.clone_environment(source_name="source", target_name="target", target_type=None)
 
         assert target.environment_type == EnvironmentType.PRODUCTION
 
     def test_clone_environment_nonexistent_source(self):
         """Test clone_environment returns None for nonexistent source."""
-        target = self.manager.clone_environment(
-            source_name="nonexistent",
-            target_name="target"
-        )
+        target = self.manager.clone_environment(source_name="nonexistent", target_name="target")
 
         assert target is None
 
@@ -511,4 +492,3 @@ class TestEnvironmentManagerAdditional:
         assert len(result["issues"]) == 0
         assert result["variable_count"] == 2
         assert result["secret_count"] == 1
-

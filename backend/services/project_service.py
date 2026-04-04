@@ -27,11 +27,7 @@ class ProjectService:
         self._logger = get_logger(__name__)
 
     async def create_project(
-        self,
-        name: str,
-        description: str,
-        requirements: str | None = None,
-        created_by: str | None = None
+        self, name: str, description: str, requirements: str | None = None, created_by: str | None = None
     ) -> dict[str, Any]:
         """
         Create a new project.
@@ -58,7 +54,7 @@ class ProjectService:
             "created_by": created_by,
             "created_at": datetime.now(UTC).isoformat(),
             "updated_at": datetime.now(UTC).isoformat(),
-            "metadata": {}
+            "metadata": {},
         }
 
         self._projects[project_id] = project
@@ -78,11 +74,7 @@ class ProjectService:
         """
         return self._projects.get(project_id)
 
-    async def list_projects(
-        self,
-        status: str | None = None,
-        created_by: str | None = None
-    ) -> list[dict[str, Any]]:
+    async def list_projects(self, status: str | None = None, created_by: str | None = None) -> list[dict[str, Any]]:
         """
         List projects with optional filtering.
 
@@ -102,11 +94,7 @@ class ProjectService:
 
         return sorted(projects, key=lambda p: p["created_at"], reverse=True)
 
-    async def update_project(
-        self,
-        project_id: str,
-        updates: dict[str, Any]
-    ) -> dict[str, Any] | None:
+    async def update_project(self, project_id: str, updates: dict[str, Any]) -> dict[str, Any] | None:
         """
         Update a project.
 
@@ -122,8 +110,7 @@ class ProjectService:
             return None
 
         # Update allowed fields
-        allowed_fields = ["name", "description", "requirements", "status",
-                         "current_phase", "tech_stack", "metadata"]
+        allowed_fields = ["name", "description", "requirements", "status", "current_phase", "tech_stack", "metadata"]
         for field in allowed_fields:
             if field in updates:
                 project[field] = updates[field]
@@ -149,11 +136,7 @@ class ProjectService:
             return True
         return False
 
-    async def update_progress(
-        self,
-        project_id: str,
-        progress_percent: float
-    ) -> dict[str, Any] | None:
+    async def update_progress(self, project_id: str, progress_percent: float) -> dict[str, Any] | None:
         """
         Update project progress.
 

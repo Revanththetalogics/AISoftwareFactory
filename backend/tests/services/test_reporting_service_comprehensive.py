@@ -29,10 +29,10 @@ class TestReportingService:
     def test_init(self, reporting_service):
         """Test ReportingService initialization."""
         assert reporting_service is not None
-        assert hasattr(reporting_service, 'templates')
-        assert hasattr(reporting_service, 'definitions')
-        assert hasattr(reporting_service, 'generated_reports')
-        assert hasattr(reporting_service, 'schedules')
+        assert hasattr(reporting_service, "templates")
+        assert hasattr(reporting_service, "definitions")
+        assert hasattr(reporting_service, "generated_reports")
+        assert hasattr(reporting_service, "schedules")
         assert isinstance(reporting_service.templates, dict)
         assert isinstance(reporting_service.definitions, dict)
         assert isinstance(reporting_service.generated_reports, dict)
@@ -87,7 +87,7 @@ class TestReportingService:
             format=ReportFormat.CSV,
             parameters={"metric": "user_actions", "group_by": "date"},
             query_template="SELECT * FROM usage_logs WHERE date >= '{{start_date}}'",
-            created_by="test_user"
+            created_by="test_user",
         )
 
         assert result is not None
@@ -158,7 +158,7 @@ class TestReportingService:
             recipients=["admin@example.com", "ops@example.com"],
             schedule_frequency=ReportFrequency.DAILY,
             schedule_time="08:00:00",
-            created_by="admin_user"
+            created_by="admin_user",
         )
 
         assert result is not None
@@ -190,7 +190,7 @@ class TestReportingService:
             recipients=["test@example.com"],
             schedule_frequency=ReportFrequency.ONCE,
             schedule_time=None,
-            created_by="test_user"
+            created_by="test_user",
         )
 
         result = await reporting_service.generate_report(definition.id)
@@ -218,8 +218,6 @@ class TestReportingService:
 
         assert "Report definition nonexistent not found" in str(exc_info.value)
 
-
-
     @pytest.mark.asyncio
     async def test_get_generated_reports(self, reporting_service):
         """Test getting generated reports."""
@@ -231,7 +229,7 @@ class TestReportingService:
             recipients=[],
             schedule_frequency=ReportFrequency.ONCE,
             schedule_time=None,
-            created_by="test_user"
+            created_by="test_user",
         )
 
         await reporting_service.generate_report(definition.id)
@@ -256,7 +254,7 @@ class TestReportingService:
             recipients=[],
             schedule_frequency=ReportFrequency.DAILY,
             schedule_time="09:00:00",
-            created_by="user1"
+            created_by="user1",
         )
         await reporting_service.create_report_definition(
             name="Definition 2",
@@ -265,7 +263,7 @@ class TestReportingService:
             recipients=[],
             schedule_frequency=ReportFrequency.WEEKLY,
             schedule_time="10:00:00",
-            created_by="user2"
+            created_by="user2",
         )
 
         result = await reporting_service.get_report_definitions()
@@ -287,7 +285,7 @@ class TestReportingService:
             recipients=[],
             schedule_frequency=ReportFrequency.MONTHLY,
             schedule_time="01:00:00",
-            created_by="scheduler"
+            created_by="scheduler",
         )
 
         result = await reporting_service.get_report_schedules()
@@ -310,7 +308,7 @@ class TestReportingService:
             recipients=[],
             schedule_frequency=ReportFrequency.ONCE,
             schedule_time=None,
-            created_by="export_user"
+            created_by="export_user",
         )
 
         report = await reporting_service.generate_report(definition.id)
@@ -321,7 +319,8 @@ class TestReportingService:
         assert len(result) > 0
         # Should be valid JSON
         import json
-        data = json.loads(result.decode('utf-8'))
+
+        data = json.loads(result.decode("utf-8"))
         assert isinstance(data, dict)
 
     @pytest.mark.asyncio
@@ -335,7 +334,7 @@ class TestReportingService:
             recipients=[],
             schedule_frequency=ReportFrequency.ONCE,
             schedule_time=None,
-            created_by="csv_user"
+            created_by="csv_user",
         )
 
         report = await reporting_service.generate_report(definition.id)
@@ -345,7 +344,7 @@ class TestReportingService:
         assert isinstance(result, bytes)
         assert len(result) > 0
         # Should contain CSV-like content
-        text = result.decode('utf-8')
+        text = result.decode("utf-8")
         assert isinstance(text, str)
 
     @pytest.mark.asyncio
@@ -367,7 +366,7 @@ class TestReportingService:
             recipients=[],
             schedule_frequency=ReportFrequency.ONCE,
             schedule_time=None,
-            created_by="fallback_user"
+            created_by="fallback_user",
         )
 
         report = await reporting_service.generate_report(definition.id)
@@ -379,7 +378,8 @@ class TestReportingService:
         assert len(result) > 0
         # Should be valid JSON (fallback)
         import json
-        data = json.loads(result.decode('utf-8'))
+
+        data = json.loads(result.decode("utf-8"))
         assert isinstance(data, dict)
 
     @pytest.mark.asyncio
@@ -393,7 +393,7 @@ class TestReportingService:
             recipients=[],
             schedule_frequency=ReportFrequency.ONCE,
             schedule_time=None,
-            created_by="stats_user"
+            created_by="stats_user",
         )
 
         await reporting_service.generate_report(definition.id)
@@ -420,7 +420,7 @@ class TestReportingService:
             parameters={"key": "value"},
             query_template="SELECT * FROM test",
             created_by="test_user",
-            created_at=datetime.now(UTC).isoformat()
+            created_at=datetime.now(UTC).isoformat(),
         )
 
         assert template.id == "test-template"
@@ -442,7 +442,7 @@ class TestReportingService:
             is_active=True,
             created_by="test_user",
             created_at=datetime.now(UTC).isoformat(),
-            updated_at=datetime.now(UTC).isoformat()
+            updated_at=datetime.now(UTC).isoformat(),
         )
 
         assert definition.id == "test-def"
@@ -466,7 +466,7 @@ class TestReportingService:
             generated_at=datetime.now(UTC).isoformat(),
             completed_at=datetime.now(UTC).isoformat(),
             error_message=None,
-            recipient_emails=["user@example.com"]
+            recipient_emails=["user@example.com"],
         )
 
         assert report.id == "test-report"
@@ -483,7 +483,7 @@ class TestReportingService:
             next_run_time="2024-01-01T00:00:00Z",
             last_run_time="2023-12-25T00:00:00Z",
             is_active=True,
-            created_at=datetime.now(UTC).isoformat()
+            created_at=datetime.now(UTC).isoformat(),
         )
 
         assert schedule.id == "test-schedule"

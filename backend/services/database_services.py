@@ -35,7 +35,7 @@ class DatabaseProjectService:
         requirements: str | None = None,
         tech_stack: dict[str, Any] | None = None,
         owner_id: str | None = None,
-        db: AsyncSession = None
+        db: AsyncSession = None,
     ) -> DBProject:
         """Create a new project in the database."""
         with PerformanceTimer("create_project", project_name=name, owner_id=owner_id) as timer:
@@ -56,7 +56,7 @@ class DatabaseProjectService:
         description: str,
         requirements: str | None = None,
         tech_stack: dict[str, Any] | None = None,
-        owner_id: str | None = None
+        owner_id: str | None = None,
     ) -> DBProject:
         """Internal method to create project."""
         # Sanitize inputs
@@ -74,7 +74,7 @@ class DatabaseProjectService:
             current_phase=None,
             progress_percent=0,
             owner_id=owner_id or "anonymous",
-            extra_metadata={}
+            extra_metadata={},
         )
 
         db.add(project)
@@ -112,7 +112,7 @@ class DatabaseProjectService:
         status: str | None = None,
         skip: int = 0,
         limit: int = 100,
-        db: AsyncSession = None
+        db: AsyncSession = None,
     ) -> list[DBProject]:
         """List projects with optional filtering."""
         with PerformanceTimer("list_projects", owner_id=owner_id, status=status, limit=limit) as timer:
@@ -126,12 +126,7 @@ class DatabaseProjectService:
             return projects
 
     async def _list_projects(
-        self,
-        db: AsyncSession,
-        owner_id: str | None = None,
-        status: str | None = None,
-        skip: int = 0,
-        limit: int = 100
+        self, db: AsyncSession, owner_id: str | None = None, status: str | None = None, skip: int = 0, limit: int = 100
     ) -> list[DBProject]:
         """Internal method to list projects."""
         stmt = select(DBProject)
@@ -150,10 +145,7 @@ class DatabaseProjectService:
         return projects
 
     async def update_project(
-        self,
-        project_id: str,
-        updates: dict[str, Any],
-        db: AsyncSession = None
+        self, project_id: str, updates: dict[str, Any], db: AsyncSession = None
     ) -> DBProject | None:
         """Update project fields."""
         with PerformanceTimer("update_project", project_id=project_id) as timer:
@@ -169,12 +161,7 @@ class DatabaseProjectService:
 
             return project
 
-    async def _update_project(
-        self,
-        db: AsyncSession,
-        project_id: str,
-        updates: dict[str, Any]
-    ) -> DBProject | None:
+    async def _update_project(self, db: AsyncSession, project_id: str, updates: dict[str, Any]) -> DBProject | None:
         """Internal method to update project."""
         # Sanitize text fields
         if "name" in updates:
@@ -184,10 +171,7 @@ class DatabaseProjectService:
         if "requirements" in updates and updates["requirements"]:
             updates["requirements"] = sanitize_input(updates["requirements"], max_length=5000)
 
-        stmt = update(DBProject).where(DBProject.id == project_id).values(
-            **updates,
-            updated_at=datetime.utcnow()
-        )
+        stmt = update(DBProject).where(DBProject.id == project_id).values(**updates, updated_at=datetime.utcnow())
 
         await db.execute(stmt)
         await db.commit()
@@ -227,7 +211,7 @@ class DatabaseWorkflowService:
         project_id: str,
         steps: list[dict[str, Any]],
         created_by: str | None = None,
-        db: AsyncSession = None
+        db: AsyncSession = None,
     ) -> DBWorkflow:
         """Create a new workflow in the database."""
         if db is None:
@@ -237,12 +221,7 @@ class DatabaseWorkflowService:
         return await self._create_workflow(db, name, project_id, steps, created_by)
 
     async def _create_workflow(
-        self,
-        db: AsyncSession,
-        name: str,
-        project_id: str,
-        steps: list[dict[str, Any]],
-        created_by: str | None = None
+        self, db: AsyncSession, name: str, project_id: str, steps: list[dict[str, Any]], created_by: str | None = None
     ) -> DBWorkflow:
         """Internal method to create workflow."""
         workflow = DBWorkflow(
@@ -255,7 +234,7 @@ class DatabaseWorkflowService:
             completed_steps=[],
             failed_steps=[],
             context={},
-            created_by=created_by
+            created_by=created_by,
         )
 
         db.add(workflow)
@@ -280,11 +259,7 @@ class DatabaseWorkflowService:
         return result.scalar_one_or_none()
 
     async def update_workflow_status(
-        self,
-        workflow_id: str,
-        status: WorkflowStatus,
-        current_step_id: str | None = None,
-        db: AsyncSession = None
+        self, workflow_id: str, status: WorkflowStatus, current_step_id: str | None = None, db: AsyncSession = None
     ) -> DBWorkflow | None:
         """Update workflow status."""
         if db is None:
@@ -294,17 +269,10 @@ class DatabaseWorkflowService:
         return await self._update_workflow_status(db, workflow_id, status, current_step_id)
 
     async def _update_workflow_status(
-        self,
-        db: AsyncSession,
-        workflow_id: str,
-        status: WorkflowStatus,
-        current_step_id: str | None = None
+        self, db: AsyncSession, workflow_id: str, status: WorkflowStatus, current_step_id: str | None = None
     ) -> DBWorkflow | None:
         """Internal method to update workflow status."""
-        updates = {
-            "status": status,
-            "updated_at": datetime.utcnow()
-        }
+        updates = {"status": status, "updated_at": datetime.utcnow()}
 
         if current_step_id:
             updates["current_step_id"] = current_step_id
@@ -324,13 +292,7 @@ class DatabaseWorkflowService:
 class DatabaseAgentService:
     """Database-backed agent service implementation."""
 
-    async def register_agent(
-        self,
-        name: str,
-        role: str,
-        capabilities: list[str],
-        db: AsyncSession = None
-    ) -> DBAgent:
+    async def register_agent(self, name: str, role: str, capabilities: list[str], db: AsyncSession = None) -> DBAgent:
         """Register a new agent in the database."""
         if db is None:
             async with get_db_context() as db:
@@ -338,13 +300,7 @@ class DatabaseAgentService:
 
         return await self._register_agent(db, name, role, capabilities)
 
-    async def _register_agent(
-        self,
-        db: AsyncSession,
-        name: str,
-        role: str,
-        capabilities: list[str]
-    ) -> DBAgent:
+    async def _register_agent(self, db: AsyncSession, name: str, role: str, capabilities: list[str]) -> DBAgent:
         """Internal method to register agent."""
         agent = DBAgent(
             id=f"agent-{uuid4().hex[:12]}",
@@ -352,7 +308,7 @@ class DatabaseAgentService:
             role=sanitize_input(role, max_length=50),
             capabilities=capabilities,
             status="idle",
-            config={}
+            config={},
         )
 
         db.add(agent)
@@ -377,10 +333,7 @@ class DatabaseAgentService:
         return result.scalar_one_or_none()
 
     async def list_agents(
-        self,
-        role: str | None = None,
-        status: str | None = None,
-        db: AsyncSession = None
+        self, role: str | None = None, status: str | None = None, db: AsyncSession = None
     ) -> list[DBAgent]:
         """List agents with optional filtering."""
         if db is None:
@@ -389,12 +342,7 @@ class DatabaseAgentService:
 
         return await self._list_agents(db, role, status)
 
-    async def _list_agents(
-        self,
-        db: AsyncSession,
-        role: str | None = None,
-        status: str | None = None
-    ) -> list[DBAgent]:
+    async def _list_agents(self, db: AsyncSession, role: str | None = None, status: str | None = None) -> list[DBAgent]:
         """Internal method to list agents."""
         stmt = select(DBAgent)
 

@@ -201,9 +201,7 @@ class TestDeploymentOrchestratorAsync:
     @pytest.mark.asyncio
     async def test_deploy_success(self):
         """Test successful deployment (lines 153-255)."""
-        with patch.object(
-            self.orchestrator, '_simulate_step', new_callable=AsyncMock
-        ) as mock_simulate:
+        with patch.object(self.orchestrator, "_simulate_step", new_callable=AsyncMock) as mock_simulate:
             result = await self.orchestrator.deploy(
                 project_name="myproject",
                 environment=DeploymentEnvironment.STAGING,
@@ -227,9 +225,7 @@ class TestDeploymentOrchestratorAsync:
     @pytest.mark.asyncio
     async def test_deploy_auto_generates_id(self):
         """Test deploy auto-generates deployment_id if not provided."""
-        with patch.object(
-            self.orchestrator, '_simulate_step', new_callable=AsyncMock
-        ):
+        with patch.object(self.orchestrator, "_simulate_step", new_callable=AsyncMock):
             result = await self.orchestrator.deploy(
                 project_name="myproject",
                 environment=DeploymentEnvironment.DEVELOPMENT,
@@ -241,9 +237,7 @@ class TestDeploymentOrchestratorAsync:
     @pytest.mark.asyncio
     async def test_deploy_failure_marks_step_failed(self):
         """Test deploy failure marks current step as failed (lines 239-254)."""
-        with patch.object(
-            self.orchestrator, '_simulate_step', new_callable=AsyncMock
-        ) as mock_simulate:
+        with patch.object(self.orchestrator, "_simulate_step", new_callable=AsyncMock) as mock_simulate:
             # Fail on the 3rd call (Infrastructure step)
             mock_simulate.side_effect = [None, None, Exception("Infra error"), None, None]
 
@@ -262,7 +256,7 @@ class TestDeploymentOrchestratorAsync:
     @pytest.mark.asyncio
     async def test_simulate_step(self):
         """Test _simulate_step method (lines 265-268)."""
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             await self.orchestrator._simulate_step("Test message", duration=0.1)
             mock_sleep.assert_called_once_with(0.1)
 
@@ -270,9 +264,7 @@ class TestDeploymentOrchestratorAsync:
     async def test_rollback_success(self):
         """Test successful rollback (lines 284-352)."""
         # First, create a deployment
-        with patch.object(
-            self.orchestrator, '_simulate_step', new_callable=AsyncMock
-        ):
+        with patch.object(self.orchestrator, "_simulate_step", new_callable=AsyncMock):
             deploy_result = await self.orchestrator.deploy(
                 project_name="myproject",
                 environment=DeploymentEnvironment.STAGING,
@@ -281,9 +273,7 @@ class TestDeploymentOrchestratorAsync:
             assert deploy_result.status == DeploymentStatus.SUCCESS
 
             # Now rollback
-            rollback_result = await self.orchestrator.rollback(
-                deployment_id="orig-dep-123"
-            )
+            rollback_result = await self.orchestrator.rollback(deployment_id="orig-dep-123")
 
             assert rollback_result.deployment_id == "rollback-orig-dep-123"
             assert rollback_result.project_name == "myproject"
@@ -307,9 +297,7 @@ class TestDeploymentOrchestratorAsync:
     @pytest.mark.asyncio
     async def test_rollback_failure(self):
         """Test rollback failure handling (lines 337-350)."""
-        with patch.object(
-            self.orchestrator, '_simulate_step', new_callable=AsyncMock
-        ) as mock_simulate:
+        with patch.object(self.orchestrator, "_simulate_step", new_callable=AsyncMock) as mock_simulate:
             # Create deployment first
             await self.orchestrator.deploy(
                 project_name="myproject",
@@ -320,9 +308,7 @@ class TestDeploymentOrchestratorAsync:
             # Make rollback fail
             mock_simulate.side_effect = Exception("Rollback error")
 
-            rollback_result = await self.orchestrator.rollback(
-                deployment_id="orig-dep-456"
-            )
+            rollback_result = await self.orchestrator.rollback(deployment_id="orig-dep-456")
 
             assert rollback_result.status == DeploymentStatus.FAILED
             assert rollback_result.completed_at is not None
@@ -335,9 +321,7 @@ class TestDeploymentOrchestratorAsync:
     @pytest.mark.asyncio
     async def test_list_deployments_with_project_filter(self):
         """Test list_deployments with project_name filter (lines 384-388)."""
-        with patch.object(
-            self.orchestrator, '_simulate_step', new_callable=AsyncMock
-        ):
+        with patch.object(self.orchestrator, "_simulate_step", new_callable=AsyncMock):
             await self.orchestrator.deploy(
                 project_name="project_a",
                 environment=DeploymentEnvironment.DEVELOPMENT,
@@ -356,9 +340,7 @@ class TestDeploymentOrchestratorAsync:
     @pytest.mark.asyncio
     async def test_list_deployments_with_environment_filter(self):
         """Test list_deployments with environment filter."""
-        with patch.object(
-            self.orchestrator, '_simulate_step', new_callable=AsyncMock
-        ):
+        with patch.object(self.orchestrator, "_simulate_step", new_callable=AsyncMock):
             await self.orchestrator.deploy(
                 project_name="myproject",
                 environment=DeploymentEnvironment.DEVELOPMENT,
@@ -369,9 +351,7 @@ class TestDeploymentOrchestratorAsync:
             )
 
             # Filter by production
-            results = self.orchestrator.list_deployments(
-                environment=DeploymentEnvironment.PRODUCTION
-            )
+            results = self.orchestrator.list_deployments(environment=DeploymentEnvironment.PRODUCTION)
 
             assert len(results) == 1
             assert results[0].environment == DeploymentEnvironment.PRODUCTION
@@ -379,9 +359,7 @@ class TestDeploymentOrchestratorAsync:
     @pytest.mark.asyncio
     async def test_list_deployments_sorted_by_start_time(self):
         """Test list_deployments returns results sorted by start time (newest first)."""
-        with patch.object(
-            self.orchestrator, '_simulate_step', new_callable=AsyncMock
-        ):
+        with patch.object(self.orchestrator, "_simulate_step", new_callable=AsyncMock):
             await self.orchestrator.deploy(
                 project_name="myproject",
                 environment=DeploymentEnvironment.DEVELOPMENT,
@@ -398,4 +376,3 @@ class TestDeploymentOrchestratorAsync:
             # Newest first
             assert results[0].deployment_id == "dep-2"
             assert results[1].deployment_id == "dep-1"
-

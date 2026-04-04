@@ -5,7 +5,7 @@ This module provides hybrid search combining vector similarity
 with keyword matching.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from backend.brain.knowledge_base import KnowledgeBase
@@ -17,10 +17,11 @@ logger = get_logger(__name__)
 @dataclass
 class RetrievalResult:
     """Retrieval result with relevance score."""
+
     text: str
     score: float
-    metadata: dict[str, Any]
-    source: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+    source: str = ""
 
 
 class RetrievalEngine:
@@ -42,11 +43,7 @@ class RetrievalEngine:
         self._logger = get_logger(__name__)
 
     async def retrieve(
-        self,
-        query: str,
-        top_k: int = 5,
-        vector_weight: float = 0.7,
-        keyword_weight: float = 0.3
+        self, query: str, top_k: int = 5, vector_weight: float = 0.7, keyword_weight: float = 0.3
     ) -> list[RetrievalResult]:
         """
         Retrieve relevant documents using hybrid search.
@@ -63,7 +60,7 @@ class RetrievalEngine:
         # Get vector search results
         vector_results = await self._knowledge_base.search(
             query=query,
-            top_k=top_k * 2  # Get more for reranking
+            top_k=top_k * 2,  # Get more for reranking
         )
 
         # Combine scores (hybrid search)
@@ -73,17 +70,16 @@ class RetrievalEngine:
             keyword_score = self._keyword_match(query, result["text"])
 
             # Weighted combination
-            combined_score = (
-                vector_weight * vector_score +
-                keyword_weight * keyword_score
-            )
+            combined_score = vector_weight * vector_score + keyword_weight * keyword_score
 
-            results.append(RetrievalResult(
-                text=result["text"],
-                score=combined_score,
-                metadata=result["metadata"],
-                source=self._knowledge_base._name
-            ))
+            results.append(
+                RetrievalResult(
+                    text=result["text"],
+                    score=combined_score,
+                    metadata=result["metadata"],
+                    source=self._knowledge_base._name,
+                )
+            )
 
         # Sort by combined score and return top_k
         results.sort(key=lambda x: x.score, reverse=True)
@@ -109,12 +105,7 @@ class RetrievalEngine:
         matches = len(query_words & text_words)
         return matches / len(query_words)
 
-    async def retrieve_with_context(
-        self,
-        query: str,
-        context_window: int = 2,
-        top_k: int = 3
-    ) -> list[dict[str, Any]]:
+    async def retrieve_with_context(self, query: str, context_window: int = 2, top_k: int = 3) -> list[dict[str, Any]]:
         """
         Retrieve documents with surrounding context.
 
@@ -136,7 +127,7 @@ class RetrievalEngine:
                 "score": result.score,
                 "metadata": result.metadata,
                 "context_before": [],
-                "context_after": []
+                "context_after": [],
             }
             contextualized.append(item)
 

@@ -26,6 +26,7 @@ class PromptTemplate:
         variables: List of required variables
         metadata: Additional template metadata
     """
+
     name: str
     template: str
     description: str = ""
@@ -61,9 +62,7 @@ class PromptTemplate:
                 template=self.name,
                 variable=missing_var,
             )
-            raise ValueError(
-                f"Missing required variable '{missing_var}' in template '{self.name}'"
-            ) from exc
+            raise ValueError(f"Missing required variable '{missing_var}' in template '{self.name}'") from exc
 
     def validate_variables(self, **kwargs) -> list[str]:
         """
@@ -133,7 +132,6 @@ Code:""",
                 description="Generate code from requirements",
                 variables=["requirements", "context"],
             ),
-
             # Code review templates
             PromptTemplate(
                 name="code_review",
@@ -154,7 +152,6 @@ Review:""",
                 description="Review code for quality and issues",
                 variables=["code", "language"],
             ),
-
             # Architecture design templates
             PromptTemplate(
                 name="architecture_design",
@@ -177,7 +174,6 @@ Architecture Design:""",
                 description="Design system architecture",
                 variables=["requirements", "constraints"],
             ),
-
             # Requirements analysis templates
             PromptTemplate(
                 name="requirements_analysis",
@@ -197,7 +193,6 @@ Requirements Analysis:""",
                 description="Analyze product requirements",
                 variables=["idea"],
             ),
-
             # Testing templates
             PromptTemplate(
                 name="test_generation",
@@ -218,7 +213,6 @@ Tests:""",
                 description="Generate test cases",
                 variables=["code", "language"],
             ),
-
             # Documentation templates
             PromptTemplate(
                 name="documentation",
@@ -240,7 +234,6 @@ Documentation:""",
                 description="Generate documentation",
                 variables=["topic", "details"],
             ),
-
             # Debugging templates
             PromptTemplate(
                 name="debugging",
@@ -263,7 +256,6 @@ Debug Analysis:""",
                 description="Debug errors and issues",
                 variables=["error", "code", "language"],
             ),
-
             # Refactoring templates
             PromptTemplate(
                 name="refactoring",
@@ -286,7 +278,6 @@ Refactored Code:""",
                 description="Refactor code for improvement",
                 variables=["code", "language", "goals"],
             ),
-
             # AI Testing templates
             PromptTemplate(
                 name="test_case_generation",
@@ -317,7 +308,6 @@ Return only the test code:""",
                 description="Generate comprehensive test cases",
                 variables=["code", "language", "component_name", "component_type"],
             ),
-
             PromptTemplate(
                 name="bug_detection",
                 template="""You are a security and code quality expert. Analyze this code for bugs:
@@ -348,7 +338,6 @@ Return findings as JSON array.""",
                 description="Detect bugs and security issues",
                 variables=["code", "language", "file_path"],
             ),
-
             PromptTemplate(
                 name="auto_fix",
                 template="""You are an expert code repair system. Fix this bug:
@@ -374,7 +363,6 @@ Return only the fixed code section:""",
                 description="Generate code fixes",
                 variables=["bug_description", "root_cause", "suggested_fix", "code", "language", "line_number"],
             ),
-
             PromptTemplate(
                 name="e2e_test_generation",
                 template="""You are an expert in Playwright E2E testing. Generate tests for this user flow:
@@ -398,7 +386,6 @@ Return the complete test file code:""",
                 description="Generate E2E tests from user flows",
                 variables=["page_path", "page_description", "user_flow"],
             ),
-
             PromptTemplate(
                 name="coverage_recommendation",
                 template="""You are a test coverage expert. Analyze uncovered code and recommend tests:
@@ -419,7 +406,6 @@ Provide actionable recommendations:""",
                 description="Recommend tests for coverage gaps",
                 variables=["file_path", "coverage_percentage", "uncovered_code"],
             ),
-
             PromptTemplate(
                 name="regression_test_from_failure",
                 template="""You are a QA engineer specializing in regression tests. Create a test from this failure:
@@ -532,9 +518,7 @@ Return the complete test code:""",
         # Check for missing variables
         missing = template.validate_variables(**kwargs)
         if missing:
-            raise ValueError(
-                f"Missing required variables for template '{template_name}': {missing}"
-            )
+            raise ValueError(f"Missing required variables for template '{template_name}': {missing}")
 
         return template.render(**kwargs)
 

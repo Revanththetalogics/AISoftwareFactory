@@ -5,7 +5,6 @@ This module provides dependency injection for authentication, authorization,
 and common services with database-backed user management.
 """
 
-
 from fastapi import Depends, HTTPException, Request, WebSocket, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -24,6 +23,7 @@ security = HTTPBearer(auto_error=False)  # Don't auto error - we'll handle cooki
 
 class User:
     """User model for authentication."""
+
     def __init__(
         self,
         user_id: str,
@@ -240,6 +240,7 @@ require_admin = Depends(lambda: require_permissions(["admin"]))
 # These provide database-backed service instances with proper session scoping.
 # Routes inject these to get services wired to the request's database session.
 
+
 def get_project_service() -> DatabaseProjectService:
     """Get project service instance for database operations."""
     return DatabaseProjectService()
@@ -253,4 +254,3 @@ def get_workflow_service() -> DatabaseWorkflowService:
 def get_agent_service() -> DatabaseAgentService:
     """Get agent service instance for database operations."""
     return DatabaseAgentService()
-

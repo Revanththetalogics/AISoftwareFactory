@@ -16,6 +16,7 @@ logger = get_logger(__name__)
 
 class ServiceType(StrEnum):
     """Types of services."""
+
     WEB = "web"
     API = "api"
     DATABASE = "database"
@@ -40,6 +41,7 @@ class DockerService:
         depends_on: Dependencies
         command: Override command
     """
+
     name: str
     service_type: ServiceType
     image: str | None = None
@@ -142,7 +144,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     gcc \
     postgresql-client \
-    {(' '.join(packages))} \
+    {(" ".join(packages))} \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
@@ -192,7 +194,7 @@ CMD ["uvicorn", "{app_name}.main:app", "--host", "0.0.0.0", "--port", "{port}"]
         Returns:
             Dockerfile content
         """
-        dockerfile = f'''# Build stage
+        dockerfile = f"""# Build stage
 FROM node:{node_version}-alpine AS builder
 
 WORKDIR /app
@@ -218,8 +220,8 @@ EXPOSE {port}
 HEALTHCHECK --interval=30s --timeout=3s
     CMD wget --no-verbose --tries=1 --spider http://localhost:{port}/health || exit 1
 
-CMD [{(', '.join(f'"{cmd}"' for cmd in start_command.split()))}]
-'''
+CMD [{(", ".join(f'"{cmd}"' for cmd in start_command.split()))}]
+"""
 
         self._logger.info(
             "Dockerfile generated",
@@ -255,10 +257,10 @@ CMD [{(', '.join(f'"{cmd}"' for cmd in start_command.split()))}]
             ... )
             >>> compose = generator.generate_compose([web])
         """
-        compose = f'''version: '{version}'
+        compose = f"""version: '{version}'
 
 services:
-'''
+"""
 
         for service in services:
             service_dict = service.to_compose_dict()
@@ -280,7 +282,7 @@ services:
             if "ports" in service_dict:
                 compose += "    ports:\n"
                 for port in service_dict["ports"]:
-                    compose += f"      - \"{port}\"\n"
+                    compose += f'      - "{port}"\n'
 
             # Environment
             if "environment" in service_dict:

@@ -28,6 +28,7 @@ class FileArtifact:
         modified_at: Last modification timestamp
         metadata: Additional metadata
     """
+
     path: str
     content: str = ""
     language: str = ""
@@ -70,6 +71,7 @@ class ProjectStructure:
         files: List of file artifacts
         directories: List of directories
     """
+
     root_path: str
     name: str
     files: list[FileArtifact] = field(default_factory=list)
@@ -308,11 +310,13 @@ class FileManager:
 
                     stat = file_path.stat()
 
-                    files.append(FileArtifact(
-                        path=str(file_path.relative_to(self.base_path)),
-                        content=content,
-                        modified_at=datetime.fromtimestamp(stat.st_mtime),
-                    ))
+                    files.append(
+                        FileArtifact(
+                            path=str(file_path.relative_to(self.base_path)),
+                            content=content,
+                            modified_at=datetime.fromtimestamp(stat.st_mtime),
+                        )
+                    )
                 except (OSError, UnicodeDecodeError) as exc:
                     self._logger.warning(
                         "Could not read file",
@@ -353,11 +357,13 @@ class FileManager:
 
                     stat = path.stat()
 
-                    files.append(FileArtifact(
-                        path=str(relative),
-                        content=content,
-                        modified_at=datetime.fromtimestamp(stat.st_mtime),
-                    ))
+                    files.append(
+                        FileArtifact(
+                            path=str(relative),
+                            content=content,
+                            modified_at=datetime.fromtimestamp(stat.st_mtime),
+                        )
+                    )
                 except (OSError, UnicodeDecodeError):
                     pass
             elif path.is_dir():

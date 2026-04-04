@@ -18,6 +18,7 @@ class ProjectPhase(StrEnum):
     These phases represent the complete software development lifecycle
     from idea to deployment.
     """
+
     IDEA = "idea"
     REQUIREMENTS = "requirements"
     ARCHITECTURE = "architecture"
@@ -30,6 +31,7 @@ class ProjectPhase(StrEnum):
 
 class PhaseStatus(StrEnum):
     """Status of a workflow phase."""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -51,6 +53,7 @@ class PhaseState:
         error: Error message if phase failed
         metadata: Additional phase metadata
     """
+
     phase: ProjectPhase
     status: PhaseStatus = PhaseStatus.PENDING
     started_at: datetime | None = None
@@ -88,6 +91,7 @@ class WorkflowState:
         created_at: When the workflow was created
         updated_at: When the workflow was last updated
     """
+
     project_id: str
     current_phase: ProjectPhase = ProjectPhase.IDEA
     phases: dict[ProjectPhase, PhaseState] = field(default_factory=dict)
@@ -155,20 +159,14 @@ class WorkflowState:
 
     def get_completed_phases(self) -> list[ProjectPhase]:
         """Get list of completed phases."""
-        return [
-            phase for phase, state in self.phases.items()
-            if state.status == PhaseStatus.COMPLETED
-        ]
+        return [phase for phase, state in self.phases.items() if state.status == PhaseStatus.COMPLETED]
 
     def to_dict(self) -> dict[str, Any]:
         """Convert workflow state to dictionary."""
         return {
             "project_id": self.project_id,
             "current_phase": self.current_phase.value,
-            "phases": {
-                phase.value: state.to_dict()
-                for phase, state in self.phases.items()
-            },
+            "phases": {phase.value: state.to_dict() for phase, state in self.phases.items()},
             "context": self.context,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),

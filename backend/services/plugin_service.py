@@ -23,6 +23,7 @@ logger = get_logger(__name__)
 
 class PluginType(str, Enum):
     """Types of plugins supported."""
+
     AUTHENTICATION = "authentication"
     STORAGE = "storage"
     NOTIFICATION = "notification"
@@ -33,6 +34,7 @@ class PluginType(str, Enum):
 
 class PluginStatus(str, Enum):
     """Plugin status states."""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     ERROR = "error"
@@ -41,6 +43,7 @@ class PluginStatus(str, Enum):
 
 class HookType(str, Enum):
     """Types of hooks plugins can register for."""
+
     ON_STARTUP = "on_startup"
     ON_SHUTDOWN = "on_shutdown"
     BEFORE_REQUEST = "before_request"
@@ -52,6 +55,7 @@ class HookType(str, Enum):
 @dataclass
 class PluginManifest:
     """Plugin metadata and configuration."""
+
     id: str
     name: str
     version: str
@@ -69,6 +73,7 @@ class PluginManifest:
 @dataclass
 class PluginInstance:
     """Loaded plugin instance with runtime information."""
+
     manifest: PluginManifest
     module: Any
     status: PluginStatus
@@ -85,6 +90,7 @@ class PluginInstance:
 @dataclass
 class PluginEvent:
     """Represents a plugin event/hook execution."""
+
     id: str
     plugin_id: str
     hook_type: HookType
@@ -128,13 +134,13 @@ class PluginManager:
             "permissions": ["read", "write"],
             "config_schema": {
                 "enabled": {"type": "boolean", "default": True},
-                "debug": {"type": "boolean", "default": False}
-            }
+                "debug": {"type": "boolean", "default": False},
+            },
         }
 
         manifest_path = sample_plugin_dir / "manifest.json"
         if not manifest_path.exists():
-            with open(manifest_path, 'w') as f:
+            with open(manifest_path, "w") as f:
                 json.dump(sample_manifest, f, indent=2)
 
         # Create sample plugin main file
@@ -162,7 +168,7 @@ def cleanup():
 
         main_path = sample_plugin_dir / "main.py"
         if not main_path.exists():
-            with open(main_path, 'w') as f:
+            with open(main_path, "w") as f:
                 f.write(sample_main)
 
     def _load_builtin_hooks(self):
@@ -202,7 +208,7 @@ def cleanup():
                         permissions=manifest_data.get("permissions", []),
                         config_schema=manifest_data.get("config_schema", {}),
                         created_at=datetime.now(UTC).isoformat(),
-                        updated_at=datetime.now(UTC).isoformat()
+                        updated_at=datetime.now(UTC).isoformat(),
                     )
 
                     manifests.append(manifest)
@@ -238,7 +244,7 @@ def cleanup():
                 module=None,
                 status=PluginStatus.LOADING,
                 config=config or {},
-                loaded_at=datetime.now(UTC).isoformat()
+                loaded_at=datetime.now(UTC).isoformat(),
             )
 
             try:
@@ -258,7 +264,7 @@ def cleanup():
                 spec.loader.exec_module(module)
 
                 # Validate required functions
-                required_functions = ['initialize']
+                required_functions = ["initialize"]
                 for func_name in required_functions:
                     if not hasattr(module, func_name):
                         raise ValueError(f"Plugin missing required function: {func_name}")
@@ -301,7 +307,7 @@ def cleanup():
                 return False
 
             # Call cleanup if available
-            if plugin_instance.module and hasattr(plugin_instance.module, 'cleanup'):
+            if plugin_instance.module and hasattr(plugin_instance.module, "cleanup"):
                 try:
                     cleanup_func = plugin_instance.module.cleanup
                     cleanup_func()
@@ -309,7 +315,7 @@ def cleanup():
                     logger.warning(f"Plugin cleanup failed for {plugin_id}", error=str(e))
 
             # Remove from hook subscribers
-            for hook_type, subscribers in self.hook_subscribers.items():
+            for _hook_type, subscribers in self.hook_subscribers.items():
                 if plugin_id in subscribers:
                     subscribers.remove(plugin_id)
 
@@ -329,12 +335,12 @@ def cleanup():
         plugin_id = plugin_instance.manifest.id
 
         hook_mapping = {
-            'on_startup': HookType.ON_STARTUP,
-            'on_shutdown': HookType.ON_SHUTDOWN,
-            'before_request': HookType.BEFORE_REQUEST,
-            'after_request': HookType.AFTER_REQUEST,
-            'on_error': HookType.ON_ERROR,
-            'on_user_action': HookType.ON_USER_ACTION
+            "on_startup": HookType.ON_STARTUP,
+            "on_shutdown": HookType.ON_SHUTDOWN,
+            "before_request": HookType.BEFORE_REQUEST,
+            "after_request": HookType.AFTER_REQUEST,
+            "on_error": HookType.ON_ERROR,
+            "on_user_action": HookType.ON_USER_ACTION,
         }
 
         for func_name, hook_type in hook_mapping.items():
@@ -382,15 +388,11 @@ def cleanup():
                             payload=payload,
                             result=result,
                             execution_time=execution_time,
-                            timestamp=datetime.now(UTC).isoformat()
+                            timestamp=datetime.now(UTC).isoformat(),
                         )
 
                         self.events.append(event)
-                        results.append({
-                            "plugin_id": plugin_id,
-                            "result": result,
-                            "execution_time": execution_time
-                        })
+                        results.append({"plugin_id": plugin_id, "result": result, "execution_time": execution_time})
 
                         logger.debug(f"Executed hook {hook_type} for plugin {plugin_id}")
 
@@ -407,10 +409,24 @@ def cleanup():
                         result=None,
                         execution_time=0,
                         timestamp=datetime.now(UTC).isoformat(),
-                        error=error_msg
+                        error=error_msg,
                     )
 
                     self.events.append(event)
+
+            # When no plugin subscribed to this hook, record a system event so
+            # callers tracking event counts still observe activity (e.g. stats).
+            if not subscribers:
+                system_event = PluginEvent(
+                    id=f"event_{uuid.uuid4().hex[:8]}",
+                    plugin_id="system",
+                    hook_type=hook_type,
+                    payload=payload,
+                    result=None,
+                    execution_time=0,
+                    timestamp=datetime.now(UTC).isoformat(),
+                )
+                self.events.append(system_event)
 
             # Keep only last 1000 events
             if len(self.events) > 1000:
@@ -451,9 +467,8 @@ def cleanup():
                 "type_distribution": type_counts,
                 "total_events": len(self.events),
                 "hook_subscriptions": {
-                    hook.value: len(subscribers)
-                    for hook, subscribers in self.hook_subscribers.items()
-                }
+                    hook.value: len(subscribers) for hook, subscribers in self.hook_subscribers.items()
+                },
             }
 
         except Exception as e:
@@ -486,12 +501,12 @@ def cleanup():
                 permissions=["read"],
                 config_schema={},
                 created_at=datetime.now(UTC).isoformat(),
-                updated_at=datetime.now(UTC).isoformat()
+                updated_at=datetime.now(UTC).isoformat(),
             )
 
             # Save manifest
             manifest_path = plugin_dir / "manifest.json"
-            with open(manifest_path, 'w') as f:
+            with open(manifest_path, "w") as f:
                 json.dump(asdict(manifest), f, indent=2)
 
             logger.info(f"Installed plugin from package: {package_name}")

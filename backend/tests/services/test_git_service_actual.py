@@ -41,10 +41,7 @@ class TestGitServiceActualMethods:
             with patch.object(git_service, "_get_repo_info", new=AsyncMock()) as mock_get_info:
                 mock_get_info.return_value = {"name": "test-repo", "branch": "main"}
 
-                result = await git_service.clone_repository(
-                    "https://github.com/user/repo.git",
-                    "my-repo"
-                )
+                result = await git_service.clone_repository("https://github.com/user/repo.git", "my-repo")
 
                 assert result["name"] == "test-repo"
                 assert "local_path" in result
@@ -78,10 +75,7 @@ class TestGitServiceActualMethods:
             mock_run.return_value = mock_result
 
             with patch.object(git_service, "_get_repo_info", new=AsyncMock()):
-                await git_service.clone_repository(
-                    "https://github.com/user/repo.git",
-                    "existing-repo"
-                )
+                await git_service.clone_repository("https://github.com/user/repo.git", "existing-repo")
 
                 # Directory should have been removed and recreated
                 assert not (repo_path / "dummy-file.txt").exists()
@@ -119,7 +113,7 @@ class TestGitServiceActualMethods:
                     "current_branch": "main",
                     "remote_url": "https://github.com/user/repo.git",
                     "commit_hash": "abc123",
-                    "status": "clean"
+                    "status": "clean",
                 }
 
                 result = await git_service.pull_repository(str(repo_path))

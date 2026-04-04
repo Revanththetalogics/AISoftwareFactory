@@ -22,14 +22,9 @@ class MockAgent(BaseAgent):
         capabilities=None,
         status=AgentStatus.IDLE,
         current_task=None,
-        last_active=None
+        last_active=None,
     ):
-        super().__init__(
-            agent_id=agent_id,
-            name=name,
-            role=role,
-            capabilities=capabilities or ["code"]
-        )
+        super().__init__(agent_id=agent_id, name=name, role=role, capabilities=capabilities or ["code"])
         self._status = status
         self._current_task = current_task
         self._last_active = last_active
@@ -102,7 +97,7 @@ class TestAgentService:
         """Test listing agents with registered agents."""
         self.mock_agents = [
             MockAgent(agent_id="agent-1", name="Agent 1", role="developer"),
-            MockAgent(agent_id="agent-2", name="Agent 2", role="designer")
+            MockAgent(agent_id="agent-2", name="Agent 2", role="designer"),
         ]
 
         agents = await self.service.list_agents()
@@ -114,7 +109,7 @@ class TestAgentService:
         """Test listing agents filtered by status."""
         self.mock_agents = [
             MockAgent(agent_id="agent-1", status=AgentStatus.IDLE),
-            MockAgent(agent_id="agent-2", status=AgentStatus.BUSY)
+            MockAgent(agent_id="agent-2", status=AgentStatus.BUSY),
         ]
 
         agents = await self.service.list_agents(status="idle")
@@ -127,7 +122,7 @@ class TestAgentService:
         """Test listing agents filtered by role."""
         self.mock_agents = [
             MockAgent(agent_id="agent-1", role="developer"),
-            MockAgent(agent_id="agent-2", role="designer")
+            MockAgent(agent_id="agent-2", role="designer"),
         ]
 
         agents = await self.service.list_agents(role="developer")
@@ -141,7 +136,7 @@ class TestAgentService:
         self.mock_agents = [
             MockAgent(agent_id="agent-1", role="developer", status=AgentStatus.IDLE),
             MockAgent(agent_id="agent-2", role="developer", status=AgentStatus.BUSY),
-            MockAgent(agent_id="agent-3", role="designer", status=AgentStatus.IDLE)
+            MockAgent(agent_id="agent-3", role="designer", status=AgentStatus.IDLE),
         ]
 
         agents = await self.service.list_agents(status="idle", role="developer")
@@ -161,7 +156,7 @@ class TestAgentService:
                 capabilities=["code", "test"],
                 status=AgentStatus.IDLE,
                 current_task=None,
-                last_active=datetime.utcnow()
+                last_active=datetime.utcnow(),
             )
         ]
 
@@ -215,7 +210,7 @@ class TestAgentService:
             capabilities=["code", "test"],
             status=AgentStatus.IDLE,
             current_task="task-123",
-            last_active=datetime.utcnow()
+            last_active=datetime.utcnow(),
         )
         agent._config = {"model": "gpt-4"}
         self.mock_agents = [agent]
@@ -239,9 +234,7 @@ class TestAgentService:
         self.mock_agents = [agent]
 
         result = await self.service.assign_task(
-            agent_id="agent-1",
-            task_id="task-123",
-            task_data={"description": "Test task"}
+            agent_id="agent-1", task_id="task-123", task_data={"description": "Test task"}
         )
 
         assert result is True
@@ -252,29 +245,17 @@ class TestAgentService:
     async def test_assign_task_agent_not_found(self):
         """Test assigning task to nonexistent agent."""
         self.mock_agents = []
-        result = await self.service.assign_task(
-            agent_id="nonexistent-id",
-            task_id="task-123",
-            task_data={}
-        )
+        result = await self.service.assign_task(agent_id="nonexistent-id", task_id="task-123", task_data={})
 
         assert result is False
 
     @pytest.mark.asyncio
     async def test_assign_task_agent_busy(self):
         """Test assigning task to busy agent."""
-        agent = MockAgent(
-            agent_id="agent-1",
-            status=AgentStatus.BUSY,
-            current_task="existing-task"
-        )
+        agent = MockAgent(agent_id="agent-1", status=AgentStatus.BUSY, current_task="existing-task")
         self.mock_agents = [agent]
 
-        result = await self.service.assign_task(
-            agent_id="agent-1",
-            task_id="task-123",
-            task_data={}
-        )
+        result = await self.service.assign_task(agent_id="agent-1", task_id="task-123", task_data={})
 
         assert result is False
         # Task should not be changed
@@ -283,11 +264,7 @@ class TestAgentService:
     @pytest.mark.asyncio
     async def test_release_agent_success(self):
         """Test releasing an agent successfully."""
-        agent = MockAgent(
-            agent_id="agent-1",
-            status=AgentStatus.BUSY,
-            current_task="task-123"
-        )
+        agent = MockAgent(agent_id="agent-1", status=AgentStatus.BUSY, current_task="task-123")
         self.mock_agents = [agent]
 
         result = await self.service.release_agent("agent-1")

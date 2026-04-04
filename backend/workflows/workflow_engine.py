@@ -5,7 +5,6 @@ This module provides the core workflow orchestration using LangGraph's StateGrap
 for managing the software development lifecycle.
 """
 
-
 from datetime import UTC, datetime
 
 from langgraph.graph import END, StateGraph
@@ -101,7 +100,7 @@ class WorkflowEngine:
             {
                 "requirements": "requirements",
                 "failed": "failed",
-            }
+            },
         )
 
         workflow.add_conditional_edges(
@@ -110,7 +109,7 @@ class WorkflowEngine:
             {
                 "architecture": "architecture",
                 "failed": "failed",
-            }
+            },
         )
 
         workflow.add_conditional_edges(
@@ -119,7 +118,7 @@ class WorkflowEngine:
             {
                 "implementation": "implementation",
                 "failed": "failed",
-            }
+            },
         )
 
         workflow.add_conditional_edges(
@@ -128,7 +127,7 @@ class WorkflowEngine:
             {
                 "testing": "testing",
                 "failed": "failed",
-            }
+            },
         )
 
         workflow.add_conditional_edges(
@@ -137,7 +136,7 @@ class WorkflowEngine:
             {
                 "deployment": "deployment",
                 "failed": "failed",
-            }
+            },
         )
 
         workflow.add_conditional_edges(
@@ -146,7 +145,7 @@ class WorkflowEngine:
             {
                 "complete": "complete",
                 "failed": "failed",
-            }
+            },
         )
 
         # Terminal states
@@ -193,11 +192,7 @@ class WorkflowEngine:
             # Run sync invoke() in async executor since we're in async context
             loop = asyncio.get_event_loop()
             result = await loop.run_in_executor(
-                None,
-                lambda: self._graph.invoke(
-                    state,
-                    {"recursion_limit": max_iterations}
-                )
+                None, lambda: self._graph.invoke(state, {"recursion_limit": max_iterations})
             )
 
             self._logger.info(
@@ -291,7 +286,7 @@ class WorkflowEngine:
             state.project_id,
             ProjectPhase.REQUIREMENTS,
             "started",
-            {"message": "AI Product Manager analyzing requirements with Mixtral"}
+            {"message": "AI Product Manager analyzing requirements with Mixtral"},
         )
 
         state.update_phase_status(
@@ -321,10 +316,7 @@ class WorkflowEngine:
             )
 
             await self._broadcast_phase_event(
-                state.project_id,
-                ProjectPhase.REQUIREMENTS,
-                "completed",
-                result["output"]
+                state.project_id, ProjectPhase.REQUIREMENTS, "completed", result["output"]
             )
         else:
             state.update_phase_status(
@@ -334,10 +326,7 @@ class WorkflowEngine:
             )
 
             await self._broadcast_phase_event(
-                state.project_id,
-                ProjectPhase.REQUIREMENTS,
-                "failed",
-                error=result.get("error", "Unknown error")
+                state.project_id, ProjectPhase.REQUIREMENTS, "failed", error=result.get("error", "Unknown error")
             )
 
         state.set_current_phase(ProjectPhase.REQUIREMENTS)

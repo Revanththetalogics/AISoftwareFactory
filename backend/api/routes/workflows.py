@@ -5,7 +5,6 @@ This module provides REST endpoints for workflow management and execution.
 Uses DatabaseWorkflowService for database-backed workflow persistence.
 """
 
-
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,7 +33,7 @@ def _db_workflow_to_response(workflow) -> WorkflowStatusResponse:
     return WorkflowStatusResponse(
         workflow_id=workflow.id,
         project_id=workflow.project_id,
-        status=workflow.status.value if hasattr(workflow.status, 'value') else str(workflow.status),
+        status=workflow.status.value if hasattr(workflow.status, "value") else str(workflow.status),
         current_phase=workflow.current_step_id,
         progress_percent=int((len(completed_steps) / max(len(steps), 1)) * 100) if steps else 0,
         steps_completed=len(completed_steps),
@@ -57,9 +56,7 @@ async def _execute_workflow_real(workflow_id: str, project_id: str, phase: str |
     try:
         # Update workflow to running status
         workflow = await workflow_service.update_workflow_status(
-            workflow_id=workflow_id,
-            status=WorkflowStatus.RUNNING,
-            current_step_id=phase or "requirements"
+            workflow_id=workflow_id, status=WorkflowStatus.RUNNING, current_step_id=phase or "requirements"
         )
 
         if not workflow:
@@ -78,6 +75,7 @@ async def _execute_workflow_real(workflow_id: str, project_id: str, phase: str |
 
         # Create initial state
         from backend.workflows.state_machine import WorkflowState
+
         initial_state = WorkflowState(
             project_id=project_id,
             current_phase=ProjectPhase(phase) if phase else ProjectPhase.IDEA,
@@ -89,15 +87,13 @@ async def _execute_workflow_real(workflow_id: str, project_id: str, phase: str |
         # Update workflow with final status
         if final_state.current_phase == ProjectPhase.FAILED:
             await workflow_service.update_workflow_status(
-                workflow_id=workflow_id,
-                status=WorkflowStatus.FAILED,
-                current_step_id=final_state.current_phase.value
+                workflow_id=workflow_id, status=WorkflowStatus.FAILED, current_step_id=final_state.current_phase.value
             )
         else:
             await workflow_service.update_workflow_status(
                 workflow_id=workflow_id,
                 status=WorkflowStatus.COMPLETED,
-                current_step_id=final_state.current_phase.value
+                current_step_id=final_state.current_phase.value,
             )
 
         logger.info(
@@ -115,10 +111,7 @@ async def _execute_workflow_real(workflow_id: str, project_id: str, phase: str |
             error=str(exc),
         )
         # Update workflow to failed status
-        await workflow_service.update_workflow_status(
-            workflow_id=workflow_id,
-            status=WorkflowStatus.FAILED
-        )
+        await workflow_service.update_workflow_status(workflow_id=workflow_id, status=WorkflowStatus.FAILED)
 
 
 @router.post(
@@ -155,7 +148,7 @@ async def execute_workflow(
         project_id=request.project_id,
         steps=steps,
         created_by=user.user_id if user else None,
-        db=db
+        db=db,
     )
 
     logger.info(
@@ -275,9 +268,7 @@ async def cancel_workflow(
 
     # Update to cancelled status
     updated_workflow = await workflow_service.update_workflow_status(
-        workflow_id=workflow_id,
-        status=WorkflowStatus.CANCELLED,
-        db=db
+        workflow_id=workflow_id, status=WorkflowStatus.CANCELLED, db=db
     )
 
     logger.info(

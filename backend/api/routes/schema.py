@@ -4,7 +4,6 @@ Database Schema Management API Routes
 Provides REST endpoints for managing database schemas and migrations.
 """
 
-
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -18,6 +17,7 @@ logger = get_logger(__name__)
 
 class ColumnCreate(BaseModel):
     """Column creation request model."""
+
     name: str
     type: str
     nullable: bool | None = True
@@ -29,6 +29,7 @@ class ColumnCreate(BaseModel):
 
 class ConstraintCreate(BaseModel):
     """Constraint creation request model."""
+
     name: str
     type: str
     columns: list[str]
@@ -39,6 +40,7 @@ class ConstraintCreate(BaseModel):
 
 class IndexCreate(BaseModel):
     """Index creation request model."""
+
     name: str
     columns: list[str]
     type: str | None = "btree"
@@ -47,6 +49,7 @@ class IndexCreate(BaseModel):
 
 class TableCreate(BaseModel):
     """Table creation request model."""
+
     name: str
     columns: list[ColumnCreate]
     constraints: list[ConstraintCreate] | None = None
@@ -56,6 +59,7 @@ class TableCreate(BaseModel):
 
 class SchemaCreate(BaseModel):
     """Schema creation request model."""
+
     name: str
     tables: list[TableCreate]
     description: str | None = None
@@ -63,12 +67,14 @@ class SchemaCreate(BaseModel):
 
 class SchemaUpdate(BaseModel):
     """Schema update request model."""
+
     tables: list[TableCreate] | None = None
     description: str | None = None
 
 
 class MigrationCreate(BaseModel):
     """Migration creation request model."""
+
     name: str
     sql_up: str
     sql_down: str | None = None
@@ -77,6 +83,7 @@ class MigrationCreate(BaseModel):
 
 class SchemaDiffRequest(BaseModel):
     """Schema diff request model."""
+
     from_schema: str
     to_schema: str
     migration_name: str
@@ -106,19 +113,13 @@ async def create_schema(schema_data: SchemaCreate):
             tables_dict.append(table_dict)
 
         schema = await schema_management_service.create_schema(
-            name=schema_data.name,
-            tables=tables_dict,
-            description=schema_data.description
+            name=schema_data.name, tables=tables_dict, description=schema_data.description
         )
 
         schema_dict = schema.__dict__.copy()
         schema_dict["tables"] = [table.__dict__ for table in schema.tables]
 
-        return APIResponse(
-            success=True,
-            data=schema_dict,
-            message=f"Schema '{schema_data.name}' created successfully"
-        )
+        return APIResponse(success=True, data=schema_dict, message=f"Schema '{schema_data.name}' created successfully")
     except Exception as e:
         logger.error("Failed to create schema", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to create schema: {str(e)}")
@@ -147,11 +148,7 @@ async def list_schemas():
                 schema_dict["tables"].append(table_dict)
             schemas_data.append(schema_dict)
 
-        return APIResponse(
-            success=True,
-            data=schemas_data,
-            message=f"Retrieved {len(schemas_data)} schemas"
-        )
+        return APIResponse(success=True, data=schemas_data, message=f"Retrieved {len(schemas_data)} schemas")
     except Exception as e:
         logger.error("Failed to list schemas", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to list schemas: {str(e)}")
@@ -183,11 +180,7 @@ async def get_schema(schema_name: str):
             table_dict["indexes"] = [index.__dict__ for index in table.indexes]
             schema_dict["tables"].append(table_dict)
 
-        return APIResponse(
-            success=True,
-            data=schema_dict,
-            message=f"Retrieved schema '{schema.name}'"
-        )
+        return APIResponse(success=True, data=schema_dict, message=f"Retrieved schema '{schema.name}'")
     except HTTPException:
         raise
     except Exception as e:
@@ -222,9 +215,7 @@ async def update_schema(schema_name: str, update_data: SchemaUpdate):
                 tables_dict.append(table_dict)
 
         schema = await schema_management_service.update_schema(
-            schema_name=schema_name,
-            tables=tables_dict,
-            description=update_data.description
+            schema_name=schema_name, tables=tables_dict, description=update_data.description
         )
 
         if not schema:
@@ -239,11 +230,7 @@ async def update_schema(schema_name: str, update_data: SchemaUpdate):
             table_dict["indexes"] = [index.__dict__ for index in table.indexes]
             schema_dict["tables"].append(table_dict)
 
-        return APIResponse(
-            success=True,
-            data=schema_dict,
-            message=f"Schema '{schema.name}' updated successfully"
-        )
+        return APIResponse(success=True, data=schema_dict, message=f"Schema '{schema.name}' updated successfully")
     except HTTPException:
         raise
     except Exception as e:
@@ -268,10 +255,7 @@ async def delete_schema(schema_name: str):
         if not success:
             raise HTTPException(status_code=404, detail=f"Schema {schema_name} not found")
 
-        return APIResponse(
-            success=True,
-            message="Schema deleted successfully"
-        )
+        return APIResponse(success=True, message="Schema deleted successfully")
     except HTTPException:
         raise
     except Exception as e:
@@ -295,13 +279,11 @@ async def create_migration(migration_data: MigrationCreate):
             name=migration_data.name,
             sql_up=migration_data.sql_up,
             sql_down=migration_data.sql_down,
-            description=migration_data.description
+            description=migration_data.description,
         )
 
         return APIResponse(
-            success=True,
-            data=migration.__dict__,
-            message=f"Migration '{migration_data.name}' created successfully"
+            success=True, data=migration.__dict__, message=f"Migration '{migration_data.name}' created successfully"
         )
     except Exception as e:
         logger.error("Failed to create migration", error=str(e))
@@ -325,10 +307,7 @@ async def apply_migration(migration_id: str):
         if not success:
             raise HTTPException(status_code=404, detail=f"Migration {migration_id} not found or cannot be applied")
 
-        return APIResponse(
-            success=True,
-            message="Migration applied successfully"
-        )
+        return APIResponse(success=True, message="Migration applied successfully")
     except HTTPException:
         raise
     except Exception as e:
@@ -353,10 +332,7 @@ async def rollback_migration(migration_id: str):
         if not success:
             raise HTTPException(status_code=404, detail=f"Migration {migration_id} not found or cannot be rolled back")
 
-        return APIResponse(
-            success=True,
-            message="Migration rolled back successfully"
-        )
+        return APIResponse(success=True, message="Migration rolled back successfully")
     except HTTPException:
         raise
     except Exception as e:
@@ -380,11 +356,7 @@ async def list_migrations(applied_only: bool = False):
 
         migrations_data = [migration.__dict__ for migration in migrations]
 
-        return APIResponse(
-            success=True,
-            data=migrations_data,
-            message=f"Retrieved {len(migrations_data)} migrations"
-        )
+        return APIResponse(success=True, data=migrations_data, message=f"Retrieved {len(migrations_data)} migrations")
     except Exception as e:
         logger.error("Failed to list migrations", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to list migrations: {str(e)}")
@@ -405,13 +377,11 @@ async def generate_migration_from_diff(diff_request: SchemaDiffRequest):
         migration = await schema_management_service.generate_migration_from_diff(
             from_schema=diff_request.from_schema,
             to_schema=diff_request.to_schema,
-            migration_name=diff_request.migration_name
+            migration_name=diff_request.migration_name,
         )
 
         return APIResponse(
-            success=True,
-            data=migration.__dict__,
-            message="Migration generated successfully from schema diff"
+            success=True, data=migration.__dict__, message="Migration generated successfully from schema diff"
         )
     except Exception as e:
         logger.error("Failed to generate migration from diff", error=str(e))
@@ -436,7 +406,7 @@ async def export_schema(schema_name: str, format: str):
         return APIResponse(
             success=True,
             data={"format": format, "content": exported_data},
-            message=f"Schema exported in {format} format"
+            message=f"Schema exported in {format} format",
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -456,11 +426,7 @@ async def get_column_types():
     try:
         column_types = [{"name": t.name, "value": t.value} for t in ColumnType]
 
-        return APIResponse(
-            success=True,
-            data=column_types,
-            message="Retrieved column types"
-        )
+        return APIResponse(success=True, data=column_types, message="Retrieved column types")
     except Exception as e:
         logger.error("Failed to get column types", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get column types: {str(e)}")
@@ -477,11 +443,7 @@ async def get_constraint_types():
     try:
         constraint_types = [{"name": t.name, "value": t.value} for t in ConstraintType]
 
-        return APIResponse(
-            success=True,
-            data=constraint_types,
-            message="Retrieved constraint types"
-        )
+        return APIResponse(success=True, data=constraint_types, message="Retrieved constraint types")
     except Exception as e:
         logger.error("Failed to get constraint types", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get constraint types: {str(e)}")
@@ -498,11 +460,7 @@ async def get_index_types():
     try:
         index_types = [{"name": t.name, "value": t.value} for t in IndexType]
 
-        return APIResponse(
-            success=True,
-            data=index_types,
-            message="Retrieved index types"
-        )
+        return APIResponse(success=True, data=index_types, message="Retrieved index types")
     except Exception as e:
         logger.error("Failed to get index types", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get index types: {str(e)}")

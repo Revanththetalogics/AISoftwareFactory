@@ -12,11 +12,7 @@ class TestBrainRetrievalResult:
         """Test creating RetrievalResult instance."""
         from backend.brain.retrieval import RetrievalResult
 
-        result = RetrievalResult(
-            text="test text",
-            score=0.95,
-            metadata={"source": "test"}
-        )
+        result = RetrievalResult(text="test text", score=0.95, metadata={"source": "test"})
 
         assert result.text == "test text"
         assert result.score == 0.95
@@ -39,11 +35,7 @@ class TestBrainMemoryDataclass:
         from backend.brain.memory_store import Memory
 
         memory = Memory(
-            memory_id="mem_123",
-            agent_id="agent_001",
-            content="Test memory",
-            memory_type="fact",
-            importance=0.8
+            memory_id="mem_123", agent_id="agent_001", content="Test memory", memory_type="fact", importance=0.8
         )
 
         assert memory.memory_id == "mem_123"
@@ -56,12 +48,7 @@ class TestBrainMemoryDataclass:
         """Test Memory with default importance."""
         from backend.brain.memory_store import Memory
 
-        memory = Memory(
-            memory_id="mem_456",
-            agent_id="agent_002",
-            content="Another memory",
-            memory_type="preference"
-        )
+        memory = Memory(memory_id="mem_456", agent_id="agent_002", content="Another memory", memory_type="preference")
 
         assert memory.importance == 1.0
 
@@ -83,10 +70,7 @@ class TestBrainConversationDataclass:
         """Test Conversation with custom metadata."""
         from backend.brain.context_manager import Conversation
 
-        conv = Conversation(
-            conversation_id="conv_456",
-            metadata={"user_id": "user_123"}
-        )
+        conv = Conversation(conversation_id="conv_456", metadata={"user_id": "user_123"})
 
         assert conv.metadata == {"user_id": "user_123"}
 
@@ -107,11 +91,7 @@ class TestBrainMessageDataclass:
         """Test Message with custom metadata."""
         from backend.brain.context_manager import Message
 
-        msg = Message(
-            role="assistant",
-            content="Hi there!",
-            metadata={"timestamp_extra": "extra_info"}
-        )
+        msg = Message(role="assistant", content="Hi there!", metadata={"timestamp_extra": "extra_info"})
 
         assert msg.metadata == {"timestamp_extra": "extra_info"}
 

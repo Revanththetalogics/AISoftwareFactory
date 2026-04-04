@@ -2,7 +2,6 @@
 Tests for CI/CD Generator.
 """
 
-
 from backend.deployment.cicd_generator import (
     CICDGenerator,
     PipelineJob,
@@ -166,4 +165,3 @@ class TestCICDGenerator:
         )
 
         assert "# Unsupported language: rust" in yaml_content
-

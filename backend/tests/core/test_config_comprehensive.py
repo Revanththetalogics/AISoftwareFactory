@@ -46,14 +46,17 @@ class TestConfigSettings:
 
     def test_settings_environment_variables(self):
         """Test settings loading from environment variables."""
-        with patch.dict(os.environ, {
-            "APP_NAME": "Test App",
-            "APP_VERSION": "2.0.0",
-            "DEBUG": "true",
-            "ENVIRONMENT": "development",
-            "HOST": "127.0.0.1",  # nosec: B104 - test configuration only
-            "PORT": "9000"
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "APP_NAME": "Test App",
+                "APP_VERSION": "2.0.0",
+                "DEBUG": "true",
+                "ENVIRONMENT": "development",
+                "HOST": "127.0.0.1",  # nosec: B104 - test configuration only
+                "PORT": "9000",
+            },
+        ):
             settings = Settings()
 
             assert settings.APP_NAME == "Test App"
@@ -161,12 +164,7 @@ class TestConfigSettings:
     def test_cors_origins_list_empty_development(self):
         """Test cors_origins_list with empty value in development."""
         settings = Settings(CORS_ORIGINS="", ENVIRONMENT="development")
-        expected = [
-            "http://localhost:3000",
-            "http://localhost:8000",
-            "http://127.0.0.1:3000",
-            "http://127.0.0.1:8000"
-        ]
+        expected = ["http://localhost:3000", "http://localhost:8000", "http://127.0.0.1:3000", "http://127.0.0.1:8000"]
         assert settings.cors_origins_list == expected
 
     def test_cors_origins_list_empty_production(self):
@@ -222,8 +220,8 @@ class TestConfigSettings:
         # Note: In newer pydantic versions, model_config is a dict-like object
         config = settings.model_config
         # Just verify it exists and has expected keys
-        assert hasattr(config, 'get')  # Dict-like interface
-        assert config.get('env_file') == ".env"
+        assert hasattr(config, "get")  # Dict-like interface
+        assert config.get("env_file") == ".env"
 
     def test_get_settings_function(self):
         """Test get_settings function returns Settings instance."""
@@ -270,7 +268,7 @@ class TestConfigSettings:
             OLLAMA_URL="http://custom-ollama:11434",
             OLLAMA_MODEL="mistral",
             LLM_DEFAULT_MODEL="gpt-4",
-            LLM_PROVIDER="openai"
+            LLM_PROVIDER="openai",
         )
 
         assert settings.OLLAMA_URL == "http://custom-ollama:11434"
@@ -281,10 +279,7 @@ class TestConfigSettings:
     def test_monitoring_settings(self):
         """Test monitoring-related settings."""
         settings = Settings(
-            ENABLE_METRICS=False,
-            METRICS_PORT=8080,
-            OTEL_ENABLED=False,
-            OTEL_SERVICE_NAME="custom-service"
+            ENABLE_METRICS=False, METRICS_PORT=8080, OTEL_ENABLED=False, OTEL_SERVICE_NAME="custom-service"
         )
 
         assert settings.ENABLE_METRICS is False
@@ -298,7 +293,7 @@ class TestConfigSettings:
             LLM_TIMEOUT_SECONDS=45,
             LLM_STREAM_TIMEOUT_SECONDS=90,
             DB_QUERY_TIMEOUT_SECONDS=15,
-            EXTERNAL_HTTP_TIMEOUT_SECONDS=20
+            EXTERNAL_HTTP_TIMEOUT_SECONDS=20,
         )
 
         assert settings.LLM_TIMEOUT_SECONDS == 45
@@ -308,21 +303,14 @@ class TestConfigSettings:
 
     def test_circuit_breaker_settings(self):
         """Test circuit breaker configuration."""
-        settings = Settings(
-            CB_FAILURE_THRESHOLD=10,
-            CB_RECOVERY_TIMEOUT_SECONDS=60
-        )
+        settings = Settings(CB_FAILURE_THRESHOLD=10, CB_RECOVERY_TIMEOUT_SECONDS=60)
 
         assert settings.CB_FAILURE_THRESHOLD == 10
         assert settings.CB_RECOVERY_TIMEOUT_SECONDS == 60
 
     def test_rate_limiting_settings(self):
         """Test rate limiting configuration."""
-        settings = Settings(
-            RATE_LIMIT_DEFAULT=200,
-            RATE_LIMIT_ADMIN=1000,
-            RATE_LIMIT_WINDOW_SECONDS=30
-        )
+        settings = Settings(RATE_LIMIT_DEFAULT=200, RATE_LIMIT_ADMIN=1000, RATE_LIMIT_WINDOW_SECONDS=30)
 
         assert settings.RATE_LIMIT_DEFAULT == 200
         assert settings.RATE_LIMIT_ADMIN == 1000
@@ -331,10 +319,7 @@ class TestConfigSettings:
     def test_backup_settings(self):
         """Test backup configuration settings."""
         settings = Settings(
-            BACKUP_ENABLED=False,
-            BACKUP_RETENTION_DAYS=60,
-            BACKUP_SCHEDULE="0 3 * * *",
-            BACKUP_DIR="/var/backups"
+            BACKUP_ENABLED=False, BACKUP_RETENTION_DAYS=60, BACKUP_SCHEDULE="0 3 * * *", BACKUP_DIR="/var/backups"
         )
 
         assert settings.BACKUP_ENABLED is False

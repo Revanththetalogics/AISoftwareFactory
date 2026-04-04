@@ -19,6 +19,7 @@ from backend.llm.router import get_llm_router
 logger = get_logger(__name__)
 router = APIRouter(prefix="/codegen", tags=["code-generation"])
 
+
 # Create a mock user for development
 class MockUser:
     def __init__(self):
@@ -26,21 +27,26 @@ class MockUser:
         self.username = "test"
         self.email = "test@example.com"
 
+
 def get_current_user():
     """Mock authentication for development."""
     return MockUser()
 
+
 # Request/Response Models
 class CodeGenerationRequest(BaseModel):
     """Request model for code generation."""
+
     prompt: str = Field(..., min_length=10, description="Description of code to generate")
     language: str = Field("python", description="Target programming language")
     framework: str | None = Field(None, description="Framework/library to use")
     project_id: str | None = Field(None, description="Associated project ID")
     context: dict[str, Any] = Field(default_factory=dict, description="Additional context")
 
+
 class CodeGenerationResponse(BaseModel):
     """Response model for code generation."""
+
     generation_id: str
     code: str
     language: str
@@ -50,31 +56,38 @@ class CodeGenerationResponse(BaseModel):
     execution_time_ms: float
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
+
 class CodeValidationRequest(BaseModel):
     """Request model for code validation."""
+
     code: str = Field(..., description="Code to validate")
     language: str = Field(..., description="Programming language of the code")
     requirements: list[str] = Field(default_factory=list, description="Validation requirements")
 
+
 class CodeValidationResponse(BaseModel):
     """Response model for code validation."""
+
     is_valid: bool
     issues: list[dict[str, Any]]
     suggestions: list[str]
     quality_score: float
     complexity_score: float
 
+
 class GenerationHistoryResponse(BaseModel):
     """Response model for generation history."""
+
     generations: list[CodeGenerationResponse]
     total_count: int
+
 
 # Endpoints
 @router.post(
     "/generate",
     response_model=CodeGenerationResponse,
     summary="Generate code from prompt",
-    description="Generate code using AI based on natural language description"
+    description="Generate code using AI based on natural language description",
 )
 async def generate_code(
     request: CodeGenerationRequest,
@@ -123,7 +136,7 @@ Return only the code without any explanations."""
         if not llm_response.success:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Code generation failed: {llm_response.error}"
+                detail=f"Code generation failed: {llm_response.error}",
             )
 
         generated_code = llm_response.text.strip()
@@ -144,26 +157,22 @@ Return only the code without any explanations."""
             execution_time_ms=execution_time,
         )
 
-        logger.info(
-            "Code generation completed",
-            language=request.language,
-            execution_time_ms=execution_time
-        )
+        logger.info("Code generation completed", language=request.language, execution_time_ms=execution_time)
 
         return response
 
     except Exception as e:
         logger.error("Code generation failed", error=str(e))
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate code: {str(e)}"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to generate code: {str(e)}"
         )
+
 
 @router.post(
     "/validate",
     response_model=CodeValidationResponse,
     summary="Validate generated code",
-    description="Validate code for syntax, best practices, and quality"
+    description="Validate code for syntax, best practices, and quality",
 )
 async def validate_code(
     request: CodeValidationRequest,
@@ -177,16 +186,17 @@ async def validate_code(
     """
     return await validate_generated_code(request.code, request.language)
 
+
 @router.get(
     "/history",
     response_model=GenerationHistoryResponse,
     summary="Get generation history",
-    description="Retrieve history of code generation requests"
+    description="Retrieve history of code generation requests",
 )
 async def get_generation_history(
     # user=Depends(get_current_user),  # Temporarily disabled for testing
     limit: int = 50,
-    offset: int = 0
+    offset: int = 0,
 ) -> GenerationHistoryResponse:
     """
     Get history of code generation requests for the current user.
@@ -195,16 +205,10 @@ async def get_generation_history(
     """
     # TODO: Implement actual history storage
     # This would typically query a database of generation records
-    return GenerationHistoryResponse(
-        generations=[],
-        total_count=0
-    )
+    return GenerationHistoryResponse(generations=[], total_count=0)
 
-@router.get(
-    "/languages",
-    summary="Get supported languages",
-    description="Get list of supported programming languages"
-)
+
+@router.get("/languages", summary="Get supported languages", description="Get list of supported programming languages")
 async def get_supported_languages(
     # user=Depends(get_current_user)  # Temporarily disabled for testing
 ) -> dict[str, Any]:
@@ -214,34 +218,23 @@ async def get_supported_languages(
     Returns available languages with their capabilities and framework support.
     """
     languages = {
-        "python": {
-            "name": "Python",
-            "frameworks": ["fastapi", "django", "flask", "streamlit"],
-            "extensions": [".py"]
-        },
+        "python": {"name": "Python", "frameworks": ["fastapi", "django", "flask", "streamlit"], "extensions": [".py"]},
         "javascript": {
             "name": "JavaScript",
             "frameworks": ["react", "vue", "angular", "nextjs", "express"],
-            "extensions": [".js", ".jsx"]
+            "extensions": [".js", ".jsx"],
         },
         "typescript": {
             "name": "TypeScript",
             "frameworks": ["react", "vue", "angular", "nextjs", "nestjs"],
-            "extensions": [".ts", ".tsx"]
+            "extensions": [".ts", ".tsx"],
         },
-        "java": {
-            "name": "Java",
-            "frameworks": ["spring-boot", "quarkus", "micronaut"],
-            "extensions": [".java"]
-        },
-        "go": {
-            "name": "Go",
-            "frameworks": ["gin", "echo", "fiber"],
-            "extensions": [".go"]
-        }
+        "java": {"name": "Java", "frameworks": ["spring-boot", "quarkus", "micronaut"], "extensions": [".java"]},
+        "go": {"name": "Go", "frameworks": ["gin", "echo", "fiber"], "extensions": [".go"]},
     }
 
     return {"supported_languages": languages}
+
 
 # Helper functions
 async def validate_generated_code(code: str, language: str) -> CodeValidationResponse:
@@ -272,15 +265,16 @@ async def validate_generated_code(code: str, language: str) -> CodeValidationRes
     quality_score = max(0.0, quality_score)
 
     # Complexity estimation (very simplified)
-    complexity_score = min(1.0, len(code.split('\n')) / 100.0)
+    complexity_score = min(1.0, len(code.split("\n")) / 100.0)
 
     return CodeValidationResponse(
         is_valid=len(issues) == 0,
         issues=issues,
         suggestions=suggestions,
         quality_score=quality_score,
-        complexity_score=complexity_score
+        complexity_score=complexity_score,
     )
+
 
 def get_file_extension(language: str) -> str:
     """Get appropriate file extension for a programming language."""
@@ -292,6 +286,6 @@ def get_file_extension(language: str) -> str:
         "go": "go",
         "rust": "rs",
         "cpp": "cpp",
-        "c": "c"
+        "c": "c",
     }
     return extensions.get(language.lower(), "txt")

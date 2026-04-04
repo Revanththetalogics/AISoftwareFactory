@@ -103,7 +103,7 @@ class TestAgentRouter:
         # Clear registry to ensure no agent matches
         from unittest.mock import patch
 
-        with patch.object(self.router, 'select_agent_for_task', return_value=None):
+        with patch.object(self.router, "select_agent_for_task", return_value=None):
             result = await self.router.route_and_execute(task)
 
         assert result["success"] is False
@@ -125,7 +125,7 @@ class TestAgentRouter:
         mock_agent.agent_id = "test-agent"
         mock_agent.execute_task = AsyncMock(side_effect=RuntimeError("Execution error"))
 
-        with patch.object(self.router, 'select_agent_for_task', return_value=mock_agent):
+        with patch.object(self.router, "select_agent_for_task", return_value=mock_agent):
             result = await self.router.route_and_execute(task)
 
         assert result["success"] is False

@@ -45,22 +45,14 @@ class TestContextManager:
         """Test adding message successfully."""
         conv_id = context_manager.create_conversation()
 
-        result = context_manager.add_message(
-            conversation_id=conv_id,
-            role="user",
-            content="Hello"
-        )
+        result = context_manager.add_message(conversation_id=conv_id, role="user", content="Hello")
 
         assert result is True
         assert len(context_manager._conversations[conv_id].messages) == 1
 
     def test_add_message_to_nonexistent_conversation(self, context_manager):
         """Test adding message to non-existent conversation."""
-        result = context_manager.add_message(
-            conversation_id="nonexistent",
-            role="user",
-            content="Hello"
-        )
+        result = context_manager.add_message(conversation_id="nonexistent", role="user", content="Hello")
 
         assert result is False
 
@@ -168,6 +160,7 @@ class TestEmbeddingEngine:
         embedding_engine._model = mock_model
 
         import asyncio
+
         result = asyncio.run(embedding_engine.embed(["Test text"]))
 
         assert len(result) == 1
@@ -186,23 +179,29 @@ class TestKnowledgeBase:
     @pytest.fixture
     def knowledge_base(self):
         """Create KnowledgeBase instance with mock dependencies."""
+
         class MockVectorStore:
             _name = "mock_vs"
+
             async def add(self, texts, embeddings, metadatas):
                 return [f"chunk_{i}" for i in range(len(texts))]
+
             async def search(self, query_embedding, top_k, filter_metadata=None):
                 return [
                     {"text": "Result about query", "score": 0.9, "metadata": {}},
-                    {"text": "Another result", "score": 0.7, "metadata": {}}
+                    {"text": "Another result", "score": 0.7, "metadata": {}},
                 ]
+
             async def delete(self, ids):
                 return True
+
             def get_count(self):
                 return 10
 
         class MockEmbeddingEngine:
             async def embed(self, texts):
                 import random
+
                 return [[random.random() for _ in range(384)] for _ in texts]
 
         mock_vs = MockVectorStore()
@@ -217,11 +216,7 @@ class TestKnowledgeBase:
     @pytest.mark.asyncio
     async def test_add_document_success(self, knowledge_base):
         """Test adding document successfully."""
-        doc_id = await knowledge_base.add_document(
-            content="Test content",
-            metadata={"source": "test"},
-            doc_id="doc1"
-        )
+        doc_id = await knowledge_base.add_document(content="Test content", metadata={"source": "test"}, doc_id="doc1")
 
         assert doc_id == "doc1"
         assert len(knowledge_base._documents) == 1
@@ -292,10 +287,7 @@ class TestMemoryStore:
     def test_store_memory_success(self, memory_store):
         """Test storing memory successfully."""
         memory_id = memory_store.store(
-            agent_id="agent_001",
-            content="Paris is capital of France",
-            memory_type="fact",
-            importance=0.9
+            agent_id="agent_001", content="Paris is capital of France", memory_type="fact", importance=0.9
         )
 
         assert memory_id is not None
@@ -305,11 +297,7 @@ class TestMemoryStore:
 
     def test_retrieve_memory_success(self, memory_store):
         """Test retrieving memory successfully."""
-        memory_store.store(
-            agent_id="agent_002",
-            content="Water boils at 100C",
-            memory_type="fact"
-        )
+        memory_store.store(agent_id="agent_002", content="Water boils at 100C", memory_type="fact")
 
         results = memory_store.retrieve(agent_id="agent_002")
 
@@ -323,11 +311,7 @@ class TestMemoryStore:
 
     def test_forget_memory_success(self, memory_store):
         """Test forgetting memory successfully."""
-        memory_id = memory_store.store(
-            agent_id="agent_003",
-            content="Forget me",
-            memory_type="fact"
-        )
+        memory_id = memory_store.store(agent_id="agent_003", content="Forget me", memory_type="fact")
 
         result = memory_store.forget(memory_id)
 
@@ -368,13 +352,15 @@ class TestRetrievalEngine:
     @pytest.fixture
     def retrieval_engine(self):
         """Create RetrievalEngine instance with mock knowledge base."""
+
         # Create a minimal mock KB
         class MockKB:
             _name = "mock_kb"
+
             async def search(self, query, top_k):
                 return [
                     {"text": f"Result about {query}", "score": 0.9, "metadata": {}},
-                    {"text": "Another result", "score": 0.7, "metadata": {}}
+                    {"text": "Another result", "score": 0.7, "metadata": {}},
                 ]
 
         mock_kb = MockKB()
@@ -387,17 +373,13 @@ class TestRetrievalEngine:
 
         assert len(results) > 0
         assert all(isinstance(r, RetrievalResult) for r in results)
-        assert all(hasattr(r, 'text') for r in results)
-        assert all(hasattr(r, 'score') for r in results)
+        assert all(hasattr(r, "text") for r in results)
+        assert all(hasattr(r, "score") for r in results)
 
     @pytest.mark.asyncio
     async def test_retrieve_with_context(self, retrieval_engine):
         """Test retrieving documents with context."""
-        results = await retrieval_engine.retrieve_with_context(
-            query="test",
-            context_window=2,
-            top_k=2
-        )
+        results = await retrieval_engine.retrieve_with_context(query="test", context_window=2, top_k=2)
 
         assert len(results) > 0
         assert "text" in results[0]

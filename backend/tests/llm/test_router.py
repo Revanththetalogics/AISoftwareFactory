@@ -270,11 +270,7 @@ class TestModelRouterGenerate:
         # Primary that returns error
         provider = MockProvider(name="ollama", default_model="llama3.2")
         provider._available = True
-        provider.generate = AsyncMock(return_value=LLMResponse(
-            text="",
-            model="llama3.2",
-            error="Generation failed"
-        ))
+        provider.generate = AsyncMock(return_value=LLMResponse(text="", model="llama3.2", error="Generation failed"))
         self.router.register_provider(provider)
 
         # Working fallback
@@ -363,11 +359,7 @@ class TestModelRouterFallbacks:
         # First fallback returns error
         provider1 = MockProvider(name="provider1", default_model="model1")
         provider1._available = True
-        provider1.generate = AsyncMock(return_value=LLMResponse(
-            text="",
-            model="model1",
-            error="Provider failed"
-        ))
+        provider1.generate = AsyncMock(return_value=LLMResponse(text="", model="model1", error="Provider failed"))
         self.router.register_provider(provider1)
 
         # Second fallback works

@@ -27,5 +27,5 @@ __all__ = [
     "StructuredLogger",
     "LogAnalyzer",
     "create_logging_middleware",
-    "LOGGING_CONFIGS"
+    "LOGGING_CONFIGS",
 ]

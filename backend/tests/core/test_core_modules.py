@@ -24,16 +24,13 @@ class TestSettings:
         """Test settings default values."""
         settings = Settings()
 
-        assert hasattr(settings, 'app_name')
-        assert hasattr(settings, 'debug')
-        assert hasattr(settings, 'database_url')
+        assert hasattr(settings, "app_name")
+        assert hasattr(settings, "debug")
+        assert hasattr(settings, "database_url")
 
     def test_settings_from_env(self):
         """Test loading settings from environment."""
-        with patch.dict(os.environ, {
-            'THETAAI_DEBUG': 'true',
-            'THETAAI_APP_NAME': 'TestApp'
-        }):
+        with patch.dict(os.environ, {"THETAAI_DEBUG": "true", "THETAAI_APP_NAME": "TestApp"}):
             settings = Settings()
             # Settings should read from env
             assert settings is not None
@@ -66,10 +63,10 @@ class TestLogging:
         logger = get_logger(__name__)
 
         assert logger is not None
-        assert hasattr(logger, 'info')
-        assert hasattr(logger, 'debug')
-        assert hasattr(logger, 'warning')
-        assert hasattr(logger, 'error')
+        assert hasattr(logger, "info")
+        assert hasattr(logger, "debug")
+        assert hasattr(logger, "warning")
+        assert hasattr(logger, "error")
 
     def test_configure_logging(self):
         """Test configuring logging."""

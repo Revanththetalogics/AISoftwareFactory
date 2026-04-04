@@ -15,11 +15,7 @@ from backend.utils.resilience import CircuitBreakerOpenError
 @pytest.fixture
 def openai_provider():
     """Create OpenAIProvider instance for testing."""
-    return OpenAIProvider(config={
-        "api_key": "test-api-key",
-        "model": "gpt-4",
-        "base_url": "https://api.openai.com/v1"
-    })
+    return OpenAIProvider(config={"api_key": "test-api-key", "model": "gpt-4", "base_url": "https://api.openai.com/v1"})
 
 
 @pytest.fixture
@@ -81,11 +77,9 @@ class TestOpenAIProviderInit:
 
     def test_init_with_config(self):
         """Test initialization with configuration."""
-        provider = OpenAIProvider(config={
-            "api_key": "custom-key",
-            "model": "gpt-3.5-turbo",
-            "base_url": "https://custom.openai.com/v1"
-        })
+        provider = OpenAIProvider(
+            config={"api_key": "custom-key", "model": "gpt-3.5-turbo", "base_url": "https://custom.openai.com/v1"}
+        )
 
         assert provider.api_key == "custom-key"
         assert provider.model == "gpt-3.5-turbo"
@@ -102,10 +96,7 @@ class TestOpenAIProviderInit:
 
     def test_init_from_env(self):
         """Test initialization from environment variables."""
-        with patch.dict("os.environ", {
-            "OPENAI_API_KEY": "env-api-key",
-            "OPENAI_MODEL": "gpt-4-turbo"
-        }):
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "env-api-key", "OPENAI_MODEL": "gpt-4-turbo"}):
             provider = OpenAIProvider()
 
             assert provider.api_key == "env-api-key"
@@ -113,14 +104,8 @@ class TestOpenAIProviderInit:
 
     def test_init_config_overrides_env(self):
         """Test that config overrides environment variables."""
-        with patch.dict("os.environ", {
-            "OPENAI_API_KEY": "env-key",
-            "OPENAI_MODEL": "env-model"
-        }):
-            provider = OpenAIProvider(config={
-                "api_key": "config-key",
-                "model": "config-model"
-            })
+        with patch.dict("os.environ", {"OPENAI_API_KEY": "env-key", "OPENAI_MODEL": "env-model"}):
+            provider = OpenAIProvider(config={"api_key": "config-key", "model": "config-model"})
 
             assert provider.api_key == "config-key"
             assert provider.model == "config-model"
@@ -156,6 +141,7 @@ class TestOpenAIProviderClient:
         with patch.dict("sys.modules", {"openai": None}):
             # Simulate import error by making the module unavailable
             import sys
+
             original = sys.modules.get("openai")
             sys.modules["openai"] = None
 
@@ -175,12 +161,15 @@ class TestOpenAIProviderGenerate:
         """Test successful text generation."""
         openai_provider._client = mock_openai_client
 
-        with patch("backend.llm.openai_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.openai_provider.metrics", mock_metrics), \
-             patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb:
+        with (
+            patch("backend.llm.openai_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.openai_provider.metrics", mock_metrics),
+            patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb,
+        ):
 
             async def call_func(func):
                 return await func()
+
             mock_cb.call = AsyncMock(side_effect=call_func)
             mock_cb.name = "llm_provider"
             mock_cb.get_state_value = MagicMock(return_value=0)
@@ -196,21 +185,20 @@ class TestOpenAIProviderGenerate:
         """Test generation with custom parameters."""
         openai_provider._client = mock_openai_client
 
-        with patch("backend.llm.openai_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.openai_provider.metrics", mock_metrics), \
-             patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb:
+        with (
+            patch("backend.llm.openai_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.openai_provider.metrics", mock_metrics),
+            patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb,
+        ):
 
             async def call_func(func):
                 return await func()
+
             mock_cb.call = AsyncMock(side_effect=call_func)
             mock_cb.name = "llm_provider"
             mock_cb.get_state_value = MagicMock(return_value=0)
 
-            result = await openai_provider.generate(
-                "Test prompt",
-                temperature=0.5,
-                max_tokens=100
-            )
+            result = await openai_provider.generate("Test prompt", temperature=0.5, max_tokens=100)
 
             assert result == "Generated response"
 
@@ -230,12 +218,15 @@ class TestOpenAIProviderGenerate:
         mock_client.chat.completions.create = AsyncMock(return_value=mock_completion)
         openai_provider._client = mock_client
 
-        with patch("backend.llm.openai_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.openai_provider.metrics", mock_metrics), \
-             patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb:
+        with (
+            patch("backend.llm.openai_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.openai_provider.metrics", mock_metrics),
+            patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb,
+        ):
 
             async def call_func(func):
                 return await func()
+
             mock_cb.call = AsyncMock(side_effect=call_func)
             mock_cb.name = "llm_provider"
             mock_cb.get_state_value = MagicMock(return_value=0)
@@ -247,10 +238,11 @@ class TestOpenAIProviderGenerate:
     @pytest.mark.asyncio
     async def test_generate_circuit_breaker_open(self, openai_provider, mock_settings, mock_metrics):
         """Test generation when circuit breaker is open."""
-        with patch("backend.llm.openai_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.openai_provider.metrics", mock_metrics), \
-             patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb:
-
+        with (
+            patch("backend.llm.openai_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.openai_provider.metrics", mock_metrics),
+            patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb,
+        ):
             mock_cb.call = AsyncMock(side_effect=CircuitBreakerOpenError("Circuit is open"))
             mock_cb.name = "llm_provider"
 
@@ -262,10 +254,11 @@ class TestOpenAIProviderGenerate:
     @pytest.mark.asyncio
     async def test_generate_timeout(self, openai_provider, mock_settings, mock_metrics):
         """Test generation timeout."""
-        with patch("backend.llm.openai_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.openai_provider.metrics", mock_metrics), \
-             patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb:
-
+        with (
+            patch("backend.llm.openai_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.openai_provider.metrics", mock_metrics),
+            patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb,
+        ):
             mock_cb.call = AsyncMock(side_effect=TimeoutError("Timeout"))
             mock_cb.name = "llm_provider"
 
@@ -277,10 +270,11 @@ class TestOpenAIProviderGenerate:
     @pytest.mark.asyncio
     async def test_generate_general_error(self, openai_provider, mock_settings, mock_metrics):
         """Test generation with general error."""
-        with patch("backend.llm.openai_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.openai_provider.metrics", mock_metrics), \
-             patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb:
-
+        with (
+            patch("backend.llm.openai_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.openai_provider.metrics", mock_metrics),
+            patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb,
+        ):
             mock_cb.call = AsyncMock(side_effect=RuntimeError("API error"))
             mock_cb.name = "llm_provider"
 
@@ -343,9 +337,7 @@ class TestOpenAIProviderGenerateStream:
     async def test_generate_stream_error(self, openai_provider):
         """Test streaming error handling."""
         mock_client = AsyncMock()
-        mock_client.chat.completions.create = AsyncMock(
-            side_effect=RuntimeError("Stream error")
-        )
+        mock_client.chat.completions.create = AsyncMock(side_effect=RuntimeError("Stream error"))
         openai_provider._client = mock_client
 
         with pytest.raises(RuntimeError):
@@ -361,12 +353,15 @@ class TestOpenAIProviderChat:
         """Test successful chat completion."""
         openai_provider._client = mock_openai_client
 
-        with patch("backend.llm.openai_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.openai_provider.metrics", mock_metrics), \
-             patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb:
+        with (
+            patch("backend.llm.openai_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.openai_provider.metrics", mock_metrics),
+            patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb,
+        ):
 
             async def call_func(func):
                 return await func()
+
             mock_cb.call = AsyncMock(side_effect=call_func)
             mock_cb.name = "llm_provider"
 
@@ -381,21 +376,20 @@ class TestOpenAIProviderChat:
         """Test chat with custom parameters."""
         openai_provider._client = mock_openai_client
 
-        with patch("backend.llm.openai_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.openai_provider.metrics", mock_metrics), \
-             patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb:
+        with (
+            patch("backend.llm.openai_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.openai_provider.metrics", mock_metrics),
+            patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb,
+        ):
 
             async def call_func(func):
                 return await func()
+
             mock_cb.call = AsyncMock(side_effect=call_func)
             mock_cb.name = "llm_provider"
 
             messages = [{"role": "user", "content": "Hello"}]
-            result = await openai_provider.chat(
-                messages,
-                temperature=0.3,
-                max_tokens=200
-            )
+            result = await openai_provider.chat(messages, temperature=0.3, max_tokens=200)
 
             assert result == "Generated response"
 
@@ -415,12 +409,15 @@ class TestOpenAIProviderChat:
         mock_client.chat.completions.create = AsyncMock(return_value=mock_completion)
         openai_provider._client = mock_client
 
-        with patch("backend.llm.openai_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.openai_provider.metrics", mock_metrics), \
-             patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb:
+        with (
+            patch("backend.llm.openai_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.openai_provider.metrics", mock_metrics),
+            patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb,
+        ):
 
             async def call_func(func):
                 return await func()
+
             mock_cb.call = AsyncMock(side_effect=call_func)
             mock_cb.name = "llm_provider"
 
@@ -432,10 +429,11 @@ class TestOpenAIProviderChat:
     @pytest.mark.asyncio
     async def test_chat_circuit_breaker_open(self, openai_provider, mock_settings, mock_metrics):
         """Test chat when circuit breaker is open."""
-        with patch("backend.llm.openai_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.openai_provider.metrics", mock_metrics), \
-             patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb:
-
+        with (
+            patch("backend.llm.openai_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.openai_provider.metrics", mock_metrics),
+            patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb,
+        ):
             mock_cb.call = AsyncMock(side_effect=CircuitBreakerOpenError("Circuit is open"))
             mock_cb.name = "llm_provider"
 
@@ -449,10 +447,11 @@ class TestOpenAIProviderChat:
     @pytest.mark.asyncio
     async def test_chat_timeout(self, openai_provider, mock_settings, mock_metrics):
         """Test chat timeout."""
-        with patch("backend.llm.openai_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.openai_provider.metrics", mock_metrics), \
-             patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb:
-
+        with (
+            patch("backend.llm.openai_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.openai_provider.metrics", mock_metrics),
+            patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb,
+        ):
             mock_cb.call = AsyncMock(side_effect=TimeoutError("Timeout"))
             mock_cb.name = "llm_provider"
 
@@ -466,10 +465,11 @@ class TestOpenAIProviderChat:
     @pytest.mark.asyncio
     async def test_chat_general_error(self, openai_provider, mock_settings, mock_metrics):
         """Test chat with general error."""
-        with patch("backend.llm.openai_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.openai_provider.metrics", mock_metrics), \
-             patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb:
-
+        with (
+            patch("backend.llm.openai_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.openai_provider.metrics", mock_metrics),
+            patch("backend.llm.openai_provider.llm_circuit_breaker") as mock_cb,
+        ):
             mock_cb.call = AsyncMock(side_effect=RuntimeError("API error"))
             mock_cb.name = "llm_provider"
 
@@ -534,9 +534,7 @@ class TestOpenAIProviderChatStream:
     async def test_chat_stream_error(self, openai_provider):
         """Test chat streaming error handling."""
         mock_client = AsyncMock()
-        mock_client.chat.completions.create = AsyncMock(
-            side_effect=RuntimeError("Stream error")
-        )
+        mock_client.chat.completions.create = AsyncMock(side_effect=RuntimeError("Stream error"))
         openai_provider._client = mock_client
 
         messages = [{"role": "user", "content": "Hi"}]
@@ -562,9 +560,7 @@ class TestOpenAIProviderEmbed:
     async def test_embed_error(self, openai_provider):
         """Test embedding error handling."""
         mock_client = AsyncMock()
-        mock_client.embeddings.create = AsyncMock(
-            side_effect=RuntimeError("API error")
-        )
+        mock_client.embeddings.create = AsyncMock(side_effect=RuntimeError("API error"))
         openai_provider._client = mock_client
 
         with pytest.raises(RuntimeError):
@@ -632,10 +628,10 @@ class TestOpenAIProviderImportError:
         # by patching the import inside _get_client
         import sys
 
-        with patch.dict(sys.modules, {'openai': None}):
+        with patch.dict(sys.modules, {"openai": None}):
             # Force the import to fail by removing the module
-            original_openai = sys.modules.get('openai')
-            del sys.modules['openai']
+            original_openai = sys.modules.get("openai")
+            del sys.modules["openai"]
 
             try:
                 # Create a new provider to trigger import
@@ -643,15 +639,17 @@ class TestOpenAIProviderImportError:
                 new_provider._client = None
 
                 # Mock the actual import to raise ImportError
-                with patch('builtins.__import__', side_effect=ImportError("No module named 'openai'")):
+                with patch("builtins.__import__", side_effect=ImportError("No module named 'openai'")):
                     with pytest.raises(ImportError) as exc_info:
                         new_provider._get_client()
 
-                    assert "OpenAI package not installed" in str(exc_info.value) or "openai" in str(exc_info.value).lower()
+                    assert (
+                        "OpenAI package not installed" in str(exc_info.value) or "openai" in str(exc_info.value).lower()
+                    )
             finally:
                 # Restore openai module
                 if original_openai:
-                    sys.modules['openai'] = original_openai
+                    sys.modules["openai"] = original_openai
 
     def test_get_client_import_error_message(self):
         """Test ImportError message includes installation instructions (lines 54-55)."""

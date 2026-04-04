@@ -16,6 +16,7 @@ def _get_otel_trace_id() -> str:
     """Get current OpenTelemetry trace ID if available."""
     try:
         from backend.infrastructure.tracing import get_current_trace_id
+
         return get_current_trace_id()
     except Exception:
         return ""

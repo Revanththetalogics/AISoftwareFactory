@@ -11,7 +11,9 @@ from fastapi.testclient import TestClient
 from backend.api.routes.plugins import router
 
 
-@pytest.mark.skip(reason="Tests use mismatched endpoints (/plugins/configure, /plugins/action, /plugins/upload vs actual /plugins/{id}/config, /plugins/{id}/execute, /plugins/install) and wrong mock method names; needs full rewrite")
+@pytest.mark.skip(
+    reason="Tests use mismatched endpoints (/plugins/configure, /plugins/action, /plugins/upload vs actual /plugins/{id}/config, /plugins/{id}/execute, /plugins/install) and wrong mock method names; needs full rewrite"
+)
 class TestPluginRoutes:
     """Tests for plugin management API routes."""
 
@@ -50,7 +52,7 @@ class TestPluginRoutes:
             "version": "1.0.0",
             "description": "A test plugin",
             "type": "feature",
-            "author": "Test Author"
+            "author": "Test Author",
         }
 
         mock_manifest2 = MagicMock()
@@ -60,7 +62,7 @@ class TestPluginRoutes:
             "version": "2.0.0",
             "description": "Another test plugin",
             "type": "integration",
-            "author": "Another Author"
+            "author": "Another Author",
         }
 
         mock_manifests = [mock_manifest1, mock_manifest2]
@@ -104,8 +106,7 @@ class TestPluginRoutes:
         mock_plugin_manager.load_plugin.return_value = mock_plugin
 
         response = client.post(
-            "/plugins/test-plugin/load",
-            json={"config": {"setting1": "value1", "setting2": "value2"}}
+            "/plugins/test-plugin/load", json={"config": {"setting1": "value1", "setting2": "value2"}}
         )
 
         assert response.status_code == 200
@@ -178,18 +179,8 @@ class TestPluginRoutes:
     def test_get_loaded_plugins(self, client, mock_plugin_manager):
         """Test getting list of loaded plugins."""
         mock_plugins = [
-            MagicMock(
-                id="plugin1",
-                name="Loaded Plugin 1",
-                status="active",
-                manifest=MagicMock(version="1.0.0")
-            ),
-            MagicMock(
-                id="plugin2",
-                name="Loaded Plugin 2",
-                status="inactive",
-                manifest=MagicMock(version="2.0.0")
-            )
+            MagicMock(id="plugin1", name="Loaded Plugin 1", status="active", manifest=MagicMock(version="1.0.0")),
+            MagicMock(id="plugin2", name="Loaded Plugin 2", status="inactive", manifest=MagicMock(version="2.0.0")),
         ]
         mock_plugin_manager.get_loaded_plugins.return_value = mock_plugins
 
@@ -217,10 +208,7 @@ class TestPluginRoutes:
         """Test successful plugin configuration."""
         mock_plugin_manager.configure_plugin.return_value = True
 
-        response = client.put(
-            "/plugins/test-plugin/configure",
-            json={"config": {"timeout": 30, "retries": 3}}
-        )
+        response = client.put("/plugins/test-plugin/configure", json={"config": {"timeout": 30, "retries": 3}})
 
         assert response.status_code == 200
         data = response.json()
@@ -231,10 +219,7 @@ class TestPluginRoutes:
         """Test configuring non-existent plugin."""
         mock_plugin_manager.configure_plugin.side_effect = ValueError("Plugin not found")
 
-        response = client.put(
-            "/plugins/nonexistent/configure",
-            json={"config": {"setting": "value"}}
-        )
+        response = client.put("/plugins/nonexistent/configure", json={"config": {"setting": "value"}})
 
         assert response.status_code == 404
 
@@ -245,10 +230,7 @@ class TestPluginRoutes:
 
         response = client.post(
             "/plugins/test-plugin/action",
-            json={
-                "action": "process_data",
-                "parameters": {"input_file": "data.csv", "output_format": "json"}
-            }
+            json={"action": "process_data", "parameters": {"input_file": "data.csv", "output_format": "json"}},
         )
 
         assert response.status_code == 200
@@ -261,25 +243,17 @@ class TestPluginRoutes:
         mock_result = {"status": "completed"}
         mock_plugin_manager.execute_plugin_action.return_value = mock_result
 
-        response = client.post(
-            "/plugins/test-plugin/action",
-            json={"action": "cleanup"}
-        )
+        response = client.post("/plugins/test-plugin/action", json={"action": "cleanup"})
 
         assert response.status_code == 200
         # Should call with None parameters
-        mock_plugin_manager.execute_plugin_action.assert_called_with(
-            "test-plugin", "cleanup", None
-        )
+        mock_plugin_manager.execute_plugin_action.assert_called_with("test-plugin", "cleanup", None)
 
     def test_execute_plugin_action_error(self, client, mock_plugin_manager):
         """Test plugin action execution when error occurs."""
         mock_plugin_manager.execute_plugin_action.side_effect = Exception("Action failed")
 
-        response = client.post(
-            "/plugins/error-plugin/action",
-            json={"action": "invalid_action"}
-        )
+        response = client.post("/plugins/error-plugin/action", json={"action": "invalid_action"})
 
         assert response.status_code == 500
         assert "failed to execute action" in response.json()["detail"].lower()
@@ -292,7 +266,7 @@ class TestPluginRoutes:
             "status": "active",
             "version": "1.0.0",
             "loaded_at": "2026-03-29T10:30:00Z",
-            "last_action": "process_data"
+            "last_action": "process_data",
         }
         mock_plugin_manager.get_plugin_status.return_value = mock_status
 
@@ -317,17 +291,17 @@ class TestPluginRoutes:
         mock_plugin_manager.install_plugin_from_file.return_value = {
             "id": "uploaded-plugin",
             "name": "Uploaded Plugin",
-            "version": "1.0.0"
+            "version": "1.0.0",
         }
 
         # Create a mock file
         from io import BytesIO
+
         plugin_file = BytesIO(b"plugin content")
         plugin_file.name = "test-plugin.zip"
 
         response = client.post(
-            "/plugins/upload",
-            files={"plugin_file": ("test-plugin.zip", plugin_file, "application/zip")}
+            "/plugins/upload", files={"plugin_file": ("test-plugin.zip", plugin_file, "application/zip")}
         )
 
         assert response.status_code == 200
@@ -338,13 +312,11 @@ class TestPluginRoutes:
     def test_upload_plugin_invalid_file(self, client):
         """Test plugin upload with invalid file."""
         from io import BytesIO
+
         invalid_file = BytesIO(b"not a zip file")
         invalid_file.name = "test.txt"
 
-        response = client.post(
-            "/plugins/upload",
-            files={"plugin_file": ("test.txt", invalid_file, "text/plain")}
-        )
+        response = client.post("/plugins/upload", files={"plugin_file": ("test.txt", invalid_file, "text/plain")})
 
         # Should reject non-zip files
         assert response.status_code == 400
@@ -368,7 +340,7 @@ class TestPluginRoutes:
             description="A test plugin",
             type="feature",
             author="Test Author",
-            dependencies=[]
+            dependencies=[],
         )
         mock_plugin_manager.get_plugin_manifest = AsyncMock(return_value=mock_manifest)
 

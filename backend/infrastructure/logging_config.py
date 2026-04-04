@@ -61,18 +61,12 @@ output {
                 {
                     "type": "log",
                     "enabled": True,
-                    "paths": [
-                        "/var/log/ai-factory/*.log"
-                    ],
-                    "fields": {
-                        "service": "ai-factory"
-                    },
-                    "fields_under_root": True
+                    "paths": ["/var/log/ai-factory/*.log"],
+                    "fields": {"service": "ai-factory"},
+                    "fields_under_root": True,
                 }
             ],
-            "output.logstash": {
-                "hosts": ["logstash:5044"]
-            }
+            "output.logstash": {"hosts": ["logstash:5044"]},
         }
 
     def generate_log_rotation_config(self) -> str:
@@ -106,12 +100,12 @@ output {
                 "structlog.processors.StackInfoRenderer",
                 "structlog.processors.format_exc_info",
                 "structlog.processors.UnicodeDecoder",
-                "structlog.processors.JSONRenderer"
+                "structlog.processors.JSONRenderer",
             ],
             "context_class": "dict",
             "logger_factory": "structlog.stdlib.LoggerFactory",
             "wrapper_class": "structlog.stdlib.BoundLogger",
-            "cache_logger_on_first_use": True
+            "cache_logger_on_first_use": True,
         }
 
     def save_configs(self, output_dir: str = "./logging"):
@@ -127,23 +121,15 @@ output {
         output_path.mkdir(parents=True, exist_ok=True)
 
         # Logstash config
-        (output_path / "logstash.conf").write_text(
-            self.generate_logstash_config()
-        )
+        (output_path / "logstash.conf").write_text(self.generate_logstash_config())
 
         # Filebeat config
-        (output_path / "filebeat.yml").write_text(
-            json.dumps(self.generate_filebeat_config(), indent=2)
-        )
+        (output_path / "filebeat.yml").write_text(json.dumps(self.generate_filebeat_config(), indent=2))
 
         # Log rotation
-        (output_path / "logrotate.conf").write_text(
-            self.generate_log_rotation_config()
-        )
+        (output_path / "logrotate.conf").write_text(self.generate_log_rotation_config())
 
         # Structlog config
-        (output_path / "structlog.json").write_text(
-            json.dumps(self.generate_structlog_config(), indent=2)
-        )
+        (output_path / "structlog.json").write_text(json.dumps(self.generate_structlog_config(), indent=2))
 
         self._logger.info("Logging configs saved", path=str(output_path))

@@ -13,6 +13,7 @@ from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+
 class IndexAnalyzer:
     """
     Database Index Analyzer for Performance Optimization.
@@ -52,8 +53,10 @@ class IndexAnalyzer:
         for examining database schema, tables, and existing indexes.
         """
         if self.inspector is None:
+
             async def get_inspector(sync_session):
                 return inspect(sync_session.connection())
+
             self.inspector = await self.session.run_sync(get_inspector)
 
     async def get_existing_indexes(self) -> dict[str, list[dict]]:
@@ -95,13 +98,13 @@ class IndexAnalyzer:
         """
         # Common patterns that benefit from indexing
         patterns = {
-            'users': ['username', 'email', 'is_active'],
-            'projects': ['owner_id', 'status', 'created_at'],
-            'workflows': ['project_id', 'status', 'created_by'],
-            'tasks': ['project_id', 'workflow_id', 'status', 'priority', 'created_at'],
-            'agents': ['role', 'status'],
-            'deployments': ['project_id', 'environment', 'status'],
-            'audit_logs': ['user_id', 'resource_type', 'created_at']
+            "users": ["username", "email", "is_active"],
+            "projects": ["owner_id", "status", "created_at"],
+            "workflows": ["project_id", "status", "created_by"],
+            "tasks": ["project_id", "workflow_id", "status", "priority", "created_at"],
+            "agents": ["role", "status"],
+            "deployments": ["project_id", "environment", "status"],
+            "audit_logs": ["user_id", "resource_type", "created_at"],
         }
 
         existing_indexes = await self.get_existing_indexes()
@@ -111,7 +114,7 @@ class IndexAnalyzer:
             if table in existing_indexes:
                 existing_columns = set()
                 for idx in existing_indexes[table]:
-                    existing_columns.update(idx['column_names'])
+                    existing_columns.update(idx["column_names"])
 
                 # Find columns that should be indexed but aren't
                 missing_columns = [col for col in columns if col not in existing_columns]
@@ -164,24 +167,25 @@ class IndexAnalyzer:
         """
         # This would typically integrate with query logs or application metrics
         patterns = {
-            'user_lookups': {
-                'frequency': 'high',
-                'typical_filters': ['username', 'email', 'id'],
-                'recommendation': 'Ensure indexes on frequently queried user attributes'
+            "user_lookups": {
+                "frequency": "high",
+                "typical_filters": ["username", "email", "id"],
+                "recommendation": "Ensure indexes on frequently queried user attributes",
             },
-            'project_filtering': {
-                'frequency': 'high',
-                'typical_filters': ['owner_id', 'status', 'created_at'],
-                'recommendation': 'Composite index on (owner_id, status) for dashboard queries'
+            "project_filtering": {
+                "frequency": "high",
+                "typical_filters": ["owner_id", "status", "created_at"],
+                "recommendation": "Composite index on (owner_id, status) for dashboard queries",
             },
-            'task_filtering': {
-                'frequency': 'very_high',
-                'typical_filters': ['project_id', 'status', 'priority'],
-                'recommendation': 'Consider partial indexes for common status filters'
-            }
+            "task_filtering": {
+                "frequency": "very_high",
+                "typical_filters": ["project_id", "status", "priority"],
+                "recommendation": "Consider partial indexes for common status filters",
+            },
         }
 
         return patterns
+
 
 class QueryOptimizer:
     """
@@ -271,6 +275,7 @@ class QueryOptimizer:
             GROUP BY p.id
         """
 
+
 class IndexMaintenance:
     """Tools for maintaining and monitoring database indexes."""
 
@@ -332,15 +337,14 @@ class IndexMaintenance:
 
         rebuild_commands = []
         for idx in indexes:
-            rebuild_commands.append(
-                f"REINDEX INDEX CONCURRENTLY {idx['indexname']};"
-            )
+            rebuild_commands.append(f"REINDEX INDEX CONCURRENTLY {idx['indexname']};")
 
         return rebuild_commands
 
+
 # Performance monitoring views
 PERFORMANCE_VIEWS = {
-    'slow_queries': """
+    "slow_queries": """
         CREATE OR REPLACE VIEW slow_queries_monitor AS
         SELECT
             query,
@@ -355,8 +359,7 @@ PERFORMANCE_VIEWS = {
         ORDER BY mean_time DESC
         LIMIT 50;
     """,
-
-    'missing_indexes': """
+    "missing_indexes": """
         CREATE OR REPLACE VIEW missing_indexes_monitor AS
         SELECT
             schemaname,
@@ -370,8 +373,9 @@ PERFORMANCE_VIEWS = {
         WHERE (seq_scan + idx_scan) > 0
         AND (100 * seq_scan / (seq_scan + idx_scan)) > 90  -- Mostly sequential scans
         ORDER BY seq_scan DESC;
-    """
+    """,
 }
+
 
 async def setup_performance_monitoring(session: AsyncSession):
     """Set up performance monitoring views and extensions."""
@@ -380,7 +384,7 @@ async def setup_performance_monitoring(session: AsyncSession):
         await session.execute(text("CREATE EXTENSION IF NOT EXISTS pg_stat_statements;"))
 
         # Create monitoring views
-        for view_name, view_sql in PERFORMANCE_VIEWS.items():
+        for _view_name, view_sql in PERFORMANCE_VIEWS.items():
             await session.execute(text(view_sql))
 
         logger.info("Performance monitoring views created successfully")
@@ -388,11 +392,12 @@ async def setup_performance_monitoring(session: AsyncSession):
     except Exception as e:
         logger.error(f"Failed to set up performance monitoring: {e}")
 
+
 async def get_database_size_report(session: AsyncSession) -> dict:
     """Get comprehensive database size and performance report."""
     queries = {
-        'database_size': "SELECT pg_size_pretty(pg_database_size(current_database())) as size;",
-        'table_sizes': """
+        "database_size": "SELECT pg_size_pretty(pg_database_size(current_database())) as size;",
+        "table_sizes": """
             SELECT
                 schemaname,
                 tablename,
@@ -402,7 +407,7 @@ async def get_database_size_report(session: AsyncSession) -> dict:
             WHERE schemaname = 'public'
             ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
         """,
-        'index_usage': """
+        "index_usage": """
             SELECT
                 schemaname,
                 tablename,
@@ -414,7 +419,7 @@ async def get_database_size_report(session: AsyncSession) -> dict:
             FROM pg_stat_user_indexes
             ORDER BY idx_scan DESC NULLS LAST
             LIMIT 20;
-        """
+        """,
     }
 
     report = {}
@@ -422,7 +427,7 @@ async def get_database_size_report(session: AsyncSession) -> dict:
     for name, query in queries.items():
         try:
             result = await session.execute(text(query))
-            if name == 'database_size':
+            if name == "database_size":
                 report[name] = result.scalar()
             else:
                 report[name] = [dict(row) for row in result.fetchall()]

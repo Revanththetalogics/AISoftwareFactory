@@ -13,10 +13,11 @@ class TestMonitoringSetupInit:
 
     def test_init(self):
         """Test MonitoringSetup initialization."""
-        with patch('backend.infrastructure.monitoring.get_logger') as mock_logger:
+        with patch("backend.infrastructure.monitoring.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.monitoring import MonitoringSetup
+
             setup = MonitoringSetup()
 
             assert setup._logger is not None
@@ -27,10 +28,11 @@ class TestGeneratePrometheusConfig:
 
     def test_generate_prometheus_config(self):
         """Test generate_prometheus_config generates valid YAML."""
-        with patch('backend.infrastructure.monitoring.get_logger') as mock_logger:
+        with patch("backend.infrastructure.monitoring.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.monitoring import MonitoringSetup
+
             setup = MonitoringSetup()
             config = setup.generate_prometheus_config()
 
@@ -48,10 +50,11 @@ class TestGenerateGrafanaDataSource:
 
     def test_generate_grafana_datasource(self):
         """Test generate_grafana_datasource generates valid config."""
-        with patch('backend.infrastructure.monitoring.get_logger') as mock_logger:
+        with patch("backend.infrastructure.monitoring.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.monitoring import MonitoringSetup
+
             setup = MonitoringSetup()
             config = setup.generate_grafana_datasource()
 
@@ -70,10 +73,11 @@ class TestGenerateDashboardConfig:
 
     def test_generate_dashboard_config(self):
         """Test generate_dashboard_config generates valid config."""
-        with patch('backend.infrastructure.monitoring.get_logger') as mock_logger:
+        with patch("backend.infrastructure.monitoring.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.monitoring import MonitoringSetup
+
             setup = MonitoringSetup()
             config = setup.generate_dashboard_config()
 
@@ -93,10 +97,11 @@ class TestGenerateAlertRules:
 
     def test_generate_alert_rules(self):
         """Test generate_alert_rules generates valid rules."""
-        with patch('backend.infrastructure.monitoring.get_logger') as mock_logger:
+        with patch("backend.infrastructure.monitoring.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.monitoring import MonitoringSetup
+
             setup = MonitoringSetup()
             rules = setup.generate_alert_rules()
 
@@ -116,10 +121,11 @@ class TestSaveConfigs:
         """Test save_configs creates output directory."""
         output_dir = tmp_path / "monitoring"
 
-        with patch('backend.infrastructure.monitoring.get_logger') as mock_logger:
+        with patch("backend.infrastructure.monitoring.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.monitoring import MonitoringSetup
+
             setup = MonitoringSetup()
             setup.save_configs(str(output_dir))
 
@@ -129,10 +135,11 @@ class TestSaveConfigs:
         """Test save_configs writes prometheus.yml."""
         output_dir = tmp_path / "monitoring"
 
-        with patch('backend.infrastructure.monitoring.get_logger') as mock_logger:
+        with patch("backend.infrastructure.monitoring.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.monitoring import MonitoringSetup
+
             setup = MonitoringSetup()
             setup.save_configs(str(output_dir))
 
@@ -145,10 +152,11 @@ class TestSaveConfigs:
         """Test save_configs writes alert_rules.yml."""
         output_dir = tmp_path / "monitoring"
 
-        with patch('backend.infrastructure.monitoring.get_logger') as mock_logger:
+        with patch("backend.infrastructure.monitoring.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.monitoring import MonitoringSetup
+
             setup = MonitoringSetup()
             setup.save_configs(str(output_dir))
 
@@ -161,10 +169,11 @@ class TestSaveConfigs:
         """Test save_configs writes datasource.yml."""
         output_dir = tmp_path / "monitoring"
 
-        with patch('backend.infrastructure.monitoring.get_logger') as mock_logger:
+        with patch("backend.infrastructure.monitoring.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.monitoring import MonitoringSetup
+
             setup = MonitoringSetup()
             setup.save_configs(str(output_dir))
 
@@ -177,10 +186,11 @@ class TestSaveConfigs:
         """Test save_configs writes dashboard.json."""
         output_dir = tmp_path / "monitoring"
 
-        with patch('backend.infrastructure.monitoring.get_logger') as mock_logger:
+        with patch("backend.infrastructure.monitoring.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.monitoring import MonitoringSetup
+
             setup = MonitoringSetup()
             setup.save_configs(str(output_dir))
 
@@ -193,11 +203,12 @@ class TestSaveConfigs:
         """Test save_configs logs completion message."""
         output_dir = tmp_path / "monitoring"
 
-        with patch('backend.infrastructure.monitoring.get_logger') as mock_logger:
+        with patch("backend.infrastructure.monitoring.get_logger") as mock_logger:
             mock_log_instance = Mock()
             mock_logger.return_value = mock_log_instance
 
             from backend.infrastructure.monitoring import MonitoringSetup
+
             setup = MonitoringSetup()
             setup.save_configs(str(output_dir))
 
@@ -207,10 +218,11 @@ class TestSaveConfigs:
         """Test save_configs uses default path when not specified."""
         monkeypatch.chdir(tmp_path)
 
-        with patch('backend.infrastructure.monitoring.get_logger') as mock_logger:
+        with patch("backend.infrastructure.monitoring.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.monitoring import MonitoringSetup
+
             setup = MonitoringSetup()
             setup.save_configs()
 

@@ -21,9 +21,7 @@ settings = get_settings()
 
 # Convert PostgreSQL URL to async version
 # postgresql:// -> postgresql+asyncpg://
-DATABASE_URL = settings.DATABASE_URL.replace(
-    "postgresql://", "postgresql+asyncpg://"
-)
+DATABASE_URL = settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
 
 # Create async engine with connection pooling
 engine = create_async_engine(

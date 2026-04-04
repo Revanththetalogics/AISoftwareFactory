@@ -2,7 +2,6 @@
 Tests for Infrastructure components.
 """
 
-
 import pytest
 
 from backend.infrastructure.docker_compose import DockerComposeGenerator
@@ -51,6 +50,7 @@ class TestDockerComposeGenerator:
 
         # Verify content is valid YAML
         import yaml
+
         with open(output_file) as f:
             loaded = yaml.safe_load(f)
         assert loaded["services"]["backend"] is not None
@@ -137,6 +137,7 @@ class TestHealthChecker:
 
         # Just verify it runs without error
         import asyncio
+
         status, message, details = asyncio.run(checker.check_disk_space())
 
         assert status in [HealthStatus.HEALTHY, HealthStatus.DEGRADED, HealthStatus.UNHEALTHY]

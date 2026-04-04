@@ -93,14 +93,16 @@ async def global_websocket(websocket: WebSocket):
     )
 
     try:
-        await websocket.send_json({
-            "type": "connected",
-            "payload": {
-                "channel": "global",
-                "user_id": user.user_id if user else "anonymous",
-                "timestamp": datetime.now().isoformat(),
-            },
-        })
+        await websocket.send_json(
+            {
+                "type": "connected",
+                "payload": {
+                    "channel": "global",
+                    "user_id": user.user_id if user else "anonymous",
+                    "timestamp": datetime.now().isoformat(),
+                },
+            }
+        )
 
         while True:
             try:
@@ -108,29 +110,37 @@ async def global_websocket(websocket: WebSocket):
                 message_type = data.get("type")
 
                 if message_type == "ping":
-                    await websocket.send_json({
-                        "type": "pong",
-                        "payload": {"timestamp": datetime.now().isoformat()},
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "pong",
+                            "payload": {"timestamp": datetime.now().isoformat()},
+                        }
+                    )
 
                 elif message_type == "subscribe":
                     topics = data.get("payload", {}).get("topics", [])
-                    await websocket.send_json({
-                        "type": "subscribed",
-                        "payload": {"topics": topics},
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "subscribed",
+                            "payload": {"topics": topics},
+                        }
+                    )
 
                 else:
-                    await websocket.send_json({
-                        "type": "error",
-                        "payload": {"message": f"Unknown message type: {message_type}"},
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "error",
+                            "payload": {"message": f"Unknown message type: {message_type}"},
+                        }
+                    )
 
             except json.JSONDecodeError:
-                await websocket.send_json({
-                    "type": "error",
-                    "payload": {"message": "Invalid JSON"},
-                })
+                await websocket.send_json(
+                    {
+                        "type": "error",
+                        "payload": {"message": "Invalid JSON"},
+                    }
+                )
 
     except WebSocketDisconnect:
         global_manager.disconnect(websocket)
@@ -185,14 +195,16 @@ async def project_websocket(websocket: WebSocket, project_id: str):
     )
 
     try:
-        await websocket.send_json({
-            "type": "connected",
-            "payload": {
-                "channel": f"project:{project_id}",
-                "project_id": project_id,
-                "timestamp": datetime.now().isoformat(),
-            },
-        })
+        await websocket.send_json(
+            {
+                "type": "connected",
+                "payload": {
+                    "channel": f"project:{project_id}",
+                    "project_id": project_id,
+                    "timestamp": datetime.now().isoformat(),
+                },
+            }
+        )
 
         while True:
             try:
@@ -200,42 +212,52 @@ async def project_websocket(websocket: WebSocket, project_id: str):
                 message_type = data.get("type")
 
                 if message_type == "ping":
-                    await websocket.send_json({
-                        "type": "pong",
-                        "payload": {"timestamp": datetime.now().isoformat()},
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "pong",
+                            "payload": {"timestamp": datetime.now().isoformat()},
+                        }
+                    )
 
                 elif message_type == "get_status":
                     # Query real project status from database
                     async with get_db_context() as db:
                         project = await _project_svc.get_project(project_id, db=db)
                     if project:
-                        await websocket.send_json({
-                            "type": "status",
-                            "payload": {
-                                "project_id": project_id,
-                                "status": project.status,
-                                "current_phase": project.current_phase,
-                                "progress_percent": project.progress_percent,
-                            },
-                        })
+                        await websocket.send_json(
+                            {
+                                "type": "status",
+                                "payload": {
+                                    "project_id": project_id,
+                                    "status": project.status,
+                                    "current_phase": project.current_phase,
+                                    "progress_percent": project.progress_percent,
+                                },
+                            }
+                        )
                     else:
-                        await websocket.send_json({
-                            "type": "error",
-                            "payload": {"message": f"Project {project_id} not found"},
-                        })
+                        await websocket.send_json(
+                            {
+                                "type": "error",
+                                "payload": {"message": f"Project {project_id} not found"},
+                            }
+                        )
 
                 else:
-                    await websocket.send_json({
-                        "type": "error",
-                        "payload": {"message": f"Unknown message type: {message_type}"},
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "error",
+                            "payload": {"message": f"Unknown message type: {message_type}"},
+                        }
+                    )
 
             except json.JSONDecodeError:
-                await websocket.send_json({
-                    "type": "error",
-                    "payload": {"message": "Invalid JSON"},
-                })
+                await websocket.send_json(
+                    {
+                        "type": "error",
+                        "payload": {"message": "Invalid JSON"},
+                    }
+                )
 
     except WebSocketDisconnect:
         _project_connections[project_id].discard(websocket)
@@ -292,14 +314,16 @@ async def workflow_websocket(websocket: WebSocket, workflow_id: str):
     )
 
     try:
-        await websocket.send_json({
-            "type": "connected",
-            "payload": {
-                "channel": f"workflow:{workflow_id}",
-                "workflow_id": workflow_id,
-                "timestamp": datetime.now().isoformat(),
-            },
-        })
+        await websocket.send_json(
+            {
+                "type": "connected",
+                "payload": {
+                    "channel": f"workflow:{workflow_id}",
+                    "workflow_id": workflow_id,
+                    "timestamp": datetime.now().isoformat(),
+                },
+            }
+        )
 
         while True:
             try:
@@ -307,10 +331,12 @@ async def workflow_websocket(websocket: WebSocket, workflow_id: str):
                 message_type = data.get("type")
 
                 if message_type == "ping":
-                    await websocket.send_json({
-                        "type": "pong",
-                        "payload": {"timestamp": datetime.now().isoformat()},
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "pong",
+                            "payload": {"timestamp": datetime.now().isoformat()},
+                        }
+                    )
 
                 elif message_type == "get_logs":
                     # Query real workflow logs from database
@@ -319,25 +345,31 @@ async def workflow_websocket(websocket: WebSocket, workflow_id: str):
                     payload_logs: list = []
                     if workflow and workflow.context:
                         payload_logs = workflow.context.get("logs", [])
-                    await websocket.send_json({
-                        "type": "logs",
-                        "payload": {
-                            "workflow_id": workflow_id,
-                            "logs": payload_logs,
-                        },
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "logs",
+                            "payload": {
+                                "workflow_id": workflow_id,
+                                "logs": payload_logs,
+                            },
+                        }
+                    )
 
                 else:
-                    await websocket.send_json({
-                        "type": "error",
-                        "payload": {"message": f"Unknown message type: {message_type}"},
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "error",
+                            "payload": {"message": f"Unknown message type: {message_type}"},
+                        }
+                    )
 
             except json.JSONDecodeError:
-                await websocket.send_json({
-                    "type": "error",
-                    "payload": {"message": "Invalid JSON"},
-                })
+                await websocket.send_json(
+                    {
+                        "type": "error",
+                        "payload": {"message": "Invalid JSON"},
+                    }
+                )
 
     except WebSocketDisconnect:
         _workflow_connections[workflow_id].discard(websocket)

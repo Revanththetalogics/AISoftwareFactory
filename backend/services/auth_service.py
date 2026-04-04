@@ -22,7 +22,7 @@ from backend.models.database import DBUser
 logger = get_logger(__name__)
 
 # Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 class AuthService:
@@ -66,11 +66,7 @@ class AuthService:
         """
         return pwd_context.hash(password)
 
-    def create_access_token(
-        self,
-        data: dict[str, Any],
-        expires_delta: timedelta | None = None
-    ) -> str:
+    def create_access_token(self, data: dict[str, Any], expires_delta: timedelta | None = None) -> str:
         """
         Create JWT access token.
 
@@ -90,17 +86,11 @@ class AuthService:
         if expires_delta:
             expire = datetime.now(UTC) + expires_delta
         else:
-            expire = datetime.now(UTC) + timedelta(
-                minutes=self.settings.ACCESS_TOKEN_EXPIRE_MINUTES
-            )
+            expire = datetime.now(UTC) + timedelta(minutes=self.settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
         to_encode.update({"exp": expire, "iat": datetime.now(UTC)})
 
-        encoded_jwt = jwt.encode(
-            to_encode,
-            self.settings.SECRET_KEY,
-            algorithm=self.algorithm
-        )
+        encoded_jwt = jwt.encode(to_encode, self.settings.SECRET_KEY, algorithm=self.algorithm)
         return encoded_jwt
 
     def decode_token(self, token: str) -> dict[str, Any]:
@@ -117,11 +107,7 @@ class AuthService:
             AuthenticationError: If token is invalid or expired
         """
         try:
-            payload = jwt.decode(
-                token,
-                self.settings.SECRET_KEY,
-                algorithms=[self.algorithm]
-            )
+            payload = jwt.decode(token, self.settings.SECRET_KEY, algorithms=[self.algorithm])
             return payload
         except JWTError as exc:
             logger.warning("Invalid token", error=str(exc))
@@ -138,13 +124,11 @@ class AuthService:
             DBUser: User record if found and active, None otherwise
         """
         async with AsyncSessionLocal() as session:
-            result = await session.execute(
-                select(DBUser).where(
-                    DBUser.username == username,
-                    DBUser.is_active
-                )
-            )
-            return result.scalar_one_or_none()
+            result = await session.execute(select(DBUser).where(DBUser.username == username, DBUser.is_active))
+            user = result.scalar_one_or_none()
+            if user is not None and not user.is_active:
+                return None
+            return user
 
     async def get_user_by_id(self, user_id: str) -> DBUser | None:
         """
@@ -157,12 +141,7 @@ class AuthService:
             DBUser: User record if found and active, None otherwise
         """
         async with AsyncSessionLocal() as session:
-            result = await session.execute(
-                select(DBUser).where(
-                    DBUser.id == user_id,
-                    DBUser.is_active
-                )
-            )
+            result = await session.execute(select(DBUser).where(DBUser.id == user_id, DBUser.is_active))
             return result.scalar_one_or_none()
 
     async def get_user_by_email(self, email: str) -> DBUser | None:
@@ -176,12 +155,7 @@ class AuthService:
             DBUser: User record if found and active, None otherwise
         """
         async with AsyncSessionLocal() as session:
-            result = await session.execute(
-                select(DBUser).where(
-                    DBUser.email == email,
-                    DBUser.is_active
-                )
-            )
+            result = await session.execute(select(DBUser).where(DBUser.email == email, DBUser.is_active))
             return result.scalar_one_or_none()
 
     async def authenticate_user(self, username: str, password: str) -> dict[str, Any] | None:
@@ -225,7 +199,7 @@ class AuthService:
             "username": user.username,
             "email": user.email,
             "permissions": user.permissions or [],
-            "is_superuser": user.is_superuser
+            "is_superuser": user.is_superuser,
         }
 
     async def create_default_admin(self) -> DBUser | None:
@@ -268,7 +242,7 @@ class AuthService:
                 "Default admin user created",
                 user_id=admin_user.id,
                 username=admin_user.username,
-                email=admin_user.email
+                email=admin_user.email,
             )
 
             return admin_user
@@ -281,7 +255,7 @@ class AuthService:
         first_name: str = None,
         last_name: str = None,
         permissions: list = None,
-        is_superuser: bool = False
+        is_superuser: bool = False,
     ) -> DBUser:
         """
         Create a new user in the database.
@@ -303,16 +277,12 @@ class AuthService:
         """
         async with AsyncSessionLocal() as session:
             # Check for existing username
-            existing = await session.execute(
-                select(DBUser).where(DBUser.username == username)
-            )
+            existing = await session.execute(select(DBUser).where(DBUser.username == username))
             if existing.scalar_one_or_none():
                 raise ValueError(f"Username '{username}' already exists")
 
             # Check for existing email
-            existing = await session.execute(
-                select(DBUser).where(DBUser.email == email)
-            )
+            existing = await session.execute(select(DBUser).where(DBUser.email == email))
             if existing.scalar_one_or_none():
                 raise ValueError(f"Email '{email}' already exists")
 
@@ -350,28 +320,19 @@ class AuthService:
         # Create access token
         access_token_expires = timedelta(minutes=self.settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = self.create_access_token(
-            data={"sub": user_data["user_id"], "username": user_data["username"]},
-            expires_delta=access_token_expires
+            data={"sub": user_data["user_id"], "username": user_data["username"]}, expires_delta=access_token_expires
         )
 
         # Create refresh token (longer lived)
         refresh_token_expires = timedelta(days=7)
         refresh_token = self.create_access_token(
-            data={
-                "sub": user_data["user_id"],
-                "username": user_data["username"],
-                "type": "refresh"
-            },
-            expires_delta=refresh_token_expires
+            data={"sub": user_data["user_id"], "username": user_data["username"], "type": "refresh"},
+            expires_delta=refresh_token_expires,
         )
 
         logger.info("User session created", user_id=user_data["user_id"])
 
-        return {
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "token_type": "bearer"
-        }
+        return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
 
 # Global auth service instance

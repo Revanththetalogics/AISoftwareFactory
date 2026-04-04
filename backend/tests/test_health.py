@@ -37,10 +37,7 @@ class TestHealthEndpoints:
     def test_health_check_with_custom_correlation_id(self, test_client: TestClient):
         """Test that custom correlation ID is preserved."""
         custom_id = "test-correlation-id-123"
-        response = test_client.get(
-            "/api/v1/health",
-            headers={"X-Correlation-ID": custom_id}
-        )
+        response = test_client.get("/api/v1/health", headers={"X-Correlation-ID": custom_id})
 
         assert response.status_code == 200
         assert response.json()["correlation_id"] == custom_id
@@ -54,19 +51,13 @@ class TestHealthEndpoints:
         components = data["components"]
 
         # Should have application component
-        app_component = next(
-            (c for c in components if c["name"] == "application"),
-            None
-        )
+        app_component = next((c for c in components if c["name"] == "application"), None)
         assert app_component is not None
         assert app_component["status"] == "healthy"
         assert "response_time_ms" in app_component
 
         # Should have configuration component
-        config_component = next(
-            (c for c in components if c["name"] == "configuration"),
-            None
-        )
+        config_component = next((c for c in components if c["name"] == "configuration"), None)
         assert config_component is not None
         assert config_component["status"] == "healthy"
 
@@ -82,8 +73,10 @@ class TestHealthEndpoints:
         mock_engine = MagicMock()
         mock_engine.connect = MagicMock(return_value=mock_conn_ctx)
 
-        with patch('backend.db.session.engine', mock_engine), \
-             patch('backend.api.health._check_redis', new=AsyncMock(return_value=True)):
+        with (
+            patch("backend.db.session.engine", mock_engine),
+            patch("backend.api.health._check_redis", new=AsyncMock(return_value=True)),
+        ):
             response = test_client.get("/api/v1/ready")
 
         assert response.status_code == 200

@@ -20,8 +20,10 @@ logger = get_logger(__name__)
 # Global simulation orchestrator instance (in production, use dependency injection)
 simulation_orchestrator = SimulationOrchestrator()
 
+
 class SimulationRunRequest(BaseModel):
     """Request model for running a simulation."""
+
     code: str
     language: str = "python"
     requirements: list[str] | None = None
@@ -31,8 +33,10 @@ class SimulationRunRequest(BaseModel):
     generate_reports: bool = True
     output_formats: list[str] | None = None
 
+
 class SimulationResultResponse(BaseModel):
     """Response model for simulation results."""
+
     simulation_id: str
     start_time: str
     end_time: str
@@ -42,6 +46,7 @@ class SimulationResultResponse(BaseModel):
     validation: dict[str, Any]
     reports: list[dict[str, str]]
     summary: dict[str, Any]
+
 
 @router.post("/run", response_model=APIResponse)
 async def run_simulation(request: SimulationRunRequest):
@@ -61,15 +66,12 @@ async def run_simulation(request: SimulationRunRequest):
             run_performance_test=request.run_performance_test,
             run_integration_test=request.run_integration_test,
             generate_reports=request.generate_reports,
-            output_formats=request.output_formats or ["json", "markdown"]
+            output_formats=request.output_formats or ["json", "markdown"],
         )
 
         # Run simulation
         results = await simulation_orchestrator.run_simulation(
-            code=request.code,
-            language=request.language,
-            requirements=request.requirements,
-            config=config
+            code=request.code, language=request.language, requirements=request.requirements, config=config
         )
 
         # Generate summary
@@ -77,19 +79,16 @@ async def run_simulation(request: SimulationRunRequest):
         results["summary"] = summary
 
         logger.info(
-            "Simulation completed successfully",
-            simulation_id=results["simulation_id"],
-            language=request.language
+            "Simulation completed successfully", simulation_id=results["simulation_id"], language=request.language
         )
 
         return APIResponse(
-            success=True,
-            data=results,
-            message=f"Simulation {results['simulation_id']} completed successfully"
+            success=True, data=results, message=f"Simulation {results['simulation_id']} completed successfully"
         )
     except Exception as e:
         logger.error("Simulation failed", error=str(e))
         raise HTTPException(status_code=500, detail=f"Simulation failed: {str(e)}")
+
 
 @router.get("/{simulation_id}", response_model=APIResponse)
 async def get_simulation(simulation_id: str):
@@ -106,11 +105,9 @@ async def get_simulation(simulation_id: str):
     # For now, we'll return a placeholder since simulations aren't persisted
     raise HTTPException(status_code=404, detail="Simulation not found - simulations are not persisted in this version")
 
+
 @router.get("/", response_model=APIResponse)
-async def list_simulations(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=100)
-):
+async def list_simulations(skip: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100)):
     """
     List recent simulations (placeholder - simulations are not persisted).
 
@@ -125,14 +122,10 @@ async def list_simulations(
     # For now, return empty list since simulations aren't persisted
     return APIResponse(
         success=True,
-        data={
-            "simulations": [],
-            "total_count": 0,
-            "skip": skip,
-            "limit": limit
-        },
-        message="No simulations found - simulations are not persisted in this version"
+        data={"simulations": [], "total_count": 0, "skip": skip, "limit": limit},
+        message="No simulations found - simulations are not persisted in this version",
     )
+
 
 @router.get("/stats", response_model=APIResponse)
 async def get_simulation_stats():
@@ -150,14 +143,11 @@ async def get_simulation_stats():
         "failed_simulations": 0,
         "average_duration": 0,
         "supported_languages": ["python"],
-        "last_run": None
+        "last_run": None,
     }
 
-    return APIResponse(
-        success=True,
-        data=stats,
-        message="Simulation statistics retrieved"
-    )
+    return APIResponse(success=True, data=stats, message="Simulation statistics retrieved")
+
 
 @router.post("/{simulation_id}/cancel", response_model=APIResponse)
 async def cancel_simulation(simulation_id: str):
@@ -173,6 +163,7 @@ async def cancel_simulation(simulation_id: str):
     # In a real implementation, this would cancel the running task
     # For now, return not implemented
     raise HTTPException(status_code=501, detail="Simulation cancellation not implemented in this version")
+
 
 @router.delete("/{simulation_id}", response_model=APIResponse)
 async def delete_simulation(simulation_id: str):

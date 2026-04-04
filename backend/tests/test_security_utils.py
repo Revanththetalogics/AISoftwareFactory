@@ -134,7 +134,7 @@ class TestSanitizeFilename:
 
     def test_filename_with_special_chars_sanitized(self):
         """Test special characters are replaced."""
-        result = sanitize_filename("file<>:\"|?*.txt")
+        result = sanitize_filename('file<>:"|?*.txt')
 
         # Should not contain dangerous characters
         assert "<" not in result
@@ -383,7 +383,7 @@ class TestSanitizeFilePathDifferentDrives:
         """Test that ValueError from commonpath is caught (covers lines 96-101)."""
         from unittest.mock import patch
 
-        with patch('os.path.commonpath') as mock_commonpath:
+        with patch("os.path.commonpath") as mock_commonpath:
             mock_commonpath.side_effect = ValueError("Paths on different drives")
 
             with pytest.raises(ValidationError) as exc_info:

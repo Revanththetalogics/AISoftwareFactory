@@ -20,6 +20,7 @@ logger = get_logger(__name__)
 
 class HealthStatus(Enum):
     """Health check status."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -28,12 +29,30 @@ class HealthStatus(Enum):
 @dataclass
 class HealthCheckResult:
     """Health check result."""
+
     component: str
     status: HealthStatus
     message: str
     timestamp: datetime
     latency_ms: float
     details: dict[str, Any] = field(default_factory=dict)
+
+
+class _AwaitableHealthResult(dict):
+    """A dict result that can also be awaited (runs async _checks when awaited)."""
+
+    def __init__(self, data: dict, async_fn=None):
+        super().__init__(data)
+        self._async_fn = async_fn
+
+    def __await__(self):
+        if self._async_fn:
+            return self._async_fn().__await__()
+
+        async def _return_self():
+            return self
+
+        return _return_self().__await__()
 
 
 class HealthChecker:
@@ -48,6 +67,7 @@ class HealthChecker:
     def __init__(self):
         """Initialize the health checker."""
         self._checks: dict[str, Callable] = {}
+        self._services: dict[str, Callable] = {}
         self._logger = get_logger(__name__)
 
     def register_check(self, name: str, check_fn: Callable):
@@ -61,7 +81,64 @@ class HealthChecker:
         self._checks[name] = check_fn
         self._logger.info("Health check registered", component=name)
 
-    async def check_health(self) -> dict[str, Any]:
+    def register_service(self, name: str, check_fn: Callable):
+        """
+        Register a service health check using a simple sync callable.
+
+        Args:
+            name: Service name
+            check_fn: Callable that returns a truthy value if healthy
+        """
+        self._services[name] = check_fn
+        self._logger.info("Service registered for health checking", service=name)
+
+    def check_health(self) -> "_AwaitableHealthResult":
+        """
+        Run all health checks.
+
+        Returns synchronously for service checks; awaitable for async checks.
+
+        Returns:
+            Health status dict (also awaitable for async _checks)
+        """
+        services_list = []
+        overall_status = HealthStatus.HEALTHY
+
+        for name, check_fn in self._services.items():
+            try:
+                result = check_fn()
+                healthy = bool(result)
+            except Exception:
+                healthy = False
+
+            if not healthy:
+                overall_status = HealthStatus.UNHEALTHY
+
+            services_list.append(
+                {
+                    "name": name,
+                    "healthy": healthy,
+                    "status": HealthStatus.HEALTHY.value if healthy else HealthStatus.UNHEALTHY.value,
+                }
+            )
+
+        sync_result = {
+            "status": overall_status.value,
+            "services": services_list,
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
+
+        if not self._checks:
+            return _AwaitableHealthResult(sync_result)
+
+        checker = self
+
+        async def _async_full_check():
+            return await checker._run_async_checks()
+
+        return _AwaitableHealthResult(sync_result, async_fn=_async_full_check)
+
+    async def _run_async_checks(self) -> dict[str, Any]:
         """
         Run all health checks.
 
@@ -93,7 +170,7 @@ class HealthChecker:
                     message=message,
                     timestamp=datetime.now(UTC),
                     latency_ms=latency,
-                    details=details
+                    details=details,
                 )
 
                 # Update overall status
@@ -111,7 +188,7 @@ class HealthChecker:
                     message=str(e),
                     timestamp=datetime.now(UTC),
                     latency_ms=latency,
-                    details={"error_type": type(e).__name__}
+                    details={"error_type": type(e).__name__},
                 )
                 overall_status = HealthStatus.UNHEALTHY
 
@@ -127,10 +204,10 @@ class HealthChecker:
                     "status": r.status.value,
                     "message": r.message,
                     "latency_ms": round(r.latency_ms, 2),
-                    "details": r.details
+                    "details": r.details,
                 }
                 for r in results
-            ]
+            ],
         }
 
     async def check_database(self) -> tuple[HealthStatus, str, dict[str, Any]]:
@@ -150,10 +227,10 @@ class HealthChecker:
             # Get connection pool statistics
             pool = engine.pool
             details["pool_stats"] = {
-                "size": pool.size() if hasattr(pool, 'size') else "N/A",
-                "checkedin": pool.checkedin() if hasattr(pool, 'checkedin') else "N/A",
-                "checkedout": pool.checkedout() if hasattr(pool, 'checkedout') else "N/A",
-                "overflow": pool.overflow() if hasattr(pool, 'overflow') else "N/A",
+                "size": pool.size() if hasattr(pool, "size") else "N/A",
+                "checkedin": pool.checkedin() if hasattr(pool, "checkedin") else "N/A",
+                "checkedout": pool.checkedout() if hasattr(pool, "checkedout") else "N/A",
+                "overflow": pool.overflow() if hasattr(pool, "overflow") else "N/A",
             }
 
             # Test actual query execution with timing
@@ -167,7 +244,7 @@ class HealthChecker:
             details["query_latency_ms"] = round(query_latency, 2)
 
             # Verify critical tables exist
-            critical_tables = ['users', 'projects', 'workflows', 'tasks']
+            critical_tables = ["users", "projects", "workflows", "tasks"]
             tables_ok = []
             tables_missing = []
 
@@ -176,6 +253,7 @@ class HealthChecker:
                     try:
                         # Use parameterized query to avoid SQL injection
                         from sqlalchemy import inspect
+
                         inspector = await session.run_sync(lambda sync_session: inspect(sync_session.connection()))
                         if table in inspector.get_table_names():
                             tables_ok.append(table)
@@ -185,40 +263,21 @@ class HealthChecker:
                         logger.debug(f"Error checking table {table}: {e}")
                         tables_missing.append(table)
 
-            details["schema"] = {
-                "tables_verified": tables_ok,
-                "tables_missing": tables_missing
-            }
+            details["schema"] = {"tables_verified": tables_ok, "tables_missing": tables_missing}
 
             # Determine status based on results
             if tables_missing:
-                return (
-                    HealthStatus.DEGRADED,
-                    f"Database connected but missing tables: {tables_missing}",
-                    details
-                )
+                return (HealthStatus.DEGRADED, f"Database connected but missing tables: {tables_missing}", details)
 
             # Check if query latency is too high (> 1000ms is concerning)
             if query_latency > 1000:
-                return (
-                    HealthStatus.DEGRADED,
-                    f"Database slow: {query_latency:.0f}ms query latency",
-                    details
-                )
+                return (HealthStatus.DEGRADED, f"Database slow: {query_latency:.0f}ms query latency", details)
 
-            return (
-                HealthStatus.HEALTHY,
-                f"Database OK ({query_latency:.1f}ms)",
-                details
-            )
+            return (HealthStatus.HEALTHY, f"Database OK ({query_latency:.1f}ms)", details)
 
         except Exception as e:
             details["error"] = str(e)
-            return (
-                HealthStatus.UNHEALTHY,
-                f"Database error: {e}",
-                details
-            )
+            return (HealthStatus.UNHEALTHY, f"Database error: {e}", details)
 
     async def check_redis(self) -> tuple[HealthStatus, str, dict[str, Any]]:
         """
@@ -253,25 +312,13 @@ class HealthChecker:
             details["ping_latency_ms"] = round(ping_latency, 2)
 
             if ping_latency > 100:
-                return (
-                    HealthStatus.DEGRADED,
-                    f"Redis slow: {ping_latency:.0f}ms",
-                    details
-                )
+                return (HealthStatus.DEGRADED, f"Redis slow: {ping_latency:.0f}ms", details)
 
-            return (
-                HealthStatus.HEALTHY,
-                f"Redis OK ({ping_latency:.1f}ms)",
-                details
-            )
+            return (HealthStatus.HEALTHY, f"Redis OK ({ping_latency:.1f}ms)", details)
 
         except Exception as e:
             details["error"] = str(e)
-            return (
-                HealthStatus.UNHEALTHY,
-                f"Redis error: {e}",
-                details
-            )
+            return (HealthStatus.UNHEALTHY, f"Redis error: {e}", details)
 
     async def check_disk_space(self) -> tuple[HealthStatus, str, dict[str, Any]]:
         """
@@ -297,30 +344,14 @@ class HealthChecker:
             details["usage_percent"] = round(usage_percent, 1)
 
             if free_gb < 1:
-                return (
-                    HealthStatus.UNHEALTHY,
-                    f"Critical: {free_gb:.1f}GB free",
-                    details
-                )
+                return (HealthStatus.UNHEALTHY, f"Critical: {free_gb:.1f}GB free", details)
             elif free_gb < 5:
-                return (
-                    HealthStatus.DEGRADED,
-                    f"Low disk: {free_gb:.1f}GB free",
-                    details
-                )
+                return (HealthStatus.DEGRADED, f"Low disk: {free_gb:.1f}GB free", details)
             else:
-                return (
-                    HealthStatus.HEALTHY,
-                    f"Disk OK: {free_gb:.1f}GB free ({usage_percent:.0f}% used)",
-                    details
-                )
+                return (HealthStatus.HEALTHY, f"Disk OK: {free_gb:.1f}GB free ({usage_percent:.0f}% used)", details)
         except Exception as e:
             details["error"] = str(e)
-            return (
-                HealthStatus.UNHEALTHY,
-                f"Disk check error: {e}",
-                details
-            )
+            return (HealthStatus.UNHEALTHY, f"Disk check error: {e}", details)
 
     def setup_default_checks(self):
         """Setup default health checks."""

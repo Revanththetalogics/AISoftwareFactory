@@ -25,6 +25,7 @@ logger = get_logger(__name__)
 
 class TestResultStatus(Enum):
     """Status of a test execution."""
+
     PASSED = "passed"
     FAILED = "failed"
     FLAKY = "flaky"
@@ -36,6 +37,7 @@ class TestResultStatus(Enum):
 @dataclass
 class TestExecutionResult:
     """Result of a single test execution."""
+
     test_id: str
     test_name: str
     status: TestResultStatus
@@ -66,6 +68,7 @@ class TestExecutionResult:
 @dataclass
 class FlakyTest:
     """Information about a flaky test."""
+
     test_id: str
     test_name: str
     failure_rate: float
@@ -88,6 +91,7 @@ class FlakyTest:
 @dataclass
 class TestSuiteResult:
     """Result of a complete test suite execution."""
+
     suite_name: str
     start_time: datetime
     end_time: datetime
@@ -205,8 +209,7 @@ class SelfHealingTestRunner:
         # Filter out quarantined tests unless explicitly requested
         if not run_quarantined:
             test_cases = [
-                tc for tc in test_cases
-                if tc.id not in self._flaky_tests or not self._flaky_tests[tc.id].quarantined
+                tc for tc in test_cases if tc.id not in self._flaky_tests or not self._flaky_tests[tc.id].quarantined
             ]
 
         # Sort tests by priority and failure history
@@ -278,11 +281,7 @@ class SelfHealingTestRunner:
 
         return suite_result
 
-    async def run_single_test(
-        self,
-        test_case: TestCase,
-        enable_retry: bool = True
-    ) -> TestExecutionResult:
+    async def run_single_test(self, test_case: TestCase, enable_retry: bool = True) -> TestExecutionResult:
         """
         Run a single test with self-healing.
 
@@ -352,26 +351,17 @@ class SelfHealingTestRunner:
         Returns:
             Statistics dictionary
         """
-        total_executions = sum(
-            len(results) for results in self._execution_history.values()
-        )
+        total_executions = sum(len(results) for results in self._execution_history.values())
 
-        total_healed = sum(
-            1 for results in self._execution_history.values()
-            for r in results if r.healing_applied
-        )
+        total_healed = sum(1 for results in self._execution_history.values() for r in results if r.healing_applied)
 
         return {
             "total_test_executions": total_executions,
             "unique_tests": len(self._execution_history),
             "flaky_tests_detected": len(self._flaky_tests),
-            "quarantined_tests": sum(
-                1 for ft in self._flaky_tests.values() if ft.quarantined
-            ),
+            "quarantined_tests": sum(1 for ft in self._flaky_tests.values() if ft.quarantined),
             "total_healing_applied": total_healed,
-            "healing_success_rate": (
-                total_healed / total_executions if total_executions > 0 else 0
-            ),
+            "healing_success_rate": (total_healed / total_executions if total_executions > 0 else 0),
         }
 
     def register_healing_strategy(self, strategy: Callable):
@@ -393,11 +383,7 @@ class SelfHealingTestRunner:
             self._heal_network_issues,
         ]
 
-    async def _run_test_with_healing(
-        self,
-        test_case: TestCase,
-        enable_retry: bool = True
-    ) -> TestExecutionResult:
+    async def _run_test_with_healing(self, test_case: TestCase, enable_retry: bool = True) -> TestExecutionResult:
         """Run a test with retry and healing logic."""
         last_result = None
 
@@ -496,9 +482,13 @@ class SelfHealingTestRunner:
             }
 
         cmd = [
-            sys.executable, "-m", "pytest",
+            sys.executable,
+            "-m",
+            "pytest",
             file_path,
-            "-x", "--tb=short", "-q",
+            "-x",
+            "--tb=short",
+            "-q",
             "--no-header",
             "--timeout=30",
         ]
@@ -509,9 +499,7 @@ class SelfHealingTestRunner:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            stdout, stderr = await asyncio.wait_for(
-                proc.communicate(), timeout=60.0
-            )
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=60.0)
             success = proc.returncode == 0
             return {
                 "success": success,
@@ -534,11 +522,7 @@ class SelfHealingTestRunner:
                 "return_code": -1,
             }
 
-    async def _attempt_healing(
-        self,
-        test_case: TestCase,
-        failure_result: dict[str, Any]
-    ) -> bool:
+    async def _attempt_healing(self, test_case: TestCase, failure_result: dict[str, Any]) -> bool:
         """Attempt to heal a failing test."""
         for strategy in self._healing_strategies:
             try:
@@ -550,11 +534,7 @@ class SelfHealingTestRunner:
 
         return False
 
-    async def _heal_timing_issues(
-        self,
-        test_case: TestCase,
-        failure_result: dict[str, Any]
-    ) -> bool:
+    async def _heal_timing_issues(self, test_case: TestCase, failure_result: dict[str, Any]) -> bool:
         """Heal timing-related issues."""
         error = failure_result.get("error", "")
 
@@ -565,11 +545,7 @@ class SelfHealingTestRunner:
 
         return False
 
-    async def _heal_selector_issues(
-        self,
-        test_case: TestCase,
-        failure_result: dict[str, Any]
-    ) -> bool:
+    async def _heal_selector_issues(self, test_case: TestCase, failure_result: dict[str, Any]) -> bool:
         """Heal selector-related issues."""
         error = failure_result.get("error", "")
 
@@ -580,11 +556,7 @@ class SelfHealingTestRunner:
 
         return False
 
-    async def _heal_network_issues(
-        self,
-        test_case: TestCase,
-        failure_result: dict[str, Any]
-    ) -> bool:
+    async def _heal_network_issues(self, test_case: TestCase, failure_result: dict[str, Any]) -> bool:
         """Heal network-related issues."""
         error = failure_result.get("error", "")
 
@@ -597,6 +569,7 @@ class SelfHealingTestRunner:
 
     def _sort_tests_by_priority(self, test_cases: list[TestCase]) -> list[TestCase]:
         """Sort tests by priority and failure history."""
+
         def sort_key(tc: TestCase):
             # Priority score (lower is higher priority)
             priority_score = tc.priority.value
@@ -604,8 +577,7 @@ class SelfHealingTestRunner:
             # Failure history score
             history = self._execution_history.get(tc.id, [])
             recent_failures = sum(
-                1 for r in history[-5:]
-                if r.status in [TestResultStatus.FAILED, TestResultStatus.FLAKY]
+                1 for r in history[-5:] if r.status in [TestResultStatus.FAILED, TestResultStatus.FLAKY]
             )
 
             # Tests with recent failures should run first (fail fast)
@@ -621,9 +593,7 @@ class SelfHealingTestRunner:
         self._execution_history[result.test_id].append(result)
 
         # Keep only last 20 results per test
-        self._execution_history[result.test_id] = (
-            self._execution_history[result.test_id][-20:]
-        )
+        self._execution_history[result.test_id] = self._execution_history[result.test_id][-20:]
 
     def _update_flaky_test_tracking(self, results: list[TestExecutionResult]):
         """Update flaky test tracking based on results."""
@@ -636,10 +606,7 @@ class SelfHealingTestRunner:
             if len(history) >= 5:
                 # Calculate failure rate
                 recent = history[-10:]
-                failures = sum(
-                    1 for r in recent
-                    if r.status in [TestResultStatus.FAILED, TestResultStatus.FLAKY]
-                )
+                failures = sum(1 for r in recent if r.status in [TestResultStatus.FAILED, TestResultStatus.FLAKY])
                 failure_rate = failures / len(recent)
 
                 if failure_rate >= self._flaky_threshold:

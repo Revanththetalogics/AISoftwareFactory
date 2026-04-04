@@ -48,12 +48,12 @@ class BackupSystem:
         """
         settings = get_settings()
 
-        self._backup_dir = Path(backup_dir or getattr(settings, 'BACKUP_DIR', './backups'))
+        self._backup_dir = Path(backup_dir or getattr(settings, "BACKUP_DIR", "./backups"))
         self._backup_dir.mkdir(parents=True, exist_ok=True)
 
-        self._retention_days = retention_days or getattr(settings, 'BACKUP_RETENTION_DAYS', 30)
-        self._schedule = schedule or getattr(settings, 'BACKUP_SCHEDULE', '0 2 * * *')
-        self._enabled = getattr(settings, 'BACKUP_ENABLED', True)
+        self._retention_days = retention_days or getattr(settings, "BACKUP_RETENTION_DAYS", 30)
+        self._schedule = schedule or getattr(settings, "BACKUP_SCHEDULE", "0 2 * * *")
+        self._enabled = getattr(settings, "BACKUP_ENABLED", True)
 
         self._logger = get_logger(__name__)
 
@@ -66,10 +66,7 @@ class BackupSystem:
         )
 
     async def create_backup(
-        self,
-        name: str | None = None,
-        include_databases: bool = True,
-        include_files: bool = True
+        self, name: str | None = None, include_databases: bool = True, include_files: bool = True
     ) -> dict[str, Any]:
         """
         Create a system backup.
@@ -124,7 +121,7 @@ class BackupSystem:
 
         # Save backup metadata
         metadata_path = backup_path / "metadata.json"
-        with open(metadata_path, 'w') as f:
+        with open(metadata_path, "w") as f:
             json.dump(backup_info, f, indent=2)
 
         self._logger.info(
@@ -156,33 +153,39 @@ class BackupSystem:
             # Parse database URL
             # Format: postgresql://user:password@host:port/database
             from urllib.parse import urlparse
+
             parsed = urlparse(db_url)
 
-            db_host = parsed.hostname or 'localhost'
+            db_host = parsed.hostname or "localhost"
             db_port = str(parsed.port or 5432)
-            db_name = parsed.path.lstrip('/') if parsed.path else 'ai_factory'
-            db_user = parsed.username or 'postgres'
-            db_password = parsed.password or ''
+            db_name = parsed.path.lstrip("/") if parsed.path else "ai_factory"
+            db_user = parsed.username or "postgres"
+            db_password = parsed.password or ""
 
             dump_file = backup_path / f"{db_name}.sql"
 
             # Set environment for pg_dump
             env = os.environ.copy()
             if db_password:
-                env['PGPASSWORD'] = db_password
+                env["PGPASSWORD"] = db_password
 
             # Run pg_dump
             cmd = [
-                'pg_dump',
-                '-h', db_host,
-                '-p', db_port,
-                '-U', db_user,
-                '-d', db_name,
-                '-f', str(dump_file),
-                '--verbose',
-                '--format=plain',
-                '--no-owner',
-                '--no-privileges',
+                "pg_dump",
+                "-h",
+                db_host,
+                "-p",
+                db_port,
+                "-U",
+                db_user,
+                "-d",
+                db_name,
+                "-f",
+                str(dump_file),
+                "--verbose",
+                "--format=plain",
+                "--no-owner",
+                "--no-privileges",
             ]
 
             self._logger.info(
@@ -278,13 +281,14 @@ class BackupSystem:
         db_url = settings.DATABASE_URL
 
         from urllib.parse import urlparse
+
         parsed = urlparse(db_url)
 
-        db_host = parsed.hostname or 'localhost'
+        db_host = parsed.hostname or "localhost"
         db_port = str(parsed.port or 5432)
-        db_name = parsed.path.lstrip('/') if parsed.path else 'ai_factory'
-        db_user = parsed.username or 'postgres'
-        db_password = parsed.password or ''
+        db_name = parsed.path.lstrip("/") if parsed.path else "ai_factory"
+        db_user = parsed.username or "postgres"
+        db_password = parsed.password or ""
 
         dump_file = backup_path / f"{db_name}.sql"
 
@@ -294,15 +298,20 @@ class BackupSystem:
 
         env = os.environ.copy()
         if db_password:
-            env['PGPASSWORD'] = db_password
+            env["PGPASSWORD"] = db_password
 
         cmd = [
-            'psql',
-            '-h', db_host,
-            '-p', db_port,
-            '-U', db_user,
-            '-d', db_name,
-            '-f', str(dump_file),
+            "psql",
+            "-h",
+            db_host,
+            "-p",
+            db_port,
+            "-U",
+            db_user,
+            "-d",
+            db_name,
+            "-f",
+            str(dump_file),
         ]
 
         process = await asyncio.create_subprocess_exec(
@@ -343,7 +352,7 @@ class BackupSystem:
             component_status = {}
 
             if "database" in metadata.get("components", []):
-                db_name = get_settings().DATABASE_URL.split('/')[-1]
+                db_name = get_settings().DATABASE_URL.split("/")[-1]
                 dump_file = backup_path / f"{db_name}.sql"
                 component_status["database"] = dump_file.exists()
                 if not dump_file.exists():
@@ -457,3 +466,70 @@ class BackupSystem:
         """Get backup cron schedule."""
         return self._schedule
 
+
+class BackupManager:
+    """
+    Simple synchronous backup manager.
+
+    A lightweight backup class with synchronous operations using string paths,
+    for compatibility with tests that expect sync behavior.
+    """
+
+    def __init__(self, backup_dir: str = "/var/backups", **kwargs):
+        """Initialize BackupManager with string backup directory."""
+        self._backup_dir = backup_dir
+
+    def create_backup(self, data: Any, name: str) -> str:
+        """
+        Create a synchronous backup of data.
+
+        Args:
+            data: Data to back up (must be JSON-serializable)
+            name: Backup name/identifier
+
+        Returns:
+            Backup file path as string
+        """
+        file_path = os.path.join(self._backup_dir, f"{name}.json")
+        os.makedirs(self._backup_dir, exist_ok=True)
+        with open(file_path, "w") as f:
+            json.dump(data, f)
+        return file_path
+
+    def list_backups(self) -> list[str]:
+        """
+        List available backup files.
+
+        Returns:
+            List of backup file names
+        """
+        if not os.path.exists(self._backup_dir):
+            return []
+        return [f for f in os.listdir(self._backup_dir) if f.endswith(".json")]
+
+    def restore_backup(self, name: str) -> Any:
+        """
+        Restore data from a backup.
+
+        Args:
+            name: Backup name to restore
+
+        Returns:
+            Restored data
+
+        Raises:
+            FileNotFoundError: If backup not found
+        """
+        file_path = os.path.join(self._backup_dir, f"{name}.json")
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"Backup '{name}' not found")
+        with open(file_path) as f:
+            return json.load(f)
+
+    def delete_backup(self, name: str) -> bool:
+        """Delete a backup file."""
+        file_path = os.path.join(self._backup_dir, f"{name}.json")
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            return True
+        return False

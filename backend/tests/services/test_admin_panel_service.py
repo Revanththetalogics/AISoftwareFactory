@@ -19,9 +19,9 @@ class TestAdminPanelService:
     def test_init(self, admin_service):
         """Test service initialization."""
         assert admin_service is not None
-        assert hasattr(admin_service, 'admin_users')
-        assert hasattr(admin_service, 'audit_logs')
-        assert hasattr(admin_service, 'maintenance_schedules')
+        assert hasattr(admin_service, "admin_users")
+        assert hasattr(admin_service, "audit_logs")
+        assert hasattr(admin_service, "maintenance_schedules")
 
     @pytest.mark.asyncio
     async def test_get_system_health(self, admin_service):
@@ -97,7 +97,7 @@ class TestAdminPanelService:
     @pytest.mark.asyncio
     async def test_logger_error_handling(self, admin_service):
         """Test that service works even if logger has issues."""
-        with patch('backend.core.logging.get_logger') as mock_get_logger:
+        with patch("backend.core.logging.get_logger") as mock_get_logger:
             mock_logger = Mock()
             mock_logger.info.side_effect = Exception("Logger error")
             mock_logger.error.side_effect = Exception("Logger error")

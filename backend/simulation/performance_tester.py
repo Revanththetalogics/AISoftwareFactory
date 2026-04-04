@@ -20,6 +20,7 @@ logger = get_logger(__name__)
 @dataclass
 class PerformanceResult:
     """Performance test result."""
+
     operation: str
     requests: int
     total_time: float
@@ -46,12 +47,7 @@ class PerformanceTester:
         self._logger = get_logger(__name__)
 
     async def load_test(
-        self,
-        operation: Callable,
-        requests: int = 100,
-        concurrency: int = 10,
-        *args,
-        **kwargs
+        self, operation: Callable, requests: int = 100, concurrency: int = 10, *args, **kwargs
     ) -> PerformanceResult:
         """
         Run a load test.
@@ -104,7 +100,7 @@ class PerformanceTester:
                 p95_latency=0,
                 p99_latency=0,
                 errors=errors,
-                throughput=0
+                throughput=0,
             )
 
         # Calculate statistics
@@ -122,14 +118,11 @@ class PerformanceTester:
             p95_latency=sorted_latencies[int(n * 0.95)],
             p99_latency=sorted_latencies[int(n * 0.99)],
             errors=errors,
-            throughput=requests / total_time
+            throughput=requests / total_time,
         )
 
     async def benchmark_api(
-        self,
-        base_url: str,
-        endpoints: list[dict[str, Any]],
-        duration: int = 60
+        self, base_url: str, endpoints: list[dict[str, Any]], duration: int = 60
     ) -> dict[str, PerformanceResult]:
         """
         Benchmark API endpoints.
@@ -152,17 +145,14 @@ class PerformanceTester:
             # Create test function - capture path and method values in default args
             async def test_fn(path=path, method=method):
                 import aiohttp
+
                 async with aiohttp.ClientSession() as session:
                     url = f"{base_url}{path}"
                     async with session.request(method, url) as resp:
                         await resp.text()
 
             # Run load test
-            result = await self.load_test(
-                test_fn,
-                requests=100,
-                concurrency=10
-            )
+            result = await self.load_test(test_fn, requests=100, concurrency=10)
 
             results[name] = result
 
@@ -175,9 +165,9 @@ class PerformanceTester:
                 "total_tests": len(results),
                 "total_requests": sum(r.requests for r in results.values()),
                 "total_errors": sum(r.errors for r in results.values()),
-                "avg_throughput": mean(r.throughput for r in results.values())
+                "avg_throughput": mean(r.throughput for r in results.values()),
             },
-            "details": {}
+            "details": {},
         }
 
         for name, result in results.items():
@@ -186,7 +176,7 @@ class PerformanceTester:
                 "avg_latency_ms": round(result.avg_latency * 1000, 2),
                 "p95_latency_ms": round(result.p95_latency * 1000, 2),
                 "throughput_rps": round(result.throughput, 2),
-                "errors": result.errors
+                "errors": result.errors,
             }
 
         return report

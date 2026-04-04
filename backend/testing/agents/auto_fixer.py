@@ -26,6 +26,7 @@ logger = get_logger(__name__)
 
 class FixStatus(Enum):
     """Status of a fix attempt."""
+
     PENDING = "pending"
     SUCCESS = "success"
     FAILED = "failed"
@@ -35,6 +36,7 @@ class FixStatus(Enum):
 
 class FixStrategy(Enum):
     """Strategy used for fixing."""
+
     PATTERN = "pattern"  # Regex/AST pattern-based
     LLM = "llm"  # LLM-generated fix
     REFACTORING = "refactoring"  # Safe refactoring
@@ -44,6 +46,7 @@ class FixStrategy(Enum):
 @dataclass
 class CodeChange:
     """Represents a code change."""
+
     file_path: str
     line_start: int
     line_end: int
@@ -65,6 +68,7 @@ class CodeChange:
 @dataclass
 class FixAttempt:
     """Represents a fix attempt."""
+
     id: str
     bug_id: str
     file_path: str
@@ -97,6 +101,7 @@ class FixAttempt:
 @dataclass
 class ValidationResult:
     """Result of fix validation."""
+
     passed: bool
     syntax_valid: bool
     tests_pass: bool
@@ -212,7 +217,7 @@ class AutoFixerAgent(BaseAgent):
         suggested_fix: str,
         line_number: int | None = None,
         auto_apply: bool = False,
-        validate: bool = True
+        validate: bool = True,
     ) -> FixAttempt:
         """
         Fix a single bug.
@@ -232,15 +237,11 @@ class AutoFixerAgent(BaseAgent):
         self._logger.info("Fixing bug", bug_id=bug_id, file_path=file_path)
 
         # Try pattern-based fix first
-        fix_attempt = await self._try_pattern_fix(
-            bug_id, file_path, bug_description, line_number
-        )
+        fix_attempt = await self._try_pattern_fix(bug_id, file_path, bug_description, line_number)
 
         # If pattern fix failed, try LLM
         if fix_attempt.status == FixStatus.FAILED:
-            fix_attempt = await self._try_llm_fix(
-                bug_id, file_path, bug_description, suggested_fix, line_number
-            )
+            fix_attempt = await self._try_llm_fix(bug_id, file_path, bug_description, suggested_fix, line_number)
 
         # Validate if requested
         if validate and fix_attempt.status != FixStatus.FAILED:
@@ -272,10 +273,7 @@ class AutoFixerAgent(BaseAgent):
         return fix_attempt
 
     async def batch_fix(
-        self,
-        bugs: list[dict[str, Any]],
-        auto_apply: bool = False,
-        stop_on_failure: bool = True
+        self, bugs: list[dict[str, Any]], auto_apply: bool = False, stop_on_failure: bool = True
     ) -> list[FixAttempt]:
         """
         Fix multiple bugs in batch.
@@ -358,12 +356,7 @@ class AutoFixerAgent(BaseAgent):
             return False
 
     async def preview_fix(
-        self,
-        bug_id: str,
-        file_path: str,
-        bug_description: str,
-        suggested_fix: str,
-        line_number: int | None = None
+        self, bug_id: str, file_path: str, bug_description: str, suggested_fix: str, line_number: int | None = None
     ) -> dict[str, Any]:
         """
         Preview a fix without applying it.
@@ -378,9 +371,7 @@ class AutoFixerAgent(BaseAgent):
         Returns:
             Preview information including diff
         """
-        fix_attempt = await self._try_llm_fix(
-            bug_id, file_path, bug_description, suggested_fix, line_number
-        )
+        fix_attempt = await self._try_llm_fix(bug_id, file_path, bug_description, suggested_fix, line_number)
 
         return {
             "can_fix": fix_attempt.status != FixStatus.FAILED,
@@ -423,33 +414,29 @@ class AutoFixerAgent(BaseAgent):
         """Load pattern-based fix definitions."""
         return {
             "bare_except": {
-                "pattern": r'except\s*:',
-                "replacement": 'except Exception:',
+                "pattern": r"except\s*:",
+                "replacement": "except Exception:",
                 "description": "Replace bare except with explicit Exception",
             },
             "mutable_default": {
-                "pattern": r'def\s+(\w+)\s*\(([^)]*=\s*)(\[|\{)([^\}\]]*)(\}|\])',
-                "replacement": r'def \1(\2None):\n    \2 = \3\4\5 if \2 is None else \2',
+                "pattern": r"def\s+(\w+)\s*\(([^)]*=\s*)(\[|\{)([^\}\]]*)(\}|\])",
+                "replacement": r"def \1(\2None):\n    \2 = \3\4\5 if \2 is None else \2",
                 "description": "Fix mutable default argument",
             },
             "print_to_logger": {
-                "pattern": r'print\s*\(([^)]+)\)',
-                "replacement": r'logger.info(\1)',
+                "pattern": r"print\s*\(([^)]+)\)",
+                "replacement": r"logger.info(\1)",
                 "description": "Replace print with logger",
             },
             "unused_import": {
-                "pattern": r'^import\s+(\w+)$',
-                "replacement": '',
+                "pattern": r"^import\s+(\w+)$",
+                "replacement": "",
                 "description": "Remove unused import",
             },
         }
 
     async def _try_pattern_fix(
-        self,
-        bug_id: str,
-        file_path: str,
-        bug_description: str,
-        line_number: int | None
+        self, bug_id: str, file_path: str, bug_description: str, line_number: int | None
     ) -> FixAttempt:
         """Try to fix using pattern matching."""
         fix_attempt = FixAttempt(
@@ -471,11 +458,8 @@ class AutoFixerAgent(BaseAgent):
             for pattern_name, pattern_def in self._fix_patterns.items():
                 if pattern_name.lower() in bug_description.lower():
                     import re
-                    new_code, count = re.subn(
-                        pattern_def["pattern"],
-                        pattern_def["replacement"],
-                        new_code
-                    )
+
+                    new_code, count = re.subn(pattern_def["pattern"], pattern_def["replacement"], new_code)
                     if count > 0:
                         changes_made = True
                         change = CodeChange(
@@ -501,12 +485,7 @@ class AutoFixerAgent(BaseAgent):
         return fix_attempt
 
     async def _try_llm_fix(
-        self,
-        bug_id: str,
-        file_path: str,
-        bug_description: str,
-        suggested_fix: str,
-        line_number: int | None
+        self, bug_id: str, file_path: str, bug_description: str, suggested_fix: str, line_number: int | None
     ) -> FixAttempt:
         """Try to fix using LLM."""
         fix_attempt = FixAttempt(
@@ -603,7 +582,7 @@ Provide the complete fixed code. Only return the code, no explanations."""
             fix_attempt.backup_path = str(backup_path)
 
             # Apply change
-            with open(change.file_path, 'w') as f:
+            with open(change.file_path, "w") as f:
                 f.write(change.new_code)
 
             return True
@@ -624,14 +603,14 @@ Provide the complete fixed code. Only return the code, no explanations."""
             tofile="modified",
         )
 
-        return ''.join(diff)
+        return "".join(diff)
 
     def _extract_code_from_response(self, response: str) -> str:
         """Extract code from LLM response."""
         # Try to extract from markdown code blocks
         import re
 
-        code_block_pattern = r'```(?:python)?\s*\n(.*?)\n```'
+        code_block_pattern = r"```(?:python)?\s*\n(.*?)\n```"
         match = re.search(code_block_pattern, response, re.DOTALL)
 
         if match:

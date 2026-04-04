@@ -14,6 +14,7 @@ from typing import Any
 
 class ModelCapability(StrEnum):
     """Capabilities that models may have."""
+
     CODE_GENERATION = "code_generation"
     CODE_REVIEW = "code_review"
     TEXT_GENERATION = "text_generation"
@@ -37,6 +38,7 @@ class LLMRequest:
         stop_sequences: Sequences that stop generation
         context: Additional context for the request
     """
+
     prompt: str
     model: str | None = None
     max_tokens: int = 1024
@@ -74,6 +76,7 @@ class LLMResponse:
         timestamp: When response was received
         error: Error message if failed
     """
+
     text: str = ""
     model: str = ""
     prompt_tokens: int = 0

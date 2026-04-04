@@ -26,8 +26,10 @@ router = APIRouter(prefix="/agent-management", tags=["agent-management"])
 
 # ── Pydantic models ────────────────────────────────────────────────────────────
 
+
 class CreateAgentRequest(BaseModel):
     """Request to create a custom agent."""
+
     name: str = Field(..., min_length=1, max_length=100)
     role: str = Field(..., min_length=1, max_length=100)
     goal: str = Field(..., min_length=10)
@@ -46,6 +48,7 @@ class CreateAgentResponse(BaseModel):
 
 class CreateCrewRequest(BaseModel):
     """Request to create a custom crew."""
+
     name: str = Field(..., min_length=1, max_length=100)
     description: str = Field(..., min_length=10)
     agent_ids: list[str] = Field(..., min_length=1)
@@ -64,6 +67,7 @@ class ListModelsResponse(BaseModel):
 
 
 # ── Agents ─────────────────────────────────────────────────────────────────────
+
 
 @router.post(
     "/agents",
@@ -164,6 +168,7 @@ async def delete_agent(
 
 # ── Crews ──────────────────────────────────────────────────────────────────────
 
+
 @router.post(
     "/crews",
     response_model=CreateCrewResponse,
@@ -244,6 +249,7 @@ async def delete_crew(
 
 
 # ── LLM Models ─────────────────────────────────────────────────────────────────
+
 
 @router.get(
     "/llm-models",

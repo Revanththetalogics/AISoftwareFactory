@@ -36,11 +36,13 @@ def sample_project():
         "status": "active",
         "visibility": "private",
         "created_at": "2024-01-01T00:00:00Z",
-        "updated_at": "2024-01-01T00:00:00Z"
+        "updated_at": "2024-01-01T00:00:00Z",
     }
 
 
-@pytest.mark.skip(reason="Patches backend.api.routes.projects.ProjectService which does not exist; routes use a project_service instance, not a ProjectService class. Needs rewrite.")
+@pytest.mark.skip(
+    reason="Patches backend.api.routes.projects.ProjectService which does not exist; routes use a project_service instance, not a ProjectService class. Needs rewrite."
+)
 class TestProjectRoutes:
     """Tests for project API routes."""
 
@@ -50,12 +52,8 @@ class TestProjectRoutes:
 
         response = client.post(
             "/projects",
-            json={
-                "name": "Test Project",
-                "description": "A test project",
-                "visibility": "private"
-            },
-            headers={"Authorization": "Bearer valid-token"}
+            json={"name": "Test Project", "description": "A test project", "visibility": "private"},
+            headers={"Authorization": "Bearer valid-token"},
         )
 
         assert response.status_code == 201
@@ -70,9 +68,9 @@ class TestProjectRoutes:
             "/projects",
             json={
                 "name": "",  # Empty name should fail validation
-                "description": "A test project"
+                "description": "A test project",
             },
-            headers={"Authorization": "Bearer valid-token"}
+            headers={"Authorization": "Bearer valid-token"},
         )
 
         assert response.status_code == 422  # Validation error
@@ -85,22 +83,19 @@ class TestProjectRoutes:
                 "name": "Project 1",
                 "description": "First project",
                 "owner_id": "user123",
-                "status": "active"
+                "status": "active",
             },
             {
                 "id": "proj2",
                 "name": "Project 2",
                 "description": "Second project",
                 "owner_id": "user123",
-                "status": "active"
-            }
+                "status": "active",
+            },
         ]
         mock_project_service.list_projects.return_value = mock_projects
 
-        response = client.get(
-            "/projects",
-            headers={"Authorization": "Bearer valid-token"}
-        )
+        response = client.get("/projects", headers={"Authorization": "Bearer valid-token"})
 
         assert response.status_code == 200
         data = response.json()
@@ -112,10 +107,7 @@ class TestProjectRoutes:
         """Test getting specific project."""
         mock_project_service.get_project.return_value = sample_project
 
-        response = client.get(
-            "/projects/proj123",
-            headers={"Authorization": "Bearer valid-token"}
-        )
+        response = client.get("/projects/proj123", headers={"Authorization": "Bearer valid-token"})
 
         assert response.status_code == 200
         data = response.json()
@@ -126,12 +118,10 @@ class TestProjectRoutes:
     def test_get_project_not_found(self, client, mock_project_service):
         """Test getting non-existent project."""
         from backend.core.exceptions import NotFoundError
+
         mock_project_service.get_project.side_effect = NotFoundError("Project not found")
 
-        response = client.get(
-            "/projects/nonexistent",
-            headers={"Authorization": "Bearer valid-token"}
-        )
+        response = client.get("/projects/nonexistent", headers={"Authorization": "Bearer valid-token"})
 
         assert response.status_code == 404
         data = response.json()
@@ -147,12 +137,8 @@ class TestProjectRoutes:
 
         response = client.put(
             "/projects/proj123",
-            json={
-                "name": "Updated Project Name",
-                "description": "Updated description",
-                "visibility": "public"
-            },
-            headers={"Authorization": "Bearer valid-token"}
+            json={"name": "Updated Project Name", "description": "Updated description", "visibility": "public"},
+            headers={"Authorization": "Bearer valid-token"},
         )
 
         assert response.status_code == 200
@@ -170,7 +156,7 @@ class TestProjectRoutes:
         response = client.patch(
             "/projects/proj123",
             json={"name": "Partially Updated Name"},
-            headers={"Authorization": "Bearer valid-token"}
+            headers={"Authorization": "Bearer valid-token"},
         )
 
         assert response.status_code == 200
@@ -182,10 +168,7 @@ class TestProjectRoutes:
         """Test deleting project."""
         mock_project_service.delete_project.return_value = True
 
-        response = client.delete(
-            "/projects/proj123",
-            headers={"Authorization": "Bearer valid-token"}
-        )
+        response = client.delete("/projects/proj123", headers={"Authorization": "Bearer valid-token"})
 
         assert response.status_code == 200
         data = response.json()
@@ -195,12 +178,10 @@ class TestProjectRoutes:
     def test_delete_project_not_found(self, client, mock_project_service):
         """Test deleting non-existent project."""
         from backend.core.exceptions import NotFoundError
+
         mock_project_service.delete_project.side_effect = NotFoundError("Project not found")
 
-        response = client.delete(
-            "/projects/nonexistent",
-            headers={"Authorization": "Bearer valid-token"}
-        )
+        response = client.delete("/projects/nonexistent", headers={"Authorization": "Bearer valid-token"})
 
         assert response.status_code == 404
 
@@ -210,10 +191,7 @@ class TestProjectRoutes:
         archived_project["status"] = "archived"
         mock_project_service.archive_project.return_value = archived_project
 
-        response = client.post(
-            "/projects/proj123/archive",
-            headers={"Authorization": "Bearer valid-token"}
-        )
+        response = client.post("/projects/proj123/archive", headers={"Authorization": "Bearer valid-token"})
 
         assert response.status_code == 200
         data = response.json()
@@ -226,10 +204,7 @@ class TestProjectRoutes:
         active_project["status"] = "active"
         mock_project_service.unarchive_project.return_value = active_project
 
-        response = client.post(
-            "/projects/proj123/unarchive",
-            headers={"Authorization": "Bearer valid-token"}
-        )
+        response = client.post("/projects/proj123/unarchive", headers={"Authorization": "Bearer valid-token"})
 
         assert response.status_code == 200
         data = response.json()
@@ -239,25 +214,12 @@ class TestProjectRoutes:
     def test_list_project_members_success(self, client, mock_project_service):
         """Test listing project members."""
         mock_members = [
-            {
-                "user_id": "user1",
-                "username": "member1",
-                "role": "developer",
-                "joined_at": "2024-01-01T00:00:00Z"
-            },
-            {
-                "user_id": "user2",
-                "username": "member2",
-                "role": "viewer",
-                "joined_at": "2024-01-02T00:00:00Z"
-            }
+            {"user_id": "user1", "username": "member1", "role": "developer", "joined_at": "2024-01-01T00:00:00Z"},
+            {"user_id": "user2", "username": "member2", "role": "viewer", "joined_at": "2024-01-02T00:00:00Z"},
         ]
         mock_project_service.list_project_members.return_value = mock_members
 
-        response = client.get(
-            "/projects/proj123/members",
-            headers={"Authorization": "Bearer valid-token"}
-        )
+        response = client.get("/projects/proj123/members", headers={"Authorization": "Bearer valid-token"})
 
         assert response.status_code == 200
         data = response.json()
@@ -271,17 +233,14 @@ class TestProjectRoutes:
             "user_id": "newuser123",
             "username": "newmember",
             "role": "developer",
-            "joined_at": "2024-01-03T00:00:00Z"
+            "joined_at": "2024-01-03T00:00:00Z",
         }
         mock_project_service.add_project_member.return_value = mock_member
 
         response = client.post(
             "/projects/proj123/members",
-            json={
-                "user_id": "newuser123",
-                "role": "developer"
-            },
-            headers={"Authorization": "Bearer valid-token"}
+            json={"user_id": "newuser123", "role": "developer"},
+            headers={"Authorization": "Bearer valid-token"},
         )
 
         assert response.status_code == 201
@@ -294,10 +253,7 @@ class TestProjectRoutes:
         """Test removing member from project."""
         mock_project_service.remove_project_member.return_value = True
 
-        response = client.delete(
-            "/projects/proj123/members/user123",
-            headers={"Authorization": "Bearer valid-token"}
-        )
+        response = client.delete("/projects/proj123/members/user123", headers={"Authorization": "Bearer valid-token"})
 
         assert response.status_code == 200
         data = response.json()
@@ -310,14 +266,12 @@ class TestProjectRoutes:
             "user_id": "user123",
             "username": "member",
             "role": "admin",
-            "joined_at": "2024-01-01T00:00:00Z"
+            "joined_at": "2024-01-01T00:00:00Z",
         }
         mock_project_service.update_member_role.return_value = mock_updated_member
 
         response = client.put(
-            "/projects/proj123/members/user123",
-            json={"role": "admin"},
-            headers={"Authorization": "Bearer valid-token"}
+            "/projects/proj123/members/user123", json={"role": "admin"}, headers={"Authorization": "Bearer valid-token"}
         )
 
         assert response.status_code == 200
@@ -332,14 +286,11 @@ class TestProjectRoutes:
             "total_workflows": 12,
             "total_agents": 8,
             "created_at": "2024-01-01T00:00:00Z",
-            "last_activity": "2024-01-15T10:30:00Z"
+            "last_activity": "2024-01-15T10:30:00Z",
         }
         mock_project_service.get_project_statistics.return_value = mock_stats
 
-        response = client.get(
-            "/projects/proj123/stats",
-            headers={"Authorization": "Bearer valid-token"}
-        )
+        response = client.get("/projects/proj123/stats", headers={"Authorization": "Bearer valid-token"})
 
         assert response.status_code == 200
         data = response.json()
@@ -350,19 +301,11 @@ class TestProjectRoutes:
     def test_search_projects_success(self, client, mock_project_service):
         """Test searching projects."""
         mock_projects = [
-            {
-                "id": "proj1",
-                "name": "Search Result 1",
-                "description": "Matches search term",
-                "owner_id": "user123"
-            }
+            {"id": "proj1", "name": "Search Result 1", "description": "Matches search term", "owner_id": "user123"}
         ]
         mock_project_service.search_projects.return_value = mock_projects
 
-        response = client.get(
-            "/projects/search?q=search+term",
-            headers={"Authorization": "Bearer valid-token"}
-        )
+        response = client.get("/projects/search?q=search+term", headers={"Authorization": "Bearer valid-token"})
 
         assert response.status_code == 200
         data = response.json()
@@ -374,14 +317,11 @@ class TestProjectRoutes:
         """Test listing projects for specific user."""
         mock_projects = [
             {"id": "proj1", "name": "User Project 1", "owner_id": "specific-user"},
-            {"id": "proj2", "name": "User Project 2", "owner_id": "specific-user"}
+            {"id": "proj2", "name": "User Project 2", "owner_id": "specific-user"},
         ]
         mock_project_service.list_user_projects.return_value = mock_projects
 
-        response = client.get(
-            "/projects/user/specific-user",
-            headers={"Authorization": "Bearer valid-token"}
-        )
+        response = client.get("/projects/user/specific-user", headers={"Authorization": "Bearer valid-token"})
 
         assert response.status_code == 200
         data = response.json()
@@ -399,7 +339,7 @@ class TestProjectRoutes:
         response = client.post(
             "/projects/proj123/duplicate",
             json={"name": "Copy of Test Project"},
-            headers={"Authorization": "Bearer valid-token"}
+            headers={"Authorization": "Bearer valid-token"},
         )
 
         assert response.status_code == 201
@@ -414,14 +354,11 @@ class TestProjectRoutes:
             "project": {"id": "proj123", "name": "Test Project"},
             "workflows": [],
             "agents": [],
-            "exported_at": "2024-01-15T10:30:00Z"
+            "exported_at": "2024-01-15T10:30:00Z",
         }
         mock_project_service.export_project.return_value = mock_export_data
 
-        response = client.get(
-            "/projects/proj123/export",
-            headers={"Authorization": "Bearer valid-token"}
-        )
+        response = client.get("/projects/proj123/export", headers={"Authorization": "Bearer valid-token"})
 
         assert response.status_code == 200
         data = response.json()
@@ -436,13 +373,8 @@ class TestProjectRoutes:
         # Mock file upload
         response = client.post(
             "/projects/import",
-            json={
-                "project_data": {
-                    "name": "Imported Project",
-                    "description": "Imported from export"
-                }
-            },
-            headers={"Authorization": "Bearer valid-token"}
+            json={"project_data": {"name": "Imported Project", "description": "Imported from export"}},
+            headers={"Authorization": "Bearer valid-token"},
         )
 
         assert response.status_code == 201

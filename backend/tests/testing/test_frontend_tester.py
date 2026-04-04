@@ -20,7 +20,8 @@ from backend.testing.agents.frontend_tester import (
 def mock_llm():
     """Fixture for mocked LLM provider."""
     llm = Mock()
-    llm.generate = AsyncMock(return_value="""import { test, expect } from '@playwright/test';
+    llm.generate = AsyncMock(
+        return_value="""import { test, expect } from '@playwright/test';
 
 test('user login flow', async ({ page }) => {
     await page.goto('/login');
@@ -29,14 +30,15 @@ test('user login flow', async ({ page }) => {
     await page.click('[data-testid="submit"]');
     await expect(page).toHaveURL('/dashboard');
 });
-""")
+"""
+    )
     return llm
 
 
 @pytest.fixture
 def frontend_tester_agent(mock_llm):
     """Fixture for FrontendTesterAgent with mocked LLM."""
-    with patch('backend.testing.agents.frontend_tester.LLMFactory.create_llm', return_value=mock_llm):
+    with patch("backend.testing.agents.frontend_tester.LLMFactory.create_llm", return_value=mock_llm):
         agent = FrontendTesterAgent(base_url="http://localhost:3000")
         agent._llm = mock_llm
         agent._playwright_available = False  # Mock playwright not available
@@ -413,9 +415,7 @@ class TestFrontendTesterAgent:
     @pytest.mark.asyncio
     async def test_heal_selector(self, frontend_tester_agent):
         """Test healing a broken selector."""
-        frontend_tester_agent._llm.generate = AsyncMock(
-            return_value='[data-testid="new-selector"]'
-        )
+        frontend_tester_agent._llm.generate = AsyncMock(return_value='[data-testid="new-selector"]')
 
         new_selector = await frontend_tester_agent.heal_selector(
             broken_selector="#old-id",
@@ -505,9 +505,9 @@ class TestFrontendTesterAgent:
 
     def test_check_playwright_not_installed(self, frontend_tester_agent):
         """Test _check_playwright when not installed."""
-        with patch.dict('sys.modules', {'playwright': None}):
+        with patch.dict("sys.modules", {"playwright": None}):
             # Create a new agent to trigger the check
-            with patch('backend.testing.agents.frontend_tester.LLMFactory.create_llm'):
+            with patch("backend.testing.agents.frontend_tester.LLMFactory.create_llm"):
                 FrontendTesterAgent()
                 # The check happens during init
 
@@ -540,18 +540,9 @@ class TestFrontendTesterAgent:
     def test_group_by_browser(self, frontend_tester_agent):
         """Test grouping results by browser."""
         frontend_tester_agent._test_history = [
-            E2ETestResult(
-                test_name="test1", status=TestStatus.PASSED,
-                duration_ms=100, browser="chromium", url="/t1"
-            ),
-            E2ETestResult(
-                test_name="test2", status=TestStatus.PASSED,
-                duration_ms=100, browser="chromium", url="/t2"
-            ),
-            E2ETestResult(
-                test_name="test3", status=TestStatus.PASSED,
-                duration_ms=100, browser="firefox", url="/t3"
-            ),
+            E2ETestResult(test_name="test1", status=TestStatus.PASSED, duration_ms=100, browser="chromium", url="/t1"),
+            E2ETestResult(test_name="test2", status=TestStatus.PASSED, duration_ms=100, browser="chromium", url="/t2"),
+            E2ETestResult(test_name="test3", status=TestStatus.PASSED, duration_ms=100, browser="firefox", url="/t3"),
         ]
 
         by_browser = frontend_tester_agent._group_by_browser()
@@ -597,8 +588,7 @@ class TestFrontendTesterExtendedCoverage:
         from backend.agents.base_agent import Task
 
         # Mock _run_e2e_tests_task to raise an exception
-        with patch.object(frontend_tester_agent, '_run_e2e_tests_task',
-                         side_effect=Exception("E2E execution failed")):
+        with patch.object(frontend_tester_agent, "_run_e2e_tests_task", side_effect=Exception("E2E execution failed")):
             task = Task(
                 task_id="task_e2e_error",
                 task_type="run_e2e_tests",
@@ -615,7 +605,7 @@ class TestFrontendTesterExtendedCoverage:
     @pytest.mark.asyncio
     async def test_visual_regression_with_playwright_available(self, mock_llm):
         """Test visual regression when Playwright is available (lines 362-433)."""
-        with patch('backend.testing.agents.frontend_tester.LLMFactory.create_llm', return_value=mock_llm):
+        with patch("backend.testing.agents.frontend_tester.LLMFactory.create_llm", return_value=mock_llm):
             agent = FrontendTesterAgent(base_url="http://localhost:3000")
             agent._llm = mock_llm
             agent._playwright_available = True
@@ -647,13 +637,11 @@ class TestFrontendTesterExtendedCoverage:
             mock_playwright_module.async_playwright = mock_async_playwright_fn
 
             # Mock the entire playwright.async_api module to avoid import errors
-            with patch.dict('sys.modules', {'playwright': Mock(), 'playwright.async_api': mock_playwright_module}):
-                with patch('pathlib.Path.mkdir'):
-                    with patch('pathlib.Path.exists', return_value=False):
+            with patch.dict("sys.modules", {"playwright": Mock(), "playwright.async_api": mock_playwright_module}):
+                with patch("pathlib.Path.mkdir"):
+                    with patch("pathlib.Path.exists", return_value=False):
                         results = await agent.run_visual_regression_test(
-                            page_path="/test",
-                            viewport_sizes=[{"width": 1920, "height": 1080}],
-                            threshold=0.1
+                            page_path="/test", viewport_sizes=[{"width": 1920, "height": 1080}], threshold=0.1
                         )
 
                         # Should return results list (empty or with results depending on mock)
@@ -665,7 +653,7 @@ class TestFrontendTesterExtendedCoverage:
         frontend_tester_agent._playwright_available = True
 
         # The import happens inside the method: from playwright.async_api import async_playwright
-        with patch.dict('sys.modules', {'playwright': None, 'playwright.async_api': None}):
+        with patch.dict("sys.modules", {"playwright": None, "playwright.async_api": None}):
             results = await frontend_tester_agent.run_visual_regression_test(
                 page_path="/test",
             )
@@ -676,7 +664,7 @@ class TestFrontendTesterExtendedCoverage:
     @pytest.mark.asyncio
     async def test_accessibility_audit_with_playwright(self, mock_llm):
         """Test accessibility audit when Playwright is available (lines 451-484)."""
-        with patch('backend.testing.agents.frontend_tester.LLMFactory.create_llm', return_value=mock_llm):
+        with patch("backend.testing.agents.frontend_tester.LLMFactory.create_llm", return_value=mock_llm):
             agent = FrontendTesterAgent(base_url="http://localhost:3000")
             agent._llm = mock_llm
             agent._playwright_available = True
@@ -708,7 +696,7 @@ class TestFrontendTesterExtendedCoverage:
             mock_playwright_module.async_playwright = mock_async_playwright_fn
 
             # Mock the entire playwright.async_api module to avoid import errors
-            with patch.dict('sys.modules', {'playwright': Mock(), 'playwright.async_api': mock_playwright_module}):
+            with patch.dict("sys.modules", {"playwright": Mock(), "playwright.async_api": mock_playwright_module}):
                 result = await agent.run_accessibility_audit(page_path="/test")
 
                 assert "page_path" in result or "error" in result
@@ -716,7 +704,7 @@ class TestFrontendTesterExtendedCoverage:
     @pytest.mark.asyncio
     async def test_accessibility_audit_exception(self, mock_llm):
         """Test accessibility audit with exception (lines 482-484)."""
-        with patch('backend.testing.agents.frontend_tester.LLMFactory.create_llm', return_value=mock_llm):
+        with patch("backend.testing.agents.frontend_tester.LLMFactory.create_llm", return_value=mock_llm):
             agent = FrontendTesterAgent(base_url="http://localhost:3000")
             agent._llm = mock_llm
             agent._playwright_available = True
@@ -729,7 +717,7 @@ class TestFrontendTesterExtendedCoverage:
             mock_playwright_module.async_playwright = Mock(side_effect=Exception("Playwright error"))
 
             # Mock the entire playwright.async_api module
-            with patch.dict('sys.modules', {'playwright': Mock(), 'playwright.async_api': mock_playwright_module}):
+            with patch.dict("sys.modules", {"playwright": Mock(), "playwright.async_api": mock_playwright_module}):
                 result = await agent.run_accessibility_audit(page_path="/test")
 
                 assert "error" in result
@@ -737,7 +725,7 @@ class TestFrontendTesterExtendedCoverage:
     def test_check_playwright_returns_true(self, frontend_tester_agent):
         """Test _check_playwright returns True when installed (line 576)."""
         # When playwright is installed, this should return True
-        with patch.dict('sys.modules', {'playwright': Mock()}):
+        with patch.dict("sys.modules", {"playwright": Mock()}):
             result = frontend_tester_agent._check_playwright()
             assert isinstance(result, bool)
 
@@ -748,7 +736,7 @@ class TestVisualRegressionExceptionHandling:
     @pytest.mark.asyncio
     async def test_visual_regression_viewport_exception(self, mock_llm):
         """Test visual regression handles exceptions during viewport iteration (lines 414-424)."""
-        with patch('backend.testing.agents.frontend_tester.LLMFactory.create_llm', return_value=mock_llm):
+        with patch("backend.testing.agents.frontend_tester.LLMFactory.create_llm", return_value=mock_llm):
             agent = FrontendTesterAgent(base_url="http://localhost:3000")
             agent._llm = mock_llm
             agent._playwright_available = True
@@ -777,13 +765,11 @@ class TestVisualRegressionExceptionHandling:
             mock_playwright_module = Mock()
             mock_playwright_module.async_playwright = mock_async_playwright_fn
 
-            with patch.dict('sys.modules', {'playwright': Mock(), 'playwright.async_api': mock_playwright_module}):
-                with patch('pathlib.Path.mkdir'):
-                    with patch('pathlib.Path.exists', return_value=False):
+            with patch.dict("sys.modules", {"playwright": Mock(), "playwright.async_api": mock_playwright_module}):
+                with patch("pathlib.Path.mkdir"):
+                    with patch("pathlib.Path.exists", return_value=False):
                         results = await agent.run_visual_regression_test(
-                            page_path="/test",
-                            viewport_sizes=[{"width": 1920, "height": 1080}],
-                            threshold=0.1
+                            page_path="/test", viewport_sizes=[{"width": 1920, "height": 1080}], threshold=0.1
                         )
 
                         # Results should contain the failed test
@@ -792,7 +778,7 @@ class TestVisualRegressionExceptionHandling:
     @pytest.mark.asyncio
     async def test_visual_regression_baseline_comparison(self, mock_llm):
         """Test visual regression when baseline exists (line 397)."""
-        with patch('backend.testing.agents.frontend_tester.LLMFactory.create_llm', return_value=mock_llm):
+        with patch("backend.testing.agents.frontend_tester.LLMFactory.create_llm", return_value=mock_llm):
             agent = FrontendTesterAgent(base_url="http://localhost:3000")
             agent._llm = mock_llm
             agent._playwright_available = True
@@ -821,22 +807,24 @@ class TestVisualRegressionExceptionHandling:
             mock_playwright_module = Mock()
             mock_playwright_module.async_playwright = mock_async_playwright_fn
 
-            with patch.dict('sys.modules', {'playwright': Mock(), 'playwright.async_api': mock_playwright_module}):
-                with patch('pathlib.Path.mkdir'):
+            with patch.dict("sys.modules", {"playwright": Mock(), "playwright.async_api": mock_playwright_module}):
+                with patch("pathlib.Path.mkdir"):
                     # Mock baseline exists
-                    with patch('pathlib.Path.exists', return_value=True):
-                        with patch.object(agent, '_compare_screenshots', return_value=VisualDiff(
-                            baseline_path="/baseline.png",
-                            current_path="/current.png",
-                            diff_path="/diff.png",
-                            pixel_diff_count=0,
-                            diff_percentage=0.0,
-                            is_significant=False
-                        )):
+                    with patch("pathlib.Path.exists", return_value=True):
+                        with patch.object(
+                            agent,
+                            "_compare_screenshots",
+                            return_value=VisualDiff(
+                                baseline_path="/baseline.png",
+                                current_path="/current.png",
+                                diff_path="/diff.png",
+                                pixel_diff_count=0,
+                                diff_percentage=0.0,
+                                is_significant=False,
+                            ),
+                        ):
                             results = await agent.run_visual_regression_test(
-                                page_path="/test",
-                                viewport_sizes=[{"width": 1920, "height": 1080}],
-                                threshold=0.1
+                                page_path="/test", viewport_sizes=[{"width": 1920, "height": 1080}], threshold=0.1
                             )
 
                             assert isinstance(results, list)

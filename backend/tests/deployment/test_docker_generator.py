@@ -2,7 +2,6 @@
 Tests for Docker Generator.
 """
 
-
 from backend.deployment.docker_generator import (
     DockerGenerator,
     DockerService,
@@ -193,9 +192,7 @@ class TestDockerGeneratorAdditional:
 
     def test_generate_dockerignore_with_extra_patterns(self):
         """Test generate_dockerignore with extra patterns (line 375)."""
-        content = self.generator.generate_dockerignore(
-            extra_patterns=["*.log", "tmp/", "secrets.json"]
-        )
+        content = self.generator.generate_dockerignore(extra_patterns=["*.log", "tmp/", "secrets.json"])
 
         # Check default patterns
         assert "__pycache__" in content
@@ -254,4 +251,3 @@ class TestDockerGeneratorAdditional:
 
         # There shouldn't be a top-level volumes section for local paths only
         # This depends on implementation - check the compose_yaml structure
-

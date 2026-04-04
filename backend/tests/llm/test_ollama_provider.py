@@ -44,10 +44,7 @@ class TestOllamaProviderInit:
 
     def test_init_with_config(self):
         """Test initialization with configuration."""
-        provider = OllamaProvider(config={
-            "base_url": "http://custom:8080",
-            "model": "custom-model"
-        })
+        provider = OllamaProvider(config={"base_url": "http://custom:8080", "model": "custom-model"})
 
         assert provider.base_url == "http://custom:8080"
         assert provider.model == "custom-model"
@@ -72,14 +69,8 @@ class TestOllamaProviderInit:
 
     def test_init_config_overrides_env(self):
         """Test that config overrides environment variables."""
-        with patch.dict("os.environ", {
-            "OLLAMA_BASE_URL": "http://env-host:9999",
-            "OLLAMA_MODEL": "env-model"
-        }):
-            provider = OllamaProvider(config={
-                "base_url": "http://config-host:8888",
-                "model": "config-model"
-            })
+        with patch.dict("os.environ", {"OLLAMA_BASE_URL": "http://env-host:9999", "OLLAMA_MODEL": "env-model"}):
+            provider = OllamaProvider(config={"base_url": "http://config-host:8888", "model": "config-model"})
 
             assert provider.base_url == "http://config-host:8888"
             assert provider.model == "config-model"
@@ -117,14 +108,16 @@ class TestOllamaProviderGenerate:
     @pytest.mark.asyncio
     async def test_generate_success(self, ollama_provider, mock_settings, mock_metrics):
         """Test successful text generation."""
-        with patch("backend.llm.ollama_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.ollama_provider.metrics", mock_metrics), \
-             patch("backend.llm.ollama_provider.llm_circuit_breaker") as mock_cb, \
-             patch.object(ollama_provider, "_get_session") as mock_get_session:
-
+        with (
+            patch("backend.llm.ollama_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.ollama_provider.metrics", mock_metrics),
+            patch("backend.llm.ollama_provider.llm_circuit_breaker") as mock_cb,
+            patch.object(ollama_provider, "_get_session") as mock_get_session,
+        ):
             # Mock circuit breaker to call function directly
             async def call_func(func):
                 return await func()
+
             mock_cb.call = AsyncMock(side_effect=call_func)
             mock_cb.name = "llm_provider"
             mock_cb.get_state_value = MagicMock(return_value=0)
@@ -152,13 +145,16 @@ class TestOllamaProviderGenerate:
     @pytest.mark.asyncio
     async def test_generate_with_max_tokens(self, ollama_provider, mock_settings, mock_metrics):
         """Test generation with max_tokens parameter."""
-        with patch("backend.llm.ollama_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.ollama_provider.metrics", mock_metrics), \
-             patch("backend.llm.ollama_provider.llm_circuit_breaker") as mock_cb, \
-             patch.object(ollama_provider, "_get_session") as mock_get_session:
+        with (
+            patch("backend.llm.ollama_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.ollama_provider.metrics", mock_metrics),
+            patch("backend.llm.ollama_provider.llm_circuit_breaker") as mock_cb,
+            patch.object(ollama_provider, "_get_session") as mock_get_session,
+        ):
 
             async def call_func(func):
                 return await func()
+
             mock_cb.call = AsyncMock(side_effect=call_func)
             mock_cb.name = "llm_provider"
             mock_cb.get_state_value = MagicMock(return_value=0)
@@ -183,10 +179,11 @@ class TestOllamaProviderGenerate:
     @pytest.mark.asyncio
     async def test_generate_circuit_breaker_open(self, ollama_provider, mock_settings, mock_metrics):
         """Test generation when circuit breaker is open."""
-        with patch("backend.llm.ollama_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.ollama_provider.metrics", mock_metrics), \
-             patch("backend.llm.ollama_provider.llm_circuit_breaker") as mock_cb:
-
+        with (
+            patch("backend.llm.ollama_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.ollama_provider.metrics", mock_metrics),
+            patch("backend.llm.ollama_provider.llm_circuit_breaker") as mock_cb,
+        ):
             mock_cb.call = AsyncMock(side_effect=CircuitBreakerOpenError("Circuit is open"))
             mock_cb.name = "llm_provider"
 
@@ -198,10 +195,11 @@ class TestOllamaProviderGenerate:
     @pytest.mark.asyncio
     async def test_generate_timeout(self, ollama_provider, mock_settings, mock_metrics):
         """Test generation timeout."""
-        with patch("backend.llm.ollama_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.ollama_provider.metrics", mock_metrics), \
-             patch("backend.llm.ollama_provider.llm_circuit_breaker") as mock_cb:
-
+        with (
+            patch("backend.llm.ollama_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.ollama_provider.metrics", mock_metrics),
+            patch("backend.llm.ollama_provider.llm_circuit_breaker") as mock_cb,
+        ):
             mock_cb.call = AsyncMock(side_effect=TimeoutError("Timeout"))
             mock_cb.name = "llm_provider"
 
@@ -213,10 +211,11 @@ class TestOllamaProviderGenerate:
     @pytest.mark.asyncio
     async def test_generate_general_error(self, ollama_provider, mock_settings, mock_metrics):
         """Test generation with general error."""
-        with patch("backend.llm.ollama_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.ollama_provider.metrics", mock_metrics), \
-             patch("backend.llm.ollama_provider.llm_circuit_breaker") as mock_cb:
-
+        with (
+            patch("backend.llm.ollama_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.ollama_provider.metrics", mock_metrics),
+            patch("backend.llm.ollama_provider.llm_circuit_breaker") as mock_cb,
+        ):
             mock_cb.call = AsyncMock(side_effect=RuntimeError("Connection failed"))
             mock_cb.name = "llm_provider"
 
@@ -235,11 +234,7 @@ class TestOllamaProviderGenerateStream:
         """Test successful streaming generation."""
         with patch.object(ollama_provider, "_get_session") as mock_get_session:
             # Mock streaming response
-            mock_lines = [
-                b'{"response": "Hello"}',
-                b'{"response": " world"}',
-                b'{"done": true}'
-            ]
+            mock_lines = [b'{"response": "Hello"}', b'{"response": " world"}', b'{"done": true}']
 
             async def mock_iter():
                 for line in mock_lines:
@@ -299,7 +294,7 @@ class TestOllamaProviderGenerateStream:
         """Test streaming handles JSON decode errors gracefully."""
         with patch.object(ollama_provider, "_get_session") as mock_get_session:
             mock_lines = [
-                b'invalid json',
+                b"invalid json",
                 b'{"response": "Valid"}',
             ]
 
@@ -350,21 +345,22 @@ class TestOllamaProviderChat:
     @pytest.mark.asyncio
     async def test_chat_success(self, ollama_provider, mock_settings, mock_metrics):
         """Test successful chat completion."""
-        with patch("backend.llm.ollama_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.ollama_provider.metrics", mock_metrics), \
-             patch("backend.llm.ollama_provider.llm_circuit_breaker") as mock_cb, \
-             patch.object(ollama_provider, "_get_session") as mock_get_session:
+        with (
+            patch("backend.llm.ollama_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.ollama_provider.metrics", mock_metrics),
+            patch("backend.llm.ollama_provider.llm_circuit_breaker") as mock_cb,
+            patch.object(ollama_provider, "_get_session") as mock_get_session,
+        ):
 
             async def call_func(func):
                 return await func()
+
             mock_cb.call = AsyncMock(side_effect=call_func)
             mock_cb.name = "llm_provider"
 
             mock_response = AsyncMock()
             mock_response.raise_for_status = MagicMock()
-            mock_response.json = AsyncMock(return_value={
-                "message": {"content": "Chat response"}
-            })
+            mock_response.json = AsyncMock(return_value={"message": {"content": "Chat response"}})
 
             mock_context = AsyncMock()
             mock_context.__aenter__ = AsyncMock(return_value=mock_response)
@@ -384,21 +380,22 @@ class TestOllamaProviderChat:
     @pytest.mark.asyncio
     async def test_chat_with_max_tokens(self, ollama_provider, mock_settings, mock_metrics):
         """Test chat with max_tokens."""
-        with patch("backend.llm.ollama_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.ollama_provider.metrics", mock_metrics), \
-             patch("backend.llm.ollama_provider.llm_circuit_breaker") as mock_cb, \
-             patch.object(ollama_provider, "_get_session") as mock_get_session:
+        with (
+            patch("backend.llm.ollama_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.ollama_provider.metrics", mock_metrics),
+            patch("backend.llm.ollama_provider.llm_circuit_breaker") as mock_cb,
+            patch.object(ollama_provider, "_get_session") as mock_get_session,
+        ):
 
             async def call_func(func):
                 return await func()
+
             mock_cb.call = AsyncMock(side_effect=call_func)
             mock_cb.name = "llm_provider"
 
             mock_response = AsyncMock()
             mock_response.raise_for_status = MagicMock()
-            mock_response.json = AsyncMock(return_value={
-                "message": {"content": "Response"}
-            })
+            mock_response.json = AsyncMock(return_value={"message": {"content": "Response"}})
 
             mock_context = AsyncMock()
             mock_context.__aenter__ = AsyncMock(return_value=mock_response)
@@ -417,10 +414,11 @@ class TestOllamaProviderChat:
     @pytest.mark.asyncio
     async def test_chat_circuit_breaker_open(self, ollama_provider, mock_settings, mock_metrics):
         """Test chat when circuit breaker is open."""
-        with patch("backend.llm.ollama_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.ollama_provider.metrics", mock_metrics), \
-             patch("backend.llm.ollama_provider.llm_circuit_breaker") as mock_cb:
-
+        with (
+            patch("backend.llm.ollama_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.ollama_provider.metrics", mock_metrics),
+            patch("backend.llm.ollama_provider.llm_circuit_breaker") as mock_cb,
+        ):
             mock_cb.call = AsyncMock(side_effect=CircuitBreakerOpenError("Circuit is open"))
             mock_cb.name = "llm_provider"
 
@@ -434,10 +432,11 @@ class TestOllamaProviderChat:
     @pytest.mark.asyncio
     async def test_chat_timeout(self, ollama_provider, mock_settings, mock_metrics):
         """Test chat timeout."""
-        with patch("backend.llm.ollama_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.ollama_provider.metrics", mock_metrics), \
-             patch("backend.llm.ollama_provider.llm_circuit_breaker") as mock_cb:
-
+        with (
+            patch("backend.llm.ollama_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.ollama_provider.metrics", mock_metrics),
+            patch("backend.llm.ollama_provider.llm_circuit_breaker") as mock_cb,
+        ):
             mock_cb.call = AsyncMock(side_effect=TimeoutError("Timeout"))
             mock_cb.name = "llm_provider"
 
@@ -451,10 +450,11 @@ class TestOllamaProviderChat:
     @pytest.mark.asyncio
     async def test_chat_general_error(self, ollama_provider, mock_settings, mock_metrics):
         """Test chat with general error."""
-        with patch("backend.llm.ollama_provider.get_settings", return_value=mock_settings), \
-             patch("backend.llm.ollama_provider.metrics", mock_metrics), \
-             patch("backend.llm.ollama_provider.llm_circuit_breaker") as mock_cb:
-
+        with (
+            patch("backend.llm.ollama_provider.get_settings", return_value=mock_settings),
+            patch("backend.llm.ollama_provider.metrics", mock_metrics),
+            patch("backend.llm.ollama_provider.llm_circuit_breaker") as mock_cb,
+        ):
             mock_cb.call = AsyncMock(side_effect=RuntimeError("Connection failed"))
             mock_cb.name = "llm_provider"
 
@@ -538,7 +538,7 @@ class TestOllamaProviderChatStream:
         """Test chat streaming handles JSON decode errors."""
         with patch.object(ollama_provider, "_get_session") as mock_get_session:
             mock_lines = [
-                b'not json',
+                b"not json",
                 b'{"message": {"content": "Valid"}}',
             ]
 
@@ -595,9 +595,7 @@ class TestOllamaProviderEmbed:
         with patch.object(ollama_provider, "_get_session") as mock_get_session:
             mock_response = AsyncMock()
             mock_response.raise_for_status = MagicMock()
-            mock_response.json = AsyncMock(return_value={
-                "embedding": [0.1, 0.2, 0.3, 0.4]
-            })
+            mock_response.json = AsyncMock(return_value={"embedding": [0.1, 0.2, 0.3, 0.4]})
 
             mock_context = AsyncMock()
             mock_context.__aenter__ = AsyncMock(return_value=mock_response)

@@ -27,6 +27,7 @@ logger = get_logger(__name__)
 
 class ReportTemplateCreate(BaseModel):
     """Report template creation request model."""
+
     name: str
     type: str
     description: str
@@ -37,6 +38,7 @@ class ReportTemplateCreate(BaseModel):
 
 class ReportDefinitionCreate(BaseModel):
     """Report definition creation request model."""
+
     name: str
     template_id: str
     parameters: dict[str, Any]
@@ -47,15 +49,13 @@ class ReportDefinitionCreate(BaseModel):
 
 class ReportGenerateRequest(BaseModel):
     """Report generation request model."""
+
     definition_id: str
     override_parameters: dict[str, Any] | None = None
 
 
 @router.get("/templates/", response_model=APIResponse)
-async def list_report_templates(
-    report_type: str | None = None,
-    include_system: bool = True
-):
+async def list_report_templates(report_type: str | None = None, include_system: bool = True):
     """
     List available report templates.
 
@@ -72,9 +72,7 @@ async def list_report_templates(
         templates_data = [template.__dict__ for template in templates]
 
         return APIResponse(
-            success=True,
-            data=templates_data,
-            message=f"Retrieved {len(templates_data)} report templates"
+            success=True, data=templates_data, message=f"Retrieved {len(templates_data)} report templates"
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -105,13 +103,11 @@ async def create_report_template(template_data: ReportTemplateCreate):
             format=ReportFormat(template_data.format),
             parameters=template_data.parameters,
             query_template=template_data.query_template,
-            created_by=created_by
+            created_by=created_by,
         )
 
         return APIResponse(
-            success=True,
-            data=template.__dict__,
-            message=f"Report template '{template.name}' created successfully"
+            success=True, data=template.__dict__, message=f"Report template '{template.name}' created successfully"
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -137,11 +133,7 @@ async def get_report_template(template_id: str):
         if not template:
             raise HTTPException(status_code=404, detail="Template not found")
 
-        return APIResponse(
-            success=True,
-            data=template.__dict__,
-            message=f"Retrieved template '{template.name}'"
-        )
+        return APIResponse(success=True, data=template.__dict__, message=f"Retrieved template '{template.name}'")
     except HTTPException:
         raise
     except Exception as e:
@@ -165,9 +157,7 @@ async def list_report_definitions(active_only: bool = True):
         definitions_data = [definition.__dict__ for definition in definitions]
 
         return APIResponse(
-            success=True,
-            data=definitions_data,
-            message=f"Retrieved {len(definitions_data)} report definitions"
+            success=True, data=definitions_data, message=f"Retrieved {len(definitions_data)} report definitions"
         )
     except Exception as e:
         logger.error("Failed to list report definitions", error=str(e))
@@ -196,17 +186,15 @@ async def create_report_definition(definition_data: ReportDefinitionCreate):
             recipients=definition_data.recipients,
             schedule_frequency=ReportFrequency(definition_data.schedule_frequency),
             schedule_time=definition_data.schedule_time,
-            created_by=created_by
+            created_by=created_by,
         )
 
         definition_dict = definition.__dict__.copy()
         # Convert enum values to strings for serialization
-        definition_dict['schedule_frequency'] = definition.schedule_frequency.value
+        definition_dict["schedule_frequency"] = definition.schedule_frequency.value
 
         return APIResponse(
-            success=True,
-            data=definition_dict,
-            message=f"Report definition '{definition.name}' created successfully"
+            success=True, data=definition_dict, message=f"Report definition '{definition.name}' created successfully"
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -228,21 +216,16 @@ async def generate_report(generate_request: ReportGenerateRequest):
     """
     try:
         report = await reporting_service.generate_report(
-            definition_id=generate_request.definition_id,
-            override_parameters=generate_request.override_parameters
+            definition_id=generate_request.definition_id, override_parameters=generate_request.override_parameters
         )
 
         report_dict = report.__dict__.copy()
         # Convert enum values to strings
-        report_dict['type'] = report.type.value
-        report_dict['format'] = report.format.value
-        report_dict['status'] = report.status.value
+        report_dict["type"] = report.type.value
+        report_dict["format"] = report.format.value
+        report_dict["status"] = report.status.value
 
-        return APIResponse(
-            success=True,
-            data=report_dict,
-            message=f"Report '{report.name}' generated successfully"
-        )
+        return APIResponse(success=True, data=report_dict, message=f"Report '{report.name}' generated successfully")
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -251,11 +234,7 @@ async def generate_report(generate_request: ReportGenerateRequest):
 
 
 @router.get("/generated/", response_model=APIResponse)
-async def list_generated_reports(
-    definition_id: str | None = None,
-    status: str | None = None,
-    limit: int = 50
-):
+async def list_generated_reports(definition_id: str | None = None, status: str | None = None, limit: int = 50):
     """
     List generated reports.
 
@@ -275,16 +254,12 @@ async def list_generated_reports(
         for report in reports:
             report_dict = report.__dict__.copy()
             # Convert enum values to strings
-            report_dict['type'] = report.type.value
-            report_dict['format'] = report.format.value
-            report_dict['status'] = report.status.value
+            report_dict["type"] = report.type.value
+            report_dict["format"] = report.format.value
+            report_dict["status"] = report.status.value
             reports_data.append(report_dict)
 
-        return APIResponse(
-            success=True,
-            data=reports_data,
-            message=f"Retrieved {len(reports_data)} generated reports"
-        )
+        return APIResponse(success=True, data=reports_data, message=f"Retrieved {len(reports_data)} generated reports")
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -311,15 +286,11 @@ async def get_generated_report(report_id: str):
 
         report_dict = report.__dict__.copy()
         # Convert enum values to strings
-        report_dict['type'] = report.type.value
-        report_dict['format'] = report.format.value
-        report_dict['status'] = report.status.value
+        report_dict["type"] = report.type.value
+        report_dict["format"] = report.format.value
+        report_dict["status"] = report.status.value
 
-        return APIResponse(
-            success=True,
-            data=report_dict,
-            message=f"Retrieved report '{report.name}'"
-        )
+        return APIResponse(success=True, data=report_dict, message=f"Retrieved report '{report.name}'")
     except HTTPException:
         raise
     except Exception as e:
@@ -344,13 +315,11 @@ async def list_report_schedules(active_only: bool = True):
 
         for schedule in schedules:
             schedule_dict = schedule.__dict__.copy()
-            schedule_dict['frequency'] = schedule.frequency.value
+            schedule_dict["frequency"] = schedule.frequency.value
             schedules_data.append(schedule_dict)
 
         return APIResponse(
-            success=True,
-            data=schedules_data,
-            message=f"Retrieved {len(schedules_data)} report schedules"
+            success=True, data=schedules_data, message=f"Retrieved {len(schedules_data)} report schedules"
         )
     except Exception as e:
         logger.error("Failed to list report schedules", error=str(e))
@@ -377,7 +346,7 @@ async def export_report(report_id: str, format: str):
         return Response(
             content=export_data,
             media_type=f"text/{format.lower()}",
-            headers={"Content-Disposition": f"attachment; filename=report_{report_id}.{format.lower()}"}
+            headers={"Content-Disposition": f"attachment; filename=report_{report_id}.{format.lower()}"},
         )
     except ValueError:
         raise HTTPException(status_code=400, detail=f"Invalid format: {format}")
@@ -397,11 +366,7 @@ async def get_report_types():
     try:
         types = [{"name": rt.name, "value": rt.value} for rt in ReportType]
 
-        return APIResponse(
-            success=True,
-            data=types,
-            message="Retrieved available report types"
-        )
+        return APIResponse(success=True, data=types, message="Retrieved available report types")
     except Exception as e:
         logger.error("Failed to get report types", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get report types: {str(e)}")
@@ -418,11 +383,7 @@ async def get_report_formats():
     try:
         formats = [{"name": rf.name, "value": rf.value} for rf in ReportFormat]
 
-        return APIResponse(
-            success=True,
-            data=formats,
-            message="Retrieved available report formats"
-        )
+        return APIResponse(success=True, data=formats, message="Retrieved available report formats")
     except Exception as e:
         logger.error("Failed to get report formats", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get report formats: {str(e)}")
@@ -439,11 +400,7 @@ async def get_report_frequencies():
     try:
         frequencies = [{"name": rf.name, "value": rf.value} for rf in ReportFrequency]
 
-        return APIResponse(
-            success=True,
-            data=frequencies,
-            message="Retrieved available report frequencies"
-        )
+        return APIResponse(success=True, data=frequencies, message="Retrieved available report frequencies")
     except Exception as e:
         logger.error("Failed to get report frequencies", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get report frequencies: {str(e)}")
@@ -460,11 +417,7 @@ async def get_report_statuses():
     try:
         statuses = [{"name": rs.name, "value": rs.value} for rs in ReportStatus]
 
-        return APIResponse(
-            success=True,
-            data=statuses,
-            message="Retrieved available report statuses"
-        )
+        return APIResponse(success=True, data=statuses, message="Retrieved available report statuses")
     except Exception as e:
         logger.error("Failed to get report statuses", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get report statuses: {str(e)}")
@@ -490,27 +443,23 @@ async def get_reporting_dashboard():
             "statistics": stats,
             "recent_reports": [],
             "active_schedules": [],
-            "system_templates": len([t for t in templates if t.is_system_default])
+            "system_templates": len([t for t in templates if t.is_system_default]),
         }
 
         # Add recent reports data
         for report in reports:
             report_dict = report.__dict__.copy()
-            report_dict['type'] = report.type.value
-            report_dict['status'] = report.status.value
-            dashboard_data['recent_reports'].append(report_dict)
+            report_dict["type"] = report.type.value
+            report_dict["status"] = report.status.value
+            dashboard_data["recent_reports"].append(report_dict)
 
         # Add active schedules data
         for schedule in schedules:
             schedule_dict = schedule.__dict__.copy()
-            schedule_dict['frequency'] = schedule.frequency.value
-            dashboard_data['active_schedules'].append(schedule_dict)
+            schedule_dict["frequency"] = schedule.frequency.value
+            dashboard_data["active_schedules"].append(schedule_dict)
 
-        return APIResponse(
-            success=True,
-            data=dashboard_data,
-            message="Retrieved reporting dashboard data"
-        )
+        return APIResponse(success=True, data=dashboard_data, message="Retrieved reporting dashboard data")
     except Exception as e:
         logger.error("Failed to get reporting dashboard", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get reporting dashboard: {str(e)}")
@@ -527,11 +476,7 @@ async def get_reporting_statistics():
     try:
         stats = await reporting_service.get_reporting_statistics()
 
-        return APIResponse(
-            success=True,
-            data=stats,
-            message="Retrieved reporting system statistics"
-        )
+        return APIResponse(success=True, data=stats, message="Retrieved reporting system statistics")
     except Exception as e:
         logger.error("Failed to get reporting statistics", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get reporting statistics: {str(e)}")
@@ -562,10 +507,7 @@ async def delete_report_definition(definition_id: str):
             if schedule.definition_id == definition_id:
                 schedule.is_active = False
 
-        return APIResponse(
-            success=True,
-            message=f"Report definition '{definition.name}' deactivated successfully"
-        )
+        return APIResponse(success=True, message=f"Report definition '{definition.name}' deactivated successfully")
     except HTTPException:
         raise
     except Exception as e:

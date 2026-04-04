@@ -27,12 +27,7 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 settings = get_settings()
 
 
-def set_auth_cookies(
-    response: Response,
-    access_token: str,
-    refresh_token: str,
-    request: Request
-) -> None:
+def set_auth_cookies(response: Response, access_token: str, refresh_token: str, request: Request) -> None:
     """
     Set httpOnly authentication cookies on response.
 
@@ -53,7 +48,7 @@ def set_auth_cookies(
         secure=is_secure,
         samesite="lax",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        path="/"
+        path="/",
     )
 
     # Set refresh token cookie (longer lived)
@@ -64,7 +59,7 @@ def set_auth_cookies(
         secure=is_secure,
         samesite="lax",
         max_age=7 * 24 * 60 * 60,  # 7 days
-        path="/api/v1/auth"  # Only sent to auth endpoints
+        path="/api/v1/auth",  # Only sent to auth endpoints
     )
 
 
@@ -81,12 +76,14 @@ def clear_auth_cookies(response: Response) -> None:
 
 class LoginRequest(BaseModel):
     """Login request model."""
+
     username: str
     password: str
 
 
 class LoginResponse(BaseModel):
     """Login response model."""
+
     access_token: str
     refresh_token: str
     token_type: str
@@ -98,11 +95,13 @@ class LoginResponse(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     """Refresh token request model (optional - can use cookie instead)."""
+
     refresh_token: str | None = None
 
 
 class TokenValidationResponse(BaseModel):
     """Token validation response model."""
+
     valid: bool
     user_id: str | None = None
     username: str | None = None
@@ -111,6 +110,7 @@ class TokenValidationResponse(BaseModel):
 
 class RegisterRequest(BaseModel):
     """User registration request model."""
+
     username: str
     email: str
     password: str
@@ -118,6 +118,7 @@ class RegisterRequest(BaseModel):
 
 class UserResponse(BaseModel):
     """Current user response model."""
+
     user_id: str
     username: str
     email: str
@@ -129,7 +130,7 @@ class UserResponse(BaseModel):
     "/login",
     status_code=status.HTTP_200_OK,
     summary="User login",
-    description="Authenticate user and return access tokens with httpOnly cookies"
+    description="Authenticate user and return access tokens with httpOnly cookies",
 )
 async def login(
     request_data: LoginRequest,
@@ -168,11 +169,7 @@ async def login(
     # Create user session
     tokens = auth_service.create_user_session(user_data)
 
-    logger.info(
-        "Login successful",
-        user_id=user_data["user_id"],
-        username=user_data["username"]
-    )
+    logger.info("Login successful", user_id=user_data["user_id"], username=user_data["username"])
 
     # Create JSON response with user data
     response_data = {
@@ -183,17 +180,14 @@ async def login(
         "username": user_data["username"],
         "email": user_data["email"],
         "permissions": user_data["permissions"],
-        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     }
 
     response = JSONResponse(content=response_data)
 
     # Set httpOnly cookies
     set_auth_cookies(
-        response=response,
-        access_token=tokens["access_token"],
-        refresh_token=tokens["refresh_token"],
-        request=request
+        response=response, access_token=tokens["access_token"], refresh_token=tokens["refresh_token"], request=request
     )
 
     return response
@@ -203,7 +197,7 @@ async def login(
     "/refresh",
     status_code=status.HTTP_200_OK,
     summary="Refresh access token",
-    description="Get new access token using refresh token from cookie or request body"
+    description="Get new access token using refresh token from cookie or request body",
 )
 async def refresh_token(
     request: Request,
@@ -233,10 +227,7 @@ async def refresh_token(
         token = request_data.refresh_token
 
     if not token:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Refresh token not provided"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Refresh token not provided")
 
     try:
         # Decode refresh token
@@ -244,19 +235,13 @@ async def refresh_token(
 
         # Verify it's a refresh token
         if payload.get("type") != "refresh":
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid refresh token"
-            )
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid refresh token")
 
         user_id = payload.get("sub")
         username = payload.get("username")
 
         if not user_id or not username:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid token payload"
-            )
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token payload")
 
         # Get user from database to verify they still exist and are active
         user = await auth_service.get_user_by_id(user_id)
@@ -272,7 +257,7 @@ async def refresh_token(
             "user_id": user.id,
             "username": user.username,
             "email": user.email,
-            "permissions": user.permissions or []
+            "permissions": user.permissions or [],
         }
         tokens = auth_service.create_user_session(user_data)
 
@@ -281,7 +266,7 @@ async def refresh_token(
         response_data = {
             "access_token": tokens["access_token"],
             "token_type": "bearer",
-            "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+            "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         }
 
         response = JSONResponse(content=response_data)
@@ -291,7 +276,7 @@ async def refresh_token(
             response=response,
             access_token=tokens["access_token"],
             refresh_token=tokens["refresh_token"],
-            request=request
+            request=request,
         )
 
         return response
@@ -310,7 +295,7 @@ async def refresh_token(
     response_model=TokenValidationResponse,
     status_code=status.HTTP_200_OK,
     summary="Validate token",
-    description="Check if JWT token is valid"
+    description="Check if JWT token is valid",
 )
 async def validate_token(
     current_user: User = Depends(get_current_user),
@@ -330,7 +315,7 @@ async def validate_token(
         valid=True,
         user_id=current_user.user_id if current_user else None,
         username=current_user.username if current_user else None,
-        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
 
 
@@ -339,7 +324,7 @@ async def validate_token(
     response_model=UserResponse,
     status_code=status.HTTP_200_OK,
     summary="Get current user",
-    description="Return the authenticated user's profile"
+    description="Return the authenticated user's profile",
 )
 async def get_me(
     current_user: User = Depends(get_current_user),
@@ -366,7 +351,7 @@ async def get_me(
     "/register",
     status_code=status.HTTP_201_CREATED,
     summary="Register new user",
-    description="Create a new user account"
+    description="Create a new user account",
 )
 async def register(
     request_data: RegisterRequest,
@@ -434,10 +419,10 @@ async def register(
     "/logout",
     status_code=status.HTTP_200_OK,
     summary="User logout",
-    description="Invalidate user session and clear httpOnly cookies"
+    description="Invalidate user session and clear httpOnly cookies",
 )
 async def logout(
-    current_user = Depends(lambda: None),  # Will be set by auth middleware
+    current_user=Depends(lambda: None),  # Will be set by auth middleware
 ) -> JSONResponse:
     """
     Logout user and clear authentication cookies.
@@ -466,7 +451,7 @@ async def logout(
     "/test-credentials",
     status_code=status.HTTP_200_OK,
     summary="Get test credentials",
-    description="Get valid test user credentials for development"
+    description="Get valid test user credentials for development",
 )
 async def get_test_credentials() -> dict[str, Any]:
     """
@@ -484,25 +469,14 @@ async def get_test_credentials() -> dict[str, Any]:
     # SECURITY: Only available in development mode with DEBUG enabled
     if not (settings.is_development and settings.DEBUG):
         # Return 404 to avoid revealing endpoint exists in production
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Not Found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
 
     logger.info("Test credentials requested (development mode)")
 
     return {
         "message": "Test credentials for development",
         "users": [
-            {
-                "username": "admin",
-                "password": "admin123",
-                "permissions": ["read", "write", "execute", "admin"]
-            },
-            {
-                "username": "developer",
-                "password": "dev123",
-                "permissions": ["read", "write", "execute"]
-            }
-        ]
+            {"username": "admin", "password": "admin123", "permissions": ["read", "write", "execute", "admin"]},
+            {"username": "developer", "password": "dev123", "permissions": ["read", "write", "execute"]},
+        ],
     }

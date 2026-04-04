@@ -24,10 +24,10 @@ def hash_password(password: str) -> str:
         Hashed password
     """
     # bcrypt has a 72-byte limit, truncate if necessary
-    password_bytes = password.encode('utf-8')[:72]
+    password_bytes = password.encode("utf-8")[:72]
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(password_bytes, salt)
-    return hashed.decode('utf-8')
+    return hashed.decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -42,8 +42,8 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         True if password matches, False otherwise
     """
     # bcrypt has a 72-byte limit, truncate if necessary
-    password_bytes = plain_password.encode('utf-8')[:72]
-    hashed_bytes = hashed_password.encode('utf-8')
+    password_bytes = plain_password.encode("utf-8")[:72]
+    hashed_bytes = hashed_password.encode("utf-8")
     return bcrypt.checkpw(password_bytes, hashed_bytes)
 
 
@@ -78,7 +78,7 @@ def sanitize_file_path(path: str, base_dir: str) -> str:
         raise ValidationError("Base directory cannot be empty")
 
     # Normalize backslashes to forward slashes for consistent handling
-    normalized_path = path.replace('\\', '/')
+    normalized_path = path.replace("\\", "/")
 
     # Normalize and resolve the base directory
     abs_base = os.path.abspath(os.path.normpath(base_dir))
@@ -92,18 +92,10 @@ def sanitize_file_path(path: str, base_dir: str) -> str:
     try:
         common = os.path.commonpath([abs_base, abs_path])
         if common != abs_base:
-            raise ValidationError(
-                f"Path traversal detected: {path}",
-                field="path",
-                value=path
-            )
+            raise ValidationError(f"Path traversal detected: {path}", field="path", value=path)
     except ValueError as exc:
         # Paths on different drives (Windows) or other issues
-        raise ValidationError(
-            f"Invalid path: {path}",
-            field="path",
-            value=path
-        ) from exc
+        raise ValidationError(f"Invalid path: {path}", field="path", value=path) from exc
 
     return abs_path
 
@@ -135,19 +127,19 @@ def sanitize_filename(filename: str, max_length: int = 255) -> str:
         raise ValidationError("Filename cannot be empty")
 
     # Remove null bytes
-    filename = filename.replace('\x00', '')
+    filename = filename.replace("\x00", "")
 
     # Remove path separators
-    filename = filename.replace('/', '_').replace('\\', '_')
+    filename = filename.replace("/", "_").replace("\\", "_")
 
     # Remove other dangerous characters
-    filename = re.sub(r'[<>:"|?*]', '_', filename)
+    filename = re.sub(r'[<>:"|?*]', "_", filename)
 
     # Remove leading/trailing dots and spaces (Windows issues)
-    filename = filename.strip('. ')
+    filename = filename.strip(". ")
 
     # Remove consecutive underscores
-    filename = re.sub(r'_+', '_', filename)
+    filename = re.sub(r"_+", "_", filename)
 
     # Truncate if too long
     if len(filename) > max_length:

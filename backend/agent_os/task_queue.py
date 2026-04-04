@@ -33,15 +33,11 @@ class TaskQueue:
             "high_priority": [],
             "langgraph": [],
             "crewai": [],
-            "dead_letter": []
+            "dead_letter": [],
         }
         self._logger = get_logger(__name__)
 
-    async def enqueue(
-        self,
-        task: Task,
-        queue_name: str = "default"
-    ) -> str:
+    async def enqueue(self, task: Task, queue_name: str = "default") -> str:
         """
         Add a task to the queue.
 
@@ -61,19 +57,11 @@ class TaskQueue:
         # Sort by priority
         self._queues[queue_name].sort(key=lambda t: t.priority.value)
 
-        self._logger.info(
-            "Task enqueued",
-            task_id=task.task_id,
-            queue=queue_name,
-            priority=task.priority.name
-        )
+        self._logger.info("Task enqueued", task_id=task.task_id, queue=queue_name, priority=task.priority.name)
 
         return task.task_id
 
-    async def dequeue(
-        self,
-        queue_name: str = "default"
-    ) -> Task | None:
+    async def dequeue(self, queue_name: str = "default") -> Task | None:
         """
         Get the next task from the queue.
 
@@ -95,19 +83,11 @@ class TaskQueue:
         task.status = TaskStatus.RUNNING
         task.started_at = datetime.now(UTC)
 
-        self._logger.info(
-            "Task dequeued",
-            task_id=task.task_id,
-            queue=queue_name
-        )
+        self._logger.info("Task dequeued", task_id=task.task_id, queue=queue_name)
 
         return task
 
-    async def complete_task(
-        self,
-        task: Task,
-        success: bool = True
-    ):
+    async def complete_task(self, task: Task, success: bool = True):
         """
         Mark a task as complete.
 
@@ -118,11 +98,7 @@ class TaskQueue:
         task.status = TaskStatus.COMPLETED if success else TaskStatus.FAILED
         task.completed_at = datetime.now(UTC)
 
-        self._logger.info(
-            "Task completed",
-            task_id=task.task_id,
-            success=success
-        )
+        self._logger.info("Task completed", task_id=task.task_id, success=success)
 
     async def move_to_dead_letter(self, task: Task):
         """
@@ -134,10 +110,7 @@ class TaskQueue:
         task.status = TaskStatus.FAILED
         self._queues["dead_letter"].append(task)
 
-        self._logger.warning(
-            "Task moved to dead letter queue",
-            task_id=task.task_id
-        )
+        self._logger.warning("Task moved to dead letter queue", task_id=task.task_id)
 
     def get_queue_length(self, queue_name: str = "default") -> int:
         """

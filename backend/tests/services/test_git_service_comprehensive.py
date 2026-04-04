@@ -33,27 +33,25 @@ class TestGitService:
     def test_init(self, git_service):
         """Test GitService initialization."""
         assert git_service is not None
-        assert hasattr(git_service, 'working_directory')
+        assert hasattr(git_service, "working_directory")
         assert isinstance(git_service.working_directory, Path)
         assert git_service.working_directory.exists()
-        assert hasattr(git_service, '_logger')
+        assert hasattr(git_service, "_logger")
 
     @pytest.mark.asyncio
     async def test_clone_repository_success(self, git_service, mock_subprocess_result):
         """Test cloning repository successfully."""
-        with patch('subprocess.run', return_value=mock_subprocess_result) as mock_run:
-            with patch.object(git_service, '_get_repo_info', return_value={'name': 'test-repo'}):
+        with patch("subprocess.run", return_value=mock_subprocess_result) as mock_run:
+            with patch.object(git_service, "_get_repo_info", return_value={"name": "test-repo"}):
                 result = await git_service.clone_repository(
-                    repo_url="https://github.com/user/repo.git",
-                    destination_name="my-repo",
-                    branch="main"
+                    repo_url="https://github.com/user/repo.git", destination_name="my-repo", branch="main"
                 )
 
                 assert result is not None
                 assert isinstance(result, dict)
-                assert result['name'] == 'test-repo'
-                assert 'local_path' in result
-                assert 'cloned_at' in result
+                assert result["name"] == "test-repo"
+                assert "local_path" in result
+                assert "cloned_at" in result
 
                 # Verify subprocess call
                 mock_run.assert_called_once()
@@ -66,14 +64,12 @@ class TestGitService:
     @pytest.mark.asyncio
     async def test_clone_repository_auto_name_extraction(self, git_service, mock_subprocess_result):
         """Test cloning repository with automatic name extraction."""
-        with patch('subprocess.run', return_value=mock_subprocess_result):
-            with patch.object(git_service, '_get_repo_info', return_value={'name': 'extracted-repo'}):
-                result = await git_service.clone_repository(
-                    repo_url="https://github.com/user/my-awesome-project.git"
-                )
+        with patch("subprocess.run", return_value=mock_subprocess_result):
+            with patch.object(git_service, "_get_repo_info", return_value={"name": "extracted-repo"}):
+                result = await git_service.clone_repository(repo_url="https://github.com/user/my-awesome-project.git")
 
                 assert result is not None
-                assert result['name'] == 'extracted-repo'
+                assert result["name"] == "extracted-repo"
 
     @pytest.mark.asyncio
     async def test_clone_repository_remove_existing(self, git_service, mock_subprocess_result):
@@ -82,12 +78,11 @@ class TestGitService:
         existing_path = git_service.working_directory / "existing-repo"
         existing_path.mkdir()
 
-        with patch('subprocess.run', return_value=mock_subprocess_result):
-            with patch.object(git_service, '_get_repo_info', return_value={'name': 'test'}):
-                with patch('shutil.rmtree') as mock_rmtree:
+        with patch("subprocess.run", return_value=mock_subprocess_result):
+            with patch.object(git_service, "_get_repo_info", return_value={"name": "test"}):
+                with patch("shutil.rmtree") as mock_rmtree:
                     await git_service.clone_repository(
-                        repo_url="https://github.com/user/repo.git",
-                        destination_name="existing-repo"
+                        repo_url="https://github.com/user/repo.git", destination_name="existing-repo"
                     )
 
                     # Should have removed existing directory
@@ -100,7 +95,7 @@ class TestGitService:
         failed_result.returncode = 1
         failed_result.stderr = "Authentication failed"
 
-        with patch('subprocess.run', return_value=failed_result):
+        with patch("subprocess.run", return_value=failed_result):
             with pytest.raises(Exception) as exc_info:
                 await git_service.clone_repository("https://github.com/user/repo.git")
 
@@ -112,20 +107,20 @@ class TestGitService:
         repo_path = str(git_service.working_directory / "test-repo")
         os.makedirs(repo_path, exist_ok=True)
 
-        with patch('subprocess.run', return_value=mock_subprocess_result) as mock_run:
-            with patch.object(git_service, '_get_repo_info', return_value={'name': 'test-repo'}):
+        with patch("subprocess.run", return_value=mock_subprocess_result) as mock_run:
+            with patch.object(git_service, "_get_repo_info", return_value={"name": "test-repo"}):
                 result = await git_service.pull_repository(repo_path)
 
                 assert result is not None
                 assert isinstance(result, dict)
-                assert result['name'] == 'test-repo'
-                assert 'last_pulled' in result
+                assert result["name"] == "test-repo"
+                assert "last_pulled" in result
 
                 # Verify subprocess call
                 mock_run.assert_called_once()
                 call_args = mock_run.call_args[0][0]
                 assert call_args == ["git", "pull"]
-                assert mock_run.call_args[1]['cwd'] == repo_path
+                assert mock_run.call_args[1]["cwd"] == repo_path
 
     @pytest.mark.asyncio
     async def test_pull_repository_not_exists(self, git_service):
@@ -147,7 +142,7 @@ class TestGitService:
         failed_result.returncode = 1
         failed_result.stderr = "Network error"
 
-        with patch('subprocess.run', return_value=failed_result):
+        with patch("subprocess.run", return_value=failed_result):
             with pytest.raises(Exception) as exc_info:
                 await git_service.pull_repository(repo_path)
 
@@ -164,20 +159,16 @@ class TestGitService:
         commit_result = MagicMock(returncode=0, stdout="Committed", stderr="")
         push_result = MagicMock(returncode=0, stdout="Pushed successfully", stderr="")
 
-        with patch('subprocess.run', side_effect=[add_result, commit_result, push_result]) as mock_run:
-            result = await git_service.push_changes(
-                repo_path=repo_path,
-                commit_message="Test commit",
-                branch="main"
-            )
+        with patch("subprocess.run", side_effect=[add_result, commit_result, push_result]) as mock_run:
+            result = await git_service.push_changes(repo_path=repo_path, commit_message="Test commit", branch="main")
 
             assert result is not None
             assert isinstance(result, dict)
-            assert result['success'] is True
-            assert result['commit_message'] == "Test commit"
-            assert result['branch'] == "main"
-            assert 'pushed_at' in result
-            assert result['stdout'] == "Pushed successfully"
+            assert result["success"] is True
+            assert result["commit_message"] == "Test commit"
+            assert result["branch"] == "main"
+            assert "pushed_at" in result
+            assert result["stdout"] == "Pushed successfully"
 
             # Should have called git add, commit, and push
             assert mock_run.call_count == 3
@@ -192,11 +183,11 @@ class TestGitService:
         commit_result = MagicMock(returncode=1, stdout="nothing to commit", stderr="")
         push_result = MagicMock(returncode=0, stdout="Pushed", stderr="")
 
-        with patch('subprocess.run', side_effect=[add_result, commit_result, push_result]):
+        with patch("subprocess.run", side_effect=[add_result, commit_result, push_result]):
             result = await git_service.push_changes(repo_path, "Test commit")
 
             assert result is not None
-            assert result['success'] is True
+            assert result["success"] is True
 
     @pytest.mark.asyncio
     async def test_push_changes_git_add_failure(self, git_service):
@@ -206,7 +197,7 @@ class TestGitService:
 
         failed_result = MagicMock(returncode=1, stdout="", stderr="Permission denied")
 
-        with patch('subprocess.run', return_value=failed_result):
+        with patch("subprocess.run", return_value=failed_result):
             with pytest.raises(Exception) as exc_info:
                 await git_service.push_changes(repo_path, "Test commit")
 
@@ -221,7 +212,7 @@ class TestGitService:
         add_result = MagicMock(returncode=0, stdout="", stderr="")
         commit_result = MagicMock(returncode=1, stdout="", stderr="Commit failed")
 
-        with patch('subprocess.run', side_effect=[add_result, commit_result]):
+        with patch("subprocess.run", side_effect=[add_result, commit_result]):
             with pytest.raises(Exception) as exc_info:
                 await git_service.push_changes(repo_path, "Test commit")
 
@@ -237,7 +228,7 @@ class TestGitService:
         commit_result = MagicMock(returncode=0, stdout="Committed", stderr="")
         push_result = MagicMock(returncode=1, stdout="", stderr="Push rejected")
 
-        with patch('subprocess.run', side_effect=[add_result, commit_result, push_result]):
+        with patch("subprocess.run", side_effect=[add_result, commit_result, push_result]):
             with pytest.raises(Exception) as exc_info:
                 await git_service.push_changes(repo_path, "Test commit")
 
@@ -259,21 +250,21 @@ class TestGitService:
         subdir_file = test_dir / "nested.txt"
         subdir_file.write_text("Nested content")
 
-        with patch.object(git_service, '_is_binary_file', return_value=False):
+        with patch.object(git_service, "_is_binary_file", return_value=False):
             result = await git_service.list_files(repo_path)
 
             assert isinstance(result, list)
             assert len(result) == 2  # One directory, one file
 
             # Should be sorted (directories first)
-            assert result[0]['type'] == 'directory'
-            assert result[0]['name'] == 'subdir'
-            assert result[1]['type'] == 'file'
-            assert result[1]['name'] == 'test.txt'
-            assert result[1]['size'] == len("Hello World")
-            assert 'modified' in result[1]
-            assert 'path' in result[1]
-            assert result[1]['is_binary'] is False
+            assert result[0]["type"] == "directory"
+            assert result[0]["name"] == "subdir"
+            assert result[1]["type"] == "file"
+            assert result[1]["name"] == "test.txt"
+            assert result[1]["size"] == len("Hello World")
+            assert "modified" in result[1]
+            assert "path" in result[1]
+            assert result[1]["is_binary"] is False
 
     @pytest.mark.asyncio
     async def test_list_files_relative_path(self, git_service):
@@ -287,15 +278,15 @@ class TestGitService:
         nested_file = subdir / "nested.txt"
         nested_file.write_text("Nested content")
 
-        with patch.object(git_service, '_is_binary_file', return_value=False):
+        with patch.object(git_service, "_is_binary_file", return_value=False):
             result = await git_service.list_files(repo_path, "subdir")
 
             assert isinstance(result, list)
             assert len(result) == 1
-            assert result[0]['name'] == 'nested.txt'
+            assert result[0]["name"] == "nested.txt"
             # Path separator may vary by OS
-            assert 'subdir' in result[0]['path']
-            assert 'nested.txt' in result[0]['path']
+            assert "subdir" in result[0]["path"]
+            assert "nested.txt" in result[0]["path"]
 
     @pytest.mark.asyncio
     async def test_list_files_non_existent_path(self, git_service):
@@ -318,17 +309,17 @@ class TestGitService:
         content = "Hello World Content"
         test_file.write_text(content)
 
-        with patch.object(git_service, '_is_binary_file', return_value=False):
+        with patch.object(git_service, "_is_binary_file", return_value=False):
             result = await git_service.read_file(repo_path, "test.txt")
 
             assert result is not None
             assert isinstance(result, dict)
-            assert result['path'] == 'test.txt'
-            assert result['content'] == content
-            assert result['size'] == len(content)
-            assert 'modified' in result
-            assert result['is_binary'] is False
-            assert result['encoding'] == 'utf-8'
+            assert result["path"] == "test.txt"
+            assert result["content"] == content
+            assert result["size"] == len(content)
+            assert "modified" in result
+            assert result["is_binary"] is False
+            assert result["encoding"] == "utf-8"
 
     @pytest.mark.asyncio
     async def test_read_file_binary_detection(self, git_service):
@@ -338,15 +329,15 @@ class TestGitService:
 
         test_file = Path(repo_path) / "binary.dat"
         # Write binary content (null bytes)
-        test_file.write_bytes(b'\x00\x01\x02\x03')
+        test_file.write_bytes(b"\x00\x01\x02\x03")
 
-        with patch.object(git_service, '_is_binary_file', return_value=True):
+        with patch.object(git_service, "_is_binary_file", return_value=True):
             result = await git_service.read_file(repo_path, "binary.dat")
 
             assert result is not None
-            assert result['is_binary'] is True
-            assert result['encoding'] == 'binary'
-            assert result['content'] is None  # Binary files don't return content
+            assert result["is_binary"] is True
+            assert result["encoding"] == "binary"
+            assert result["content"] is None  # Binary files don't return content
 
     @pytest.mark.asyncio
     async def test_read_file_unicode_decode_error_handling(self, git_service):
@@ -356,14 +347,14 @@ class TestGitService:
 
         test_file = Path(repo_path) / "weird_encoding.txt"
         # Write content that will cause UTF-8 decode error
-        test_file.write_bytes(b'\xff\xfe\x00\x48')  # Invalid UTF-8 sequence
+        test_file.write_bytes(b"\xff\xfe\x00\x48")  # Invalid UTF-8 sequence
 
-        with patch.object(git_service, '_is_binary_file', return_value=False):
+        with patch.object(git_service, "_is_binary_file", return_value=False):
             result = await git_service.read_file(repo_path, "weird_encoding.txt")
 
             assert result is not None
             # Should handle the decode error gracefully
-            assert 'content' in result
+            assert "content" in result
 
     @pytest.mark.asyncio
     async def test_read_file_not_found(self, git_service):
@@ -401,10 +392,10 @@ class TestGitService:
 
         assert result is not None
         assert isinstance(result, dict)
-        assert result['path'] == 'new-file.txt'
-        assert result['size'] == len(content)
-        assert 'modified' in result
-        assert 'written_at' in result
+        assert result["path"] == "new-file.txt"
+        assert result["size"] == len(content)
+        assert "modified" in result
+        assert "written_at" in result
 
         # Verify file was actually written
         written_file = Path(repo_path) / "new-file.txt"
@@ -435,9 +426,7 @@ class TestGitService:
         subdir_path = "nonexistent/subdir/file.txt"
 
         with pytest.raises(FileNotFoundError):
-            await git_service.write_file(
-                repo_path, subdir_path, content, create_parents=False
-            )
+            await git_service.write_file(repo_path, subdir_path, content, create_parents=False)
 
     @pytest.mark.asyncio
     async def test_delete_file_success(self, git_service):
@@ -453,8 +442,8 @@ class TestGitService:
 
         assert result is not None
         assert isinstance(result, dict)
-        assert result['path'] == 'to-delete.txt'
-        assert 'deleted_at' in result
+        assert result["path"] == "to-delete.txt"
+        assert "deleted_at" in result
 
         # Verify file was deleted
         assert not test_file.exists()
@@ -490,7 +479,7 @@ class TestGitService:
     @pytest.mark.asyncio
     async def test_is_binary_file_null_bytes(self):
         """Test binary file detection with null bytes."""
-        with patch('builtins.open', mock_open(read_data=b'Some text\x00with null bytes')):
+        with patch("builtins.open", mock_open(read_data=b"Some text\x00with null bytes")):
             git_service = GitService()
             result = await git_service._is_binary_file(Path("test.bin"))
             assert result is True
@@ -498,7 +487,7 @@ class TestGitService:
     @pytest.mark.asyncio
     async def test_is_binary_file_valid_utf8(self):
         """Test binary file detection with valid UTF-8."""
-        with patch('builtins.open', mock_open(read_data=b'Valid UTF-8 text content')):
+        with patch("builtins.open", mock_open(read_data=b"Valid UTF-8 text content")):
             git_service = GitService()
             result = await git_service._is_binary_file(Path("test.txt"))
             assert result is False
@@ -506,7 +495,7 @@ class TestGitService:
     @pytest.mark.asyncio
     async def test_is_binary_file_invalid_utf8(self):
         """Test binary file detection with invalid UTF-8."""
-        with patch('builtins.open', mock_open(read_data=b'\xff\xfeInvalid UTF-8')):
+        with patch("builtins.open", mock_open(read_data=b"\xff\xfeInvalid UTF-8")):
             git_service = GitService()
             result = await git_service._is_binary_file(Path("test.bin"))
             assert result is True
@@ -514,7 +503,7 @@ class TestGitService:
     @pytest.mark.asyncio
     async def test_is_binary_file_exception_handling(self):
         """Test binary file detection exception handling."""
-        with patch('builtins.open', side_effect=Exception("File error")):
+        with patch("builtins.open", side_effect=Exception("File error")):
             git_service = GitService()
             result = await git_service._is_binary_file(Path("error.txt"))
             assert result is True  # Should return True on exception
@@ -530,17 +519,17 @@ class TestGitService:
         remote_result = MagicMock(returncode=0, stdout="https://github.com/user/repo.git\n", stderr="")
         hash_result = MagicMock(returncode=0, stdout="abc123def456\n", stderr="")
 
-        with patch('subprocess.run', side_effect=[branch_result, remote_result, hash_result]):
+        with patch("subprocess.run", side_effect=[branch_result, remote_result, hash_result]):
             result = await git_service._get_repo_info(repo_path)
 
             assert result is not None
             assert isinstance(result, dict)
-            assert result['name'] == 'test-repo'
-            assert result['path'] == str(repo_path)
-            assert result['current_branch'] == 'main'
-            assert result['remote_url'] == 'https://github.com/user/repo.git'
-            assert result['commit_hash'] == 'abc123def456'
-            assert result['status'] == 'clean'
+            assert result["name"] == "test-repo"
+            assert result["path"] == str(repo_path)
+            assert result["current_branch"] == "main"
+            assert result["remote_url"] == "https://github.com/user/repo.git"
+            assert result["commit_hash"] == "abc123def456"
+            assert result["status"] == "clean"
 
     @pytest.mark.asyncio
     async def test_get_repo_info_git_commands_fail(self, git_service):
@@ -550,15 +539,15 @@ class TestGitService:
 
         failed_result = MagicMock(returncode=1, stdout="", stderr="Git error")
 
-        with patch('subprocess.run', return_value=failed_result):
+        with patch("subprocess.run", return_value=failed_result):
             result = await git_service._get_repo_info(repo_path)
 
             assert result is not None
-            assert result['current_branch'] == 'unknown'
-            assert result['remote_url'] is None
-            assert result['commit_hash'] == 'unknown'
+            assert result["current_branch"] == "unknown"
+            assert result["remote_url"] is None
+            assert result["commit_hash"] == "unknown"
             # Status defaults to 'clean' in the implementation
-            assert result['status'] == 'clean'
+            assert result["status"] == "clean"
 
 
 if __name__ == "__main__":

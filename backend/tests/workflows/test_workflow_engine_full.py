@@ -32,7 +32,7 @@ class TestWorkflowEngine:
 
             # Mock the crew integration methods that the graph nodes call
             # This is more reliable than mocking the graph itself
-            with patch.object(engine.crew_integration, 'execute_crew', return_value=state):
+            with patch.object(engine.crew_integration, "execute_crew", return_value=state):
                 result = await engine.run(state)
 
             assert result.project_id == "test-123"
@@ -45,13 +45,11 @@ class TestWorkflowEngine:
             state = WorkflowState(project_id="test-123")
 
             # Mock the crew integration to raise exception
-            with patch.object(engine.crew_integration, 'execute_crew', side_effect=RuntimeError("Workflow failed")):
+            with patch.object(engine.crew_integration, "execute_crew", side_effect=RuntimeError("Workflow failed")):
                 result = await engine.run(state)
 
             assert result.current_phase == ProjectPhase.FAILED
-            assert (
-                result.phases[ProjectPhase.FAILED].status == PhaseStatus.FAILED
-            )
+            assert result.phases[ProjectPhase.FAILED].status == PhaseStatus.FAILED
 
     @pytest.mark.asyncio
     async def test_run_phase_idea(self):
@@ -99,9 +97,7 @@ class TestWorkflowEngine:
                     "output": {"requirements": "User requirements doc"},
                 }
             )
-            mock_crew.map_crew_output_to_state = MagicMock(
-                return_value={"requirements": "User requirements doc"}
-            )
+            mock_crew.map_crew_output_to_state = MagicMock(return_value={"requirements": "User requirements doc"})
             mock_crew_cls.return_value = mock_crew
 
             engine = WorkflowEngine()
@@ -144,9 +140,7 @@ class TestWorkflowEngine:
                     "output": {"architecture": "System architecture"},
                 }
             )
-            mock_crew.map_crew_output_to_state = MagicMock(
-                return_value={"architecture": "System architecture"}
-            )
+            mock_crew.map_crew_output_to_state = MagicMock(return_value={"architecture": "System architecture"})
             mock_crew_cls.return_value = mock_crew
 
             engine = WorkflowEngine()
@@ -187,9 +181,7 @@ class TestWorkflowEngine:
                     "output": {"backend_code": "code"},
                 }
             )
-            mock_crew.map_crew_output_to_state = MagicMock(
-                return_value={"backend_code": "code"}
-            )
+            mock_crew.map_crew_output_to_state = MagicMock(return_value={"backend_code": "code"})
             mock_crew_cls.return_value = mock_crew
 
             engine = WorkflowEngine()
@@ -230,9 +222,7 @@ class TestWorkflowEngine:
                     "output": {"test_results": "all tests passed"},
                 }
             )
-            mock_crew.map_crew_output_to_state = MagicMock(
-                return_value={"test_results": "all tests passed"}
-            )
+            mock_crew.map_crew_output_to_state = MagicMock(return_value={"test_results": "all tests passed"})
             mock_crew_cls.return_value = mock_crew
 
             engine = WorkflowEngine()
@@ -254,9 +244,7 @@ class TestWorkflowEngine:
                     "output": {"infrastructure": "terraform configs"},
                 }
             )
-            mock_crew.map_crew_output_to_state = MagicMock(
-                return_value={"infrastructure": "terraform configs"}
-            )
+            mock_crew.map_crew_output_to_state = MagicMock(return_value={"infrastructure": "terraform configs"})
             mock_crew_cls.return_value = mock_crew
 
             engine = WorkflowEngine()
@@ -380,9 +368,7 @@ class TestWorkflowEngine:
         with patch("backend.workflows.workflow_engine.CrewIntegration"):
             engine = WorkflowEngine()
             state = WorkflowState(project_id="test-123")
-            state.update_phase_status(
-                ProjectPhase.IMPLEMENTATION, PhaseStatus.COMPLETED
-            )
+            state.update_phase_status(ProjectPhase.IMPLEMENTATION, PhaseStatus.COMPLETED)
 
             route = engine._route_from_implementation(state)
 
@@ -448,9 +434,7 @@ class TestWorkflowEngine:
         """Test running all phase types through run_phase."""
         with patch("backend.workflows.workflow_engine.CrewIntegration") as mock_crew_cls:
             mock_crew = MagicMock()
-            mock_crew.execute_phase = AsyncMock(
-                return_value={"success": True, "output": {}}
-            )
+            mock_crew.execute_phase = AsyncMock(return_value={"success": True, "output": {}})
             mock_crew.map_crew_output_to_state = MagicMock(return_value={})
             mock_crew_cls.return_value = mock_crew
 

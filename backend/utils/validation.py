@@ -17,22 +17,23 @@ from backend.core.exceptions import ValidationError
 
 # SSRF Protection - Blocked IP ranges
 BLOCKED_IP_RANGES = [
-    ipaddress.ip_network('10.0.0.0/8'),       # Private Class A
-    ipaddress.ip_network('172.16.0.0/12'),    # Private Class B
-    ipaddress.ip_network('192.168.0.0/16'),   # Private Class C
-    ipaddress.ip_network('127.0.0.0/8'),      # Loopback
-    ipaddress.ip_network('169.254.0.0/16'),   # Link-local
-    ipaddress.ip_network('0.0.0.0/8'),        # Current network
-    ipaddress.ip_network('224.0.0.0/4'),      # Multicast
-    ipaddress.ip_network('240.0.0.0/4'),      # Reserved
-    ipaddress.ip_network('::1/128'),          # IPv6 loopback
-    ipaddress.ip_network('fc00::/7'),         # IPv6 unique local
-    ipaddress.ip_network('fe80::/10'),        # IPv6 link-local
+    ipaddress.ip_network("10.0.0.0/8"),  # Private Class A
+    ipaddress.ip_network("172.16.0.0/12"),  # Private Class B
+    ipaddress.ip_network("192.168.0.0/16"),  # Private Class C
+    ipaddress.ip_network("127.0.0.0/8"),  # Loopback
+    ipaddress.ip_network("169.254.0.0/16"),  # Link-local
+    ipaddress.ip_network("0.0.0.0/8"),  # Current network
+    ipaddress.ip_network("224.0.0.0/4"),  # Multicast
+    ipaddress.ip_network("240.0.0.0/4"),  # Reserved
+    ipaddress.ip_network("::1/128"),  # IPv6 loopback
+    ipaddress.ip_network("fc00::/7"),  # IPv6 unique local
+    ipaddress.ip_network("fe80::/10"),  # IPv6 link-local
 ]
 
 
 class SanitizedString(str):
     """String that has been sanitized for security."""
+
     pass
 
 
@@ -58,11 +59,11 @@ def sanitize_input(value: str, max_length: int = 1000) -> str:
 
     # Remove potentially dangerous characters
     # Allow alphanumeric, spaces, and common punctuation
-    sanitized = re.sub(r'[<>"\'`;]', '', value)
+    sanitized = re.sub(r'[<>"\'`;]', "", value)
 
     # Prevent directory traversal
-    sanitized = re.sub(r'\.\./', '', sanitized)
-    sanitized = re.sub(r'\\\.', '', sanitized)
+    sanitized = re.sub(r"\.\./", "", sanitized)
+    sanitized = re.sub(r"\\\.", "", sanitized)
 
     return sanitized.strip()
 
@@ -80,6 +81,7 @@ def validate_email_format(email: str) -> bool:
     try:
         # Use email-validator directly (used by Pydantic EmailStr)
         from email_validator import validate_email
+
         validate_email(email, check_deliverability=False)
         return True
     except Exception:
@@ -100,15 +102,15 @@ def validate_url_format(url: str) -> bool:
         parsed = urlparse(url)
 
         # Check for valid scheme
-        if parsed.scheme not in ['http', 'https']:
+        if parsed.scheme not in ["http", "https"]:
             return False
 
         # Check for localhost/loopback addresses
-        if parsed.hostname in ['localhost', '127.0.0.1', '::1']:
+        if parsed.hostname in ["localhost", "127.0.0.1", "::1"]:
             return False
 
         # Check for private IP ranges
-        if parsed.hostname and re.match(r'^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)', parsed.hostname):
+        if parsed.hostname and re.match(r"^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)", parsed.hostname):
             return False
 
         return True
@@ -144,7 +146,7 @@ def validate_url_safe(url: str) -> bool:
         parsed = urlparse(url)
 
         # Check for valid scheme
-        if parsed.scheme not in ['http', 'https']:
+        if parsed.scheme not in ["http", "https"]:
             return False
 
         hostname = parsed.hostname
@@ -152,7 +154,7 @@ def validate_url_safe(url: str) -> bool:
             return False
 
         # Block localhost variants
-        if hostname.lower() in ['localhost', 'localhost.localdomain']:
+        if hostname.lower() in ["localhost", "localhost.localdomain"]:
             return False
 
         # Resolve hostname to IP for comprehensive check
@@ -212,40 +214,27 @@ class SecureProjectCreate(BaseModel):
     """
     Enhanced project creation model with security validation.
     """
-    name: str = Field(
-        ...,
-        min_length=1,
-        max_length=100,
-        description="Project name"
-    )
-    description: str = Field(
-        ...,
-        min_length=1,
-        max_length=2000,
-        description="Project description"
-    )
-    requirements: str | None = Field(
-        None,
-        max_length=5000,
-        description="Project requirements"
-    )
 
-    @field_validator('name')
+    name: str = Field(..., min_length=1, max_length=100, description="Project name")
+    description: str = Field(..., min_length=1, max_length=2000, description="Project description")
+    requirements: str | None = Field(None, max_length=5000, description="Project requirements")
+
+    @field_validator("name")
     @classmethod
     def validate_name(cls, v):
         """Validate and sanitize project name."""
         sanitized = sanitize_input(v, max_length=100)
-        if not re.match(r'^[a-zA-Z0-9 _\-\.]+$', sanitized):
+        if not re.match(r"^[a-zA-Z0-9 _\-\.]+$", sanitized):
             raise ValidationError("Project name contains invalid characters")
         return sanitized
 
-    @field_validator('description')
+    @field_validator("description")
     @classmethod
     def validate_description(cls, v):
         """Validate and sanitize project description."""
         return sanitize_input(v, max_length=2000)
 
-    @field_validator('requirements')
+    @field_validator("requirements")
     @classmethod
     def validate_requirements(cls, v):
         """Validate and sanitize requirements."""
@@ -258,25 +247,26 @@ class SecureDeploymentRequest(BaseModel):
     """
     Enhanced deployment request with security validation.
     """
+
     project_id: str = Field(..., min_length=1, max_length=50)
     environment: str = Field(..., pattern="^(dev|staging|production)$")
-    version: str = Field(..., pattern=r'^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$')
+    version: str = Field(..., pattern=r"^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$")
     config: dict[str, Any] | None = None
 
-    @field_validator('project_id')
+    @field_validator("project_id")
     @classmethod
     def validate_project_id(cls, v):
         """Validate project ID format."""
-        if not re.match(r'^[a-zA-Z0-9\-_]+$', v):
+        if not re.match(r"^[a-zA-Z0-9\-_]+$", v):
             raise ValidationError("Invalid project ID format")
         return v
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_config_security(self):
         """Validate configuration doesn't contain sensitive data."""
         if self.config:
             # Check for common sensitive keys
-            sensitive_keys = ['password', 'secret', 'key', 'token', 'api_key']
+            sensitive_keys = ["password", "secret", "key", "token", "api_key"]
             for key, _value in self.config.items():
                 key_lower = key.lower()
                 if any(sensitive in key_lower for sensitive in sensitive_keys):
@@ -288,6 +278,7 @@ class RateLimitConfig(BaseModel):
     """
     Rate limiting configuration for API endpoints.
     """
+
     requests_per_minute: int = Field(60, ge=1, le=1000)
     requests_per_hour: int = Field(1000, ge=1, le=10000)
     burst_limit: int = Field(10, ge=1, le=100)
@@ -295,11 +286,11 @@ class RateLimitConfig(BaseModel):
 
 # Common validation patterns
 VALIDATION_PATTERNS = {
-    'project_name': r'^[a-zA-Z0-9 _\-\.]{1,100}$',
-    'version': r'^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$',
-    'identifier': r'^[a-zA-Z0-9\-_]{1,50}$',
-    'environment': r'^(dev|staging|production)$',
-    'email': r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    "project_name": r"^[a-zA-Z0-9 _\-\.]{1,100}$",
+    "version": r"^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$",
+    "identifier": r"^[a-zA-Z0-9\-_]{1,50}$",
+    "environment": r"^(dev|staging|production)$",
+    "email": r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
 }
 
 

@@ -38,7 +38,7 @@ class CEOCrew(BaseAgent):
             engineering, product management, and business strategy. You make
             high-level decisions about project direction and resource allocation.""",
             verbose=True,
-            allow_delegation=True
+            allow_delegation=True,
         )
 
         # Product Manager Agent
@@ -48,7 +48,7 @@ class CEOCrew(BaseAgent):
             backstory="""You are a skilled product manager who translates business
             needs into technical requirements. You prioritize features and ensure
             the product meets user needs.""",
-            verbose=True
+            verbose=True,
         )
 
         # Technical Lead Agent
@@ -58,22 +58,15 @@ class CEOCrew(BaseAgent):
             backstory="""You are a senior technical lead with expertise in modern
             software architecture. You make key technical decisions and ensure
             technical excellence.""",
-            verbose=True
+            verbose=True,
         )
 
         # Create crew
-        crew = Crew(
-            agents=[ceo, pm, tech_lead],
-            tasks=[],
-            verbose=True
-        )
+        crew = Crew(agents=[ceo, pm, tech_lead], tasks=[], verbose=True)
 
         return crew
 
-    async def make_strategic_decision(
-        self,
-        context: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def make_strategic_decision(self, context: dict[str, Any]) -> dict[str, Any]:
         """
         Make a strategic decision based on context.
 
@@ -88,9 +81,9 @@ class CEOCrew(BaseAgent):
         decision_task = Task(
             description=f"""Based on the following context, make a strategic decision:
 
-            Project State: {context.get('project_state', 'Unknown')}
-            Options: {context.get('options', [])}
-            Constraints: {context.get('constraints', [])}
+            Project State: {context.get("project_state", "Unknown")}
+            Options: {context.get("options", [])}
+            Constraints: {context.get("constraints", [])}
 
             Provide:
             1. The decision
@@ -99,22 +92,15 @@ class CEOCrew(BaseAgent):
             4. Next steps
             """,
             expected_output="A strategic decision with detailed rationale",
-            agent=crew.agents[0]  # CEO agent
+            agent=crew.agents[0],  # CEO agent
         )
 
         crew.tasks = [decision_task]
         result = crew.kickoff()
 
-        return {
-            "decision": result,
-            "crew": "CEO Crew",
-            "context": context
-        }
+        return {"decision": result, "crew": "CEO Crew", "context": context}
 
-    async def review_project_status(
-        self,
-        project_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def review_project_status(self, project_data: dict[str, Any]) -> dict[str, Any]:
         """
         Review project status and provide executive summary.
 
@@ -129,10 +115,10 @@ class CEOCrew(BaseAgent):
         review_task = Task(
             description=f"""Review the following project status and provide an executive summary:
 
-            Project: {project_data.get('name', 'Unknown')}
-            Status: {project_data.get('status', 'Unknown')}
-            Progress: {project_data.get('progress', 0)}%
-            Issues: {project_data.get('issues', [])}
+            Project: {project_data.get("name", "Unknown")}
+            Status: {project_data.get("status", "Unknown")}
+            Progress: {project_data.get("progress", 0)}%
+            Issues: {project_data.get("issues", [])}
 
             Provide:
             1. Executive summary
@@ -141,14 +127,10 @@ class CEOCrew(BaseAgent):
             4. Resource needs
             """,
             expected_output="Executive project review",
-            agent=crew.agents[0]
+            agent=crew.agents[0],
         )
 
         crew.tasks = [review_task]
         result = crew.kickoff()
 
-        return {
-            "review": result,
-            "crew": "CEO Crew",
-            "project": project_data.get('name')
-        }
+        return {"review": result, "crew": "CEO Crew", "project": project_data.get("name")}

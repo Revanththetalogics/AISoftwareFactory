@@ -39,11 +39,7 @@ class PerformanceTimer:
 
     def __enter__(self):
         self.start_time = time.perf_counter()
-        logger.info(
-            f"Starting {self.operation_name}",
-            operation=self.operation_name,
-            **self.context
-        )
+        logger.info(f"Starting {self.operation_name}", operation=self.operation_name, **self.context)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -57,7 +53,7 @@ class PerformanceTimer:
                 duration_ms=round(duration_ms, 2),
                 error_type=exc_type.__name__,
                 error_message=str(exc_val),
-                **self.context
+                **self.context,
             )
         else:
             logger.info(
@@ -65,7 +61,7 @@ class PerformanceTimer:
                 operation=self.operation_name,
                 duration_ms=round(duration_ms, 2),
                 **self.result_metadata,
-                **self.context
+                **self.context,
             )
 
     def set_result_metadata(self, **metadata):
@@ -83,12 +79,13 @@ def timed_operation(operation_name: str):
             # Authentication logic
             pass
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
             with PerformanceTimer(operation_name, function=func.__name__) as timer:
                 result = await func(*args, **kwargs)
-                if hasattr(result, '__len__'):
+                if hasattr(result, "__len__"):
                     timer.set_result_metadata(result_count=len(result))
                 return result
 
@@ -96,7 +93,7 @@ def timed_operation(operation_name: str):
         def sync_wrapper(*args, **kwargs):
             with PerformanceTimer(operation_name, function=func.__name__) as timer:
                 result = func(*args, **kwargs)
-                if hasattr(result, '__len__'):
+                if hasattr(result, "__len__"):
                     timer.set_result_metadata(result_count=len(result))
                 return result
 
@@ -117,7 +114,7 @@ class BusinessEventLogger:
             project_id=project_id,
             project_name=project_name,
             user_id=user_id,
-            action="CREATE"
+            action="CREATE",
         )
 
     @staticmethod
@@ -129,7 +126,7 @@ class BusinessEventLogger:
             project_id=project_id,
             user_id=user_id,
             changes=list(changes.keys()),
-            action="UPDATE"
+            action="UPDATE",
         )
 
     @staticmethod
@@ -141,7 +138,7 @@ class BusinessEventLogger:
             workflow_id=workflow_id,
             project_id=project_id,
             user_id=user_id,
-            action="EXECUTE"
+            action="EXECUTE",
         )
 
     @staticmethod
@@ -153,7 +150,7 @@ class BusinessEventLogger:
             task_id=task_id,
             agent_id=agent_id,
             user_id=user_id,
-            action="ASSIGN"
+            action="ASSIGN",
         )
 
     @staticmethod
@@ -166,7 +163,7 @@ class BusinessEventLogger:
             project_id=project_id,
             environment=environment,
             user_id=user_id,
-            action="DEPLOY"
+            action="DEPLOY",
         )
 
 
@@ -182,7 +179,7 @@ class AuditTrailLogger:
             username=username,
             success=success,
             ip_address=ip_address,
-            security_event=True
+            security_event=True,
         )
 
     @staticmethod
@@ -195,7 +192,7 @@ class AuditTrailLogger:
             resource=resource,
             action=action,
             granted=granted,
-            security_event=True
+            security_event=True,
         )
 
     @staticmethod
@@ -208,7 +205,7 @@ class AuditTrailLogger:
             resource_type=resource_type,
             resource_id=resource_id,
             action=action,
-            security_event=True
+            security_event=True,
         )
 
 
@@ -219,10 +216,7 @@ class ErrorContextLogger:
     def log_with_context(error: Exception, context: dict[str, Any]):
         """Log error with additional context."""
         logger.error(
-            "Operation failed with error",
-            error_type=type(error).__name__,
-            error_message=str(error),
-            **context
+            "Operation failed with error", error_type=type(error).__name__, error_message=str(error), **context
         )
 
     @staticmethod
@@ -235,7 +229,7 @@ class ErrorContextLogger:
             query=query,
             error_type=type(error).__name__,
             error_message=str(error),
-            **context
+            **context,
         )
 
 

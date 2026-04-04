@@ -19,10 +19,10 @@ class TestProjectService:
     def test_init(self, project_service):
         """Test ProjectService initialization."""
         assert project_service is not None
-        assert hasattr(project_service, '_projects')
+        assert hasattr(project_service, "_projects")
         assert isinstance(project_service._projects, dict)
         assert len(project_service._projects) == 0
-        assert hasattr(project_service, '_logger')
+        assert hasattr(project_service, "_logger")
 
     @pytest.mark.asyncio
     async def test_create_project_basic(self, project_service):
@@ -53,9 +53,7 @@ class TestProjectService:
     async def test_create_project_with_requirements(self, project_service):
         """Test creating project with requirements."""
         result = await project_service.create_project(
-            name="Project with Requirements",
-            description="Description here",
-            requirements="These are the requirements"
+            name="Project with Requirements", description="Description here", requirements="These are the requirements"
         )
 
         assert result["requirements"] == "These are the requirements"
@@ -64,11 +62,7 @@ class TestProjectService:
     async def test_create_project_with_creator(self, project_service):
         """Test creating project with creator info."""
         creator_id = "user123"
-        result = await project_service.create_project(
-            name="Project",
-            description="Desc",
-            created_by=creator_id
-        )
+        result = await project_service.create_project(name="Project", description="Desc", created_by=creator_id)
 
         assert result["created_by"] == creator_id
 
@@ -182,7 +176,7 @@ class TestProjectService:
             "name": "Updated Name",
             "description": "Updated Description",
             "status": "active",
-            "current_phase": "development"
+            "current_phase": "development",
         }
 
         result = await project_service.update_project(project_id, updates)
@@ -219,7 +213,7 @@ class TestProjectService:
         updates = {
             "name": "Allowed Update",
             "disallowed_field": "Should be ignored",
-            "another_disallowed": "Also ignored"
+            "another_disallowed": "Also ignored",
         }
 
         result = await project_service.update_project(project_id, updates)
@@ -333,8 +327,8 @@ class TestProjectService:
         assert "created_at" in project
         assert "updated_at" in project
 
-        created_time = datetime.fromisoformat(project["created_at"].replace('Z', '+00:00'))
-        updated_time = datetime.fromisoformat(project["updated_at"].replace('Z', '+00:00'))
+        created_time = datetime.fromisoformat(project["created_at"].replace("Z", "+00:00"))
+        updated_time = datetime.fromisoformat(project["updated_at"].replace("Z", "+00:00"))
 
         # Times should be very close (within a few seconds)
         time_diff = abs((updated_time - created_time).total_seconds())
@@ -348,10 +342,7 @@ class TestProjectService:
         project_id = project["id"]
 
         # 2. Update it
-        await project_service.update_project(project_id, {
-            "description": "Updated desc",
-            "status": "active"
-        })
+        await project_service.update_project(project_id, {"description": "Updated desc", "status": "active"})
 
         # 3. Update progress
         await project_service.update_progress(project_id, 25.0)

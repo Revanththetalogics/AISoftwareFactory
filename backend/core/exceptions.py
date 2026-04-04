@@ -21,6 +21,7 @@ class AISoftwareFactoryException(Exception):
         self.status_code = status_code
         super().__init__(self.message)
 
+
 class BackendException(AISoftwareFactoryException):
     """Base exception for all backend errors."""
 
@@ -29,7 +30,7 @@ class BackendException(AISoftwareFactoryException):
         message: str,
         error_code: str = "BACKEND_ERROR",
         status_code: int = 500,
-        details: dict[str, Any] | None = None
+        details: dict[str, Any] | None = None,
     ):
         self.message = message
         self.error_code = error_code
@@ -37,17 +38,17 @@ class BackendException(AISoftwareFactoryException):
         self.details = details or {}
         super().__init__(message, error_code, status_code)
 
+
 # Configuration exception
 class ConfigurationError(AISoftwareFactoryException):
     """Raised when configuration is invalid or missing."""
 
     def __init__(self, message: str, config_key: str | None = None):
         super().__init__(
-            message=message,
-            error_code="CONFIGURATION_ERROR",
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            message=message, error_code="CONFIGURATION_ERROR", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
         self.config_key = config_key
+
 
 # Resource not found exception
 class ResourceNotFoundError(AISoftwareFactoryException):
@@ -57,38 +58,42 @@ class ResourceNotFoundError(AISoftwareFactoryException):
         super().__init__(
             message=f"{resource_type} with id '{resource_id}' not found",
             error_code="RESOURCE_NOT_FOUND",
-            status_code=status.HTTP_404_NOT_FOUND
+            status_code=status.HTTP_404_NOT_FOUND,
         )
         self.resource_type = resource_type
         self.resource_id = resource_id
+
 
 # Validation exceptions
 class ValidationError(BackendException):
     """Raised when input validation fails."""
 
-    def __init__(self, message: str, field: str | None = None, value: Any = None):
-        details = {}
+    def __init__(
+        self,
+        message: str,
+        field: str | None = None,
+        value: Any = None,
+        errors: list | None = None,
+        status_code: int = status.HTTP_400_BAD_REQUEST,
+    ):
+        details: dict[str, Any] = {}
         if field:
             details["field"] = field
         if value is not None:
             details["value"] = value
+        if errors is not None:
+            details["errors"] = errors
 
-        super().__init__(
-            message=message,
-            error_code="VALIDATION_ERROR",
-            status_code=status.HTTP_400_BAD_REQUEST,
-            details=details
-        )
+        super().__init__(message=message, error_code="VALIDATION_ERROR", status_code=status_code, details=details)
+
 
 class SchemaValidationError(ValidationError):
     """Raised when database schema validation fails."""
 
     def __init__(self, message: str, schema: str, field: str | None = None):
-        super().__init__(
-            message=message,
-            field=field
-        )
+        super().__init__(message=message, field=field)
         self.details["schema"] = schema
+
 
 # Resource exceptions
 class NotFoundException(BackendException):
@@ -99,11 +104,9 @@ class NotFoundException(BackendException):
             message=f"{resource_type} with id '{resource_id}' not found",
             error_code="NOT_FOUND",
             status_code=status.HTTP_404_NOT_FOUND,
-            details={
-                "resource_type": resource_type,
-                "resource_id": resource_id
-            }
+            details={"resource_type": resource_type, "resource_id": resource_id},
         )
+
 
 class ConflictException(BackendException):
     """Raised when there's a conflict with the current state."""
@@ -113,22 +116,17 @@ class ConflictException(BackendException):
             message=message,
             error_code="CONFLICT",
             status_code=status.HTTP_409_CONFLICT,
-            details={
-                "resource_type": resource_type,
-                "resource_id": resource_id
-            }
+            details={"resource_type": resource_type, "resource_id": resource_id},
         )
+
 
 # Authentication/Authorization exceptions
 class AuthenticationError(BackendException):
     """Raised when authentication fails."""
 
     def __init__(self, message: str = "Authentication required"):
-        super().__init__(
-            message=message,
-            error_code="AUTHENTICATION_ERROR",
-            status_code=status.HTTP_401_UNAUTHORIZED
-        )
+        super().__init__(message=message, error_code="AUTHENTICATION_ERROR", status_code=status.HTTP_401_UNAUTHORIZED)
+
 
 class AuthorizationError(BackendException):
     """Raised when user lacks required permissions."""
@@ -139,11 +137,9 @@ class AuthorizationError(BackendException):
             details["required_permission"] = required_permission
 
         super().__init__(
-            message=message,
-            error_code="AUTHORIZATION_ERROR",
-            status_code=status.HTTP_403_FORBIDDEN,
-            details=details
+            message=message, error_code="AUTHORIZATION_ERROR", status_code=status.HTTP_403_FORBIDDEN, details=details
         )
+
 
 # Service exceptions
 class ServiceUnavailableError(BackendException):
@@ -154,11 +150,9 @@ class ServiceUnavailableError(BackendException):
             message=f"Service '{service_name}' is unavailable: {reason}",
             error_code="SERVICE_UNAVAILABLE",
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            details={
-                "service_name": service_name,
-                "reason": reason
-            }
+            details={"service_name": service_name, "reason": reason},
         )
+
 
 class DatabaseError(BackendException):
     """Raised when database operations fail."""
@@ -172,8 +166,9 @@ class DatabaseError(BackendException):
             message=message,
             error_code="DATABASE_ERROR",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            details=details
+            details=details,
         )
+
 
 class CacheError(BackendException):
     """Raised when cache operations fail."""
@@ -187,8 +182,9 @@ class CacheError(BackendException):
             message=message,
             error_code="CACHE_ERROR",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            details=details
+            details=details,
         )
+
 
 # Git/File exceptions
 class GitError(BackendException):
@@ -200,11 +196,9 @@ class GitError(BackendException):
             details["repo_name"] = repo_name
 
         super().__init__(
-            message=message,
-            error_code="GIT_ERROR",
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            details=details
+            message=message, error_code="GIT_ERROR", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, details=details
         )
+
 
 class FileNotFoundError(BackendException):
     """Raised when a file is not found."""
@@ -214,11 +208,9 @@ class FileNotFoundError(BackendException):
             message=f"File not found: {file_path}",
             error_code="FILE_NOT_FOUND",
             status_code=status.HTTP_404_NOT_FOUND,
-            details={
-                "file_path": file_path,
-                "operation": operation
-            }
+            details={"file_path": file_path, "operation": operation},
         )
+
 
 # Simulation/Knowledge exceptions
 class SimulationError(BackendException):
@@ -233,8 +225,9 @@ class SimulationError(BackendException):
             message=message,
             error_code="SIMULATION_ERROR",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            details=details
+            details=details,
         )
+
 
 class KnowledgeBaseError(BackendException):
     """Raised when knowledge base operations fail."""
@@ -248,8 +241,9 @@ class KnowledgeBaseError(BackendException):
             message=message,
             error_code="KNOWLEDGE_BASE_ERROR",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            details=details
+            details=details,
         )
+
 
 # Network/Communication exceptions
 class NetworkError(BackendException):
@@ -264,8 +258,9 @@ class NetworkError(BackendException):
             message=message,
             error_code="NETWORK_ERROR",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            details=details
+            details=details,
         )
+
 
 # Business logic exceptions
 class BusinessLogicError(BackendException):
@@ -276,8 +271,9 @@ class BusinessLogicError(BackendException):
             message=message,
             error_code="BUSINESS_LOGIC_ERROR",
             status_code=status.HTTP_400_BAD_REQUEST,
-            details={"rule": rule}
+            details={"rule": rule},
         )
+
 
 # Rate limiting exception
 class RateLimitError(BackendException):
@@ -285,15 +281,14 @@ class RateLimitError(BackendException):
 
     def __init__(self, message: str = "Rate limit exceeded", retry_after: int | None = None):
         super().__init__(
-            message=message,
-            error_code="RATE_LIMIT_EXCEEDED",
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS
+            message=message, error_code="RATE_LIMIT_EXCEEDED", status_code=status.HTTP_429_TOO_MANY_REQUESTS
         )
         self.retry_after = retry_after
 
 
 class RateLimitExceededError(RateLimitError):
     """Alias for RateLimitError for backward compatibility."""
+
     pass
 
 
@@ -301,11 +296,7 @@ class ExternalServiceError(BackendException):
     """Raised when an external service fails."""
 
     def __init__(self, message: str = "External service error", service: str | None = None):
-        super().__init__(
-            message=message,
-            error_code="EXTERNAL_SERVICE_ERROR",
-            status_code=status.HTTP_502_BAD_GATEWAY
-        )
+        super().__init__(message=message, error_code="EXTERNAL_SERVICE_ERROR", status_code=status.HTTP_502_BAD_GATEWAY)
         self.service = service
 
 
@@ -313,11 +304,7 @@ class ConflictError(BackendException):
     """Raised when there's a conflict with the current state of a resource."""
 
     def __init__(self, message: str = "Resource conflict", resource: str | None = None):
-        super().__init__(
-            message=message,
-            error_code="CONFLICT_ERROR",
-            status_code=status.HTTP_409_CONFLICT
-        )
+        super().__init__(message=message, error_code="CONFLICT_ERROR", status_code=status.HTTP_409_CONFLICT)
         self.resource = resource
 
 
@@ -325,32 +312,24 @@ class ConflictError(BackendException):
 class ErrorResponse:
     """Structured error response format."""
 
-    def __init__(
-        self,
-        error: AISoftwareFactoryException,
-        request_id: str | None = None
-    ):
+    def __init__(self, error: AISoftwareFactoryException, request_id: str | None = None):
         self.error = {
             "code": error.error_code,
             "message": error.message,
             "status_code": error.status_code,
-            "details": getattr(error, 'details', {}),
-            "timestamp": __import__('datetime').datetime.now(__import__('datetime').UTC).isoformat()
+            "details": getattr(error, "details", {}),
+            "timestamp": __import__("datetime").datetime.now(__import__("datetime").UTC).isoformat(),
         }
         if request_id:
             self.error["request_id"] = request_id
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "success": False,
-            "error": self.error
-        }
+        return {"success": False, "error": self.error}
+
 
 # Exception handler utility
 def handle_backend_exception(
-    exc: AISoftwareFactoryException,
-    request_id: str | None = None,
-    logger: logging.Logger | None = None
+    exc: AISoftwareFactoryException, request_id: str | None = None, logger: logging.Logger | None = None
 ) -> HTTPException:
     """Convert BackendException to HTTPException with proper logging."""
 
@@ -363,19 +342,17 @@ def handle_backend_exception(
             extra={
                 "error_code": exc.error_code,
                 "status_code": exc.status_code,
-                "details": getattr(exc, 'details', {}),
-                "request_id": request_id
-            }
+                "details": getattr(exc, "details", {}),
+                "request_id": request_id,
+            },
         )
 
     # Create structured error response
     error_response = ErrorResponse(exc, request_id)
 
     # Return HTTPException with structured response
-    return HTTPException(
-        status_code=exc.status_code,
-        detail=error_response.to_dict()
-    )
+    return HTTPException(status_code=exc.status_code, detail=error_response.to_dict())
+
 
 # Convenience functions for raising common exceptions
 def raise_validation_error(field: str, value: Any, message: str = None):
@@ -384,13 +361,16 @@ def raise_validation_error(field: str, value: Any, message: str = None):
         message = f"Invalid value for field '{field}'"
     raise ValidationError(message, field, value)
 
+
 def raise_not_found(resource_type: str, resource_id: str):
     """Raise a not found error."""
     raise NotFoundException(resource_type, resource_id)
 
+
 def raise_auth_error(message: str = "Authentication required"):
     """Raise an authentication error."""
     raise AuthenticationError(message)
+
 
 def raise_forbidden(permission: str = None):
     """Raise an authorization error."""
@@ -398,6 +378,7 @@ def raise_forbidden(permission: str = None):
     if permission:
         message = f"Access forbidden: requires '{permission}' permission"
     raise AuthorizationError(message, permission)
+
 
 def raise_conflict(resource_type: str, resource_id: str, message: str = None):
     """Raise a conflict error."""

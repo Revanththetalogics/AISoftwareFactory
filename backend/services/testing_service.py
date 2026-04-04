@@ -61,15 +61,15 @@ class TestingService:
     async def get_test_run(self, test_run_id: str, db: AsyncSession = None) -> TestRun | None:
         """Get a specific test run."""
         try:
-            result = await db.execute(
-                select(TestRun).where(TestRun.id == test_run_id)
-            )
+            result = await db.execute(select(TestRun).where(TestRun.id == test_run_id))
             return result.scalar_one_or_none()
         except Exception as e:
             logger.error("Failed to get test run", test_run_id=test_run_id, error=str(e))
             return None
 
-    async def list_bugs(self, project_id: str = None, status: str = None, severity: str = None, db: AsyncSession = None) -> list[Bug]:
+    async def list_bugs(
+        self, project_id: str = None, status: str = None, severity: str = None, db: AsyncSession = None
+    ) -> list[Bug]:
         """List bugs with optional filters."""
         try:
             query = select(Bug).order_by(Bug.found_at.desc())
@@ -90,9 +90,7 @@ class TestingService:
     async def get_bug(self, bug_id: str, db: AsyncSession = None) -> Bug | None:
         """Get a specific bug."""
         try:
-            result = await db.execute(
-                select(Bug).where(Bug.id == bug_id)
-            )
+            result = await db.execute(select(Bug).where(Bug.id == bug_id))
             return result.scalar_one_or_none()
         except Exception as e:
             logger.error("Failed to get bug", bug_id=bug_id, error=str(e))
@@ -107,7 +105,7 @@ class TestingService:
         file_path: str = None,
         line_number: int = None,
         test_run_id: str = None,
-        db: AsyncSession = None
+        db: AsyncSession = None,
     ) -> Bug:
         """Create a new bug."""
         bug = Bug(
@@ -147,10 +145,7 @@ class TestingService:
         try:
             # Get latest test run for project
             result = await db.execute(
-                select(TestRun)
-                .where(TestRun.project_id == project_id)
-                .order_by(TestRun.started_at.desc())
-                .limit(1)
+                select(TestRun).where(TestRun.project_id == project_id).order_by(TestRun.started_at.desc()).limit(1)
             )
             test_run = result.scalar_one_or_none()
 
@@ -161,9 +156,9 @@ class TestingService:
             result = await db.execute(
                 select(
                     TestCase.file_path,
-                    func.count(TestCase.id).label('total'),
-                    func.sum(func.case((TestCase.status == 'passed', 1), else_=0)).label('passed'),
-                    func.sum(func.case((TestCase.status == 'failed', 1), else_=0)).label('failed'),
+                    func.count(TestCase.id).label("total"),
+                    func.sum(func.case((TestCase.status == "passed", 1), else_=0)).label("passed"),
+                    func.sum(func.case((TestCase.status == "failed", 1), else_=0)).label("failed"),
                 )
                 .where(TestCase.test_run_id == test_run.id)
                 .group_by(TestCase.file_path)
@@ -171,13 +166,15 @@ class TestingService:
 
             files = []
             for row in result:
-                files.append({
-                    "file_path": row.file_path,
-                    "total": row.total,
-                    "passed": row.passed,
-                    "failed": row.failed,
-                    "status": "passed" if row.failed == 0 else "failed"
-                })
+                files.append(
+                    {
+                        "file_path": row.file_path,
+                        "total": row.total,
+                        "passed": row.passed,
+                        "failed": row.failed,
+                        "status": "passed" if row.failed == 0 else "failed",
+                    }
+                )
 
             return files
         except Exception as e:

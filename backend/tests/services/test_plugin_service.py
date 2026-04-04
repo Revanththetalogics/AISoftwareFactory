@@ -58,17 +58,17 @@ class TestPluginService:
             "entry_point": "main.py",
             "dependencies": ["dep1", "dep2"],
             "permissions": ["read", "write"],
-            "config_schema": {"setting": {"type": "string"}}
+            "config_schema": {"setting": {"type": "string"}},
         }
 
         # Create manifest file
         manifest_path = sample_plugin_dir / "manifest.json"
-        with open(manifest_path, 'w') as f:
+        with open(manifest_path, "w") as f:
             json.dump(manifest_data, f)
 
         # Create entry point file
         entry_path = sample_plugin_dir / "main.py"
-        with open(entry_path, 'w') as f:
+        with open(entry_path, "w") as f:
             f.write("def initialize(config): return True")
 
         # Discover plugins
@@ -100,12 +100,12 @@ class TestPluginService:
 
         # Create invalid manifest (missing required fields)
         manifest_path = bad_plugin_dir / "manifest.json"
-        with open(manifest_path, 'w') as f:
+        with open(manifest_path, "w") as f:
             json.dump({"id": "bad_plugin"}, f)  # Missing required fields
 
         # Create entry point
         entry_path = bad_plugin_dir / "main.py"
-        with open(entry_path, 'w') as f:
+        with open(entry_path, "w") as f:
             f.write("def initialize(config): return True")
 
         # Should handle gracefully and return empty list or skip bad plugin
@@ -131,16 +131,16 @@ class TestPluginService:
             "entry_point": "main.py",
             "dependencies": [],
             "permissions": ["read"],
-            "config_schema": {}
+            "config_schema": {},
         }
 
         # Create manifest
         manifest_path = plugin_dir / "manifest.json"
-        with open(manifest_path, 'w') as f:
+        with open(manifest_path, "w") as f:
             json.dump(manifest_data, f)
 
         # Create plugin module with required functions
-        plugin_code = '''
+        plugin_code = """
 def initialize(config):
     print(f"Initializing with config: {config}")
     return True
@@ -150,10 +150,10 @@ def on_startup():
 
 def on_user_action(data):
     return {"response": "handled", "data": data}
-'''
+"""
 
         entry_path = plugin_dir / "main.py"
-        with open(entry_path, 'w') as f:
+        with open(entry_path, "w") as f:
             f.write(plugin_code)
 
         # Load plugin
@@ -186,20 +186,20 @@ def on_user_action(data):
             "entry_point": "main.py",
             "dependencies": [],
             "permissions": ["read"],
-            "config_schema": {}
+            "config_schema": {},
         }
 
         manifest_path = plugin_dir / "manifest.json"
-        with open(manifest_path, 'w') as f:
+        with open(manifest_path, "w") as f:
             json.dump(manifest_data, f)
 
-        plugin_code = '''
+        plugin_code = """
 def initialize(config):
     return True
-'''
+"""
 
         entry_path = plugin_dir / "main.py"
-        with open(entry_path, 'w') as f:
+        with open(entry_path, "w") as f:
             f.write(plugin_code)
 
         # Load plugin first time
@@ -237,11 +237,11 @@ def initialize(config):
             "entry_point": "missing.py",  # This file won't exist
             "dependencies": [],
             "permissions": ["read"],
-            "config_schema": {}
+            "config_schema": {},
         }
 
         manifest_path = plugin_dir / "manifest.json"
-        with open(manifest_path, 'w') as f:
+        with open(manifest_path, "w") as f:
             json.dump(manifest_data, f)
 
         # Try to load plugin
@@ -265,21 +265,21 @@ def initialize(config):
             "entry_point": "main.py",
             "dependencies": [],
             "permissions": ["read"],
-            "config_schema": {}
+            "config_schema": {},
         }
 
         manifest_path = plugin_dir / "manifest.json"
-        with open(manifest_path, 'w') as f:
+        with open(manifest_path, "w") as f:
             json.dump(manifest_data, f)
 
         # Create plugin module WITHOUT initialize function
-        plugin_code = '''
+        plugin_code = """
 def some_other_function():
     pass
-'''
+"""
 
         entry_path = plugin_dir / "main.py"
-        with open(entry_path, 'w') as f:
+        with open(entry_path, "w") as f:
             f.write(plugin_code)
 
         # Try to load plugin
@@ -306,23 +306,23 @@ def some_other_function():
             "entry_point": "main.py",
             "dependencies": [],
             "permissions": ["read"],
-            "config_schema": {}
+            "config_schema": {},
         }
 
         manifest_path = plugin_dir / "manifest.json"
-        with open(manifest_path, 'w') as f:
+        with open(manifest_path, "w") as f:
             json.dump(manifest_data, f)
 
-        plugin_code = '''
+        plugin_code = """
 def initialize(config):
     return True
 
 def cleanup():
     print("Cleaning up plugin resources")
-'''
+"""
 
         entry_path = plugin_dir / "main.py"
-        with open(entry_path, 'w') as f:
+        with open(entry_path, "w") as f:
             f.write(plugin_code)
 
         # Load plugin
@@ -359,14 +359,14 @@ def cleanup():
             "entry_point": "main.py",
             "dependencies": [],
             "permissions": ["read"],
-            "config_schema": {}
+            "config_schema": {},
         }
 
         manifest_path = plugin_dir / "manifest.json"
-        with open(manifest_path, 'w') as f:
+        with open(manifest_path, "w") as f:
             json.dump(manifest_data, f)
 
-        plugin_code = '''
+        plugin_code = """
 def initialize(config):
     return True
 
@@ -375,10 +375,10 @@ def on_user_action(data):
 
 def on_startup():
     return "startup_complete"
-'''
+"""
 
         entry_path = plugin_dir / "main.py"
-        with open(entry_path, 'w') as f:
+        with open(entry_path, "w") as f:
             f.write(plugin_code)
 
         # Load plugin
@@ -424,23 +424,23 @@ def on_startup():
             "entry_point": "main.py",
             "dependencies": [],
             "permissions": ["read"],
-            "config_schema": {}
+            "config_schema": {},
         }
 
         manifest_path = plugin_dir / "manifest.json"
-        with open(manifest_path, 'w') as f:
+        with open(manifest_path, "w") as f:
             json.dump(manifest_data, f)
 
-        plugin_code = '''
+        plugin_code = """
 def initialize(config):
     return True
 
 def on_user_action(data):
     return {"result": "should_not_be_called"}
-'''
+"""
 
         entry_path = plugin_dir / "main.py"
-        with open(entry_path, 'w') as f:
+        with open(entry_path, "w") as f:
             f.write(plugin_code)
 
         # Load plugin
@@ -471,20 +471,20 @@ def on_user_action(data):
             "entry_point": "main.py",
             "dependencies": [],
             "permissions": ["read"],
-            "config_schema": {}
+            "config_schema": {},
         }
 
         manifest_path = plugin_dir / "manifest.json"
-        with open(manifest_path, 'w') as f:
+        with open(manifest_path, "w") as f:
             json.dump(manifest_data, f)
 
-        plugin_code = '''
+        plugin_code = """
 def initialize(config):
     return True
-'''
+"""
 
         entry_path = plugin_dir / "main.py"
-        with open(entry_path, 'w') as f:
+        with open(entry_path, "w") as f:
             f.write(plugin_code)
 
         # Load plugin
@@ -523,20 +523,20 @@ def initialize(config):
                 "entry_point": "main.py",
                 "dependencies": [],
                 "permissions": ["read"],
-                "config_schema": {}
+                "config_schema": {},
             }
 
             manifest_path = plugin_dir / "manifest.json"
-            with open(manifest_path, 'w') as f:
+            with open(manifest_path, "w") as f:
                 json.dump(manifest_data, f)
 
-            plugin_code = '''
+            plugin_code = """
 def initialize(config):
     return True
-'''
+"""
 
             entry_path = plugin_dir / "main.py"
-            with open(entry_path, 'w') as f:
+            with open(entry_path, "w") as f:
                 f.write(plugin_code)
 
             # Load plugin
@@ -557,7 +557,7 @@ def initialize(config):
         plugin_data = [
             ("auth_plugin", PluginType.AUTHENTICATION, PluginStatus.ACTIVE),
             ("storage_plugin", PluginType.STORAGE, PluginStatus.ACTIVE),
-            ("broken_plugin", PluginType.CUSTOM, PluginStatus.ERROR)
+            ("broken_plugin", PluginType.CUSTOM, PluginStatus.ERROR),
         ]
 
         for plugin_id, plugin_type, status in plugin_data:
@@ -574,20 +574,20 @@ def initialize(config):
                 "entry_point": "main.py",
                 "dependencies": [],
                 "permissions": ["read"],
-                "config_schema": {}
+                "config_schema": {},
             }
 
             manifest_path = plugin_dir / "manifest.json"
-            with open(manifest_path, 'w') as f:
+            with open(manifest_path, "w") as f:
                 json.dump(manifest_data, f)
 
-            plugin_code = '''
+            plugin_code = """
 def initialize(config):
     return True
-'''
+"""
 
             entry_path = plugin_dir / "main.py"
-            with open(entry_path, 'w') as f:
+            with open(entry_path, "w") as f:
                 f.write(plugin_code)
 
             # Load plugin
@@ -671,14 +671,14 @@ def initialize(config):
             "entry_point": "main.py",
             "dependencies": [],
             "permissions": ["read"],
-            "config_schema": {}
+            "config_schema": {},
         }
 
         manifest_path = plugin_dir / "manifest.json"
-        with open(manifest_path, 'w') as f:
+        with open(manifest_path, "w") as f:
             json.dump(manifest_data, f)
 
-        plugin_code = '''
+        plugin_code = """
 def initialize(config):
     return True
 
@@ -690,10 +690,10 @@ def on_shutdown():
 
 def on_user_action(data):
     pass
-'''
+"""
 
         entry_path = plugin_dir / "main.py"
-        with open(entry_path, 'w') as f:
+        with open(entry_path, "w") as f:
             f.write(plugin_code)
 
         # Load plugin (this should automatically register hooks)

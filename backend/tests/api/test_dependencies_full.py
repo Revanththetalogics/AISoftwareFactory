@@ -37,7 +37,7 @@ class TestUser:
             email="test@example.com",
             permissions=["read", "write"],
             is_active=True,
-            is_superuser=False
+            is_superuser=False,
         )
 
         assert user.user_id == "user-123"
@@ -49,12 +49,7 @@ class TestUser:
 
     def test_user_default_values(self):
         """Test User initialization with default values."""
-        user = User(
-            user_id="user-123",
-            username="testuser",
-            email="test@example.com",
-            permissions=[]
-        )
+        user = User(user_id="user-123", username="testuser", email="test@example.com", permissions=[])
 
         assert user.is_active is True
         assert user.is_superuser is False
@@ -99,16 +94,11 @@ class TestGetCurrentUser:
         self, mock_request, mock_credentials, mock_db_user, mock_auth_service
     ):
         """Test authentication with bearer token."""
-        mock_auth_service.decode_token = Mock(return_value={
-            "sub": "user-123",
-            "username": "testuser"
-        })
+        mock_auth_service.decode_token = Mock(return_value={"sub": "user-123", "username": "testuser"})
         mock_auth_service.get_user_by_id = AsyncMock(return_value=mock_db_user)
 
         user = await get_current_user(
-            request=mock_request,
-            credentials=mock_credentials,
-            auth_service=mock_auth_service
+            request=mock_request, credentials=mock_credentials, auth_service=mock_auth_service
         )
 
         assert user.user_id == "user-123"
@@ -116,116 +106,78 @@ class TestGetCurrentUser:
         mock_auth_service.decode_token.assert_called_once_with("valid-token")
 
     @pytest.mark.asyncio
-    async def test_get_current_user_with_cookie_token(
-        self, mock_request, mock_db_user, mock_auth_service
-    ):
+    async def test_get_current_user_with_cookie_token(self, mock_request, mock_db_user, mock_auth_service):
         """Test authentication with cookie token fallback."""
         mock_request.cookies = {"auth_token": "cookie-token"}
-        mock_auth_service.decode_token = Mock(return_value={
-            "sub": "user-123",
-            "username": "testuser"
-        })
+        mock_auth_service.decode_token = Mock(return_value={"sub": "user-123", "username": "testuser"})
         mock_auth_service.get_user_by_id = AsyncMock(return_value=mock_db_user)
 
-        user = await get_current_user(
-            request=mock_request,
-            credentials=None,
-            auth_service=mock_auth_service
-        )
+        user = await get_current_user(request=mock_request, credentials=None, auth_service=mock_auth_service)
 
         assert user.user_id == "user-123"
         mock_auth_service.decode_token.assert_called_once_with("cookie-token")
 
     @pytest.mark.asyncio
-    async def test_get_current_user_no_token(
-        self, mock_request, mock_auth_service
-    ):
+    async def test_get_current_user_no_token(self, mock_request, mock_auth_service):
         """Test authentication failure when no token provided."""
         mock_request.cookies = {}
 
         with pytest.raises(HTTPException) as exc_info:
-            await get_current_user(
-                request=mock_request,
-                credentials=None,
-                auth_service=mock_auth_service
-            )
+            await get_current_user(request=mock_request, credentials=None, auth_service=mock_auth_service)
 
         assert exc_info.value.status_code == 401
         assert "Authentication required" in exc_info.value.detail
 
     @pytest.mark.asyncio
-    async def test_get_current_user_empty_credentials(
-        self, mock_request, mock_auth_service
-    ):
+    async def test_get_current_user_empty_credentials(self, mock_request, mock_auth_service):
         """Test authentication failure with empty credentials."""
         mock_request.cookies = {}
         credentials = Mock()
         credentials.credentials = None
 
         with pytest.raises(HTTPException) as exc_info:
-            await get_current_user(
-                request=mock_request,
-                credentials=credentials,
-                auth_service=mock_auth_service
-            )
+            await get_current_user(request=mock_request, credentials=credentials, auth_service=mock_auth_service)
 
         assert exc_info.value.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_get_current_user_invalid_token_format(
-        self, mock_request, mock_credentials, mock_auth_service
-    ):
+    async def test_get_current_user_invalid_token_format(self, mock_request, mock_credentials, mock_auth_service):
         """Test authentication failure with invalid token format (missing fields)."""
-        mock_auth_service.decode_token = Mock(return_value={
-            "sub": "user-123"
-            # Missing username
-        })
+        mock_auth_service.decode_token = Mock(
+            return_value={
+                "sub": "user-123"
+                # Missing username
+            }
+        )
 
         with pytest.raises(HTTPException) as exc_info:
-            await get_current_user(
-                request=mock_request,
-                credentials=mock_credentials,
-                auth_service=mock_auth_service
-            )
+            await get_current_user(request=mock_request, credentials=mock_credentials, auth_service=mock_auth_service)
 
         assert exc_info.value.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_get_current_user_missing_sub(
-        self, mock_request, mock_credentials, mock_auth_service
-    ):
+    async def test_get_current_user_missing_sub(self, mock_request, mock_credentials, mock_auth_service):
         """Test authentication failure when token missing sub claim."""
-        mock_auth_service.decode_token = Mock(return_value={
-            "username": "testuser"
-            # Missing sub
-        })
+        mock_auth_service.decode_token = Mock(
+            return_value={
+                "username": "testuser"
+                # Missing sub
+            }
+        )
 
         with pytest.raises(HTTPException) as exc_info:
-            await get_current_user(
-                request=mock_request,
-                credentials=mock_credentials,
-                auth_service=mock_auth_service
-            )
+            await get_current_user(request=mock_request, credentials=mock_credentials, auth_service=mock_auth_service)
 
         assert exc_info.value.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_get_current_user_user_not_found(
-        self, mock_request, mock_credentials, mock_auth_service
-    ):
+    async def test_get_current_user_user_not_found(self, mock_request, mock_credentials, mock_auth_service):
         """Test authentication failure when user not found in database."""
-        mock_auth_service.decode_token = Mock(return_value={
-            "sub": "user-123",
-            "username": "testuser"
-        })
+        mock_auth_service.decode_token = Mock(return_value={"sub": "user-123", "username": "testuser"})
         mock_auth_service.get_user_by_id = AsyncMock(return_value=None)
 
         with pytest.raises(HTTPException) as exc_info:
-            await get_current_user(
-                request=mock_request,
-                credentials=mock_credentials,
-                auth_service=mock_auth_service
-            )
+            await get_current_user(request=mock_request, credentials=mock_credentials, auth_service=mock_auth_service)
 
         assert exc_info.value.status_code == 401
         assert "User not found" in exc_info.value.detail
@@ -236,37 +188,22 @@ class TestGetCurrentUser:
     ):
         """Test authentication failure when user is inactive."""
         mock_db_user.is_active = False
-        mock_auth_service.decode_token = Mock(return_value={
-            "sub": "user-123",
-            "username": "testuser"
-        })
+        mock_auth_service.decode_token = Mock(return_value={"sub": "user-123", "username": "testuser"})
         mock_auth_service.get_user_by_id = AsyncMock(return_value=mock_db_user)
 
         with pytest.raises(HTTPException) as exc_info:
-            await get_current_user(
-                request=mock_request,
-                credentials=mock_credentials,
-                auth_service=mock_auth_service
-            )
+            await get_current_user(request=mock_request, credentials=mock_credentials, auth_service=mock_auth_service)
 
         assert exc_info.value.status_code == 401
         assert "Account is inactive" in exc_info.value.detail
 
     @pytest.mark.asyncio
-    async def test_get_current_user_token_decode_error(
-        self, mock_request, mock_credentials, mock_auth_service
-    ):
+    async def test_get_current_user_token_decode_error(self, mock_request, mock_credentials, mock_auth_service):
         """Test authentication failure when token decoding fails."""
-        mock_auth_service.decode_token = Mock(
-            side_effect=AuthenticationError("Invalid token")
-        )
+        mock_auth_service.decode_token = Mock(side_effect=AuthenticationError("Invalid token"))
 
         with pytest.raises(HTTPException) as exc_info:
-            await get_current_user(
-                request=mock_request,
-                credentials=mock_credentials,
-                auth_service=mock_auth_service
-            )
+            await get_current_user(request=mock_request, credentials=mock_credentials, auth_service=mock_auth_service)
 
         assert exc_info.value.status_code == 401
         assert "Invalid token" in exc_info.value.detail
@@ -278,17 +215,9 @@ class TestRequirePermissions:
     @pytest.mark.asyncio
     async def test_require_permissions_admin_bypass(self):
         """Test admin users bypass permission checks."""
-        user = User(
-            user_id="admin-123",
-            username="admin",
-            email="admin@example.com",
-            permissions=["admin"]
-        )
+        user = User(user_id="admin-123", username="admin", email="admin@example.com", permissions=["admin"])
 
-        result = await require_permissions(
-            required_permissions=["delete", "execute"],
-            user=user
-        )
+        result = await require_permissions(required_permissions=["delete", "execute"], user=user)
 
         assert result == user
 
@@ -296,34 +225,20 @@ class TestRequirePermissions:
     async def test_require_permissions_user_has_permissions(self):
         """Test user with required permissions passes."""
         user = User(
-            user_id="user-123",
-            username="testuser",
-            email="test@example.com",
-            permissions=["read", "write", "execute"]
+            user_id="user-123", username="testuser", email="test@example.com", permissions=["read", "write", "execute"]
         )
 
-        result = await require_permissions(
-            required_permissions=["read", "write"],
-            user=user
-        )
+        result = await require_permissions(required_permissions=["read", "write"], user=user)
 
         assert result == user
 
     @pytest.mark.asyncio
     async def test_require_permissions_missing_permissions(self):
         """Test user without required permissions fails."""
-        user = User(
-            user_id="user-123",
-            username="testuser",
-            email="test@example.com",
-            permissions=["read"]
-        )
+        user = User(user_id="user-123", username="testuser", email="test@example.com", permissions=["read"])
 
         with pytest.raises(HTTPException) as exc_info:
-            await require_permissions(
-                required_permissions=["write", "execute"],
-                user=user
-            )
+            await require_permissions(required_permissions=["write", "execute"], user=user)
 
         assert exc_info.value.status_code == 403
         assert "Missing permissions" in exc_info.value.detail
@@ -362,21 +277,13 @@ class TestGetWebsocketUser:
         return user
 
     @pytest.mark.asyncio
-    async def test_websocket_user_with_query_token(
-        self, mock_websocket, mock_auth_service, mock_db_user
-    ):
+    async def test_websocket_user_with_query_token(self, mock_websocket, mock_auth_service, mock_db_user):
         """Test WebSocket authentication with query parameter token."""
         mock_websocket.query_params = {"token": "valid-token"}
-        mock_auth_service.decode_token = Mock(return_value={
-            "sub": "user-123",
-            "username": "testuser"
-        })
+        mock_auth_service.decode_token = Mock(return_value={"sub": "user-123", "username": "testuser"})
         mock_auth_service.get_user_by_id = AsyncMock(return_value=mock_db_user)
 
-        user = await get_websocket_user(
-            websocket=mock_websocket,
-            auth_service=mock_auth_service
-        )
+        user = await get_websocket_user(websocket=mock_websocket, auth_service=mock_auth_service)
 
         assert user is not None
         assert user.user_id == "user-123"
@@ -385,104 +292,73 @@ class TestGetWebsocketUser:
         assert user.permissions == ["read", "write", "execute"]
 
     @pytest.mark.asyncio
-    async def test_websocket_user_with_header_token(
-        self, mock_websocket, mock_auth_service, mock_db_user
-    ):
+    async def test_websocket_user_with_header_token(self, mock_websocket, mock_auth_service, mock_db_user):
         """Test WebSocket authentication with Authorization header."""
         mock_websocket.headers = {"Authorization": "Bearer valid-token"}
-        mock_auth_service.decode_token = Mock(return_value={
-            "sub": "user-123",
-            "username": "testuser"
-        })
+        mock_auth_service.decode_token = Mock(return_value={"sub": "user-123", "username": "testuser"})
         mock_auth_service.get_user_by_id = AsyncMock(return_value=mock_db_user)
 
-        user = await get_websocket_user(
-            websocket=mock_websocket,
-            auth_service=mock_auth_service
-        )
+        user = await get_websocket_user(websocket=mock_websocket, auth_service=mock_auth_service)
 
         assert user is not None
         assert user.user_id == "user-123"
 
     @pytest.mark.asyncio
-    async def test_websocket_user_no_token(
-        self, mock_websocket, mock_auth_service
-    ):
+    async def test_websocket_user_no_token(self, mock_websocket, mock_auth_service):
         """Test WebSocket authentication failure with no token."""
-        user = await get_websocket_user(
-            websocket=mock_websocket,
-            auth_service=mock_auth_service
-        )
+        user = await get_websocket_user(websocket=mock_websocket, auth_service=mock_auth_service)
 
         assert user is None
 
     @pytest.mark.asyncio
-    async def test_websocket_user_invalid_token_payload(
-        self, mock_websocket, mock_auth_service
-    ):
+    async def test_websocket_user_invalid_token_payload(self, mock_websocket, mock_auth_service):
         """Test WebSocket authentication failure with invalid token payload."""
         mock_websocket.query_params = {"token": "valid-token"}
-        mock_auth_service.decode_token = Mock(return_value={
-            "sub": "user-123"
-            # Missing username
-        })
-
-        user = await get_websocket_user(
-            websocket=mock_websocket,
-            auth_service=mock_auth_service
+        mock_auth_service.decode_token = Mock(
+            return_value={
+                "sub": "user-123"
+                # Missing username
+            }
         )
+
+        user = await get_websocket_user(websocket=mock_websocket, auth_service=mock_auth_service)
 
         assert user is None
 
     @pytest.mark.asyncio
-    async def test_websocket_user_missing_sub(
-        self, mock_websocket, mock_auth_service
-    ):
+    async def test_websocket_user_missing_sub(self, mock_websocket, mock_auth_service):
         """Test WebSocket authentication failure when missing sub."""
         mock_websocket.query_params = {"token": "valid-token"}
-        mock_auth_service.decode_token = Mock(return_value={
-            "username": "testuser"
-            # Missing sub
-        })
-
-        user = await get_websocket_user(
-            websocket=mock_websocket,
-            auth_service=mock_auth_service
+        mock_auth_service.decode_token = Mock(
+            return_value={
+                "username": "testuser"
+                # Missing sub
+            }
         )
+
+        user = await get_websocket_user(websocket=mock_websocket, auth_service=mock_auth_service)
 
         assert user is None
 
     @pytest.mark.asyncio
-    async def test_websocket_user_token_decode_error(
-        self, mock_websocket, mock_auth_service
-    ):
+    async def test_websocket_user_token_decode_error(self, mock_websocket, mock_auth_service):
         """Test WebSocket authentication failure on decode error."""
         mock_websocket.query_params = {"token": "invalid-token"}
-        mock_auth_service.decode_token = Mock(
-            side_effect=AuthenticationError("Invalid token")
-        )
+        mock_auth_service.decode_token = Mock(side_effect=AuthenticationError("Invalid token"))
 
-        user = await get_websocket_user(
-            websocket=mock_websocket,
-            auth_service=mock_auth_service
-        )
+        user = await get_websocket_user(websocket=mock_websocket, auth_service=mock_auth_service)
 
         assert user is None
 
     @pytest.mark.asyncio
-    async def test_websocket_user_no_client(
-        self, mock_auth_service
-    ):
+    async def test_websocket_user_no_client(self, mock_auth_service):
         """Test WebSocket authentication with no client info."""
         websocket = Mock()
         websocket.query_params = {}
         websocket.headers = {}
         websocket.client = None
 
-        user = await get_websocket_user(
-            websocket=websocket,
-            auth_service=mock_auth_service
-        )
+        user = await get_websocket_user(websocket=websocket, auth_service=mock_auth_service)
 
         assert user is None
 

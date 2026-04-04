@@ -18,6 +18,7 @@ logger = get_logger(__name__)
 
 class NodeType(str, Enum):
     """Types of nodes in architecture diagrams."""
+
     SERVICE = "service"
     DATABASE = "database"
     CACHE = "cache"
@@ -31,6 +32,7 @@ class NodeType(str, Enum):
 
 class RelationshipType(str, Enum):
     """Types of relationships between nodes."""
+
     DEPENDS_ON = "depends_on"
     COMMUNICATES_WITH = "communicates_with"
     STORES_IN = "stores_in"
@@ -41,6 +43,7 @@ class RelationshipType(str, Enum):
 
 class DiagramType(str, Enum):
     """Types of architecture diagrams."""
+
     SYSTEM_OVERVIEW = "system_overview"
     DEPLOYMENT = "deployment"
     DATA_FLOW = "data_flow"
@@ -51,6 +54,7 @@ class DiagramType(str, Enum):
 @dataclass
 class Node:
     """Represents a node in an architecture diagram."""
+
     id: str
     name: str
     type: NodeType
@@ -69,6 +73,7 @@ class Node:
 @dataclass
 class Relationship:
     """Represents a relationship between two nodes."""
+
     id: str
     source_id: str
     target_id: str
@@ -85,6 +90,7 @@ class Relationship:
 @dataclass
 class ArchitectureDiagram:
     """Represents a complete architecture diagram."""
+
     id: str
     name: str
     type: DiagramType
@@ -140,7 +146,7 @@ class ArchitectureVisualizationService:
             created_at=datetime.now(UTC).isoformat(),
             updated_at=datetime.now(UTC).isoformat(),
             description="High-level system architecture overview",
-            layout_algorithm="hierarchical"
+            layout_algorithm="hierarchical",
         )
 
         self.templates["system-overview"] = system_template
@@ -169,7 +175,7 @@ class ArchitectureVisualizationService:
             relationships=deployment_relationships,
             created_at=datetime.now(UTC).isoformat(),
             updated_at=datetime.now(UTC).isoformat(),
-            description="Production deployment topology"
+            description="Production deployment topology",
         )
 
         self.templates["deployment"] = deployment_template
@@ -180,7 +186,7 @@ class ArchitectureVisualizationService:
         diagram_type: DiagramType,
         nodes: list[dict[str, Any]],
         relationships: list[dict[str, Any]],
-        description: str | None = None
+        description: str | None = None,
     ) -> ArchitectureDiagram:
         """Create a new architecture diagram."""
         try:
@@ -195,7 +201,7 @@ class ArchitectureVisualizationService:
                     width=float(node.get("width", 120)),
                     height=float(node.get("height", 80)),
                     status=node.get("status", "active"),
-                    metadata=node.get("metadata", {})
+                    metadata=node.get("metadata", {}),
                 )
                 for node in nodes
             ]
@@ -209,7 +215,7 @@ class ArchitectureVisualizationService:
                     type=RelationshipType(rel["type"]),
                     label=rel.get("label"),
                     status=rel.get("status", "active"),
-                    metadata=rel.get("metadata", {})
+                    metadata=rel.get("metadata", {}),
                 )
                 for rel in relationships
             ]
@@ -224,7 +230,7 @@ class ArchitectureVisualizationService:
                 relationships=relationship_objects,
                 created_at=datetime.now(UTC).isoformat(),
                 updated_at=datetime.now(UTC).isoformat(),
-                description=description
+                description=description,
             )
 
             self.diagrams[diagram_id] = diagram
@@ -255,7 +261,7 @@ class ArchitectureVisualizationService:
         name: str | None = None,
         nodes: list[dict[str, Any]] | None = None,
         relationships: list[dict[str, Any]] | None = None,
-        description: str | None = None
+        description: str | None = None,
     ) -> ArchitectureDiagram | None:
         """Update an existing diagram."""
         diagram = self.diagrams.get(diagram_id)
@@ -277,7 +283,7 @@ class ArchitectureVisualizationService:
                         width=float(node.get("width", 120)),
                         height=float(node.get("height", 80)),
                         status=node.get("status", "active"),
-                        metadata=node.get("metadata", {})
+                        metadata=node.get("metadata", {}),
                     )
                     for node in nodes
                 ]
@@ -291,7 +297,7 @@ class ArchitectureVisualizationService:
                         type=RelationshipType(rel["type"]),
                         label=rel.get("label"),
                         status=rel.get("status", "active"),
-                        metadata=rel.get("metadata", {})
+                        metadata=rel.get("metadata", {}),
                     )
                     for rel in relationships
                 ]
@@ -344,10 +350,7 @@ class ArchitectureVisualizationService:
                     type=NodeType.SERVICE,
                     x=200 + (i * 150),
                     y=100,
-                    metadata={
-                        "version": service.get("version", "latest"),
-                        "status": service.get("status", "active")
-                    }
+                    metadata={"version": service.get("version", "latest"), "status": service.get("status", "active")},
                 )
                 nodes.append(node)
 
@@ -359,10 +362,7 @@ class ArchitectureVisualizationService:
                     type=NodeType.DATABASE,
                     x=200 + (i * 150),
                     y=300,
-                    metadata={
-                        "engine": db.get("engine", "postgresql"),
-                        "size": db.get("size", "unknown")
-                    }
+                    metadata={"engine": db.get("engine", "postgresql"), "size": db.get("size", "unknown")},
                 )
                 nodes.append(node)
 
@@ -374,10 +374,7 @@ class ArchitectureVisualizationService:
                     type=NodeType.CACHE,
                     x=600 + (i * 150),
                     y=200,
-                    metadata={
-                        "type": cache.get("type", "redis"),
-                        "size": cache.get("size", "unknown")
-                    }
+                    metadata={"type": cache.get("type", "redis"), "size": cache.get("size", "unknown")},
                 )
                 nodes.append(node)
 
@@ -388,7 +385,7 @@ class ArchitectureVisualizationService:
                         id=f"{service_node.id}-to-{db_node.id}",
                         source_id=service_node.id,
                         target_id=db_node.id,
-                        type=RelationshipType.STORES_IN
+                        type=RelationshipType.STORES_IN,
                     )
                     relationships.append(relationship)
 
@@ -400,7 +397,7 @@ class ArchitectureVisualizationService:
                 relationships=relationships,
                 created_at=datetime.now(UTC).isoformat(),
                 updated_at=datetime.now(UTC).isoformat(),
-                description="Automatically generated from system information"
+                description="Automatically generated from system information",
             )
 
             self.diagrams[diagram.id] = diagram
@@ -431,7 +428,7 @@ class ArchitectureVisualizationService:
         # Add nodes
         for node in diagram.nodes:
             node_type = node.type.value.replace("_", " ").title()
-            lines.append(f"    {node.id}[\"{node.name}<br/>({node_type})\"]")
+            lines.append(f'    {node.id}["{node.name}<br/>({node_type})"]')
 
         # Add relationships
         for rel in diagram.relationships:

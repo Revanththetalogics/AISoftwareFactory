@@ -29,8 +29,8 @@ class TestAuthService:
     def test_init(self, auth_service):
         """Test AuthService initialization."""
         assert auth_service is not None
-        assert hasattr(auth_service, 'settings')
-        assert hasattr(auth_service, 'algorithm')
+        assert hasattr(auth_service, "settings")
+        assert hasattr(auth_service, "algorithm")
         assert auth_service.algorithm == "HS256"
 
     def test_verify_password_success(self, auth_service):
@@ -63,7 +63,7 @@ class TestAuthService:
 
     def test_create_access_token_default_expiry(self, auth_service, mock_settings):
         """Test creating access token with default expiry."""
-        with patch.object(auth_service, 'settings', mock_settings):
+        with patch.object(auth_service, "settings", mock_settings):
             data = {"sub": "user123", "username": "testuser"}
             token = auth_service.create_access_token(data)
 
@@ -79,7 +79,7 @@ class TestAuthService:
 
     def test_create_access_token_custom_expiry(self, auth_service, mock_settings):
         """Test creating access token with custom expiry."""
-        with patch.object(auth_service, 'settings', mock_settings):
+        with patch.object(auth_service, "settings", mock_settings):
             data = {"sub": "user123"}
             custom_expiry = timedelta(minutes=15)
             token = auth_service.create_access_token(data, custom_expiry)
@@ -94,7 +94,7 @@ class TestAuthService:
 
     def test_decode_token_success(self, auth_service, mock_settings):
         """Test successful token decoding."""
-        with patch.object(auth_service, 'settings', mock_settings):
+        with patch.object(auth_service, "settings", mock_settings):
             # Create a token first
             data = {"sub": "user123", "test_claim": "test_value"}
             token = auth_service.create_access_token(data)
@@ -109,7 +109,7 @@ class TestAuthService:
 
     def test_decode_token_invalid(self, auth_service, mock_settings):
         """Test decoding invalid token."""
-        with patch.object(auth_service, 'settings', mock_settings):
+        with patch.object(auth_service, "settings", mock_settings):
             invalid_token = "invalid.token.string"
 
             with pytest.raises(Exception) as exc_info:  # JWTError or AuthenticationError
@@ -120,12 +120,12 @@ class TestAuthService:
 
     def test_decode_token_expired(self, auth_service, mock_settings):
         """Test decoding expired token."""
-        with patch.object(auth_service, 'settings', mock_settings):
+        with patch.object(auth_service, "settings", mock_settings):
             # Create token that expires immediately
             data = {"sub": "user123"}
             expired_token = auth_service.create_access_token(
                 data,
-                timedelta(seconds=-1)  # Expired 1 second ago
+                timedelta(seconds=-1),  # Expired 1 second ago
             )
 
             with pytest.raises(Exception) as exc_info:
@@ -141,10 +141,10 @@ class TestAuthService:
             username="testuser",
             email="test@example.com",
             hashed_password="hashed_password",
-            is_active=True
+            is_active=True,
         )
 
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_class:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_class:
             mock_session = AsyncMock()
             mock_session_class.return_value.__aenter__.return_value = mock_session
 
@@ -162,7 +162,7 @@ class TestAuthService:
     @pytest.mark.asyncio
     async def test_get_user_by_username_not_found(self, auth_service):
         """Test getting non-existent user by username."""
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_class:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_class:
             mock_session = AsyncMock()
             mock_session_class.return_value.__aenter__.return_value = mock_session
 
@@ -182,10 +182,10 @@ class TestAuthService:
             username="testuser",
             email="test@example.com",
             hashed_password="hashed_password",
-            is_active=False  # Inactive user
+            is_active=False,  # Inactive user
         )
 
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_class:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_class:
             mock_session = AsyncMock()
             mock_session_class.return_value.__aenter__.return_value = mock_session
 
@@ -206,10 +206,10 @@ class TestAuthService:
             username="testuser",
             email="test@example.com",
             hashed_password="hashed_password",
-            is_active=True
+            is_active=True,
         )
 
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_class:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_class:
             mock_session = AsyncMock()
             mock_session_class.return_value.__aenter__.return_value = mock_session
 
@@ -231,10 +231,10 @@ class TestAuthService:
             username="testuser",
             email="test@example.com",
             hashed_password="hashed_password",
-            is_active=True
+            is_active=True,
         )
 
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_class:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_class:
             mock_session = AsyncMock()
             mock_session_class.return_value.__aenter__.return_value = mock_session
 
@@ -256,12 +256,12 @@ class TestAuthService:
             username="testuser",
             email="test@example.com",
             hashed_password=auth_service.get_password_hash("correct_password"),
-            is_active=True
+            is_active=True,
         )
 
-        with patch.object(auth_service, 'get_user_by_username', return_value=mock_user):
-            with patch.object(auth_service, 'get_user_by_email', return_value=None):
-                with patch('backend.services.auth_service.AsyncSessionLocal'):
+        with patch.object(auth_service, "get_user_by_username", return_value=mock_user):
+            with patch.object(auth_service, "get_user_by_email", return_value=None):
+                with patch("backend.services.auth_service.AsyncSessionLocal"):
                     result = await auth_service.authenticate_user("testuser", "correct_password")
 
                     assert result is not None
@@ -279,12 +279,12 @@ class TestAuthService:
             username="testuser",
             email="test@example.com",
             hashed_password=auth_service.get_password_hash("correct_password"),
-            is_active=True
+            is_active=True,
         )
 
-        with patch.object(auth_service, 'get_user_by_username', return_value=None):
-            with patch.object(auth_service, 'get_user_by_email', return_value=mock_user):
-                with patch('backend.services.auth_service.AsyncSessionLocal'):
+        with patch.object(auth_service, "get_user_by_username", return_value=None):
+            with patch.object(auth_service, "get_user_by_email", return_value=mock_user):
+                with patch("backend.services.auth_service.AsyncSessionLocal"):
                     result = await auth_service.authenticate_user("test@example.com", "correct_password")
 
                     assert result is not None
@@ -299,10 +299,10 @@ class TestAuthService:
             username="testuser",
             email="test@example.com",
             hashed_password=auth_service.get_password_hash("correct_password"),
-            is_active=True
+            is_active=True,
         )
 
-        with patch.object(auth_service, 'get_user_by_username', return_value=mock_user):
+        with patch.object(auth_service, "get_user_by_username", return_value=mock_user):
             result = await auth_service.authenticate_user("testuser", "wrong_password")
 
             assert result is None
@@ -310,8 +310,8 @@ class TestAuthService:
     @pytest.mark.asyncio
     async def test_authenticate_user_user_not_found(self, auth_service):
         """Test authentication for non-existent user."""
-        with patch.object(auth_service, 'get_user_by_username', return_value=None):
-            with patch.object(auth_service, 'get_user_by_email', return_value=None):
+        with patch.object(auth_service, "get_user_by_username", return_value=None):
+            with patch.object(auth_service, "get_user_by_email", return_value=None):
                 result = await auth_service.authenticate_user("nonexistent", "password")
 
                 assert result is None
@@ -324,10 +324,10 @@ class TestAuthService:
             username="testuser",
             email="test@example.com",
             hashed_password=auth_service.get_password_hash("correct_password"),
-            is_active=False  # Inactive user
+            is_active=False,  # Inactive user
         )
 
-        with patch.object(auth_service, 'get_user_by_username', return_value=mock_user):
+        with patch.object(auth_service, "get_user_by_username", return_value=mock_user):
             result = await auth_service.authenticate_user("testuser", "correct_password")
 
             assert result is None
@@ -335,7 +335,7 @@ class TestAuthService:
     @pytest.mark.asyncio
     async def test_create_default_admin_success(self, auth_service):
         """Test creating default admin user."""
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_class:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_class:
             mock_session = AsyncMock()
             mock_session_class.return_value.__aenter__.return_value = mock_session
 
@@ -361,10 +361,10 @@ class TestAuthService:
             username="existinguser",
             email="existing@example.com",
             hashed_password="hashed_password",
-            is_active=True
+            is_active=True,
         )
 
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_class:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_class:
             mock_session = AsyncMock()
             mock_session_class.return_value.__aenter__.return_value = mock_session
 
@@ -380,7 +380,7 @@ class TestAuthService:
     @pytest.mark.asyncio
     async def test_create_user_success(self, auth_service):
         """Test creating new user."""
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_class:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_class:
             mock_session = AsyncMock()
             mock_session_class.return_value.__aenter__.return_value = mock_session
 
@@ -396,7 +396,7 @@ class TestAuthService:
                 first_name="New",
                 last_name="User",
                 permissions=["read", "write"],
-                is_superuser=False
+                is_superuser=False,
             )
 
             assert result is not None
@@ -420,10 +420,10 @@ class TestAuthService:
             username="duplicateuser",
             email="other@example.com",
             hashed_password="hashed_password",
-            is_active=True
+            is_active=True,
         )
 
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_class:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_class:
             mock_session = AsyncMock()
             mock_session_class.return_value.__aenter__.return_value = mock_session
 
@@ -436,7 +436,7 @@ class TestAuthService:
                 await auth_service.create_user(
                     username="duplicateuser",  # Same username
                     email="new@example.com",
-                    password="password123"
+                    password="password123",
                 )
 
             assert "already exists" in str(exc_info.value)
@@ -449,10 +449,10 @@ class TestAuthService:
             username="otheruser",
             email="duplicate@example.com",
             hashed_password="hashed_password",
-            is_active=True
+            is_active=True,
         )
 
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_class:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_class:
             mock_session = AsyncMock()
             mock_session_class.return_value.__aenter__.return_value = mock_session
 
@@ -470,19 +470,15 @@ class TestAuthService:
                 await auth_service.create_user(
                     username="newuser",
                     email="duplicate@example.com",  # Same email
-                    password="password123"
+                    password="password123",
                 )
 
             assert "already exists" in str(exc_info.value)
 
     def test_create_user_session(self, auth_service, mock_settings):
         """Test creating user session with tokens."""
-        with patch.object(auth_service, 'settings', mock_settings):
-            user_data = {
-                "user_id": "user123",
-                "username": "testuser",
-                "email": "test@example.com"
-            }
+        with patch.object(auth_service, "settings", mock_settings):
+            user_data = {"user_id": "user123", "username": "testuser", "email": "test@example.com"}
 
             session_data = auth_service.create_user_session(user_data)
 

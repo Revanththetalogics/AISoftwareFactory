@@ -27,11 +27,7 @@ class TestMessageDataclass:
 
     def test_create_message_with_metadata(self):
         """Test creating a message with metadata."""
-        msg = Message(
-            role="assistant",
-            content="Hi there!",
-            metadata={"source": "gpt-4", "tokens": 10}
-        )
+        msg = Message(role="assistant", content="Hi there!", metadata={"source": "gpt-4", "tokens": 10})
 
         assert msg.role == "assistant"
         assert msg.content == "Hi there!"
@@ -62,11 +58,7 @@ class TestConversationDataclass:
     def test_create_conversation_with_messages(self):
         """Test creating a conversation with initial messages."""
         msg = Message(role="user", content="Test")
-        conv = Conversation(
-            conversation_id="conv_002",
-            messages=[msg],
-            metadata={"topic": "testing"}
-        )
+        conv = Conversation(conversation_id="conv_002", messages=[msg], metadata={"topic": "testing"})
 
         assert len(conv.messages) == 1
         assert conv.messages[0].content == "Test"
@@ -97,10 +89,7 @@ class TestContextManager:
 
     def test_create_conversation_custom_id(self, context_manager):
         """Test creating conversation with custom ID."""
-        conv_id = context_manager.create_conversation(
-            conversation_id="my_conv_123",
-            metadata={"user": "test_user"}
-        )
+        conv_id = context_manager.create_conversation(conversation_id="my_conv_123", metadata={"user": "test_user"})
 
         assert conv_id == "my_conv_123"
         assert conv_id in context_manager._conversations
@@ -111,10 +100,7 @@ class TestContextManager:
         conv_id = context_manager.create_conversation()
 
         result = context_manager.add_message(
-            conversation_id=conv_id,
-            role="user",
-            content="Hello, AI!",
-            metadata={"sentiment": "positive"}
+            conversation_id=conv_id, role="user", content="Hello, AI!", metadata={"sentiment": "positive"}
         )
 
         assert result is True
@@ -124,11 +110,7 @@ class TestContextManager:
 
     def test_add_message_nonexistent_conversation(self, context_manager):
         """Test adding message to non-existent conversation."""
-        result = context_manager.add_message(
-            conversation_id="nonexistent",
-            role="user",
-            content="Test"
-        )
+        result = context_manager.add_message(conversation_id="nonexistent", role="user", content="Test")
 
         assert result is False
 
@@ -267,6 +249,7 @@ class TestEmbeddingEngine:
         embedding_engine._model = mock_model
 
         import asyncio
+
         result = asyncio.run(embedding_engine.embed(["Test text"]))
 
         assert len(result) == 1
@@ -295,11 +278,7 @@ class TestKnowledgeBase:
     @pytest.mark.asyncio
     async def test_add_document_success(self, knowledge_base):
         """Test adding document successfully."""
-        doc_id = await knowledge_base.add_document(
-            content="Test content",
-            metadata={"source": "test"},
-            doc_id="doc1"
-        )
+        doc_id = await knowledge_base.add_document(content="Test content", metadata={"source": "test"}, doc_id="doc1")
 
         assert doc_id == "doc1"
         assert len(knowledge_base._documents) == 1
@@ -384,10 +363,7 @@ class TestMemoryStore:
     def test_store_memory_success(self, memory_store):
         """Test storing memory successfully."""
         memory_id = memory_store.store(
-            agent_id="agent_001",
-            content="Paris is capital of France",
-            memory_type="fact",
-            importance=0.9
+            agent_id="agent_001", content="Paris is capital of France", memory_type="fact", importance=0.9
         )
 
         assert memory_id is not None
@@ -397,11 +373,7 @@ class TestMemoryStore:
 
     def test_recall_memory_success(self, memory_store):
         """Test recalling memory successfully."""
-        memory_store.store(
-            agent_id="agent_002",
-            content="Water boils at 100C",
-            memory_type="fact"
-        )
+        memory_store.store(agent_id="agent_002", content="Water boils at 100C", memory_type="fact")
 
         # Use retrieve method instead of recall
         results = memory_store.retrieve(agent_id="agent_002")
@@ -416,11 +388,7 @@ class TestMemoryStore:
 
     def test_forget_memory_success(self, memory_store):
         """Test forgetting memory successfully."""
-        memory_id = memory_store.store(
-            agent_id="agent_003",
-            content="Forget me",
-            memory_type="fact"
-        )
+        memory_id = memory_store.store(agent_id="agent_003", content="Forget me", memory_type="fact")
 
         result = memory_store.forget(memory_id)
 
@@ -461,13 +429,15 @@ class TestRetrievalEngine:
     @pytest.fixture
     def retrieval_engine(self):
         """Create RetrievalEngine instance with mock knowledge base."""
+
         # Create a minimal mock KB
         class MockKB:
             _name = "mock_kb"
+
             async def search(self, query, top_k):
                 return [
                     {"text": f"Result about {query}", "score": 0.9, "metadata": {}},
-                    {"text": "Another result", "score": 0.7, "metadata": {}}
+                    {"text": "Another result", "score": 0.7, "metadata": {}},
                 ]
 
         mock_kb = MockKB()
@@ -480,17 +450,13 @@ class TestRetrievalEngine:
 
         assert len(results) > 0
         assert all(isinstance(r, RetrievalResult) for r in results)
-        assert all(hasattr(r, 'text') for r in results)
-        assert all(hasattr(r, 'score') for r in results)
+        assert all(hasattr(r, "text") for r in results)
+        assert all(hasattr(r, "score") for r in results)
 
     @pytest.mark.asyncio
     async def test_retrieve_with_context(self, retrieval_engine):
         """Test retrieving documents with context."""
-        results = await retrieval_engine.retrieve_with_context(
-            query="test",
-            context_window=2,
-            top_k=2
-        )
+        results = await retrieval_engine.retrieve_with_context(query="test", context_window=2, top_k=2)
 
         assert len(results) > 0
         assert "text" in results[0]

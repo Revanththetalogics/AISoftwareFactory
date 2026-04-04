@@ -279,9 +279,7 @@ class TestSetupExceptionHandlers:
         @app.get("/custom-exception")
         async def raise_custom():
             raise AISoftwareFactoryException(
-                message="Custom error occurred",
-                error_code="CUSTOM_ERROR",
-                status_code=422
+                message="Custom error occurred", error_code="CUSTOM_ERROR", status_code=422
             )
 
         client = TestClient(app, raise_server_exceptions=False)
@@ -330,10 +328,7 @@ class TestErrorHandlerEdgeCases:
 
         @app.get("/empty-details")
         async def raise_empty():
-            raise ValidationError(
-                message="Error with no details",
-                status_code=400
-            )
+            raise ValidationError(message="Error with no details", status_code=400)
 
         client = TestClient(app, raise_server_exceptions=False)
         response = client.get("/empty-details")

@@ -2,7 +2,6 @@
 Tests for Authentication Service.
 """
 
-
 import pytest
 from backend.services.auth_service import AuthService
 
@@ -85,7 +84,7 @@ class TestAuthService:
             "user_id": "user-123",
             "username": "testuser",
             "email": "test@example.com",
-            "permissions": ["read", "write"]
+            "permissions": ["read", "write"],
         }
 
         session = auth_service.create_user_session(user_data)
@@ -109,10 +108,7 @@ class TestAuthEndpoints:
 
     def test_login_success(self, client):
         """Test successful login."""
-        response = client.post(
-            "/api/v1/auth/login",
-            json={"username": "admin", "password": "admin123"}
-        )
+        response = client.post("/api/v1/auth/login", json={"username": "admin", "password": "admin123"})
 
         assert response.status_code == 200
         data = response.json()
@@ -124,27 +120,18 @@ class TestAuthEndpoints:
 
     def test_login_invalid_credentials(self, client):
         """Test login with invalid credentials."""
-        response = client.post(
-            "/api/v1/auth/login",
-            json={"username": "admin", "password": "wrong-password"}
-        )
+        response = client.post("/api/v1/auth/login", json={"username": "admin", "password": "wrong-password"})
 
         assert response.status_code == 401
 
     def test_refresh_token(self, client):
         """Test token refresh functionality."""
         # First login to get refresh token
-        login_response = client.post(
-            "/api/v1/auth/login",
-            json={"username": "admin", "password": "admin123"}
-        )
+        login_response = client.post("/api/v1/auth/login", json={"username": "admin", "password": "admin123"})
         refresh_token = login_response.json()["refresh_token"]
 
         # Refresh token
-        response = client.post(
-            "/api/v1/auth/refresh",
-            json={"refresh_token": refresh_token}
-        )
+        response = client.post("/api/v1/auth/refresh", json={"refresh_token": refresh_token})
 
         assert response.status_code == 200
         data = response.json()
@@ -153,17 +140,11 @@ class TestAuthEndpoints:
     def test_validate_token(self, client):
         """Test token validation."""
         # Login to get token
-        login_response = client.post(
-            "/api/v1/auth/login",
-            json={"username": "admin", "password": "admin123"}
-        )
+        login_response = client.post("/api/v1/auth/login", json={"username": "admin", "password": "admin123"})
         access_token = login_response.json()["access_token"]
 
         # Validate token
-        response = client.get(
-            "/api/v1/auth/validate",
-            headers={"Authorization": f"Bearer {access_token}"}
-        )
+        response = client.get("/api/v1/auth/validate", headers={"Authorization": f"Bearer {access_token}"})
 
         assert response.status_code == 200
         data = response.json()

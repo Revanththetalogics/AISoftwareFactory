@@ -71,6 +71,7 @@ class CorrelationIdFilter(logging.Filter):
         # Add OpenTelemetry trace context if available
         try:
             from backend.infrastructure.tracing import get_current_span_id, get_current_trace_id
+
             record.trace_id = get_current_trace_id() or ""
             record.span_id = get_current_span_id() or ""
         except Exception:

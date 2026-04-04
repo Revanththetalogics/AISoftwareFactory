@@ -18,6 +18,7 @@ logger = get_logger(__name__)
 @dataclass
 class Memory:
     """A memory item."""
+
     memory_id: str
     agent_id: str
     content: str
@@ -42,13 +43,7 @@ class MemoryStore:
         self._agent_memories: dict[str, list[str]] = {}  # agent_id -> memory_ids
         self._logger = get_logger(__name__)
 
-    def store(
-        self,
-        agent_id: str,
-        content: str,
-        memory_type: str = "fact",
-        importance: float = 1.0
-    ) -> str:
+    def store(self, agent_id: str, content: str, memory_type: str = "fact", importance: float = 1.0) -> str:
         """
         Store a memory.
 
@@ -64,11 +59,7 @@ class MemoryStore:
         memory_id = str(uuid4())
 
         memory = Memory(
-            memory_id=memory_id,
-            agent_id=agent_id,
-            content=content,
-            memory_type=memory_type,
-            importance=importance
+            memory_id=memory_id, agent_id=agent_id, content=content, memory_type=memory_type, importance=importance
         )
 
         self._memories[memory_id] = memory
@@ -78,21 +69,12 @@ class MemoryStore:
             self._agent_memories[agent_id] = []
         self._agent_memories[agent_id].append(memory_id)
 
-        self._logger.info(
-            "Memory stored",
-            memory_id=memory_id,
-            agent_id=agent_id,
-            type=memory_type
-        )
+        self._logger.info("Memory stored", memory_id=memory_id, agent_id=agent_id, type=memory_type)
 
         return memory_id
 
     def retrieve(
-        self,
-        agent_id: str,
-        query: str | None = None,
-        memory_type: str | None = None,
-        limit: int = 10
+        self, agent_id: str, query: str | None = None, memory_type: str | None = None, limit: int = 10
     ) -> list[Memory]:
         """
         Retrieve memories for an agent.
@@ -118,16 +100,10 @@ class MemoryStore:
 
         if query:
             query_lower = query.lower()
-            memories = [
-                m for m in memories
-                if query_lower in m.content.lower()
-            ]
+            memories = [m for m in memories if query_lower in m.content.lower()]
 
         # Sort by importance and recency
-        memories.sort(
-            key=lambda m: (m.importance, m.created_at),
-            reverse=True
-        )
+        memories.sort(key=lambda m: (m.importance, m.created_at), reverse=True)
 
         # Update access stats
         for memory in memories[:limit]:
@@ -181,7 +157,4 @@ class MemoryStore:
         for memory in memories:
             by_type[memory.memory_type] = by_type.get(memory.memory_type, 0) + 1
 
-        return {
-            "total": len(memories),
-            "by_type": by_type
-        }
+        return {"total": len(memories), "by_type": by_type}

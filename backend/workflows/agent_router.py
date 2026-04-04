@@ -255,6 +255,7 @@ class AgentRouter:
         """
         max_tasks_per_agent = 5
         return [
-            agent for agent in self._registry.list_all()
+            agent
+            for agent in self._registry.list_all()
             if self.get_agent_workload(agent.agent_id) < max_tasks_per_agent
         ]

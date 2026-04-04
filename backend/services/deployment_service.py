@@ -27,11 +27,7 @@ class DeploymentService:
         self._logger = get_logger(__name__)
 
     async def create_deployment(
-        self,
-        project_id: str,
-        environment: str,
-        version: str,
-        config: dict[str, Any] | None = None
+        self, project_id: str, environment: str, version: str, config: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """
         Create a new deployment.
@@ -57,15 +53,12 @@ class DeploymentService:
             "completed_at": None,
             "error_message": None,
             "url": None,
-            "config": config or {}
+            "config": config or {},
         }
 
         self._deployments[deployment_id] = deployment
         self._logger.info(
-            "Deployment created",
-            deployment_id=deployment_id,
-            project_id=project_id,
-            environment=environment
+            "Deployment created", deployment_id=deployment_id, project_id=project_id, environment=environment
         )
 
         return deployment
@@ -83,9 +76,7 @@ class DeploymentService:
         return self._deployments.get(deployment_id)
 
     async def list_deployments(
-        self,
-        project_id: str | None = None,
-        environment: str | None = None
+        self, project_id: str | None = None, environment: str | None = None
     ) -> list[dict[str, Any]]:
         """
         List deployments with optional filtering.
@@ -112,7 +103,7 @@ class DeploymentService:
         status: str,
         steps: list[dict[str, Any]] | None = None,
         error_message: str | None = None,
-        url: str | None = None
+        url: str | None = None,
     ) -> dict[str, Any] | None:
         """
         Update deployment status.
@@ -142,11 +133,7 @@ class DeploymentService:
         if status in ["success", "failed", "rolled_back"]:
             deployment["completed_at"] = datetime.now(UTC).isoformat()
 
-        self._logger.info(
-            "Deployment status updated",
-            deployment_id=deployment_id,
-            status=status
-        )
+        self._logger.info("Deployment status updated", deployment_id=deployment_id, status=status)
 
         return deployment
 

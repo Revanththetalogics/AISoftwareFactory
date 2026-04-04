@@ -18,6 +18,7 @@ logger = get_logger(__name__)
 @dataclass
 class Message:
     """A message in the conversation."""
+
     role: str  # user, assistant, system
     content: str
     timestamp: datetime = field(default_factory=datetime.utcnow)
@@ -27,6 +28,7 @@ class Message:
 @dataclass
 class Conversation:
     """A conversation session."""
+
     conversation_id: str
     messages: list[Message] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -52,11 +54,7 @@ class ContextManager:
         self._conversations: dict[str, Conversation] = {}
         self._logger = get_logger(__name__)
 
-    def create_conversation(
-        self,
-        conversation_id: str | None = None,
-        metadata: dict[str, Any] | None = None
-    ) -> str:
+    def create_conversation(self, conversation_id: str | None = None, metadata: dict[str, Any] | None = None) -> str:
         """
         Create a new conversation.
 
@@ -69,26 +67,16 @@ class ContextManager:
         """
         conversation_id = conversation_id or str(uuid4())
 
-        conversation = Conversation(
-            conversation_id=conversation_id,
-            metadata=metadata or {}
-        )
+        conversation = Conversation(conversation_id=conversation_id, metadata=metadata or {})
 
         self._conversations[conversation_id] = conversation
 
-        self._logger.info(
-            "Conversation created",
-            conversation_id=conversation_id
-        )
+        self._logger.info("Conversation created", conversation_id=conversation_id)
 
         return conversation_id
 
     def add_message(
-        self,
-        conversation_id: str,
-        role: str,
-        content: str,
-        metadata: dict[str, Any] | None = None
+        self, conversation_id: str, role: str, content: str, metadata: dict[str, Any] | None = None
     ) -> bool:
         """
         Add a message to a conversation.
@@ -107,11 +95,7 @@ class ContextManager:
 
         conversation = self._conversations[conversation_id]
 
-        message = Message(
-            role=role,
-            content=content,
-            metadata=metadata or {}
-        )
+        message = Message(role=role, content=content, metadata=metadata or {})
 
         conversation.messages.append(message)
 
@@ -120,11 +104,7 @@ class ContextManager:
 
         return True
 
-    def get_context(
-        self,
-        conversation_id: str,
-        max_messages: int | None = None
-    ) -> list[dict[str, Any]]:
+    def get_context(self, conversation_id: str, max_messages: int | None = None) -> list[dict[str, Any]]:
         """
         Get conversation context.
 
@@ -144,14 +124,7 @@ class ContextManager:
         if max_messages:
             messages = messages[-max_messages:]
 
-        return [
-            {
-                "role": msg.role,
-                "content": msg.content,
-                "timestamp": msg.timestamp.isoformat()
-            }
-            for msg in messages
-        ]
+        return [{"role": msg.role, "content": msg.content, "timestamp": msg.timestamp.isoformat()} for msg in messages]
 
     def get_conversation_summary(self, conversation_id: str) -> str | None:
         """
@@ -208,5 +181,5 @@ class ContextManager:
             self._logger.info(
                 "Context window managed",
                 conversation_id=conversation.conversation_id,
-                messages_remaining=len(conversation.messages)
+                messages_remaining=len(conversation.messages),
             )

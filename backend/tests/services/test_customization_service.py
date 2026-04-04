@@ -2,7 +2,6 @@
 Comprehensive tests for CustomizationService to increase coverage.
 """
 
-
 import pytest
 from backend.services.customization_service import (
     CustomComponent,
@@ -58,7 +57,7 @@ class TestCustomizationService:
             background_color="#0f172a",
             text_color="#f1f5f9",
             border_color="#334155",
-            created_by="user123"
+            created_by="user123",
         )
 
         assert isinstance(theme, Theme)
@@ -87,7 +86,7 @@ class TestCustomizationService:
             accent_color="#ff0000",
             background_color="#ffffff",
             text_color="#000000",
-            border_color="#cccccc"
+            border_color="#cccccc",
         )
 
         # Get theme
@@ -115,7 +114,7 @@ class TestCustomizationService:
             accent_color="#ff0000",
             background_color="#000000",
             text_color="#ffffff",
-            border_color="#333333"
+            border_color="#333333",
         )
 
         # List themes (includes system defaults)
@@ -137,7 +136,7 @@ class TestCustomizationService:
             accent_color="#ff0000",
             background_color="#ffffff",
             text_color="#000000",
-            border_color="#cccccc"
+            border_color="#cccccc",
         )
 
         # List only custom themes
@@ -159,15 +158,12 @@ class TestCustomizationService:
             accent_color="#ff0000",
             background_color="#ffffff",
             text_color="#000000",
-            border_color="#cccccc"
+            border_color="#cccccc",
         )
 
         # Update theme
         updated_theme = await customization_service.update_theme(
-            theme_id=theme.id,
-            name="Updated Theme",
-            primary_color="#ff0000",
-            background_color="#000000"
+            theme_id=theme.id, name="Updated Theme", primary_color="#ff0000", background_color="#000000"
         )
 
         assert updated_theme.id == theme.id
@@ -184,10 +180,7 @@ class TestCustomizationService:
         system_theme_id = "theme_light"
 
         with pytest.raises(ValueError) as exc_info:
-            await customization_service.update_theme(
-                theme_id=system_theme_id,
-                name="Modified System Theme"
-            )
+            await customization_service.update_theme(theme_id=system_theme_id, name="Modified System Theme")
 
         assert "Cannot modify system default themes" in str(exc_info.value)
 
@@ -203,7 +196,7 @@ class TestCustomizationService:
             accent_color="#ff0000",
             background_color="#ffffff",
             text_color="#000000",
-            border_color="#cccccc"
+            border_color="#cccccc",
         )
 
         # Verify theme exists
@@ -236,7 +229,7 @@ class TestCustomizationService:
             content_spacing=20,
             card_border_radius=10,
             font_size="medium",
-            created_by="user123"
+            created_by="user123",
         )
 
         assert isinstance(layout, Layout)
@@ -266,7 +259,7 @@ class TestCustomizationService:
             sidebar_width=250,
             content_spacing=15,
             card_border_radius=5,
-            font_size="small"
+            font_size="small",
         )
 
         # Get layout
@@ -286,7 +279,7 @@ class TestCustomizationService:
             sidebar_width=350,
             content_spacing=25,
             card_border_radius=12,
-            font_size="large"
+            font_size="large",
         )
 
         # List layouts (includes system defaults)
@@ -327,9 +320,7 @@ class TestCustomizationService:
 
         # Update preferences
         await customization_service.update_user_preferences(
-            user_id=user_id,
-            theme_id="theme_dark",
-            notifications_enabled=False
+            user_id=user_id, theme_id="theme_dark", notifications_enabled=False
         )
 
         # Get preferences again
@@ -356,7 +347,7 @@ class TestCustomizationService:
             notifications_enabled=False,
             compact_mode=True,
             recent_colors=["#ff0000", "#00ff00", "#0000ff"],
-            favorite_themes=["theme_dark", "theme_blue_professional"]
+            favorite_themes=["theme_dark", "theme_blue_professional"],
         )
 
         assert updated_prefs.user_id == user_id
@@ -379,7 +370,7 @@ class TestCustomizationService:
             html_template="<button>{{text}}</button>",
             css_styles=".custom-button { color: red; }",
             javascript_code="console.log('Custom button loaded');",
-            created_by="user123"
+            created_by="user123",
         )
 
         assert isinstance(component, CustomComponent)
@@ -408,7 +399,7 @@ class TestCustomizationService:
             html_template="<div>{{content}}</div>",
             css_styles=".test-card { padding: 1rem; }",
             javascript_code="alert('Hello');",
-            created_by="user123"
+            created_by="user123",
         )
 
         # Get component
@@ -428,7 +419,7 @@ class TestCustomizationService:
             html_template="<input />",
             css_styles="",
             javascript_code="",
-            created_by="user123"
+            created_by="user123",
         )
 
         await customization_service.create_custom_component(
@@ -437,7 +428,7 @@ class TestCustomizationService:
             html_template="<select></select>",
             css_styles="",
             javascript_code="",
-            created_by="user123"
+            created_by="user123",
         )
 
         # List components
@@ -458,7 +449,7 @@ class TestCustomizationService:
             html_template="<div>Test</div>",
             css_styles="",
             javascript_code="",
-            created_by="user123"
+            created_by="user123",
         )
 
         # Component should be active initially
@@ -512,7 +503,7 @@ class TestCustomizationService:
             accent_color="#0000ff",
             background_color="#000000",
             text_color="#ffffff",
-            border_color="#333333"
+            border_color="#333333",
         )
 
         # Export theme
@@ -538,7 +529,7 @@ class TestCustomizationService:
                 "accent_color": "#123456",
                 "background_color": "#ffffff",
                 "text_color": "#000000",
-                "border_color": "#cccccc"
+                "border_color": "#cccccc",
             }
         }
 

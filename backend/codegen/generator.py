@@ -17,6 +17,7 @@ logger = get_logger(__name__)
 
 class CodeLanguage(StrEnum):
     """Supported programming languages."""
+
     PYTHON = "python"
     TYPESCRIPT = "typescript"
     JAVASCRIPT = "javascript"
@@ -31,6 +32,7 @@ class CodeLanguage(StrEnum):
 
 class CodeFramework(StrEnum):
     """Supported frameworks."""
+
     FASTAPI = "fastapi"
     REACT = "react"
     NEXTJS = "nextjs"
@@ -52,6 +54,7 @@ class GeneratedCode:
         metadata: Additional metadata
         error: Error message if generation failed
     """
+
     content: str = ""
     language: CodeLanguage = CodeLanguage.PYTHON
     framework: CodeFramework | None = None
@@ -78,6 +81,7 @@ class CodeTemplate:
         description: Template description
         variables: Required template variables
     """
+
     name: str
     template: str
     language: CodeLanguage
@@ -142,10 +146,16 @@ async def $endpoint_name($parameters):
                 language=CodeLanguage.PYTHON,
                 framework=CodeFramework.FASTAPI,
                 description="FastAPI endpoint handler",
-                variables=["method", "path", "endpoint_name", "parameters",
-                          "description", "implementation", "return_value"],
+                variables=[
+                    "method",
+                    "path",
+                    "endpoint_name",
+                    "parameters",
+                    "description",
+                    "implementation",
+                    "return_value",
+                ],
             ),
-
             CodeTemplate(
                 name="fastapi_model",
                 template='''from pydantic import BaseModel, Field
@@ -167,11 +177,10 @@ class $model_name(BaseModel):
                 description="Pydantic model for FastAPI",
                 variables=["model_name", "description", "fields", "example"],
             ),
-
             # React component templates
             CodeTemplate(
                 name="react_component",
-                template='''import React from 'react';
+                template="""import React from 'react';
 
 interface $component_name$props_interface {
     $props
@@ -182,18 +191,16 @@ export const $component_name: React.FC<$component_name$props_interface> = ({ $pr
         $jsx_content
     );
 };
-''',
+""",
                 language=CodeLanguage.TYPESCRIPT,
                 framework=CodeFramework.REACT,
                 description="React functional component",
-                variables=["component_name", "props_interface", "props",
-                          "prop_names", "jsx_content"],
+                variables=["component_name", "props_interface", "props", "prop_names", "jsx_content"],
             ),
-
             # Database templates
             CodeTemplate(
                 name="sql_table",
-                template='''CREATE TABLE $table_name (
+                template="""CREATE TABLE $table_name (
     id SERIAL PRIMARY KEY,
     $columns
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -201,16 +208,15 @@ export const $component_name: React.FC<$component_name$props_interface> = ({ $pr
 );
 
 $indexes
-''',
+""",
                 language=CodeLanguage.SQL,
                 description="SQL table creation",
                 variables=["table_name", "columns", "indexes"],
             ),
-
             # Docker templates
             CodeTemplate(
                 name="dockerfile_python",
-                template='''FROM python:$python_version-slim
+                template="""FROM python:$python_version-slim
 
 WORKDIR /app
 
@@ -222,12 +228,11 @@ COPY . .
 EXPOSE $port
 
 CMD ["$command"]
-''',
+""",
                 language=CodeLanguage.DOCKERFILE,
                 description="Dockerfile for Python app",
                 variables=["python_version", "port", "command"],
             ),
-
             # Test templates
             CodeTemplate(
                 name="pytest_test",
@@ -249,14 +254,12 @@ class Test$class_name:
 ''',
                 language=CodeLanguage.PYTHON,
                 description="Pytest test class",
-                variables=["class_name", "test_name", "test_description",
-                          "arrange", "act", "assert"],
+                variables=["class_name", "test_name", "test_description", "arrange", "act", "assert"],
             ),
-
             # Configuration templates
             CodeTemplate(
                 name="docker_compose",
-                template='''version: '3.8'
+                template="""version: '3.8'
 
 services:
   $service_name:
@@ -283,13 +286,23 @@ services:
 
 volumes:
   postgres_data:
-''',
+""",
                 language=CodeLanguage.YAML,
                 description="Docker Compose configuration",
-                variables=["service_name", "host_port", "container_port",
-                          "environment_vars", "dependencies", "volumes",
-                          "db_service", "postgres_version", "db_name",
-                          "db_user", "db_password", "db_port"],
+                variables=[
+                    "service_name",
+                    "host_port",
+                    "container_port",
+                    "environment_vars",
+                    "dependencies",
+                    "volumes",
+                    "db_service",
+                    "postgres_version",
+                    "db_name",
+                    "db_user",
+                    "db_password",
+                    "db_port",
+                ],
             ),
         ]
 
@@ -346,9 +359,7 @@ volumes:
         """
         template = self._templates.get(template_name)
         if not template:
-            return GeneratedCode(
-                error=f"Template '{template_name}' not found"
-            )
+            return GeneratedCode(error=f"Template '{template_name}' not found")
 
         try:
             content = template.render(**variables)
@@ -457,21 +468,26 @@ volumes:
             try:
                 compile(code, "<string>", "exec")
             except SyntaxError as exc:
-                issues.append({
-                    "type": "syntax_error",
-                    "message": str(exc),
-                    "line": exc.lineno,
-                })
+                issues.append(
+                    {
+                        "type": "syntax_error",
+                        "message": str(exc),
+                        "line": exc.lineno,
+                    }
+                )
 
         elif language == CodeLanguage.JSON:
             import json
+
             try:
                 json.loads(code)
             except json.JSONDecodeError as exc:
-                issues.append({
-                    "type": "json_error",
-                    "message": str(exc),
-                })
+                issues.append(
+                    {
+                        "type": "json_error",
+                        "message": str(exc),
+                    }
+                )
 
         # Check for common issues
         if not code.strip():

@@ -176,23 +176,27 @@ class TestAbstractBaseLLMProviderLegacy:
         class ConcreteProvider(BaseLLMProvider):
             """Concrete implementation for testing abstract methods."""
 
-            async def generate(self, prompt: str, temperature: float = 0.7,
-                             max_tokens: int | None = None, **kwargs) -> str:
+            async def generate(
+                self, prompt: str, temperature: float = 0.7, max_tokens: int | None = None, **kwargs
+            ) -> str:
                 # Call parent's pass statement to cover line 49
                 return "generated"
 
-            async def generate_stream(self, prompt: str, temperature: float = 0.7,
-                                     max_tokens: int | None = None, **kwargs) -> AsyncIterator[str]:
+            async def generate_stream(
+                self, prompt: str, temperature: float = 0.7, max_tokens: int | None = None, **kwargs
+            ) -> AsyncIterator[str]:
                 # Cover line 71
                 yield "chunk"
 
-            async def chat(self, messages: list[dict[str, str]], temperature: float = 0.7,
-                          max_tokens: int | None = None, **kwargs) -> str:
+            async def chat(
+                self, messages: list[dict[str, str]], temperature: float = 0.7, max_tokens: int | None = None, **kwargs
+            ) -> str:
                 # Cover line 93
                 return "chat response"
 
-            async def chat_stream(self, messages: list[dict[str, str]], temperature: float = 0.7,
-                                 max_tokens: int | None = None, **kwargs) -> AsyncIterator[str]:
+            async def chat_stream(
+                self, messages: list[dict[str, str]], temperature: float = 0.7, max_tokens: int | None = None, **kwargs
+            ) -> AsyncIterator[str]:
                 # Cover line 115
                 yield "stream chunk"
 
@@ -232,21 +236,25 @@ class TestAbstractBaseLLMProviderLegacy:
         from backend.llm.base_provider import BaseLLMProvider
 
         class TestProvider(BaseLLMProvider):
-            async def generate(self, prompt: str, temperature: float = 0.7,
-                             max_tokens: int | None = None, **kwargs) -> str:
+            async def generate(
+                self, prompt: str, temperature: float = 0.7, max_tokens: int | None = None, **kwargs
+            ) -> str:
                 return f"Generated: {prompt}"
 
-            async def generate_stream(self, prompt: str, temperature: float = 0.7,
-                                     max_tokens: int | None = None, **kwargs) -> AsyncIterator[str]:
+            async def generate_stream(
+                self, prompt: str, temperature: float = 0.7, max_tokens: int | None = None, **kwargs
+            ) -> AsyncIterator[str]:
                 for word in prompt.split():
                     yield word
 
-            async def chat(self, messages: list[dict[str, str]], temperature: float = 0.7,
-                          max_tokens: int | None = None, **kwargs) -> str:
+            async def chat(
+                self, messages: list[dict[str, str]], temperature: float = 0.7, max_tokens: int | None = None, **kwargs
+            ) -> str:
                 return "chat response"
 
-            async def chat_stream(self, messages: list[dict[str, str]], temperature: float = 0.7,
-                                 max_tokens: int | None = None, **kwargs) -> AsyncIterator[str]:
+            async def chat_stream(
+                self, messages: list[dict[str, str]], temperature: float = 0.7, max_tokens: int | None = None, **kwargs
+            ) -> AsyncIterator[str]:
                 yield "chunk"
 
             async def embed(self, text: str) -> list[float]:
@@ -290,7 +298,7 @@ class TestAbstractProviderMethods:
         from abc import ABC
 
         # Verify BaseLLMProvider is abstract
-        assert issubclass(BaseLLMProvider, ABC) or hasattr(BaseLLMProvider, '__abstractmethods__')
+        assert issubclass(BaseLLMProvider, ABC) or hasattr(BaseLLMProvider, "__abstractmethods__")
 
     @pytest.mark.asyncio
     async def test_concrete_provider_generate(self):

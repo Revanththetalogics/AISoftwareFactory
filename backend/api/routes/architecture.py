@@ -19,6 +19,7 @@ logger = get_logger(__name__)
 
 class NodeCreate(BaseModel):
     """Node creation request model."""
+
     id: str
     name: str
     type: str
@@ -32,6 +33,7 @@ class NodeCreate(BaseModel):
 
 class RelationshipCreate(BaseModel):
     """Relationship creation request model."""
+
     id: str
     source_id: str
     target_id: str
@@ -43,6 +45,7 @@ class RelationshipCreate(BaseModel):
 
 class DiagramCreate(BaseModel):
     """Diagram creation request model."""
+
     name: str
     type: str
     nodes: list[NodeCreate]
@@ -52,6 +55,7 @@ class DiagramCreate(BaseModel):
 
 class DiagramUpdate(BaseModel):
     """Diagram update request model."""
+
     name: str | None = None
     nodes: list[NodeCreate] | None = None
     relationships: list[RelationshipCreate] | None = None
@@ -60,6 +64,7 @@ class DiagramUpdate(BaseModel):
 
 class SystemInfo(BaseModel):
     """System information for auto-generation."""
+
     services: list[dict[str, Any]]
     databases: list[dict[str, Any]]
     caches: list[dict[str, Any]]
@@ -87,13 +92,11 @@ async def create_diagram(diagram_data: DiagramCreate):
             diagram_type=DiagramType(diagram_data.type),
             nodes=nodes_dict,
             relationships=relationships_dict,
-            description=diagram_data.description
+            description=diagram_data.description,
         )
 
         return APIResponse(
-            success=True,
-            data=diagram.__dict__,
-            message=f"Diagram '{diagram_data.name}' created successfully"
+            success=True, data=diagram.__dict__, message=f"Diagram '{diagram_data.name}' created successfully"
         )
     except Exception as e:
         logger.error("Failed to create diagram", error=str(e))
@@ -122,11 +125,7 @@ async def list_diagrams(diagram_type: str | None = None):
             diagram_dict["relationships"] = [rel.__dict__ for rel in diagram.relationships]
             diagrams_data.append(diagram_dict)
 
-        return APIResponse(
-            success=True,
-            data=diagrams_data,
-            message=f"Retrieved {len(diagrams_data)} diagrams"
-        )
+        return APIResponse(success=True, data=diagrams_data, message=f"Retrieved {len(diagrams_data)} diagrams")
     except Exception as e:
         logger.error("Failed to list diagrams", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to list diagrams: {str(e)}")
@@ -153,11 +152,7 @@ async def get_diagram(diagram_id: str):
         diagram_dict["nodes"] = [node.__dict__ for node in diagram.nodes]
         diagram_dict["relationships"] = [rel.__dict__ for rel in diagram.relationships]
 
-        return APIResponse(
-            success=True,
-            data=diagram_dict,
-            message=f"Retrieved diagram '{diagram.name}'"
-        )
+        return APIResponse(success=True, data=diagram_dict, message=f"Retrieved diagram '{diagram.name}'")
     except HTTPException:
         raise
     except Exception as e:
@@ -187,7 +182,7 @@ async def update_diagram(diagram_id: str, update_data: DiagramUpdate):
             name=update_data.name,
             nodes=nodes_dict,
             relationships=relationships_dict,
-            description=update_data.description
+            description=update_data.description,
         )
 
         if not diagram:
@@ -197,11 +192,7 @@ async def update_diagram(diagram_id: str, update_data: DiagramUpdate):
         diagram_dict["nodes"] = [node.__dict__ for node in diagram.nodes]
         diagram_dict["relationships"] = [rel.__dict__ for rel in diagram.relationships]
 
-        return APIResponse(
-            success=True,
-            data=diagram_dict,
-            message=f"Diagram '{diagram.name}' updated successfully"
-        )
+        return APIResponse(success=True, data=diagram_dict, message=f"Diagram '{diagram.name}' updated successfully")
     except HTTPException:
         raise
     except Exception as e:
@@ -226,10 +217,7 @@ async def delete_diagram(diagram_id: str):
         if not success:
             raise HTTPException(status_code=404, detail=f"Diagram {diagram_id} not found")
 
-        return APIResponse(
-            success=True,
-            message="Diagram deleted successfully"
-        )
+        return APIResponse(success=True, message="Diagram deleted successfully")
     except HTTPException:
         raise
     except Exception as e:
@@ -255,11 +243,7 @@ async def list_templates():
             template_dict["relationships"] = [rel.__dict__ for rel in template.relationships]
             templates_data.append(template_dict)
 
-        return APIResponse(
-            success=True,
-            data=templates_data,
-            message=f"Retrieved {len(templates_data)} templates"
-        )
+        return APIResponse(success=True, data=templates_data, message=f"Retrieved {len(templates_data)} templates")
     except Exception as e:
         logger.error("Failed to list templates", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to list templates: {str(e)}")
@@ -286,11 +270,7 @@ async def get_template(template_name: str):
         template_dict["nodes"] = [node.__dict__ for node in template.nodes]
         template_dict["relationships"] = [rel.__dict__ for rel in template.relationships]
 
-        return APIResponse(
-            success=True,
-            data=template_dict,
-            message=f"Retrieved template '{template.name}'"
-        )
+        return APIResponse(success=True, data=template_dict, message=f"Retrieved template '{template.name}'")
     except HTTPException:
         raise
     except Exception as e:
@@ -316,11 +296,7 @@ async def generate_system_diagram(system_info: SystemInfo):
         diagram_dict["nodes"] = [node.__dict__ for node in diagram.nodes]
         diagram_dict["relationships"] = [rel.__dict__ for rel in diagram.relationships]
 
-        return APIResponse(
-            success=True,
-            data=diagram_dict,
-            message="System diagram generated successfully"
-        )
+        return APIResponse(success=True, data=diagram_dict, message="System diagram generated successfully")
     except Exception as e:
         logger.error("Failed to generate system diagram", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to generate system diagram: {str(e)}")
@@ -344,7 +320,7 @@ async def export_diagram(diagram_id: str, format: str):
         return APIResponse(
             success=True,
             data={"format": format, "content": exported_data},
-            message=f"Diagram exported in {format} format"
+            message=f"Diagram exported in {format} format",
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -364,11 +340,7 @@ async def get_node_types():
     try:
         node_types = [{"name": t.name, "value": t.value} for t in NodeType]
 
-        return APIResponse(
-            success=True,
-            data=node_types,
-            message="Retrieved node types"
-        )
+        return APIResponse(success=True, data=node_types, message="Retrieved node types")
     except Exception as e:
         logger.error("Failed to get node types", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get node types: {str(e)}")
@@ -385,11 +357,7 @@ async def get_relationship_types():
     try:
         relationship_types = [{"name": t.name, "value": t.value} for t in RelationshipType]
 
-        return APIResponse(
-            success=True,
-            data=relationship_types,
-            message="Retrieved relationship types"
-        )
+        return APIResponse(success=True, data=relationship_types, message="Retrieved relationship types")
     except Exception as e:
         logger.error("Failed to get relationship types", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get relationship types: {str(e)}")
@@ -406,11 +374,7 @@ async def get_diagram_types():
     try:
         diagram_types = [{"name": t.name, "value": t.value} for t in DiagramType]
 
-        return APIResponse(
-            success=True,
-            data=diagram_types,
-            message="Retrieved diagram types"
-        )
+        return APIResponse(success=True, data=diagram_types, message="Retrieved diagram types")
     except Exception as e:
         logger.error("Failed to get diagram types", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get diagram types: {str(e)}")

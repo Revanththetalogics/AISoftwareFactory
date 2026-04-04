@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class APIResponse(BaseModel):
     """Standard API response wrapper."""
+
     success: bool
     data: Any = None
     message: str | None = None
@@ -22,6 +23,7 @@ class APIResponse(BaseModel):
 
 class ProjectStatus(StrEnum):
     """Project status values."""
+
     DRAFT = "draft"
     ACTIVE = "active"
     PAUSED = "paused"
@@ -31,13 +33,16 @@ class ProjectStatus(StrEnum):
 
 class ProjectCreate(BaseModel):
     """Request model for creating a project."""
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "name": "My SaaS App",
-            "description": "A revolutionary SaaS application",
-            "requirements": "User authentication, dashboard, API",
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "name": "My SaaS App",
+                "description": "A revolutionary SaaS application",
+                "requirements": "User authentication, dashboard, API",
+            }
         }
-    })
+    )
 
     name: str = Field(..., min_length=1, max_length=100, description="Project name")
     description: str = Field(..., min_length=1, description="Project description")
@@ -47,6 +52,7 @@ class ProjectCreate(BaseModel):
 
 class ProjectUpdate(BaseModel):
     """Request model for updating a project."""
+
     name: str | None = Field(None, min_length=1, max_length=100)
     description: str | None = None
     requirements: str | None = None
@@ -56,6 +62,7 @@ class ProjectUpdate(BaseModel):
 
 class ProjectResponse(BaseModel):
     """Response model for project data."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: str
@@ -73,13 +80,16 @@ class ProjectResponse(BaseModel):
 
 class WorkflowExecuteRequest(BaseModel):
     """Request model for executing a workflow."""
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "project_id": "proj-123",
-            "phase": "implementation",
-            "context": {"priority": "high"},
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "project_id": "proj-123",
+                "phase": "implementation",
+                "context": {"priority": "high"},
+            }
         }
-    })
+    )
 
     project_id: str = Field(..., description="Project ID")
     phase: str | None = Field(None, description="Specific phase to execute")
@@ -89,6 +99,7 @@ class WorkflowExecuteRequest(BaseModel):
 
 class WorkflowStatusResponse(BaseModel):
     """Response model for workflow status."""
+
     model_config = ConfigDict(from_attributes=True)
 
     workflow_id: str
@@ -106,6 +117,7 @@ class WorkflowStatusResponse(BaseModel):
 
 class AgentResponse(BaseModel):
     """Response model for agent data."""
+
     model_config = ConfigDict(from_attributes=True)
 
     agent_id: str
@@ -120,6 +132,7 @@ class AgentResponse(BaseModel):
 
 class AgentTaskRequest(BaseModel):
     """Request model for assigning a task to an agent."""
+
     task_type: str
     description: str
     context: dict[str, Any] | None = None
@@ -128,6 +141,7 @@ class AgentTaskRequest(BaseModel):
 
 class TaskAssignmentResponse(BaseModel):
     """Response model for task assignment to an agent."""
+
     model_config = ConfigDict(from_attributes=True)
 
     task_id: str
@@ -138,13 +152,16 @@ class TaskAssignmentResponse(BaseModel):
 
 class DeploymentRequest(BaseModel):
     """Request model for creating a deployment."""
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "project_id": "proj-123",
-            "environment": "staging",
-            "version": "1.0.0",
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "project_id": "proj-123",
+                "environment": "staging",
+                "version": "1.0.0",
+            }
         }
-    })
+    )
 
     project_id: str
     environment: str = Field(..., pattern="^(dev|staging|production)$")
@@ -154,6 +171,7 @@ class DeploymentRequest(BaseModel):
 
 class DeploymentResponse(BaseModel):
     """Response model for deployment data."""
+
     model_config = ConfigDict(from_attributes=True)
 
     deployment_id: str
@@ -170,6 +188,7 @@ class DeploymentResponse(BaseModel):
 
 class CodeGenerationRequest(BaseModel):
     """Request model for code generation."""
+
     project_id: str
     component_type: str
     specifications: dict[str, Any]
@@ -179,6 +198,7 @@ class CodeGenerationRequest(BaseModel):
 
 class CodeGenerationResponse(BaseModel):
     """Response model for generated code."""
+
     generation_id: str
     project_id: str
     files: list[dict[str, str]]
@@ -189,6 +209,7 @@ class CodeGenerationResponse(BaseModel):
 
 class WebSocketMessage(BaseModel):
     """Model for WebSocket messages."""
+
     type: str
     payload: dict[str, Any]
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
@@ -196,6 +217,7 @@ class WebSocketMessage(BaseModel):
 
 class HealthCheckResponse(BaseModel):
     """Response model for health check."""
+
     status: str
     version: str
     timestamp: datetime
@@ -205,13 +227,16 @@ class HealthCheckResponse(BaseModel):
 
 class QuickStartRequest(BaseModel):
     """Request model for single-prompt SaaS creation."""
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "idea": "A SaaS platform for managing freelance projects with time tracking and invoicing",
-            "template": "saas_starter",
-            "tech_stack": {"frontend": "nextjs", "backend": "fastapi"}
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "idea": "A SaaS platform for managing freelance projects with time tracking and invoicing",
+                "template": "saas_starter",
+                "tech_stack": {"frontend": "nextjs", "backend": "fastapi"},
+            }
         }
-    })
+    )
 
     idea: str = Field(..., min_length=10, description="Your SaaS idea/prompt")
     template: str | None = Field(None, description="Optional template to use")
@@ -220,6 +245,7 @@ class QuickStartRequest(BaseModel):
 
 class QuickStartResponse(BaseModel):
     """Response model for QuickStart endpoint."""
+
     model_config = ConfigDict(from_attributes=True)
 
     project_id: str

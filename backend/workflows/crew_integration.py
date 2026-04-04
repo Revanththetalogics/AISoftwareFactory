@@ -145,6 +145,7 @@ class CrewIntegration:
                 # Execute crew (kickoff)
                 # Note: CrewAI kickoff is synchronous, run in thread pool for async
                 import asyncio
+
                 result = await asyncio.to_thread(crew.kickoff)
 
                 self._logger.info(
@@ -236,7 +237,7 @@ class CrewIntegration:
             Parsed result dictionary
         """
         # CrewAI returns different types depending on execution
-        if hasattr(result, 'to_dict'):
+        if hasattr(result, "to_dict"):
             return result.to_dict()
         elif isinstance(result, str):
             return {"result": result}

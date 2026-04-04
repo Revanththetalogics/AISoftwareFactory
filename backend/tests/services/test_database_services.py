@@ -102,18 +102,18 @@ class TestDatabaseProjectService:
     async def test_create_project_with_provided_db(self, mock_db_session, mock_project):
         """Test project creation with provided db session."""
         # Setup mock
-        mock_db_session.refresh = AsyncMock(side_effect=lambda p: setattr(p, 'id', 'proj-test123456'))
+        mock_db_session.refresh = AsyncMock(side_effect=lambda p: setattr(p, "id", "proj-test123456"))
 
-        with patch('backend.services.database_services.sanitize_input', side_effect=lambda x, **kwargs: x):
-            with patch('backend.services.database_services.PerformanceTimer'):
-                with patch('backend.services.database_services.business_events'):
+        with patch("backend.services.database_services.sanitize_input", side_effect=lambda x, **kwargs: x):
+            with patch("backend.services.database_services.PerformanceTimer"):
+                with patch("backend.services.database_services.business_events"):
                     project = await self.service.create_project(
                         name="Test Project",
                         description="Test Description",
                         requirements="Test requirements",
                         tech_stack={"backend": "python"},
                         owner_id="user-001",
-                        db=mock_db_session
+                        db=mock_db_session,
                     )
 
         assert project is not None
@@ -130,14 +130,11 @@ class TestDatabaseProjectService:
         mock_session.refresh = AsyncMock()
         mock_db_context.__aenter__.return_value = mock_session
 
-        with patch('backend.services.database_services.get_db_context', return_value=mock_db_context):
-            with patch('backend.services.database_services.sanitize_input', side_effect=lambda x, **kwargs: x):
-                with patch('backend.services.database_services.PerformanceTimer'):
-                    with patch('backend.services.database_services.business_events'):
-                        project = await self.service.create_project(
-                            name="Test Project",
-                            description="Test Description"
-                        )
+        with patch("backend.services.database_services.get_db_context", return_value=mock_db_context):
+            with patch("backend.services.database_services.sanitize_input", side_effect=lambda x, **kwargs: x):
+                with patch("backend.services.database_services.PerformanceTimer"):
+                    with patch("backend.services.database_services.business_events"):
+                        project = await self.service.create_project(name="Test Project", description="Test Description")
 
         assert project is not None
 
@@ -148,7 +145,7 @@ class TestDatabaseProjectService:
         mock_result.scalar_one_or_none = Mock(return_value=mock_project)
         mock_db_session.execute = AsyncMock(return_value=mock_result)
 
-        with patch('backend.services.database_services.PerformanceTimer'):
+        with patch("backend.services.database_services.PerformanceTimer"):
             project = await self.service.get_project("proj-test123456", db=mock_db_session)
 
         assert project == mock_project
@@ -163,8 +160,8 @@ class TestDatabaseProjectService:
         mock_session.execute = AsyncMock(return_value=mock_result)
         mock_db_context.__aenter__.return_value = mock_session
 
-        with patch('backend.services.database_services.get_db_context', return_value=mock_db_context):
-            with patch('backend.services.database_services.PerformanceTimer'):
+        with patch("backend.services.database_services.get_db_context", return_value=mock_db_context):
+            with patch("backend.services.database_services.PerformanceTimer"):
                 project = await self.service.get_project("proj-test123456")
 
         assert project == mock_project
@@ -176,7 +173,7 @@ class TestDatabaseProjectService:
         mock_result.scalar_one_or_none = Mock(return_value=None)
         mock_db_session.execute = AsyncMock(return_value=mock_result)
 
-        with patch('backend.services.database_services.PerformanceTimer'):
+        with patch("backend.services.database_services.PerformanceTimer"):
             project = await self.service.get_project("nonexistent", db=mock_db_session)
 
         assert project is None
@@ -190,7 +187,7 @@ class TestDatabaseProjectService:
         mock_result.scalars = Mock(return_value=mock_scalars)
         mock_db_session.execute = AsyncMock(return_value=mock_result)
 
-        with patch('backend.services.database_services.PerformanceTimer'):
+        with patch("backend.services.database_services.PerformanceTimer"):
             projects = await self.service.list_projects(db=mock_db_session)
 
         assert len(projects) == 1
@@ -207,8 +204,8 @@ class TestDatabaseProjectService:
         mock_session.execute = AsyncMock(return_value=mock_result)
         mock_db_context.__aenter__.return_value = mock_session
 
-        with patch('backend.services.database_services.get_db_context', return_value=mock_db_context):
-            with patch('backend.services.database_services.PerformanceTimer'):
+        with patch("backend.services.database_services.get_db_context", return_value=mock_db_context):
+            with patch("backend.services.database_services.PerformanceTimer"):
                 projects = await self.service.list_projects()
 
         assert len(projects) == 1
@@ -222,13 +219,9 @@ class TestDatabaseProjectService:
         mock_result.scalars = Mock(return_value=mock_scalars)
         mock_db_session.execute = AsyncMock(return_value=mock_result)
 
-        with patch('backend.services.database_services.PerformanceTimer'):
+        with patch("backend.services.database_services.PerformanceTimer"):
             projects = await self.service.list_projects(
-                owner_id="user-001",
-                status="draft",
-                skip=0,
-                limit=50,
-                db=mock_db_session
+                owner_id="user-001", status="draft", skip=0, limit=50, db=mock_db_session
             )
 
         assert len(projects) == 1
@@ -240,13 +233,13 @@ class TestDatabaseProjectService:
         mock_result.scalar_one_or_none = Mock(return_value=mock_project)
         mock_db_session.execute = AsyncMock(return_value=mock_result)
 
-        with patch('backend.services.database_services.PerformanceTimer'):
-            with patch('backend.services.database_services.business_events'):
-                with patch('backend.services.database_services.sanitize_input', side_effect=lambda x, **kwargs: x):
+        with patch("backend.services.database_services.PerformanceTimer"):
+            with patch("backend.services.database_services.business_events"):
+                with patch("backend.services.database_services.sanitize_input", side_effect=lambda x, **kwargs: x):
                     updated = await self.service.update_project(
                         "proj-test123456",
                         {"name": "Updated", "description": "Updated desc", "requirements": "Updated reqs"},
-                        db=mock_db_session
+                        db=mock_db_session,
                     )
 
         assert updated is not None
@@ -262,14 +255,11 @@ class TestDatabaseProjectService:
         mock_session.commit = AsyncMock()
         mock_db_context.__aenter__.return_value = mock_session
 
-        with patch('backend.services.database_services.get_db_context', return_value=mock_db_context):
-            with patch('backend.services.database_services.PerformanceTimer'):
-                with patch('backend.services.database_services.business_events'):
-                    with patch('backend.services.database_services.sanitize_input', side_effect=lambda x, **kwargs: x):
-                        updated = await self.service.update_project(
-                            "proj-test123456",
-                            {"name": "Updated"}
-                        )
+        with patch("backend.services.database_services.get_db_context", return_value=mock_db_context):
+            with patch("backend.services.database_services.PerformanceTimer"):
+                with patch("backend.services.database_services.business_events"):
+                    with patch("backend.services.database_services.sanitize_input", side_effect=lambda x, **kwargs: x):
+                        updated = await self.service.update_project("proj-test123456", {"name": "Updated"})
 
         assert updated is not None
 
@@ -280,13 +270,9 @@ class TestDatabaseProjectService:
         mock_result.scalar_one_or_none = Mock(return_value=None)
         mock_db_session.execute = AsyncMock(return_value=mock_result)
 
-        with patch('backend.services.database_services.PerformanceTimer'):
-            with patch('backend.services.database_services.business_events'):
-                updated = await self.service.update_project(
-                    "nonexistent",
-                    {"name": "Updated"},
-                    db=mock_db_session
-                )
+        with patch("backend.services.database_services.PerformanceTimer"):
+            with patch("backend.services.database_services.business_events"):
+                updated = await self.service.update_project("nonexistent", {"name": "Updated"}, db=mock_db_session)
 
         # When project not found, business_events should not be called with update
         assert updated is None
@@ -298,7 +284,7 @@ class TestDatabaseProjectService:
         mock_result.rowcount = 1
         mock_db_session.execute = AsyncMock(return_value=mock_result)
 
-        with patch('backend.services.database_services.PerformanceTimer'):
+        with patch("backend.services.database_services.PerformanceTimer"):
             result = await self.service.delete_project("proj-test123456", db=mock_db_session)
 
         assert result is True
@@ -314,8 +300,8 @@ class TestDatabaseProjectService:
         mock_session.commit = AsyncMock()
         mock_db_context.__aenter__.return_value = mock_session
 
-        with patch('backend.services.database_services.get_db_context', return_value=mock_db_context):
-            with patch('backend.services.database_services.PerformanceTimer'):
+        with patch("backend.services.database_services.get_db_context", return_value=mock_db_context):
+            with patch("backend.services.database_services.PerformanceTimer"):
                 result = await self.service.delete_project("proj-test123456")
 
         assert result is True
@@ -327,7 +313,7 @@ class TestDatabaseProjectService:
         mock_result.rowcount = 0
         mock_db_session.execute = AsyncMock(return_value=mock_result)
 
-        with patch('backend.services.database_services.PerformanceTimer'):
+        with patch("backend.services.database_services.PerformanceTimer"):
             result = await self.service.delete_project("nonexistent", db=mock_db_session)
 
         assert result is False
@@ -343,13 +329,13 @@ class TestDatabaseWorkflowService:
     @pytest.mark.asyncio
     async def test_create_workflow_with_provided_db(self, mock_db_session):
         """Test workflow creation with provided db."""
-        with patch('backend.services.database_services.sanitize_input', side_effect=lambda x, **kwargs: x):
+        with patch("backend.services.database_services.sanitize_input", side_effect=lambda x, **kwargs: x):
             workflow = await self.service.create_workflow(
                 name="Test Workflow",
                 project_id="proj-123",
                 steps=[{"step_id": "s1", "name": "Step 1"}],
                 created_by="user-001",
-                db=mock_db_session
+                db=mock_db_session,
             )
 
         assert workflow is not None
@@ -365,13 +351,9 @@ class TestDatabaseWorkflowService:
         mock_session.refresh = AsyncMock()
         mock_db_context.__aenter__.return_value = mock_session
 
-        with patch('backend.services.database_services.get_db_context', return_value=mock_db_context):
-            with patch('backend.services.database_services.sanitize_input', side_effect=lambda x, **kwargs: x):
-                workflow = await self.service.create_workflow(
-                    name="Test Workflow",
-                    project_id="proj-123",
-                    steps=[]
-                )
+        with patch("backend.services.database_services.get_db_context", return_value=mock_db_context):
+            with patch("backend.services.database_services.sanitize_input", side_effect=lambda x, **kwargs: x):
+                workflow = await self.service.create_workflow(name="Test Workflow", project_id="proj-123", steps=[])
 
         assert workflow is not None
 
@@ -395,7 +377,7 @@ class TestDatabaseWorkflowService:
         mock_session.execute = AsyncMock(return_value=mock_result)
         mock_db_context.__aenter__.return_value = mock_session
 
-        with patch('backend.services.database_services.get_db_context', return_value=mock_db_context):
+        with patch("backend.services.database_services.get_db_context", return_value=mock_db_context):
             workflow = await self.service.get_workflow("wf-test123456")
 
         assert workflow == mock_workflow
@@ -408,10 +390,7 @@ class TestDatabaseWorkflowService:
         mock_db_session.execute = AsyncMock(return_value=mock_result)
 
         updated = await self.service.update_workflow_status(
-            "wf-test123456",
-            WorkflowStatus.RUNNING,
-            current_step_id="step-1",
-            db=mock_db_session
+            "wf-test123456", WorkflowStatus.RUNNING, current_step_id="step-1", db=mock_db_session
         )
 
         assert updated is not None
@@ -427,11 +406,8 @@ class TestDatabaseWorkflowService:
         mock_session.commit = AsyncMock()
         mock_db_context.__aenter__.return_value = mock_session
 
-        with patch('backend.services.database_services.get_db_context', return_value=mock_db_context):
-            updated = await self.service.update_workflow_status(
-                "wf-test123456",
-                WorkflowStatus.COMPLETED
-            )
+        with patch("backend.services.database_services.get_db_context", return_value=mock_db_context):
+            updated = await self.service.update_workflow_status("wf-test123456", WorkflowStatus.COMPLETED)
 
         assert updated is not None
 
@@ -442,11 +418,7 @@ class TestDatabaseWorkflowService:
         mock_result.scalar_one_or_none = Mock(return_value=mock_workflow)
         mock_db_session.execute = AsyncMock(return_value=mock_result)
 
-        await self.service.update_workflow_status(
-            "wf-test123456",
-            WorkflowStatus.RUNNING,
-            db=mock_db_session
-        )
+        await self.service.update_workflow_status("wf-test123456", WorkflowStatus.RUNNING, db=mock_db_session)
 
         mock_db_session.commit.assert_awaited_once()
 
@@ -457,11 +429,7 @@ class TestDatabaseWorkflowService:
         mock_result.scalar_one_or_none = Mock(return_value=mock_workflow)
         mock_db_session.execute = AsyncMock(return_value=mock_result)
 
-        await self.service.update_workflow_status(
-            "wf-test123456",
-            WorkflowStatus.COMPLETED,
-            db=mock_db_session
-        )
+        await self.service.update_workflow_status("wf-test123456", WorkflowStatus.COMPLETED, db=mock_db_session)
 
         mock_db_session.commit.assert_awaited_once()
 
@@ -472,11 +440,7 @@ class TestDatabaseWorkflowService:
         mock_result.scalar_one_or_none = Mock(return_value=mock_workflow)
         mock_db_session.execute = AsyncMock(return_value=mock_result)
 
-        await self.service.update_workflow_status(
-            "wf-test123456",
-            WorkflowStatus.FAILED,
-            db=mock_db_session
-        )
+        await self.service.update_workflow_status("wf-test123456", WorkflowStatus.FAILED, db=mock_db_session)
 
         mock_db_session.commit.assert_awaited_once()
 
@@ -487,11 +451,7 @@ class TestDatabaseWorkflowService:
         mock_result.scalar_one_or_none = Mock(return_value=mock_workflow)
         mock_db_session.execute = AsyncMock(return_value=mock_result)
 
-        await self.service.update_workflow_status(
-            "wf-test123456",
-            WorkflowStatus.CANCELLED,
-            db=mock_db_session
-        )
+        await self.service.update_workflow_status("wf-test123456", WorkflowStatus.CANCELLED, db=mock_db_session)
 
         mock_db_session.commit.assert_awaited_once()
 
@@ -506,12 +466,9 @@ class TestDatabaseAgentService:
     @pytest.mark.asyncio
     async def test_register_agent_with_provided_db(self, mock_db_session):
         """Test agent registration with provided db."""
-        with patch('backend.services.database_services.sanitize_input', side_effect=lambda x, **kwargs: x):
+        with patch("backend.services.database_services.sanitize_input", side_effect=lambda x, **kwargs: x):
             agent = await self.service.register_agent(
-                name="Test Agent",
-                role="developer",
-                capabilities=["code", "test"],
-                db=mock_db_session
+                name="Test Agent", role="developer", capabilities=["code", "test"], db=mock_db_session
             )
 
         assert agent is not None
@@ -527,13 +484,9 @@ class TestDatabaseAgentService:
         mock_session.refresh = AsyncMock()
         mock_db_context.__aenter__.return_value = mock_session
 
-        with patch('backend.services.database_services.get_db_context', return_value=mock_db_context):
-            with patch('backend.services.database_services.sanitize_input', side_effect=lambda x, **kwargs: x):
-                agent = await self.service.register_agent(
-                    name="Test Agent",
-                    role="developer",
-                    capabilities=["code"]
-                )
+        with patch("backend.services.database_services.get_db_context", return_value=mock_db_context):
+            with patch("backend.services.database_services.sanitize_input", side_effect=lambda x, **kwargs: x):
+                agent = await self.service.register_agent(name="Test Agent", role="developer", capabilities=["code"])
 
         assert agent is not None
 
@@ -557,7 +510,7 @@ class TestDatabaseAgentService:
         mock_session.execute = AsyncMock(return_value=mock_result)
         mock_db_context.__aenter__.return_value = mock_session
 
-        with patch('backend.services.database_services.get_db_context', return_value=mock_db_context):
+        with patch("backend.services.database_services.get_db_context", return_value=mock_db_context):
             agent = await self.service.get_agent("agent-test12345")
 
         assert agent == mock_agent
@@ -587,7 +540,7 @@ class TestDatabaseAgentService:
         mock_session.execute = AsyncMock(return_value=mock_result)
         mock_db_context.__aenter__.return_value = mock_session
 
-        with patch('backend.services.database_services.get_db_context', return_value=mock_db_context):
+        with patch("backend.services.database_services.get_db_context", return_value=mock_db_context):
             agents = await self.service.list_agents()
 
         assert len(agents) == 1
@@ -627,11 +580,7 @@ class TestDatabaseAgentService:
         mock_result.scalars = Mock(return_value=mock_scalars)
         mock_db_session.execute = AsyncMock(return_value=mock_result)
 
-        agents = await self.service.list_agents(
-            role="developer",
-            status="idle",
-            db=mock_db_session
-        )
+        agents = await self.service.list_agents(role="developer", status="idle", db=mock_db_session)
 
         assert len(agents) == 1
 

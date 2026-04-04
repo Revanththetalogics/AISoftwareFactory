@@ -34,9 +34,11 @@ class LLMFactory:
         """
         if provider == "ollama":
             from backend.llm.ollama_provider import OllamaProvider
+
             return OllamaProvider()
         elif provider == "openai":
             from backend.llm.openai_provider import OpenAIProvider
+
             return OpenAIProvider()
         else:
             raise ValueError(f"Unsupported LLM provider: {provider}")

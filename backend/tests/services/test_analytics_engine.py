@@ -19,9 +19,9 @@ class TestAdvancedAnalyticsEngine:
     def test_init(self, analytics_service):
         """Test service initialization."""
         assert analytics_service is not None
-        assert hasattr(analytics_service, 'queries')
-        assert hasattr(analytics_service, 'reports')
-        assert hasattr(analytics_service, 'predictions')
+        assert hasattr(analytics_service, "queries")
+        assert hasattr(analytics_service, "reports")
+        assert hasattr(analytics_service, "predictions")
 
     @pytest.mark.asyncio
     async def test_create_and_execute_query(self, analytics_service):
@@ -33,7 +33,7 @@ class TestAdvancedAnalyticsEngine:
             dimensions=[],
             filters={},
             time_range={"start": "2024-01-01", "end": "2024-12-31"},
-            granularity=TimeGranularity.DAY
+            granularity=TimeGranularity.DAY,
         )
 
         assert isinstance(query, AnalyticsQuery)
@@ -55,29 +55,24 @@ class TestAdvancedAnalyticsEngine:
             dimensions=[],
             filters={},
             time_range={"start": "2024-01-01", "end": "2024-12-31"},
-            granularity=TimeGranularity.DAY
+            granularity=TimeGranularity.DAY,
         )
 
         # Generate report
-        report = await analytics_service.generate_report(
-            query_id=query.id,
-            report_type=ReportType.SUMMARY
-        )
+        report = await analytics_service.generate_report(query_id=query.id, report_type=ReportType.SUMMARY)
 
         assert report.id.startswith("report_")
         assert report.type == ReportType.SUMMARY
-        assert hasattr(report, 'data')
+        assert hasattr(report, "data")
 
     @pytest.mark.asyncio
     async def test_predict_future_values(self, analytics_service):
         """Test predicting future values."""
         prediction = await analytics_service.predict_future_values(
-            metric="projects_created",
-            periods=10,
-            model_type="linear_regression"
+            metric="projects_created", periods=10, model_type="linear_regression"
         )
 
-        assert hasattr(prediction, 'predicted_values')
+        assert hasattr(prediction, "predicted_values")
         assert isinstance(prediction.predicted_values, list)
 
     @pytest.mark.asyncio
@@ -104,18 +99,13 @@ class TestAdvancedAnalyticsEngine:
             dimensions=[],
             filters={},
             time_range={"start": "2024-01-01", "end": "2024-12-31"},
-            granularity=TimeGranularity.DAY
+            granularity=TimeGranularity.DAY,
         )
 
-        await analytics_service.generate_report(
-            query_id=query.id,
-            report_type=ReportType.SUMMARY
-        )
+        await analytics_service.generate_report(query_id=query.id, report_type=ReportType.SUMMARY)
 
         await analytics_service.predict_future_values(
-            metric="projects_created",
-            periods=5,
-            model_type="linear_regression"
+            metric="projects_created", periods=5, model_type="linear_regression"
         )
 
         # Test listing operations
@@ -138,7 +128,7 @@ class TestAdvancedAnalyticsEngine:
     @pytest.mark.asyncio
     async def test_logger_error_handling(self, analytics_service):
         """Test that service works even if logger has issues."""
-        with patch('backend.core.logging.get_logger') as mock_get_logger:
+        with patch("backend.core.logging.get_logger") as mock_get_logger:
             mock_logger = Mock()
             mock_logger.info.side_effect = Exception("Logger error")
             mock_logger.error.side_effect = Exception("Logger error")
@@ -151,7 +141,7 @@ class TestAdvancedAnalyticsEngine:
                 dimensions=[],
                 filters={},
                 time_range={"start": "2024-01-01", "end": "2024-12-31"},
-                granularity=TimeGranularity.DAY
+                granularity=TimeGranularity.DAY,
             )
             assert isinstance(query, AnalyticsQuery)
 

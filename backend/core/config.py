@@ -65,8 +65,7 @@ class Settings(BaseSettings):
 
     # Server Configuration
     HOST: str = Field(
-        default="127.0.0.1",
-        description="Server host address. Use 0.0.0.0 for Docker/containerized deployments"
+        default="127.0.0.1", description="Server host address. Use 0.0.0.0 for Docker/containerized deployments"
     )
     PORT: int = Field(default=8000, description="Server port")
     WORKERS: int = Field(default=1, description="Number of worker processes")
@@ -76,39 +75,25 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, description="JWT token expiration time")
 
     # CORS
-    ALLOWED_HOSTS: str = Field(default="", description="Comma-separated list of allowed hosts (must be explicitly set in production)")
+    ALLOWED_HOSTS: str = Field(
+        default="", description="Comma-separated list of allowed hosts (must be explicitly set in production)"
+    )
     CORS_ORIGINS: str = Field(default="", description="Comma-separated list of allowed CORS origins")
 
     # Database Configuration (Phase 5)
     DATABASE_URL: str = Field(
-        default="postgresql://user:password@localhost:5432/ai_factory",
-        description="PostgreSQL connection URL"
+        default="postgresql://user:password@localhost:5432/ai_factory", description="PostgreSQL connection URL"
     )
     DATABASE_POOL_SIZE: int = Field(default=10, description="Database connection pool size")
 
     # Redis Configuration (Phase 4)
-    REDIS_URL: str = Field(
-        default="redis://localhost:6379/0",
-        description="Redis connection URL"
-    )
+    REDIS_URL: str = Field(default="redis://localhost:6379/0", description="Redis connection URL")
 
     # Ollama AI Service
-    OLLAMA_URL: str = Field(
-        default="http://localhost:11434",
-        description="Ollama API base URL"
-    )
-    OLLAMA_MODEL: str = Field(
-        default="llama3.2",
-        description="Default Ollama model for general tasks"
-    )
-    LLM_DEFAULT_MODEL: str = Field(
-        default="llama3.2",
-        description="Default LLM model name used by the model router"
-    )
-    LLM_PROVIDER: str = Field(
-        default="ollama",
-        description="LLM provider to use (ollama, openai)"
-    )
+    OLLAMA_URL: str = Field(default="http://localhost:11434", description="Ollama API base URL")
+    OLLAMA_MODEL: str = Field(default="llama3.2", description="Default Ollama model for general tasks")
+    LLM_DEFAULT_MODEL: str = Field(default="llama3.2", description="Default LLM model name used by the model router")
+    LLM_PROVIDER: str = Field(default="ollama", description="LLM provider to use (ollama, openai)")
 
     # Monitoring
     ENABLE_METRICS: bool = Field(default=True, description="Enable Prometheus metrics")
@@ -123,64 +108,25 @@ class Settings(BaseSettings):
     ESCALATION_WEBHOOK_URL: str = Field(default="", description="Webhook URL for human escalation notifications")
 
     # Timeout Configuration (seconds)
-    LLM_TIMEOUT_SECONDS: int = Field(
-        default=30,
-        description="LLM API call timeout in seconds"
-    )
-    LLM_STREAM_TIMEOUT_SECONDS: int = Field(
-        default=60,
-        description="LLM streaming API call timeout in seconds"
-    )
-    DB_QUERY_TIMEOUT_SECONDS: int = Field(
-        default=10,
-        description="Database query timeout in seconds"
-    )
-    EXTERNAL_HTTP_TIMEOUT_SECONDS: int = Field(
-        default=15,
-        description="External HTTP call timeout in seconds"
-    )
+    LLM_TIMEOUT_SECONDS: int = Field(default=30, description="LLM API call timeout in seconds")
+    LLM_STREAM_TIMEOUT_SECONDS: int = Field(default=60, description="LLM streaming API call timeout in seconds")
+    DB_QUERY_TIMEOUT_SECONDS: int = Field(default=10, description="Database query timeout in seconds")
+    EXTERNAL_HTTP_TIMEOUT_SECONDS: int = Field(default=15, description="External HTTP call timeout in seconds")
 
     # Circuit Breaker Configuration
-    CB_FAILURE_THRESHOLD: int = Field(
-        default=5,
-        description="Number of failures before circuit breaker opens"
-    )
-    CB_RECOVERY_TIMEOUT_SECONDS: int = Field(
-        default=30,
-        description="Seconds before circuit breaker attempts recovery"
-    )
+    CB_FAILURE_THRESHOLD: int = Field(default=5, description="Number of failures before circuit breaker opens")
+    CB_RECOVERY_TIMEOUT_SECONDS: int = Field(default=30, description="Seconds before circuit breaker attempts recovery")
 
     # Rate Limiting Configuration
-    RATE_LIMIT_DEFAULT: int = Field(
-        default=100,
-        description="Default requests per minute for regular users"
-    )
-    RATE_LIMIT_ADMIN: int = Field(
-        default=500,
-        description="Requests per minute for admin users"
-    )
-    RATE_LIMIT_WINDOW_SECONDS: int = Field(
-        default=60,
-        description="Rate limit window in seconds"
-    )
+    RATE_LIMIT_DEFAULT: int = Field(default=100, description="Default requests per minute for regular users")
+    RATE_LIMIT_ADMIN: int = Field(default=500, description="Requests per minute for admin users")
+    RATE_LIMIT_WINDOW_SECONDS: int = Field(default=60, description="Rate limit window in seconds")
 
     # Backup Configuration
-    BACKUP_ENABLED: bool = Field(
-        default=True,
-        description="Enable database backups"
-    )
-    BACKUP_RETENTION_DAYS: int = Field(
-        default=30,
-        description="Days to retain backups"
-    )
-    BACKUP_SCHEDULE: str = Field(
-        default="0 2 * * *",
-        description="Backup cron schedule (default: daily at 2 AM)"
-    )
-    BACKUP_DIR: str = Field(
-        default="./backups",
-        description="Directory for storing backups"
-    )
+    BACKUP_ENABLED: bool = Field(default=True, description="Enable database backups")
+    BACKUP_RETENTION_DAYS: int = Field(default=30, description="Days to retain backups")
+    BACKUP_SCHEDULE: str = Field(default="0 2 * * *", description="Backup cron schedule (default: daily at 2 AM)")
+    BACKUP_DIR: str = Field(default="./backups", description="Directory for storing backups")
 
     @field_validator("ENVIRONMENT")
     @classmethod
@@ -246,6 +192,21 @@ class Settings(BaseSettings):
                 ]
             return []
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+
+    @property
+    def app_name(self) -> str:
+        """Lowercase alias for APP_NAME."""
+        return self.APP_NAME
+
+    @property
+    def debug(self) -> bool:
+        """Lowercase alias for DEBUG."""
+        return self.DEBUG
+
+    @property
+    def database_url(self) -> str:
+        """Lowercase alias for DATABASE_URL."""
+        return self.DATABASE_URL
 
     @property
     def is_development(self) -> bool:

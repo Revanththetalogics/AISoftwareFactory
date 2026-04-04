@@ -18,6 +18,7 @@ logger = get_logger(__name__)
 
 class EntityType(str, Enum):
     """Types of entities that can be commented on."""
+
     PROJECT = "project"
     TASK = "task"
     DOCUMENT = "document"
@@ -27,6 +28,7 @@ class EntityType(str, Enum):
 
 class NotificationType(str, Enum):
     """Types of notifications."""
+
     COMMENT = "comment"
     MENTION = "mention"
     ASSIGNMENT = "assignment"
@@ -36,6 +38,7 @@ class NotificationType(str, Enum):
 
 class UserRole(str, Enum):
     """User roles in collaboration context."""
+
     OWNER = "owner"
     ADMIN = "admin"
     MEMBER = "member"
@@ -45,6 +48,7 @@ class UserRole(str, Enum):
 @dataclass
 class User:
     """Represents a user in the collaboration system."""
+
     id: str
     username: str
     email: str
@@ -55,6 +59,7 @@ class User:
 @dataclass
 class Comment:
     """Represents a comment on an entity."""
+
     id: str
     entity_id: str
     entity_type: EntityType
@@ -76,6 +81,7 @@ class Comment:
 @dataclass
 class Notification:
     """Represents a notification for a user."""
+
     id: str
     user_id: str
     type: NotificationType
@@ -94,6 +100,7 @@ class Notification:
 @dataclass
 class Team:
     """Represents a team/collaboration group."""
+
     id: str
     name: str
     description: str | None
@@ -106,6 +113,7 @@ class Team:
 @dataclass
 class ActivityLog:
     """Represents a logged activity/event."""
+
     id: str
     user_id: str
     action: str
@@ -125,7 +133,19 @@ class CollaborationService:
         self.teams: dict[str, Team] = {}
         self.activity_logs: list[ActivityLog] = []
         self._connected_users: set[str] = set()
+        self._sessions: dict[str, dict] = {}
+        self._messages: dict[str, list] = {}
+        self._invitations: dict[str, dict] = {}
+        self._session_notifications: list[dict] = []
         self._initialize_sample_data()
+
+    def _generate_session_id(self) -> str:
+        """Generate a unique session ID."""
+        return f"sess_{uuid.uuid4().hex[:8]}"
+
+    def _create_session_token(self) -> str:
+        """Generate a unique session token."""
+        return f"token_{uuid.uuid4().hex[:16]}"
 
     def _initialize_sample_data(self):
         """Initialize with sample collaboration data."""
@@ -134,7 +154,7 @@ class CollaborationService:
             User("user_1", "alice_dev", "alice@example.com", role=UserRole.OWNER),
             User("user_2", "bob_eng", "bob@example.com", role=UserRole.ADMIN),
             User("user_3", "charlie_qa", "charlie@example.com", role=UserRole.MEMBER),
-            User("user_4", "diana_pm", "diana@example.com", role=UserRole.MEMBER)
+            User("user_4", "diana_pm", "diana@example.com", role=UserRole.MEMBER),
         ]
 
         # Sample team
@@ -145,7 +165,7 @@ class CollaborationService:
             members=users,
             owner_id="user_1",
             created_at=datetime.now(UTC).isoformat(),
-            updated_at=datetime.now(UTC).isoformat()
+            updated_at=datetime.now(UTC).isoformat(),
         )
         self.teams[team.id] = team
 
@@ -158,7 +178,7 @@ class CollaborationService:
             content="Great progress on the architecture! The microservices design looks solid.",
             created_at=datetime.now(UTC).isoformat(),
             updated_at=datetime.now(UTC).isoformat(),
-            mentions=["user_2"]
+            mentions=["user_2"],
         )
 
         comment2 = Comment(
@@ -169,7 +189,7 @@ class CollaborationService:
             content="Thanks Alice! I've updated the database schema based on our discussion.",
             created_at=datetime.now(UTC).isoformat(),
             updated_at=datetime.now(UTC).isoformat(),
-            parent_id="comment_1"
+            parent_id="comment_1",
         )
 
         self.comments[comment1.id] = comment1
@@ -183,7 +203,7 @@ class CollaborationService:
             title="New mention in project",
             message="Alice mentioned you in a comment about the ThetaAI project",
             entity_id="project_thetaai",
-            entity_type=EntityType.PROJECT
+            entity_type=EntityType.PROJECT,
         )
         self.notifications[notification.id] = notification
 
@@ -194,7 +214,7 @@ class CollaborationService:
         author_id: str,
         content: str,
         parent_id: str | None = None,
-        mentions: list[str] | None = None
+        mentions: list[str] | None = None,
     ) -> Comment:
         """Create a new comment on an entity."""
         try:
@@ -209,7 +229,7 @@ class CollaborationService:
                 parent_id=parent_id,
                 mentions=mentions or [],
                 created_at=datetime.now(UTC).isoformat(),
-                updated_at=datetime.now(UTC).isoformat()
+                updated_at=datetime.now(UTC).isoformat(),
             )
 
             self.comments[comment_id] = comment
@@ -223,7 +243,7 @@ class CollaborationService:
                         title="You were mentioned",
                         message=f"{self._get_username(author_id)} mentioned you in a comment",
                         entity_id=entity_id,
-                        entity_type=entity_type
+                        entity_type=entity_type,
                     )
 
             # Log activity
@@ -233,7 +253,7 @@ class CollaborationService:
                 entity_id=entity_id,
                 entity_type=entity_type,
                 description=f"Commented on {entity_type.value}",
-                metadata={"comment_id": comment_id, "parent_id": parent_id}
+                metadata={"comment_id": comment_id, "parent_id": parent_id},
             )
 
             logger.info(f"Created comment on {entity_type.value} {entity_id}", comment_id=comment_id)
@@ -243,16 +263,12 @@ class CollaborationService:
             logger.error("Failed to create comment", error=str(e))
             raise
 
-    async def get_comments(
-        self,
-        entity_id: str,
-        entity_type: EntityType,
-        limit: int = 50
-    ) -> list[Comment]:
+    async def get_comments(self, entity_id: str, entity_type: EntityType, limit: int = 50) -> list[Comment]:
         """Get comments for an entity."""
         try:
             entity_comments = [
-                comment for comment in self.comments.values()
+                comment
+                for comment in self.comments.values()
                 if comment.entity_id == entity_id and comment.entity_type == entity_type
             ]
 
@@ -266,10 +282,7 @@ class CollaborationService:
             raise
 
     async def update_comment(
-        self,
-        comment_id: str,
-        content: str | None = None,
-        mentions: list[str] | None = None
+        self, comment_id: str, content: str | None = None, mentions: list[str] | None = None
     ) -> Comment:
         """Update an existing comment."""
         try:
@@ -295,7 +308,7 @@ class CollaborationService:
                         title="You were mentioned",
                         message=f"{self._get_username(comment.author_id)} mentioned you in an updated comment",
                         entity_id=comment.entity_id,
-                        entity_type=comment.entity_type
+                        entity_type=comment.entity_type,
                     )
 
             await self.log_activity(
@@ -304,7 +317,7 @@ class CollaborationService:
                 entity_id=comment.entity_id,
                 entity_type=comment.entity_type,
                 description="Updated comment",
-                metadata={"comment_id": comment_id}
+                metadata={"comment_id": comment_id},
             )
 
             logger.info(f"Updated comment {comment_id}")
@@ -329,7 +342,7 @@ class CollaborationService:
                 entity_id=comment.entity_id,
                 entity_type=comment.entity_type,
                 description="Deleted comment",
-                metadata={"comment_id": comment_id}
+                metadata={"comment_id": comment_id},
             )
 
             logger.info(f"Deleted comment {comment_id}")
@@ -339,12 +352,7 @@ class CollaborationService:
             logger.error("Failed to delete comment", error=str(e), comment_id=comment_id)
             raise
 
-    async def add_reaction(
-        self,
-        comment_id: str,
-        user_id: str,
-        emoji: str
-    ) -> Comment:
+    async def add_reaction(self, comment_id: str, user_id: str, emoji: str) -> Comment:
         """Add a reaction to a comment."""
         try:
             comment = self.comments.get(comment_id)
@@ -363,7 +371,7 @@ class CollaborationService:
                 entity_id=comment.entity_id,
                 entity_type=comment.entity_type,
                 description=f"Reacted with {emoji}",
-                metadata={"comment_id": comment_id, "emoji": emoji}
+                metadata={"comment_id": comment_id, "emoji": emoji},
             )
 
             logger.info(f"Added reaction {emoji} to comment {comment_id}", user_id=user_id)
@@ -373,50 +381,12 @@ class CollaborationService:
             logger.error("Failed to add reaction", error=str(e))
             raise
 
-    async def create_notification(
-        self,
-        user_id: str,
-        type: NotificationType,
-        title: str,
-        message: str,
-        entity_id: str,
-        entity_type: EntityType
-    ) -> Notification:
-        """Create a new notification for a user."""
-        try:
-            notification_id = f"notif_{uuid.uuid4().hex[:8]}"
-
-            notification = Notification(
-                id=notification_id,
-                user_id=user_id,
-                type=type,
-                title=title,
-                message=message,
-                entity_id=entity_id,
-                entity_type=entity_type
-            )
-
-            self.notifications[notification_id] = notification
-
-            logger.info(f"Created notification for user {user_id}", notification_id=notification_id)
-            return notification
-
-        except Exception as e:
-            logger.error("Failed to create notification", error=str(e))
-            raise
-
     async def get_user_notifications(
-        self,
-        user_id: str,
-        unread_only: bool = False,
-        limit: int = 20
+        self, user_id: str, unread_only: bool = False, limit: int = 20
     ) -> list[Notification]:
         """Get notifications for a user."""
         try:
-            user_notifications = [
-                notif for notif in self.notifications.values()
-                if notif.user_id == user_id
-            ]
+            user_notifications = [notif for notif in self.notifications.values() if notif.user_id == user_id]
 
             if unread_only:
                 user_notifications = [n for n in user_notifications if not n.read]
@@ -445,11 +415,7 @@ class CollaborationService:
             raise
 
     async def create_team(
-        self,
-        name: str,
-        owner_id: str,
-        description: str | None = None,
-        initial_members: list[User] | None = None
+        self, name: str, owner_id: str, description: str | None = None, initial_members: list[User] | None = None
     ) -> Team:
         """Create a new team."""
         try:
@@ -462,7 +428,7 @@ class CollaborationService:
                 members=initial_members or [],
                 owner_id=owner_id,
                 created_at=datetime.now(UTC).isoformat(),
-                updated_at=datetime.now(UTC).isoformat()
+                updated_at=datetime.now(UTC).isoformat(),
             )
 
             self.teams[team_id] = team
@@ -473,7 +439,7 @@ class CollaborationService:
                 entity_id=team_id,
                 entity_type=EntityType.PROJECT,  # Teams are treated as projects for logging
                 description=f"Created team '{name}'",
-                metadata={}
+                metadata={},
             )
 
             logger.info(f"Created team: {name}", team_id=team_id)
@@ -483,11 +449,7 @@ class CollaborationService:
             logger.error("Failed to create team", error=str(e))
             raise
 
-    async def add_team_member(
-        self,
-        team_id: str,
-        user: User
-    ) -> Team:
+    async def add_team_member(self, team_id: str, user: User) -> Team:
         """Add a member to a team."""
         try:
             team = self.teams.get(team_id)
@@ -507,7 +469,7 @@ class CollaborationService:
                 entity_id=team_id,
                 entity_type=EntityType.PROJECT,
                 description=f"Added {user.username} to team",
-                metadata={"added_user_id": user.id}
+                metadata={"added_user_id": user.id},
             )
 
             logger.info(f"Added member {user.username} to team {team_id}")
@@ -524,7 +486,7 @@ class CollaborationService:
         entity_id: str,
         entity_type: EntityType,
         description: str,
-        metadata: dict[str, Any]
+        metadata: dict[str, Any],
     ) -> ActivityLog:
         """Log an activity/event."""
         try:
@@ -538,7 +500,7 @@ class CollaborationService:
                 entity_type=entity_type,
                 description=description,
                 metadata=metadata,
-                created_at=datetime.now(UTC).isoformat()
+                created_at=datetime.now(UTC).isoformat(),
             )
 
             self.activity_logs.append(activity)
@@ -554,18 +516,11 @@ class CollaborationService:
             logger.error("Failed to log activity", error=str(e))
             raise
 
-    async def get_recent_activities(
-        self,
-        limit: int = 50
-    ) -> list[ActivityLog]:
+    async def get_recent_activities(self, limit: int = 50) -> list[ActivityLog]:
         """Get recent activities."""
         try:
             # Sort by creation time (newest first)
-            sorted_activities = sorted(
-                self.activity_logs,
-                key=lambda x: x.created_at,
-                reverse=True
-            )
+            sorted_activities = sorted(self.activity_logs, key=lambda x: x.created_at, reverse=True)
 
             return sorted_activities[:limit]
 
@@ -573,16 +528,12 @@ class CollaborationService:
             logger.error("Failed to get recent activities", error=str(e))
             raise
 
-    async def get_entity_activity(
-        self,
-        entity_id: str,
-        entity_type: EntityType,
-        limit: int = 20
-    ) -> list[ActivityLog]:
+    async def get_entity_activity(self, entity_id: str, entity_type: EntityType, limit: int = 20) -> list[ActivityLog]:
         """Get activities for a specific entity."""
         try:
             entity_activities = [
-                activity for activity in self.activity_logs
+                activity
+                for activity in self.activity_logs
                 if activity.entity_id == entity_id and activity.entity_type == entity_type
             ]
 
@@ -609,16 +560,255 @@ class CollaborationService:
         """Get count of currently connected users."""
         return len(self._connected_users)
 
+    async def create_collaboration_session(
+        self, project_id: str, creator_id: str, participants: list[str], session_type: str = "code_review"
+    ) -> dict:
+        """Create a new collaboration session."""
+        session_id = self._generate_session_id()
+        token = self._create_session_token()
+        now = datetime.now(UTC).isoformat()
+
+        session = {
+            "session_id": session_id,
+            "project_id": project_id,
+            "creator_id": creator_id,
+            "participants": [{"user_id": creator_id, "status": "joined", "joined_at": now}]
+            + [{"user_id": uid, "status": "invited", "joined_at": None} for uid in participants],
+            "session_type": session_type,
+            "status": "active",
+            "token": token,
+            "settings": {},
+            "created_at": now,
+            "ended_at": None,
+        }
+        self._sessions[session_id] = session
+        self._messages[session_id] = []
+        return session
+
+    async def send_collaboration_message(
+        self, session_id: str, sender_id: str, message_type: str, content: str
+    ) -> dict:
+        """Send a message to a collaboration session."""
+        now = datetime.now(UTC).isoformat()
+        message = {"sender_id": sender_id, "message_type": message_type, "content": content, "timestamp": now}
+        if session_id not in self._messages:
+            self._messages[session_id] = []
+        self._messages[session_id].append(message)
+        return message
+
+    async def get_session_messages(self, session_id: str) -> list[dict]:
+        """Get messages from a collaboration session."""
+        return sorted(self._messages.get(session_id, []), key=lambda m: m["timestamp"])
+
+    async def end_collaboration_session(self, session_id: str) -> dict:
+        """End a collaboration session."""
+        session = self._sessions.get(session_id)
+        if not session:
+            raise ValueError(f"Session {session_id} not found")
+        now = datetime.now(UTC).isoformat()
+        session["status"] = "ended"
+        session["ended_at"] = now
+        return {"session_id": session_id, "status": "ended", "ended_at": now}
+
+    async def list_active_sessions(self, project_id: str) -> list[dict]:
+        """List active sessions for a project."""
+        return [s for s in self._sessions.values() if s["project_id"] == project_id and s["status"] == "active"]
+
+    async def get_session_details(self, session_id: str) -> dict:
+        """Get details for a collaboration session."""
+        session = self._sessions.get(session_id)
+        if not session:
+            raise ValueError(f"Session {session_id} not found")
+        return session
+
+    async def invite_user_to_session(
+        self, session_id: str, inviter_id: str, invitee_id: str, message: str = ""
+    ) -> dict:
+        """Invite a user to a collaboration session."""
+        token = f"inv_{uuid.uuid4().hex[:16]}"
+        now = datetime.now(UTC).isoformat()
+        expires_at = datetime.now(UTC).replace(hour=23, minute=59).isoformat()
+        invitation = {
+            "session_id": session_id,
+            "inviter_id": inviter_id,
+            "invitee_id": invitee_id,
+            "message": message,
+            "invitation_token": token,
+            "status": "pending",
+            "created_at": now,
+            "expires_at": expires_at,
+        }
+        self._invitations[token] = invitation
+        return invitation
+
+    async def respond_to_invitation(self, invitation_token: str, invitee_id: str, response: str) -> dict:
+        """Respond to a session invitation (accept or decline)."""
+        invitation = self._invitations.get(invitation_token)
+        if not invitation:
+            raise ValueError(f"Invitation {invitation_token} not found")
+
+        invitation["status"] = "accepted" if response == "accept" else "declined"
+        invitation["invitee_id"] = invitee_id
+
+        if response == "accept":
+            session = self._sessions.get(invitation["session_id"])
+            if session:
+                for p in session["participants"]:
+                    if p["user_id"] == invitee_id:
+                        p["status"] = "joined"
+                        p["joined_at"] = datetime.now(UTC).isoformat()
+                        break
+                else:
+                    session["participants"].append(
+                        {"user_id": invitee_id, "status": "joined", "joined_at": datetime.now(UTC).isoformat()}
+                    )
+
+        return invitation
+
+    async def join_collaboration_session(self, session_id: str, user_id: str, token: str) -> dict:
+        """Join a collaboration session."""
+        session = self._sessions.get(session_id)
+        if not session:
+            raise ValueError(f"Session {session_id} not found")
+
+        for p in session["participants"]:
+            if p["user_id"] == user_id:
+                p["status"] = "joined"
+                p["joined_at"] = datetime.now(UTC).isoformat()
+                return {"session_id": session_id, "user_id": user_id, "status": "joined"}
+
+        session["participants"].append(
+            {"user_id": user_id, "status": "joined", "joined_at": datetime.now(UTC).isoformat()}
+        )
+        return {"session_id": session_id, "user_id": user_id, "status": "joined"}
+
+    async def leave_collaboration_session(self, session_id: str, user_id: str) -> dict:
+        """Leave a collaboration session."""
+        session = self._sessions.get(session_id)
+        if not session:
+            raise ValueError(f"Session {session_id} not found")
+        session["participants"] = [p for p in session["participants"] if p["user_id"] != user_id]
+        return {"session_id": session_id, "user_id": user_id, "status": "left"}
+
+    async def get_session_participants(self, session_id: str) -> list[dict]:
+        """Get participants in a session."""
+        session = self._sessions.get(session_id)
+        if not session:
+            raise ValueError(f"Session {session_id} not found")
+        return session["participants"]
+
+    async def update_session_settings(self, session_id: str, settings: dict) -> dict:
+        """Update settings for a collaboration session."""
+        session = self._sessions.get(session_id)
+        if not session:
+            raise ValueError(f"Session {session_id} not found")
+        session["settings"].update(settings)
+        return {"session_id": session_id, "settings": session["settings"]}
+
+    async def broadcast_to_session(
+        self, session_id: str, message_type: str, payload: dict, sender_id: str | None = None
+    ) -> dict:
+        """Broadcast a message to all participants of a session."""
+        session = self._sessions.get(session_id)
+        if not session:
+            raise ValueError(f"Session {session_id} not found")
+        broadcast = {
+            "session_id": session_id,
+            "message_type": message_type,
+            "payload": payload,
+            "sender_id": sender_id,
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
+        return broadcast
+
+    async def generate_session_report(self, session_id: str) -> dict:
+        """Generate a report for a collaboration session."""
+        session = self._sessions.get(session_id)
+        if not session:
+            raise ValueError(f"Session {session_id} not found")
+
+        messages = self._messages.get(session_id, [])
+        now = datetime.now(UTC).isoformat()
+        created_at = session["created_at"]
+        ended_at = session.get("ended_at") or now
+
+        return {
+            "session_id": session_id,
+            "project_id": session["project_id"],
+            "session_type": session["session_type"],
+            "creator_id": session["creator_id"],
+            "participant_count": len(session["participants"]),
+            "message_count": len(messages),
+            "duration": f"{created_at} to {ended_at}",
+            "created_at": created_at,
+            "ended_at": ended_at,
+        }
+
+    async def create_notification(self, **kwargs) -> Any:
+        """
+        Create a notification - supports both legacy and new API.
+
+        Legacy API: create_notification(user_id=, type=, title=, message=, entity_id=, entity_type=)
+        New API: create_notification(recipient_id=, sender_id=, notification_type=, title=, message=, ...)
+        """
+        if "recipient_id" in kwargs:
+            # New-style dict-based notification
+            notification_id = f"notif_{uuid.uuid4().hex[:8]}"
+            now = datetime.now(UTC).isoformat()
+            notif = {
+                "id": notification_id,
+                "recipient_id": kwargs["recipient_id"],
+                "sender_id": kwargs.get("sender_id"),
+                "type": kwargs.get("notification_type", ""),
+                "title": kwargs.get("title", ""),
+                "message": kwargs.get("message", ""),
+                "status": "unread",
+                "related_session_id": kwargs.get("related_session_id"),
+                "created_at": now,
+            }
+            self._session_notifications.append(notif)
+            return notif
+        else:
+            # Legacy-style Notification object
+            user_id = kwargs.get("user_id", "")
+            notif_type = kwargs.get("type", NotificationType.COMMENT)
+            title = kwargs.get("title", "")
+            message = kwargs.get("message", "")
+            entity_id = kwargs.get("entity_id", "")
+            entity_type = kwargs.get("entity_type", EntityType.PROJECT)
+
+            notification_id = f"notif_{uuid.uuid4().hex[:8]}"
+            notification = Notification(
+                id=notification_id,
+                user_id=user_id,
+                type=notif_type,
+                title=title,
+                message=message,
+                entity_id=entity_id,
+                entity_type=entity_type,
+            )
+            self.notifications[notification_id] = notification
+            logger.info(f"Created notification for user {user_id}", notification_id=notification_id)
+            return notification
+
+    async def list_user_notifications(self, user_id: str) -> list[dict]:
+        """List notifications (new-style dict) for a user."""
+        return [n for n in self._session_notifications if n["recipient_id"] == user_id]
+
+    async def mark_notification_as_read(self, notification_id: str, user_id: str) -> dict:
+        """Mark a session notification as read (new-style API)."""
+        for notif in self._session_notifications:
+            if notif["id"] == notification_id:
+                notif["status"] = "read"
+                notif["read_at"] = datetime.now(UTC).isoformat()
+                return notif
+        raise ValueError(f"Notification {notification_id} not found")
+
     # Private helper methods
     def _get_username(self, user_id: str) -> str:
         """Get username for a user ID (simplified lookup)."""
         # In a real implementation, this would query a user service
-        user_map = {
-            "user_1": "Alice",
-            "user_2": "Bob",
-            "user_3": "Charlie",
-            "user_4": "Diana"
-        }
+        user_map = {"user_1": "Alice", "user_2": "Bob", "user_3": "Charlie", "user_4": "Diana"}
         return user_map.get(user_id, f"User {user_id}")
 
 

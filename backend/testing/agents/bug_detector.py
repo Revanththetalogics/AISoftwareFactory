@@ -25,6 +25,7 @@ logger = get_logger(__name__)
 
 class BugSeverity(Enum):
     """Bug severity levels."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -34,6 +35,7 @@ class BugSeverity(Enum):
 
 class BugCategory(Enum):
     """Bug categories."""
+
     SYNTAX = "syntax"
     LOGIC = "logic"
     SECURITY = "security"
@@ -47,6 +49,7 @@ class BugCategory(Enum):
 @dataclass
 class BugLocation:
     """Location of a bug in code."""
+
     file_path: str
     line_number: int
     column: int | None = None
@@ -66,6 +69,7 @@ class BugLocation:
 @dataclass
 class DetectedBug:
     """Represents a detected bug."""
+
     id: str
     severity: BugSeverity
     category: BugCategory
@@ -105,6 +109,7 @@ class DetectedBug:
 @dataclass
 class BugPattern:
     """Pattern for detecting specific bug types."""
+
     name: str
     category: BugCategory
     severity: BugSeverity
@@ -198,11 +203,7 @@ class BugDetectorAgent(BaseAgent):
             )
 
     async def detect_bugs_in_file(
-        self,
-        file_path: str,
-        use_static_analysis: bool = True,
-        use_llm_review: bool = True,
-        min_confidence: float = 0.7
+        self, file_path: str, use_static_analysis: bool = True, use_llm_review: bool = True, min_confidence: float = 0.7
     ) -> list[DetectedBug]:
         """
         Detect bugs in a single file.
@@ -264,10 +265,7 @@ class BugDetectorAgent(BaseAgent):
         return filtered_bugs
 
     async def detect_bugs_in_directory(
-        self,
-        directory: str,
-        file_patterns: list[str] = None,
-        **kwargs
+        self, directory: str, file_patterns: list[str] = None, **kwargs
     ) -> dict[str, list[DetectedBug]]:
         """
         Detect bugs in all files in a directory.
@@ -289,22 +287,14 @@ class BugDetectorAgent(BaseAgent):
         for pattern in file_patterns:
             for file_path in path.rglob(pattern):
                 if file_path.is_file():
-                    bugs = await self.detect_bugs_in_file(
-                        str(file_path),
-                        **kwargs
-                    )
+                    bugs = await self.detect_bugs_in_file(str(file_path), **kwargs)
                     if bugs:
                         results[str(file_path)] = bugs
 
         return results
 
     async def analyze_test_failure(
-        self,
-        test_name: str,
-        error_message: str,
-        stack_trace: str,
-        code_context: str,
-        file_path: str
+        self, test_name: str, error_message: str, stack_trace: str, code_context: str, file_path: str
     ) -> DetectedBug | None:
         """
         Analyze a test failure to identify the root cause bug.
@@ -347,6 +337,7 @@ Provide analysis as JSON:
         try:
             response = await self._llm.generate(prompt)
             import json
+
             analysis = json.loads(response)
 
             location = BugLocation(
@@ -443,18 +434,17 @@ Provide analysis as JSON:
                 name="eval_usage",
                 category=BugCategory.SECURITY,
                 severity=BugSeverity.CRITICAL,
-                pattern=r'\beval\s*\(',
+                pattern=r"\beval\s*\(",
                 description="Dangerous eval() usage",
                 suggestion="Use ast.literal_eval for safe evaluation",
                 confidence_boost=0.95,
             ),
-
             # Logic patterns
             BugPattern(
                 name="bare_except",
                 category=BugCategory.LOGIC,
                 severity=BugSeverity.MEDIUM,
-                pattern=r'except\s*:',
+                pattern=r"except\s*:",
                 description="Bare except clause catches all exceptions including KeyboardInterrupt",
                 suggestion="Use 'except Exception:' or specific exceptions",
                 confidence_boost=0.9,
@@ -463,29 +453,27 @@ Provide analysis as JSON:
                 name="mutable_default_arg",
                 category=BugCategory.LOGIC,
                 severity=BugSeverity.HIGH,
-                pattern=r'def\s+\w+\s*\([^)]*=\s*(\[|\{)',
+                pattern=r"def\s+\w+\s*\([^)]*=\s*(\[|\{)",
                 description="Mutable default argument can cause unexpected behavior",
                 suggestion="Use None as default and initialize inside function",
                 confidence_boost=0.9,
             ),
-
             # Performance patterns
             BugPattern(
                 name="list_in_for_loop",
                 category=BugCategory.PERFORMANCE,
                 severity=BugSeverity.LOW,
-                pattern=r'for\s+\w+\s+in\s+range\s*\(\s*len\s*\(',
+                pattern=r"for\s+\w+\s+in\s+range\s*\(\s*len\s*\(",
                 description="Using range(len()) instead of enumerate()",
                 suggestion="Use enumerate() for cleaner code",
                 confidence_boost=0.7,
             ),
-
             # Resource leak patterns
             BugPattern(
                 name="unclosed_file",
                 category=BugCategory.RESOURCE_LEAK,
                 severity=BugSeverity.MEDIUM,
-                pattern=r'open\s*\([^)]+\)(?!\s+as)',
+                pattern=r"open\s*\([^)]+\)(?!\s+as)",
                 description="File opened without context manager",
                 suggestion="Use 'with open(...) as f:' pattern",
                 confidence_boost=0.8,
@@ -534,10 +522,10 @@ Provide analysis as JSON:
             # Check for dangerous built-ins
             if isinstance(node, ast.Call):
                 if isinstance(node.func, ast.Name):
-                    if node.func.id in ['eval', 'exec']:
+                    if node.func.id in ["eval", "exec"]:
                         location = BugLocation(
                             file_path=file_path,
-                            line_number=getattr(node, 'lineno', 1),
+                            line_number=getattr(node, "lineno", 1),
                         )
 
                         bug = DetectedBug(
@@ -567,7 +555,7 @@ Provide analysis as JSON:
         for pattern in self._patterns:
             for match in re.finditer(pattern.pattern, code, re.IGNORECASE):
                 # Find line number
-                line_number = code[:match.start()].count('\n') + 1
+                line_number = code[: match.start()].count("\n") + 1
                 code_snippet = lines[line_number - 1] if line_number <= len(lines) else ""
 
                 location = BugLocation(
@@ -623,6 +611,7 @@ If no issues found, return empty array []. Be thorough but only report real issu
         try:
             response = await self._llm.generate(prompt)
             import json
+
             findings = json.loads(response)
 
             bugs = []

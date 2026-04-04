@@ -48,24 +48,13 @@ class OpenAIProvider(BaseLLMProvider):
         if self._client is None:
             try:
                 from openai import AsyncOpenAI
-                self._client = AsyncOpenAI(
-                    api_key=self.api_key,
-                    base_url=self.base_url
-                )
+
+                self._client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url)
             except ImportError as exc:
-                raise ImportError(
-                    "OpenAI package not installed. "
-                    "Install with: pip install openai"
-                ) from exc
+                raise ImportError("OpenAI package not installed. Install with: pip install openai") from exc
         return self._client
 
-    async def generate(
-        self,
-        prompt: str,
-        temperature: float = 0.7,
-        max_tokens: int | None = None,
-        **kwargs
-    ) -> str:
+    async def generate(self, prompt: str, temperature: float = 0.7, max_tokens: int | None = None, **kwargs) -> str:
         """
         Generate text using OpenAI with circuit breaker and timeout.
 
@@ -85,37 +74,21 @@ class OpenAIProvider(BaseLLMProvider):
             client = self._get_client()
             messages = [{"role": "user", "content": prompt}]
             response = await client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                **kwargs
+                model=self.model, messages=messages, temperature=temperature, max_tokens=max_tokens, **kwargs
             )
             return response.choices[0].message.content or ""
 
         try:
             # Apply circuit breaker and timeout
             result = await llm_circuit_breaker.call(
-                lambda: with_timeout(
-                    _do_generate(),
-                    settings.LLM_TIMEOUT_SECONDS,
-                    f"OpenAI generate ({self.model})"
-                )
+                lambda: with_timeout(_do_generate(), settings.LLM_TIMEOUT_SECONDS, f"OpenAI generate ({self.model})")
             )
 
             # Record success metrics
             duration = time.time() - start_time
-            metrics.record_llm_call(
-                provider="openai",
-                operation="generate",
-                duration=duration,
-                status="success"
-            )
+            metrics.record_llm_call(provider="openai", operation="generate", duration=duration, status="success")
             metrics.record_circuit_breaker_success(llm_circuit_breaker.name)
-            metrics.record_circuit_breaker_state(
-                llm_circuit_breaker.name,
-                llm_circuit_breaker.get_state_value()
-            )
+            metrics.record_circuit_breaker_state(llm_circuit_breaker.name, llm_circuit_breaker.get_state_value())
 
             return result
 
@@ -126,30 +99,18 @@ class OpenAIProvider(BaseLLMProvider):
         except TimeoutError:
             metrics.record_timeout(f"openai_generate_{self.model}")
             metrics.record_llm_call(
-                provider="openai",
-                operation="generate",
-                duration=time.time() - start_time,
-                status="timeout"
+                provider="openai", operation="generate", duration=time.time() - start_time, status="timeout"
             )
             raise
         except Exception as e:
             duration = time.time() - start_time
-            metrics.record_llm_call(
-                provider="openai",
-                operation="generate",
-                duration=duration,
-                status="error"
-            )
+            metrics.record_llm_call(provider="openai", operation="generate", duration=duration, status="error")
             metrics.record_circuit_breaker_failure(llm_circuit_breaker.name)
             logger.error(f"OpenAI generation error: {e}")
             raise
 
     async def generate_stream(
-        self,
-        prompt: str,
-        temperature: float = 0.7,
-        max_tokens: int | None = None,
-        **kwargs
+        self, prompt: str, temperature: float = 0.7, max_tokens: int | None = None, **kwargs
     ) -> AsyncIterator[str]:
         """
         Generate text with streaming.
@@ -174,7 +135,7 @@ class OpenAIProvider(BaseLLMProvider):
                 temperature=temperature,
                 max_tokens=max_tokens,
                 stream=True,
-                **kwargs
+                **kwargs,
             )
             async for chunk in stream:
                 content = chunk.choices[0].delta.content
@@ -185,11 +146,7 @@ class OpenAIProvider(BaseLLMProvider):
             raise
 
     async def chat(
-        self,
-        messages: list[dict[str, str]],
-        temperature: float = 0.7,
-        max_tokens: int | None = None,
-        **kwargs
+        self, messages: list[dict[str, str]], temperature: float = 0.7, max_tokens: int | None = None, **kwargs
     ) -> str:
         """
         Generate chat response with circuit breaker and timeout.
@@ -209,30 +166,17 @@ class OpenAIProvider(BaseLLMProvider):
         async def _do_chat():
             client = self._get_client()
             response = await client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                **kwargs
+                model=self.model, messages=messages, temperature=temperature, max_tokens=max_tokens, **kwargs
             )
             return response.choices[0].message.content or ""
 
         try:
             result = await llm_circuit_breaker.call(
-                lambda: with_timeout(
-                    _do_chat(),
-                    settings.LLM_TIMEOUT_SECONDS,
-                    f"OpenAI chat ({self.model})"
-                )
+                lambda: with_timeout(_do_chat(), settings.LLM_TIMEOUT_SECONDS, f"OpenAI chat ({self.model})")
             )
 
             duration = time.time() - start_time
-            metrics.record_llm_call(
-                provider="openai",
-                operation="chat",
-                duration=duration,
-                status="success"
-            )
+            metrics.record_llm_call(provider="openai", operation="chat", duration=duration, status="success")
             metrics.record_circuit_breaker_success(llm_circuit_breaker.name)
 
             return result
@@ -244,29 +188,19 @@ class OpenAIProvider(BaseLLMProvider):
         except TimeoutError:
             metrics.record_timeout(f"openai_chat_{self.model}")
             metrics.record_llm_call(
-                provider="openai",
-                operation="chat",
-                duration=time.time() - start_time,
-                status="timeout"
+                provider="openai", operation="chat", duration=time.time() - start_time, status="timeout"
             )
             raise
         except Exception as e:
             metrics.record_llm_call(
-                provider="openai",
-                operation="chat",
-                duration=time.time() - start_time,
-                status="error"
+                provider="openai", operation="chat", duration=time.time() - start_time, status="error"
             )
             metrics.record_circuit_breaker_failure(llm_circuit_breaker.name)
             logger.error(f"OpenAI chat error: {e}")
             raise
 
     async def chat_stream(
-        self,
-        messages: list[dict[str, str]],
-        temperature: float = 0.7,
-        max_tokens: int | None = None,
-        **kwargs
+        self, messages: list[dict[str, str]], temperature: float = 0.7, max_tokens: int | None = None, **kwargs
     ) -> AsyncIterator[str]:
         """
         Generate chat response with streaming.
@@ -289,7 +223,7 @@ class OpenAIProvider(BaseLLMProvider):
                 temperature=temperature,
                 max_tokens=max_tokens,
                 stream=True,
-                **kwargs
+                **kwargs,
             )
             async for chunk in stream:
                 content = chunk.choices[0].delta.content
@@ -312,10 +246,7 @@ class OpenAIProvider(BaseLLMProvider):
         client = self._get_client()
 
         try:
-            response = await client.embeddings.create(
-                model="text-embedding-3-small",
-                input=text
-            )
+            response = await client.embeddings.create(model="text-embedding-3-small", input=text)
             return response.data[0].embedding
         except Exception as e:
             logger.error(f"OpenAI embedding error: {e}")

@@ -20,6 +20,7 @@ logger = get_logger(__name__)
 
 class CommentCreate(BaseModel):
     """Comment creation request model."""
+
     entity_id: str
     entity_type: str
     content: str
@@ -29,22 +30,26 @@ class CommentCreate(BaseModel):
 
 class CommentUpdate(BaseModel):
     """Comment update request model."""
+
     content: str | None = None
     mentions: list[str] | None = None
 
 
 class ReactionAdd(BaseModel):
     """Reaction addition request model."""
+
     emoji: str
 
 
 class NotificationMarkRead(BaseModel):
     """Notification mark as read request model."""
+
     read: bool = True
 
 
 class TeamCreate(BaseModel):
     """Team creation request model."""
+
     name: str
     description: str | None = None
     initial_members: list[dict[str, Any]] | None = None
@@ -52,6 +57,7 @@ class TeamCreate(BaseModel):
 
 class TeamMemberAdd(BaseModel):
     """Team member addition request model."""
+
     user_id: str
     username: str
     email: str
@@ -79,14 +85,10 @@ async def create_comment(comment_data: CommentCreate):
             author_id=author_id,
             content=comment_data.content,
             parent_id=comment_data.parent_id,
-            mentions=comment_data.mentions
+            mentions=comment_data.mentions,
         )
 
-        return APIResponse(
-            success=True,
-            data=comment.__dict__,
-            message="Comment created successfully"
-        )
+        return APIResponse(success=True, data=comment.__dict__, message="Comment created successfully")
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -109,18 +111,12 @@ async def get_comments(entity_type: str, entity_id: str, limit: int = 50):
     """
     try:
         comments = await collaboration_service.get_comments(
-            entity_id=entity_id,
-            entity_type=EntityType(entity_type),
-            limit=limit
+            entity_id=entity_id, entity_type=EntityType(entity_type), limit=limit
         )
 
         comments_data = [comment.__dict__ for comment in comments]
 
-        return APIResponse(
-            success=True,
-            data=comments_data,
-            message=f"Retrieved {len(comments_data)} comments"
-        )
+        return APIResponse(success=True, data=comments_data, message=f"Retrieved {len(comments_data)} comments")
     except Exception as e:
         logger.error("Failed to get comments", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get comments: {str(e)}")
@@ -140,16 +136,10 @@ async def update_comment(comment_id: str, update_data: CommentUpdate):
     """
     try:
         comment = await collaboration_service.update_comment(
-            comment_id=comment_id,
-            content=update_data.content,
-            mentions=update_data.mentions
+            comment_id=comment_id, content=update_data.content, mentions=update_data.mentions
         )
 
-        return APIResponse(
-            success=True,
-            data=comment.__dict__,
-            message="Comment updated successfully"
-        )
+        return APIResponse(success=True, data=comment.__dict__, message="Comment updated successfully")
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -172,10 +162,7 @@ async def delete_comment(comment_id: str):
         success = await collaboration_service.delete_comment(comment_id)
 
         if success:
-            return APIResponse(
-                success=True,
-                message="Comment deleted successfully"
-            )
+            return APIResponse(success=True, message="Comment deleted successfully")
         else:
             raise HTTPException(status_code=404, detail="Comment not found")
 
@@ -201,16 +188,10 @@ async def add_reaction(comment_id: str, reaction_data: ReactionAdd):
         user_id = "user_2"
 
         comment = await collaboration_service.add_reaction(
-            comment_id=comment_id,
-            user_id=user_id,
-            emoji=reaction_data.emoji
+            comment_id=comment_id, user_id=user_id, emoji=reaction_data.emoji
         )
 
-        return APIResponse(
-            success=True,
-            data=comment.__dict__,
-            message="Reaction added successfully"
-        )
+        return APIResponse(success=True, data=comment.__dict__, message="Reaction added successfully")
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -235,17 +216,13 @@ async def get_user_notifications(unread_only: bool = False, limit: int = 20):
         user_id = "user_2"
 
         notifications = await collaboration_service.get_user_notifications(
-            user_id=user_id,
-            unread_only=unread_only,
-            limit=limit
+            user_id=user_id, unread_only=unread_only, limit=limit
         )
 
         notifications_data = [notif.__dict__ for notif in notifications]
 
         return APIResponse(
-            success=True,
-            data=notifications_data,
-            message=f"Retrieved {len(notifications_data)} notifications"
+            success=True, data=notifications_data, message=f"Retrieved {len(notifications_data)} notifications"
         )
     except Exception as e:
         logger.error("Failed to get notifications", error=str(e))
@@ -269,10 +246,7 @@ async def mark_notification_read(notification_id: str, read_data: NotificationMa
 
         if success:
             status = "read" if read_data.read else "unread"
-            return APIResponse(
-                success=True,
-                message=f"Notification marked as {status}"
-            )
+            return APIResponse(success=True, message=f"Notification marked as {status}")
         else:
             raise HTTPException(status_code=404, detail="Notification not found")
 
@@ -304,25 +278,18 @@ async def create_team(team_data: TeamCreate):
                     id=member_data["id"],
                     username=member_data["username"],
                     email=member_data["email"],
-                    role=UserRole(member_data.get("role", "member"))
+                    role=UserRole(member_data.get("role", "member")),
                 )
                 initial_members.append(user)
 
         team = await collaboration_service.create_team(
-            name=team_data.name,
-            owner_id=owner_id,
-            description=team_data.description,
-            initial_members=initial_members
+            name=team_data.name, owner_id=owner_id, description=team_data.description, initial_members=initial_members
         )
 
         team_dict = team.__dict__.copy()
         team_dict["members"] = [member.__dict__ for member in team.members]
 
-        return APIResponse(
-            success=True,
-            data=team_dict,
-            message=f"Team '{team_data.name}' created successfully"
-        )
+        return APIResponse(success=True, data=team_dict, message=f"Team '{team_data.name}' created successfully")
     except Exception as e:
         logger.error("Failed to create team", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to create team: {str(e)}")
@@ -345,7 +312,7 @@ async def add_team_member(team_id: str, member_data: TeamMemberAdd):
             id=member_data.user_id,
             username=member_data.username,
             email=member_data.email,
-            role=UserRole(member_data.role)
+            role=UserRole(member_data.role),
         )
 
         team = await collaboration_service.add_team_member(team_id, user)
@@ -353,11 +320,7 @@ async def add_team_member(team_id: str, member_data: TeamMemberAdd):
         team_dict = team.__dict__.copy()
         team_dict["members"] = [member.__dict__ for member in team.members]
 
-        return APIResponse(
-            success=True,
-            data=team_dict,
-            message=f"Added {member_data.username} to team"
-        )
+        return APIResponse(success=True, data=team_dict, message=f"Added {member_data.username} to team")
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -382,11 +345,7 @@ async def list_teams():
             team_dict["members"] = [member.__dict__ for member in team.members]
             teams_data.append(team_dict)
 
-        return APIResponse(
-            success=True,
-            data=teams_data,
-            message=f"Retrieved {len(teams_data)} teams"
-        )
+        return APIResponse(success=True, data=teams_data, message=f"Retrieved {len(teams_data)} teams")
     except Exception as e:
         logger.error("Failed to list teams", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to list teams: {str(e)}")
@@ -408,9 +367,7 @@ async def get_recent_activities(limit: int = 50):
         activities_data = [activity.__dict__ for activity in activities]
 
         return APIResponse(
-            success=True,
-            data=activities_data,
-            message=f"Retrieved {len(activities_data)} recent activities"
+            success=True, data=activities_data, message=f"Retrieved {len(activities_data)} recent activities"
         )
     except Exception as e:
         logger.error("Failed to get recent activities", error=str(e))
@@ -432,17 +389,13 @@ async def get_entity_activities(entity_type: str, entity_id: str, limit: int = 2
     """
     try:
         activities = await collaboration_service.get_entity_activity(
-            entity_id=entity_id,
-            entity_type=EntityType(entity_type),
-            limit=limit
+            entity_id=entity_id, entity_type=EntityType(entity_type), limit=limit
         )
 
         activities_data = [activity.__dict__ for activity in activities]
 
         return APIResponse(
-            success=True,
-            data=activities_data,
-            message=f"Retrieved {len(activities_data)} activities for entity"
+            success=True, data=activities_data, message=f"Retrieved {len(activities_data)} activities for entity"
         )
     except Exception as e:
         logger.error("Failed to get entity activities", error=str(e))
@@ -464,17 +417,10 @@ async def get_collaboration_stats():
             "total_teams": len(collaboration_service.teams),
             "total_activities": len(collaboration_service.activity_logs),
             "connected_users": await collaboration_service.get_connected_users_count(),
-            "unread_notifications": len([
-                n for n in collaboration_service.notifications.values()
-                if not n.read
-            ])
+            "unread_notifications": len([n for n in collaboration_service.notifications.values() if not n.read]),
         }
 
-        return APIResponse(
-            success=True,
-            data=stats,
-            message="Retrieved collaboration statistics"
-        )
+        return APIResponse(success=True, data=stats, message="Retrieved collaboration statistics")
     except Exception as e:
         logger.error("Failed to get collaboration stats", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get collaboration stats: {str(e)}")
@@ -494,10 +440,7 @@ async def connect_user():
 
         await collaboration_service.connect_user(user_id)
 
-        return APIResponse(
-            success=True,
-            message="User connected successfully"
-        )
+        return APIResponse(success=True, message="User connected successfully")
     except Exception as e:
         logger.error("Failed to connect user", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to connect user: {str(e)}")
@@ -517,10 +460,7 @@ async def disconnect_user():
 
         await collaboration_service.disconnect_user(user_id)
 
-        return APIResponse(
-            success=True,
-            message="User disconnected successfully"
-        )
+        return APIResponse(success=True, message="User disconnected successfully")
     except Exception as e:
         logger.error("Failed to disconnect user", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to disconnect user: {str(e)}")

@@ -13,10 +13,11 @@ class TestLoggingConfigInit:
 
     def test_init(self):
         """Test LoggingConfig initialization."""
-        with patch('backend.infrastructure.logging_config.get_logger') as mock_logger:
+        with patch("backend.infrastructure.logging_config.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.logging_config import LoggingConfig
+
             config = LoggingConfig()
 
             assert config._logger is not None
@@ -27,10 +28,11 @@ class TestGenerateLogstashConfig:
 
     def test_generate_logstash_config(self):
         """Test generate_logstash_config generates valid config."""
-        with patch('backend.infrastructure.logging_config.get_logger') as mock_logger:
+        with patch("backend.infrastructure.logging_config.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.logging_config import LoggingConfig
+
             config = LoggingConfig()
             logstash_config = config.generate_logstash_config()
 
@@ -52,10 +54,11 @@ class TestGenerateFilebeatConfig:
 
     def test_generate_filebeat_config(self):
         """Test generate_filebeat_config generates valid config."""
-        with patch('backend.infrastructure.logging_config.get_logger') as mock_logger:
+        with patch("backend.infrastructure.logging_config.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.logging_config import LoggingConfig
+
             config = LoggingConfig()
             filebeat_config = config.generate_filebeat_config()
 
@@ -77,10 +80,11 @@ class TestGenerateLogRotationConfig:
 
     def test_generate_log_rotation_config(self):
         """Test generate_log_rotation_config generates valid config."""
-        with patch('backend.infrastructure.logging_config.get_logger') as mock_logger:
+        with patch("backend.infrastructure.logging_config.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.logging_config import LoggingConfig
+
             config = LoggingConfig()
             rotation_config = config.generate_log_rotation_config()
 
@@ -102,10 +106,11 @@ class TestGenerateStructlogConfig:
 
     def test_generate_structlog_config(self):
         """Test generate_structlog_config generates valid config."""
-        with patch('backend.infrastructure.logging_config.get_logger') as mock_logger:
+        with patch("backend.infrastructure.logging_config.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.logging_config import LoggingConfig
+
             config = LoggingConfig()
             structlog_config = config.generate_structlog_config()
 
@@ -134,10 +139,11 @@ class TestSaveConfigs:
         """Test save_configs creates output directory."""
         output_dir = tmp_path / "logging"
 
-        with patch('backend.infrastructure.logging_config.get_logger') as mock_logger:
+        with patch("backend.infrastructure.logging_config.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.logging_config import LoggingConfig
+
             config = LoggingConfig()
             config.save_configs(str(output_dir))
 
@@ -147,10 +153,11 @@ class TestSaveConfigs:
         """Test save_configs writes logstash.conf."""
         output_dir = tmp_path / "logging"
 
-        with patch('backend.infrastructure.logging_config.get_logger') as mock_logger:
+        with patch("backend.infrastructure.logging_config.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.logging_config import LoggingConfig
+
             config = LoggingConfig()
             config.save_configs(str(output_dir))
 
@@ -164,10 +171,11 @@ class TestSaveConfigs:
         """Test save_configs writes filebeat.yml."""
         output_dir = tmp_path / "logging"
 
-        with patch('backend.infrastructure.logging_config.get_logger') as mock_logger:
+        with patch("backend.infrastructure.logging_config.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.logging_config import LoggingConfig
+
             config = LoggingConfig()
             config.save_configs(str(output_dir))
 
@@ -180,10 +188,11 @@ class TestSaveConfigs:
         """Test save_configs writes logrotate.conf."""
         output_dir = tmp_path / "logging"
 
-        with patch('backend.infrastructure.logging_config.get_logger') as mock_logger:
+        with patch("backend.infrastructure.logging_config.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.logging_config import LoggingConfig
+
             config = LoggingConfig()
             config.save_configs(str(output_dir))
 
@@ -197,10 +206,11 @@ class TestSaveConfigs:
         """Test save_configs writes structlog.json."""
         output_dir = tmp_path / "logging"
 
-        with patch('backend.infrastructure.logging_config.get_logger') as mock_logger:
+        with patch("backend.infrastructure.logging_config.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.logging_config import LoggingConfig
+
             config = LoggingConfig()
             config.save_configs(str(output_dir))
 
@@ -213,11 +223,12 @@ class TestSaveConfigs:
         """Test save_configs logs completion message."""
         output_dir = tmp_path / "logging"
 
-        with patch('backend.infrastructure.logging_config.get_logger') as mock_logger:
+        with patch("backend.infrastructure.logging_config.get_logger") as mock_logger:
             mock_log_instance = Mock()
             mock_logger.return_value = mock_log_instance
 
             from backend.infrastructure.logging_config import LoggingConfig
+
             config = LoggingConfig()
             config.save_configs(str(output_dir))
 
@@ -227,10 +238,11 @@ class TestSaveConfigs:
         """Test save_configs uses default path when not specified."""
         monkeypatch.chdir(tmp_path)
 
-        with patch('backend.infrastructure.logging_config.get_logger') as mock_logger:
+        with patch("backend.infrastructure.logging_config.get_logger") as mock_logger:
             mock_logger.return_value = Mock()
 
             from backend.infrastructure.logging_config import LoggingConfig
+
             config = LoggingConfig()
             config.save_configs()
 

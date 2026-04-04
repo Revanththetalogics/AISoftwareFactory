@@ -21,21 +21,26 @@ from fastapi import WebSocket, WebSocketDisconnect
 
 logger = get_logger(__name__)
 
+
 class MonitorEventType(str, Enum):
     """Types of monitoring events."""
+
     METRIC_UPDATE = "metric_update"
     ALERT_TRIGGERED = "alert_triggered"
     SERVICE_STATUS_CHANGE = "service_status_change"
     CLUSTER_TOPOLOGY_CHANGE = "cluster_topology_change"
     PERFORMANCE_DEGRADATION = "performance_degradation"
 
+
 @dataclass
 class MonitorEvent:
     """Represents a monitoring event."""
+
     event_type: MonitorEventType
     timestamp: datetime
     data: dict[str, Any]
     severity: str = "info"
+
 
 class RealtimeMonitor:
     """Real-time monitoring system with WebSocket broadcasting."""
@@ -69,12 +74,15 @@ class RealtimeMonitor:
 
         try:
             # Send initial connection confirmation
-            await self._send_event(websocket, MonitorEvent(
-                event_type=MonitorEventType.METRIC_UPDATE,
-                timestamp=datetime.now(UTC),
-                data={"message": "Connected to realtime monitoring", "client_id": client_id},
-                severity="info"
-            ))
+            await self._send_event(
+                websocket,
+                MonitorEvent(
+                    event_type=MonitorEventType.METRIC_UPDATE,
+                    timestamp=datetime.now(UTC),
+                    data={"message": "Connected to realtime monitoring", "client_id": client_id},
+                    severity="info",
+                ),
+            )
 
             # Handle incoming messages
             while True:
@@ -124,32 +132,27 @@ class RealtimeMonitor:
         """Handle subscription requests."""
         # For simplicity, we'll treat all subscriptions the same way
         # In a real implementation, you might have topic-based filtering
-        response = {
-            "type": "subscription_confirmed",
-            "topics": topics,
-            "timestamp": datetime.now(UTC).isoformat()
-        }
+        response = {"type": "subscription_confirmed", "topics": topics, "timestamp": datetime.now(UTC).isoformat()}
         await websocket.send_text(json.dumps(response))
 
     async def _handle_unsubscription(self, websocket: WebSocket, client_id: str, topics: list[str]):
         """Handle unsubscription requests."""
-        response = {
-            "type": "unsubscription_confirmed",
-            "topics": topics,
-            "timestamp": datetime.now(UTC).isoformat()
-        }
+        response = {"type": "unsubscription_confirmed", "topics": topics, "timestamp": datetime.now(UTC).isoformat()}
         await websocket.send_text(json.dumps(response))
 
     async def _send_current_snapshot(self, websocket: WebSocket):
         """Send current system snapshot to client."""
         try:
             snapshot = await self._collect_system_snapshot()
-            await self._send_event(websocket, MonitorEvent(
-                event_type=MonitorEventType.METRIC_UPDATE,
-                timestamp=datetime.now(UTC),
-                data=snapshot,
-                severity="info"
-            ))
+            await self._send_event(
+                websocket,
+                MonitorEvent(
+                    event_type=MonitorEventType.METRIC_UPDATE,
+                    timestamp=datetime.now(UTC),
+                    data=snapshot,
+                    severity="info",
+                ),
+            )
         except Exception as e:
             await self._send_error(websocket, f"Failed to collect snapshot: {e}")
 
@@ -215,14 +218,11 @@ class RealtimeMonitor:
             event_data = {
                 "cpu_percent": cpu_percent,
                 "memory_percent": memory.percent,
-                "timestamp": datetime.now(UTC).isoformat()
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
             event = MonitorEvent(
-                event_type=MonitorEventType.METRIC_UPDATE,
-                timestamp=datetime.now(UTC),
-                data=event_data,
-                severity="info"
+                event_type=MonitorEventType.METRIC_UPDATE, timestamp=datetime.now(UTC), data=event_data, severity="info"
             )
 
             await self._broadcast_event(event)
@@ -236,10 +236,7 @@ class RealtimeMonitor:
             snapshot = await self._collect_system_snapshot()
 
             event = MonitorEvent(
-                event_type=MonitorEventType.METRIC_UPDATE,
-                timestamp=datetime.now(UTC),
-                data=snapshot,
-                severity="info"
+                event_type=MonitorEventType.METRIC_UPDATE, timestamp=datetime.now(UTC), data=snapshot, severity="info"
             )
 
             await self._broadcast_event(event)
@@ -258,16 +255,16 @@ class RealtimeMonitor:
                 "leader_info": {
                     "is_leader": cluster_manager.is_leader(),
                     "leader_id": leader_info,
-                    "node_id": "current_node_id"  # Would get actual node ID
+                    "node_id": "current_node_id",  # Would get actual node ID
                 },
-                "timestamp": datetime.now(UTC).isoformat()
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
             event = MonitorEvent(
                 event_type=MonitorEventType.CLUSTER_TOPOLOGY_CHANGE,
                 timestamp=datetime.now(UTC),
                 data=event_data,
-                severity="info"
+                severity="info",
             )
 
             await self._broadcast_event(event)
@@ -281,7 +278,7 @@ class RealtimeMonitor:
             # System metrics
             cpu_percent = psutil.cpu_percent()
             memory = psutil.virtual_memory()
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
             net_io = psutil.net_io_counters()
 
             # Resource manager metrics
@@ -290,19 +287,21 @@ class RealtimeMonitor:
 
             # Process information
             top_processes = []
-            for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
+            for proc in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent"]):
                 try:
-                    top_processes.append({
-                        "pid": proc.info['pid'],
-                        "name": proc.info['name'],
-                        "cpu_percent": proc.info['cpu_percent'] or 0,
-                        "memory_percent": proc.info['memory_percent'] or 0
-                    })
+                    top_processes.append(
+                        {
+                            "pid": proc.info["pid"],
+                            "name": proc.info["name"],
+                            "cpu_percent": proc.info["cpu_percent"] or 0,
+                            "memory_percent": proc.info["memory_percent"] or 0,
+                        }
+                    )
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
 
             # Sort and limit processes
-            top_processes.sort(key=lambda x: x['cpu_percent'], reverse=True)
+            top_processes.sort(key=lambda x: x["cpu_percent"], reverse=True)
             top_processes = top_processes[:10]
 
             return {
@@ -310,21 +309,18 @@ class RealtimeMonitor:
                     "cpu_percent": cpu_percent,
                     "memory_percent": memory.percent,
                     "disk_percent": (disk.used / disk.total) * 100,
-                    "network_io": {
-                        "bytes_sent": net_io.bytes_sent,
-                        "bytes_recv": net_io.bytes_recv
-                    },
+                    "network_io": {"bytes_sent": net_io.bytes_sent, "bytes_recv": net_io.bytes_recv},
                     "boot_time": datetime.fromtimestamp(psutil.boot_time(), UTC).isoformat(),
-                    "uptime_seconds": time.time() - psutil.boot_time()
+                    "uptime_seconds": time.time() - psutil.boot_time(),
                 },
                 "resources": {
                     "database_connections": resource_metrics.get("db_connections_active", 0),
                     "redis_connections": resource_metrics.get("redis_connections_active", 0),
                     "database_health": resource_health.get("database", {}).get("status", "unknown"),
-                    "redis_health": resource_health.get("redis", {}).get("status", "unknown")
+                    "redis_health": resource_health.get("redis", {}).get("status", "unknown"),
                 },
                 "processes": top_processes,
-                "timestamp": datetime.now(UTC).isoformat()
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
@@ -356,7 +352,7 @@ class RealtimeMonitor:
             "type": event.event_type.value,
             "timestamp": event.timestamp.isoformat(),
             "data": event.data,
-            "severity": event.severity
+            "severity": event.severity,
         }
         await websocket.send_text(json.dumps(message))
 
@@ -366,7 +362,7 @@ class RealtimeMonitor:
             event_type=MonitorEventType.METRIC_UPDATE,  # Using metric update for errors
             timestamp=datetime.now(UTC),
             data={"error": error_message},
-            severity="error"
+            severity="error",
         )
         await self._send_event(websocket, error_event)
 
@@ -380,8 +376,10 @@ class RealtimeMonitor:
         """Get recent events from the buffer."""
         return self._event_buffer[-limit:] if self._event_buffer else []
 
+
 # Global realtime monitor instance
 realtime_monitor = RealtimeMonitor()
+
 
 # WebSocket endpoint for real-time monitoring
 async def realtime_monitoring_endpoint(websocket: WebSocket, client_id: str = "anonymous"):
@@ -393,6 +391,7 @@ async def realtime_monitoring_endpoint(websocket: WebSocket, client_id: str = "a
     """
     await realtime_monitor.connect(websocket, client_id)
 
+
 # API for triggering events
 class MonitoringEventTrigger:
     """Utility for triggering monitoring events from other parts of the system."""
@@ -403,12 +402,8 @@ class MonitoringEventTrigger:
         event = MonitorEvent(
             event_type=MonitorEventType.ALERT_TRIGGERED,
             timestamp=datetime.now(UTC),
-            data={
-                "alert_name": alert_name,
-                "severity": severity,
-                "details": details
-            },
-            severity=severity
+            data={"alert_name": alert_name, "severity": severity, "details": details},
+            severity=severity,
         )
         realtime_monitor.add_event(event)
 
@@ -418,12 +413,8 @@ class MonitoringEventTrigger:
         event = MonitorEvent(
             event_type=MonitorEventType.SERVICE_STATUS_CHANGE,
             timestamp=datetime.now(UTC),
-            data={
-                "service_name": service_name,
-                "old_status": old_status,
-                "new_status": new_status
-            },
-            severity="warning" if new_status == "unhealthy" else "info"
+            data={"service_name": service_name, "old_status": old_status, "new_status": new_status},
+            severity="warning" if new_status == "unhealthy" else "info",
         )
         realtime_monitor.add_event(event)
 
@@ -433,20 +424,18 @@ class MonitoringEventTrigger:
         event = MonitorEvent(
             event_type=MonitorEventType.PERFORMANCE_DEGRADATION,
             timestamp=datetime.now(UTC),
-            data={
-                "metric_name": metric_name,
-                "value": value,
-                "threshold": threshold
-            },
-            severity="warning"
+            data={"metric_name": metric_name, "value": value, "threshold": threshold},
+            severity="warning",
         )
         realtime_monitor.add_event(event)
+
 
 # Start monitoring when module is imported
 async def initialize_realtime_monitoring():
     """Initialize and start real-time monitoring."""
     await realtime_monitor.start_monitoring()
     logger.info("Real-time monitoring initialized")
+
 
 # Cleanup function
 async def cleanup_realtime_monitoring():

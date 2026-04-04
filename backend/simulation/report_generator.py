@@ -32,11 +32,7 @@ class ReportGenerator:
         self._output_dir.mkdir(parents=True, exist_ok=True)
         self._logger = get_logger(__name__)
 
-    def generate_json(
-        self,
-        results: dict[str, Any],
-        filename: str | None = None
-    ) -> str:
+    def generate_json(self, results: dict[str, Any], filename: str | None = None) -> str:
         """
         Generate JSON report.
 
@@ -50,17 +46,13 @@ class ReportGenerator:
         filename = filename or f"report_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
         filepath = self._output_dir / filename
 
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=2, default=str)
 
         self._logger.info("JSON report generated", path=str(filepath))
         return str(filepath)
 
-    def generate_markdown(
-        self,
-        results: dict[str, Any],
-        filename: str | None = None
-    ) -> str:
+    def generate_markdown(self, results: dict[str, Any], filename: str | None = None) -> str:
         """
         Generate Markdown report.
 
@@ -80,19 +72,21 @@ class ReportGenerator:
             f"**Generated:** {datetime.now(UTC).isoformat()}",
             "",
             "## Summary",
-            ""
+            "",
         ]
 
         if "summary" in results:
             summary = results["summary"]
-            lines.extend([
-                f"- **Total Tests:** {summary.get('total_tests', 'N/A')}",
-                f"- **Passed:** {summary.get('passed', 'N/A')}",
-                f"- **Failed:** {summary.get('failed', 'N/A')}",
-                f"- **Success Rate:** {summary.get('success_rate', 0) * 100:.1f}%",
-                f"- **Duration:** {summary.get('duration_seconds', 0):.2f}s",
-                ""
-            ])
+            lines.extend(
+                [
+                    f"- **Total Tests:** {summary.get('total_tests', 'N/A')}",
+                    f"- **Passed:** {summary.get('passed', 'N/A')}",
+                    f"- **Failed:** {summary.get('failed', 'N/A')}",
+                    f"- **Success Rate:** {summary.get('success_rate', 0) * 100:.1f}%",
+                    f"- **Duration:** {summary.get('duration_seconds', 0):.2f}s",
+                    "",
+                ]
+            )
 
         if "results" in results:
             lines.extend(["## Detailed Results", ""])
@@ -105,17 +99,13 @@ class ReportGenerator:
                         lines.append(f"- **{key}:** {value}")
                     lines.append("")
 
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             f.write("\n".join(lines))
 
         self._logger.info("Markdown report generated", path=str(filepath))
         return str(filepath)
 
-    def generate_html(
-        self,
-        results: dict[str, Any],
-        filename: str | None = None
-    ) -> str:
+    def generate_html(self, results: dict[str, Any], filename: str | None = None) -> str:
         """
         Generate HTML report.
 
@@ -151,11 +141,11 @@ class ReportGenerator:
 
     <div class="summary">
         <h2>Summary</h2>
-        <p>Total Tests: {summary.get('total_tests', 'N/A')}</p>
-        <p class="passed">Passed: {summary.get('passed', 'N/A')}</p>
-        <p class="failed">Failed: {summary.get('failed', 'N/A')}</p>
+        <p>Total Tests: {summary.get("total_tests", "N/A")}</p>
+        <p class="passed">Passed: {summary.get("passed", "N/A")}</p>
+        <p class="failed">Failed: {summary.get("failed", "N/A")}</p>
         <p>Success Rate: {success_rate:.1f}%</p>
-        <p>Duration: {summary.get('duration_seconds', 0):.2f}s</p>
+        <p>Duration: {summary.get("duration_seconds", 0):.2f}s</p>
     </div>
 
     <h2>Detailed Results</h2>
@@ -165,8 +155,8 @@ class ReportGenerator:
             status_class = "passed" if result.get("success") else "failed"
             html += f"""
     <div class="test-result">
-        <h3 class="{status_class}">{result.get('test', 'Unknown')}</h3>
-        <p>Status: {'PASS' if result.get('success') else 'FAIL'}</p>
+        <h3 class="{status_class}">{result.get("test", "Unknown")}</h3>
+        <p>Status: {"PASS" if result.get("success") else "FAIL"}</p>
     </div>
 """
 
@@ -175,7 +165,7 @@ class ReportGenerator:
 </html>
 """
 
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             f.write(html)
 
         self._logger.info("HTML report generated", path=str(filepath))

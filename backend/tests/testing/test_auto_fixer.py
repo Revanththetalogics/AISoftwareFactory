@@ -23,17 +23,19 @@ from backend.testing.agents.auto_fixer import (
 def mock_llm():
     """Fixture for mocked LLM provider."""
     llm = Mock()
-    llm.generate = AsyncMock(return_value="""```python
+    llm.generate = AsyncMock(
+        return_value="""```python
 def fixed_function():
     return True
-```""")
+```"""
+    )
     return llm
 
 
 @pytest.fixture
 def auto_fixer_agent(mock_llm):
     """Fixture for AutoFixerAgent with mocked LLM."""
-    with patch('backend.testing.agents.auto_fixer.LLMFactory.create_llm', return_value=mock_llm):
+    with patch("backend.testing.agents.auto_fixer.LLMFactory.create_llm", return_value=mock_llm):
         agent = AutoFixerAgent()
         agent._llm = mock_llm
         return agent
@@ -42,14 +44,14 @@ def auto_fixer_agent(mock_llm):
 @pytest.fixture
 def temp_python_file():
     """Create a temporary Python file for testing."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-        f.write('''def sample_function():
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        f.write("""def sample_function():
     try:
         result = 1 / 0
     except:
         pass
     return None
-''')
+""")
         f.flush()
         yield f.name
     os.unlink(f.name)
@@ -591,7 +593,7 @@ That should work."""
         from backend.agents.base_agent import Task
 
         # First add a fix to history with backup
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.bak', delete=False) as backup:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".bak", delete=False) as backup:
             backup.write("backup content")
             backup_path = backup.name
 
@@ -750,12 +752,13 @@ class TestAutoFixerExtendedCoverage:
         """Create a temporary Python file for testing."""
         import os
         import tempfile
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-            f.write('''try:
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write("""try:
     x = 1
 except:
     pass
-''')
+""")
             f.flush()
             yield f.name
         os.unlink(f.name)
@@ -766,7 +769,7 @@ except:
         from unittest.mock import AsyncMock, patch
 
         # Mock _apply_fix to return False (failure)
-        with patch.object(auto_fixer_agent, '_apply_fix', new_callable=AsyncMock) as mock_apply:
+        with patch.object(auto_fixer_agent, "_apply_fix", new_callable=AsyncMock) as mock_apply:
             mock_apply.return_value = False
 
             fix_attempt = await auto_fixer_agent.fix_bug(
@@ -800,7 +803,7 @@ except:
         auto_fixer_agent._fix_history.append(fix_attempt)
 
         # Mock shutil.copy2 to raise an exception (line 356-358)
-        with patch('backend.testing.agents.auto_fixer.shutil.copy2') as mock_copy:
+        with patch("backend.testing.agents.auto_fixer.shutil.copy2") as mock_copy:
             mock_copy.side_effect = Exception("Permission denied")
 
             result = await auto_fixer_agent.rollback_fix("fix_rollback_exc")
@@ -818,7 +821,7 @@ except:
         from backend.testing.agents.auto_fixer import CodeChange, FixAttempt, FixStatus, FixStrategy
 
         # Create a temp file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write("original code")
             f.flush()
             file_path = f.name
@@ -830,18 +833,20 @@ except:
                 strategy=FixStrategy.LLM,
                 status=FixStatus.PENDING,
                 file_path=file_path,
-                changes=[CodeChange(
-                    file_path=file_path,
-                    line_start=1,
-                    line_end=1,
-                    original_code="original",
-                    new_code="new",
-                    description="Test fix",
-                )],
+                changes=[
+                    CodeChange(
+                        file_path=file_path,
+                        line_start=1,
+                        line_end=1,
+                        original_code="original",
+                        new_code="new",
+                        description="Test fix",
+                    )
+                ],
             )
 
             # Mock open to raise an exception when writing (line 611-613)
-            with patch('builtins.open', side_effect=Exception("Disk full")):
+            with patch("builtins.open", side_effect=Exception("Disk full")):
                 result = await auto_fixer_agent._apply_fix(fix_attempt)
 
                 # Should return False due to exception

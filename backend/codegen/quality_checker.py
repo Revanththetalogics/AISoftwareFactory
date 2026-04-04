@@ -16,6 +16,7 @@ logger = get_logger(__name__)
 
 class IssueSeverity(StrEnum):
     """Severity levels for code issues."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -25,6 +26,7 @@ class IssueSeverity(StrEnum):
 
 class IssueCategory(StrEnum):
     """Categories of code issues."""
+
     STYLE = "style"
     SECURITY = "security"
     PERFORMANCE = "performance"
@@ -48,6 +50,7 @@ class CodeIssue:
         file_path: File path (if applicable)
         suggestion: Suggested fix
     """
+
     rule_id: str
     message: str
     severity: IssueSeverity
@@ -83,6 +86,7 @@ class QualityReport:
         language: Programming language
         metrics: Additional metrics
     """
+
     file_path: str
     issues: list[CodeIssue] = field(default_factory=list)
     score: float = 100.0
@@ -187,75 +191,87 @@ class QualityChecker:
         for line_num, line in enumerate(lines, 1):
             # Check for print statements (should use logging)
             if re.search(r"^\s*print\(", line):
-                issues.append(CodeIssue(
-                    rule_id="PY001",
-                    message="Use logging instead of print statements",
-                    severity=IssueSeverity.LOW,
-                    category=IssueCategory.MAINTAINABILITY,
-                    line=line_num,
-                    file_path=file_path,
-                    suggestion="Replace print() with logger.info() or appropriate log level",
-                ))
+                issues.append(
+                    CodeIssue(
+                        rule_id="PY001",
+                        message="Use logging instead of print statements",
+                        severity=IssueSeverity.LOW,
+                        category=IssueCategory.MAINTAINABILITY,
+                        line=line_num,
+                        file_path=file_path,
+                        suggestion="Replace print() with logger.info() or appropriate log level",
+                    )
+                )
 
             # Check for bare except
             if re.search(r"^\s*except\s*:", line):
-                issues.append(CodeIssue(
-                    rule_id="PY002",
-                    message="Bare except clause - should catch specific exceptions",
-                    severity=IssueSeverity.HIGH,
-                    category=IssueCategory.SECURITY,
-                    line=line_num,
-                    file_path=file_path,
-                    suggestion="Use 'except SpecificException:' instead of 'except:'",
-                ))
+                issues.append(
+                    CodeIssue(
+                        rule_id="PY002",
+                        message="Bare except clause - should catch specific exceptions",
+                        severity=IssueSeverity.HIGH,
+                        category=IssueCategory.SECURITY,
+                        line=line_num,
+                        file_path=file_path,
+                        suggestion="Use 'except SpecificException:' instead of 'except:'",
+                    )
+                )
 
             # Check for TODO comments
             if "TODO" in line.upper():
-                issues.append(CodeIssue(
-                    rule_id="PY003",
-                    message="TODO comment found",
-                    severity=IssueSeverity.INFO,
-                    category=IssueCategory.MAINTAINABILITY,
-                    line=line_num,
-                    file_path=file_path,
-                    suggestion="Address TODO or create a ticket to track it",
-                ))
+                issues.append(
+                    CodeIssue(
+                        rule_id="PY003",
+                        message="TODO comment found",
+                        severity=IssueSeverity.INFO,
+                        category=IssueCategory.MAINTAINABILITY,
+                        line=line_num,
+                        file_path=file_path,
+                        suggestion="Address TODO or create a ticket to track it",
+                    )
+                )
 
             # Check line length
             if len(line) > 120:
-                issues.append(CodeIssue(
-                    rule_id="PY004",
-                    message=f"Line too long ({len(line)} > 120 characters)",
-                    severity=IssueSeverity.LOW,
-                    category=IssueCategory.STYLE,
-                    line=line_num,
-                    file_path=file_path,
-                    suggestion="Break line into multiple lines",
-                ))
+                issues.append(
+                    CodeIssue(
+                        rule_id="PY004",
+                        message=f"Line too long ({len(line)} > 120 characters)",
+                        severity=IssueSeverity.LOW,
+                        category=IssueCategory.STYLE,
+                        line=line_num,
+                        file_path=file_path,
+                        suggestion="Break line into multiple lines",
+                    )
+                )
 
             # Check for hardcoded secrets (basic pattern)
             if re.search(r"(password|secret|key|token)\s*=\s*['\"][^'\"]+['\"]", line, re.IGNORECASE):
                 if "os.environ" not in line and "getenv" not in line:
-                    issues.append(CodeIssue(
-                        rule_id="PY005",
-                        message="Potential hardcoded secret detected",
-                        severity=IssueSeverity.CRITICAL,
-                        category=IssueCategory.SECURITY,
-                        line=line_num,
-                        file_path=file_path,
-                        suggestion="Use environment variables for secrets",
-                    ))
+                    issues.append(
+                        CodeIssue(
+                            rule_id="PY005",
+                            message="Potential hardcoded secret detected",
+                            severity=IssueSeverity.CRITICAL,
+                            category=IssueCategory.SECURITY,
+                            line=line_num,
+                            file_path=file_path,
+                            suggestion="Use environment variables for secrets",
+                        )
+                    )
 
         # Check for missing docstring
         if not re.search(r'"""|\'\'\'', code):
-            issues.append(CodeIssue(
-                rule_id="PY006",
-                message="Missing module docstring",
-                severity=IssueSeverity.LOW,
-                category=IssueCategory.DOCUMENTATION,
-                file_path=file_path,
-                suggestion="Add a module-level docstring",
-            ))
+            issues.append(
+                CodeIssue(
+                    rule_id="PY006",
+                    message="Missing module docstring",
+                    severity=IssueSeverity.LOW,
+                    category=IssueCategory.DOCUMENTATION,
+                    file_path=file_path,
+                    suggestion="Add a module-level docstring",
+                )
+            )
 
         return issues
 
@@ -281,9 +297,7 @@ class QualityChecker:
             IssueSeverity.INFO: 0,
         }
 
-        total_deduction = sum(
-            deductions.get(issue.severity, 0) for issue in issues
-        )
+        total_deduction = sum(deductions.get(issue.severity, 0) for issue in issues)
 
         return max(0.0, 100.0 - total_deduction)
 
@@ -353,6 +367,6 @@ class QualityChecker:
 
         ext = file_path.lower()
         if "." in file_path:
-            ext = file_path[file_path.rfind("."):].lower()
+            ext = file_path[file_path.rfind(".") :].lower()
 
         return extension_map.get(ext, "unknown")

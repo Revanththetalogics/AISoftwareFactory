@@ -26,9 +26,7 @@ class TestSetupTracing:
 
         with patch("backend.infrastructure.tracing.TracerProvider") as mock_provider_cls:
             with patch("backend.infrastructure.tracing.trace") as mock_trace:
-                with patch(
-                    "backend.infrastructure.tracing.FastAPIInstrumentor"
-                ) as mock_instrumentor:
+                with patch("backend.infrastructure.tracing.FastAPIInstrumentor") as mock_instrumentor:
                     mock_provider = MagicMock()
                     mock_provider_cls.return_value = mock_provider
 
@@ -63,13 +61,9 @@ class TestSetupTracing:
                             )
 
                             assert result == mock_provider
-                            mock_exporter_cls.assert_called_once_with(
-                                endpoint="http://localhost:4317", insecure=True
-                            )
+                            mock_exporter_cls.assert_called_once_with(endpoint="http://localhost:4317", insecure=True)
                             mock_processor_cls.assert_called_once_with(mock_exporter)
-                            mock_provider.add_span_processor.assert_called_once_with(
-                                mock_processor
-                            )
+                            mock_provider.add_span_processor.assert_called_once_with(mock_processor)
 
     def test_setup_tracing_exception(self):
         """Test setup_tracing handles exceptions gracefully."""
@@ -224,9 +218,7 @@ class TestTracingIntegration:
             with patch("backend.infrastructure.tracing.OTLPSpanExporter") as mock_exporter_cls:
                 with patch("backend.infrastructure.tracing.BatchSpanProcessor") as mock_processor_cls:
                     with patch("backend.infrastructure.tracing.trace") as mock_trace:
-                        with patch(
-                            "backend.infrastructure.tracing.FastAPIInstrumentor"
-                        ) as mock_instrumentor:
+                        with patch("backend.infrastructure.tracing.FastAPIInstrumentor") as mock_instrumentor:
                             mock_provider = MagicMock()
                             mock_provider_cls.return_value = mock_provider
 
@@ -247,9 +239,7 @@ class TestTracingIntegration:
                             assert provider is not None
 
                             # Verify exporter was configured
-                            mock_exporter_cls.assert_called_with(
-                                endpoint="http://jaeger:4317", insecure=True
-                            )
+                            mock_exporter_cls.assert_called_with(endpoint="http://jaeger:4317", insecure=True)
 
                             # Verify processor was added
                             mock_provider.add_span_processor.assert_called()

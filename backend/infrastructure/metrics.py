@@ -15,7 +15,7 @@ from collections import defaultdict, deque
 from datetime import UTC, datetime
 from typing import Any
 
-from prometheus_client import Counter, Gauge, Histogram, Summary
+from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram, Summary
 
 from backend.core.logging import get_logger
 
@@ -29,143 +29,122 @@ class MetricsCollector:
     Collects and exposes metrics for monitoring and alerting.
     """
 
-    def __init__(self):
+    def __init__(self, registry: CollectorRegistry | None = None):
         """Initialize metrics collector."""
+        self._registry = registry or CollectorRegistry()
+
         # API Metrics
         self.api_requests_total = Counter(
-            'api_requests_total',
-            'Total number of API requests',
-            ['method', 'endpoint', 'status_code']
+            "api_requests_total",
+            "Total number of API requests",
+            ["method", "endpoint", "status_code"],
+            registry=self._registry,
         )
 
         self.api_request_duration = Histogram(
-            'api_request_duration_seconds',
-            'API request duration in seconds',
-            ['method', 'endpoint'],
-            buckets=(0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0)
+            "api_request_duration_seconds",
+            "API request duration in seconds",
+            ["method", "endpoint"],
+            buckets=(0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0),
+            registry=self._registry,
         )
 
         self.api_errors_total = Counter(
-            'api_errors_total',
-            'Total number of API errors',
-            ['method', 'endpoint', 'error_type']
+            "api_errors_total",
+            "Total number of API errors",
+            ["method", "endpoint", "error_type"],
+            registry=self._registry,
         )
 
         # Database Metrics
         self.db_queries_total = Counter(
-            'db_queries_total',
-            'Total number of database queries',
-            ['operation', 'table']
+            "db_queries_total", "Total number of database queries", ["operation", "table"], registry=self._registry
         )
 
         self.db_query_duration = Histogram(
-            'db_query_duration_seconds',
-            'Database query duration in seconds',
-            ['operation', 'table'],
-            buckets=(0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0)
+            "db_query_duration_seconds",
+            "Database query duration in seconds",
+            ["operation", "table"],
+            buckets=(0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0),
+            registry=self._registry,
         )
 
         # Business Metrics
         self.projects_created_total = Counter(
-            'projects_created_total',
-            'Total number of projects created',
-            ['user_type']
+            "projects_created_total", "Total number of projects created", ["user_type"], registry=self._registry
         )
 
         self.workflows_executed_total = Counter(
-            'workflows_executed_total',
-            'Total number of workflows executed',
-            ['phase']
+            "workflows_executed_total", "Total number of workflows executed", ["phase"], registry=self._registry
         )
 
         self.deployments_total = Counter(
-            'deployments_total',
-            'Total number of deployments',
-            ['environment', 'status']
+            "deployments_total", "Total number of deployments", ["environment", "status"], registry=self._registry
         )
 
         # System Metrics
-        self.active_users = Gauge(
-            'active_users',
-            'Number of currently active users'
-        )
+        self.active_users = Gauge("active_users", "Number of currently active users", registry=self._registry)
 
         self.concurrent_requests = Gauge(
-            'concurrent_requests',
-            'Number of concurrent requests being processed'
+            "concurrent_requests", "Number of concurrent requests being processed", registry=self._registry
         )
 
-        self.memory_usage_bytes = Gauge(
-            'memory_usage_bytes',
-            'Current memory usage in bytes'
-        )
+        self.memory_usage_bytes = Gauge("memory_usage_bytes", "Current memory usage in bytes", registry=self._registry)
 
-        self.cpu_usage_percent = Gauge(
-            'cpu_usage_percent',
-            'Current CPU usage percentage'
-        )
+        self.cpu_usage_percent = Gauge("cpu_usage_percent", "Current CPU usage percentage", registry=self._registry)
 
         # Custom business metrics
         self.project_completion_rate = Gauge(
-            'project_completion_rate',
-            'Percentage of projects completed successfully'
+            "project_completion_rate", "Percentage of projects completed successfully", registry=self._registry
         )
 
         self.average_workflow_duration = Summary(
-            'average_workflow_duration_seconds',
-            'Average workflow execution time'
+            "average_workflow_duration_seconds", "Average workflow execution time", registry=self._registry
         )
 
         # LLM Metrics
         self.llm_call_total = Counter(
-            'llm_call_total',
-            'Total LLM API calls',
-            ['provider', 'operation', 'status']
+            "llm_call_total", "Total LLM API calls", ["provider", "operation", "status"], registry=self._registry
         )
 
         self.llm_call_duration = Histogram(
-            'llm_call_duration_seconds',
-            'LLM API call duration in seconds',
-            ['provider', 'operation'],
-            buckets=(0.5, 1.0, 2.5, 5.0, 10.0, 30.0, 60.0, 120.0)
+            "llm_call_duration_seconds",
+            "LLM API call duration in seconds",
+            ["provider", "operation"],
+            buckets=(0.5, 1.0, 2.5, 5.0, 10.0, 30.0, 60.0, 120.0),
+            registry=self._registry,
         )
 
         self.llm_tokens_total = Counter(
-            'llm_tokens_total',
-            'Total tokens processed by LLM',
-            ['provider', 'token_type']  # token_type: prompt, completion
+            "llm_tokens_total", "Total tokens processed by LLM", ["provider", "token_type"], registry=self._registry
         )
 
         # Circuit Breaker Metrics
         self.circuit_breaker_state = Gauge(
-            'circuit_breaker_state',
-            'Circuit breaker state (0=closed, 1=half-open, 2=open)',
-            ['name']
+            "circuit_breaker_state",
+            "Circuit breaker state (0=closed, 1=half-open, 2=open)",
+            ["name"],
+            registry=self._registry,
         )
 
         self.circuit_breaker_failures = Counter(
-            'circuit_breaker_failures_total',
-            'Total circuit breaker failures',
-            ['name']
+            "circuit_breaker_failures_total", "Total circuit breaker failures", ["name"], registry=self._registry
         )
 
         self.circuit_breaker_successes = Counter(
-            'circuit_breaker_successes_total',
-            'Total circuit breaker successes',
-            ['name']
+            "circuit_breaker_successes_total", "Total circuit breaker successes", ["name"], registry=self._registry
         )
 
         self.circuit_breaker_rejections = Counter(
-            'circuit_breaker_rejections_total',
-            'Total requests rejected by open circuit breaker',
-            ['name']
+            "circuit_breaker_rejections_total",
+            "Total requests rejected by open circuit breaker",
+            ["name"],
+            registry=self._registry,
         )
 
         # Timeout Metrics
         self.timeout_total = Counter(
-            'timeout_total',
-            'Total timeout occurrences',
-            ['operation']
+            "timeout_total", "Total timeout occurrences", ["operation"], registry=self._registry
         )
 
         # Internal tracking
@@ -181,6 +160,7 @@ class MetricsCollector:
         """Start background metrics collection tasks."""
         try:
             import asyncio
+
             loop = asyncio.get_event_loop()
             if loop.is_running():
                 loop.create_task(self._collect_system_metrics())
@@ -190,9 +170,11 @@ class MetricsCollector:
     async def _collect_system_metrics(self):
         """Periodically collect system-level metrics."""
         import asyncio
+
         while True:
             try:
                 import psutil
+
                 process = psutil.Process()
                 self.memory_usage_bytes.set(process.memory_info().rss)
                 self.cpu_usage_percent.set(process.cpu_percent(interval=None))
@@ -209,12 +191,9 @@ class MetricsCollector:
     def record_api_error(self, method: str, endpoint: str, error_type: str):
         """Record an API error."""
         self.api_errors_total.labels(method=method, endpoint=endpoint, error_type=error_type).inc()
-        self._recent_errors.append({
-            'timestamp': datetime.now(UTC),
-            'method': method,
-            'endpoint': endpoint,
-            'error_type': error_type
-        })
+        self._recent_errors.append(
+            {"timestamp": datetime.now(UTC), "method": method, "endpoint": endpoint, "error_type": error_type}
+        )
 
     def record_db_query(self, operation: str, table: str, duration: float):
         """Record a database query."""
@@ -252,7 +231,8 @@ class MetricsCollector:
         """Clean up expired user sessions."""
         current_time = time.time()
         expired_sessions = [
-            user_id for user_id, timestamp in self._user_sessions.items()
+            user_id
+            for user_id, timestamp in self._user_sessions.items()
             if current_time - timestamp > 3600  # 1 hour timeout
         ]
 
@@ -269,11 +249,11 @@ class MetricsCollector:
     def get_system_health(self) -> dict[str, Any]:
         """Get system health metrics."""
         return {
-            'active_users': self.active_users._value.get(),
-            'concurrent_requests': self.concurrent_requests._value.get(),
-            'api_error_rate': self._calculate_error_rate(),
-            'recent_errors': len(self._recent_errors),
-            'uptime_seconds': self._get_uptime()
+            "active_users": self.active_users._value.get(),
+            "concurrent_requests": self.concurrent_requests._value.get(),
+            "api_error_rate": self._calculate_error_rate(),
+            "recent_errors": len(self._recent_errors),
+            "uptime_seconds": self._get_uptime(),
         }
 
     def _calculate_error_rate(self) -> float:
@@ -285,21 +265,21 @@ class MetricsCollector:
         if not recent_errors:
             return 0.0  # pragma: no cover - defensive, list will have items if _recent_errors is truthy
 
-        error_count = len([e for e in recent_errors if e.get('error_type')])
+        error_count = len([e for e in recent_errors if e.get("error_type")])
         return error_count / len(recent_errors) if recent_errors else 0.0
 
     def _get_uptime(self) -> float:
         """Get application uptime in seconds."""
         # This would typically track from application start time
-        return time.time() - getattr(self, '_start_time', time.time())
+        return time.time() - getattr(self, "_start_time", time.time())
 
     def update_business_kpis(self, metrics: dict[str, Any]):
         """Update business KPIs."""
-        if 'project_completion_rate' in metrics:
-            self.project_completion_rate.set(metrics['project_completion_rate'])
+        if "project_completion_rate" in metrics:
+            self.project_completion_rate.set(metrics["project_completion_rate"])
 
-        if 'average_workflow_duration' in metrics:
-            self.average_workflow_duration.observe(metrics['average_workflow_duration'])
+        if "average_workflow_duration" in metrics:
+            self.average_workflow_duration.observe(metrics["average_workflow_duration"])
 
     def record_llm_call(
         self,
@@ -308,7 +288,7 @@ class MetricsCollector:
         duration: float,
         status: str = "success",
         prompt_tokens: int = 0,
-        completion_tokens: int = 0
+        completion_tokens: int = 0,
     ):
         """
         Record an LLM API call.
@@ -321,11 +301,7 @@ class MetricsCollector:
             prompt_tokens: Number of prompt tokens (if available)
             completion_tokens: Number of completion tokens (if available)
         """
-        self.llm_call_total.labels(
-            provider=provider,
-            operation=operation,
-            status=status
-        ).inc()
+        self.llm_call_total.labels(provider=provider, operation=operation, status=status).inc()
         self.llm_call_duration.labels(provider=provider, operation=operation).observe(duration)
 
         if prompt_tokens > 0:
@@ -358,6 +334,45 @@ class MetricsCollector:
     def record_timeout(self, operation: str):
         """Record a timeout occurrence."""
         self.timeout_total.labels(operation=operation).inc()
+
+    def record_metric(self, name: str, value: float, metric_type: str = "counter") -> None:
+        """
+        Record an arbitrary metric by name.
+
+        Args:
+            name: Metric name
+            value: Metric value
+            metric_type: Type of metric ('counter', 'gauge', 'histogram')
+        """
+        if not hasattr(self, "_custom_metrics"):
+            self._custom_metrics: dict[str, dict] = {}
+
+        if name not in self._custom_metrics:
+            self._custom_metrics[name] = {"type": metric_type, "value": 0.0, "count": 0}
+
+        metric = self._custom_metrics[name]
+        metric["count"] += 1
+        if metric_type == "counter":
+            metric["value"] += value
+        elif metric_type == "gauge":
+            metric["value"] = value
+        elif metric_type == "histogram":
+            metric["value"] = value
+
+    def get_metrics(self) -> dict:
+        """
+        Get all recorded custom metrics.
+
+        Returns:
+            Dict of metric name to metric info
+        """
+        if not hasattr(self, "_custom_metrics"):
+            self._custom_metrics = {}
+        return dict(self._custom_metrics)
+
+    def reset_metrics(self) -> None:
+        """Reset all custom metrics."""
+        self._custom_metrics = {}
 
 
 # Global metrics collector instance
@@ -424,6 +439,7 @@ class MetricsMiddleware:
 # Decorators for easy metrics collection
 def track_db_operation(operation: str, table: str):
     """Decorator to track database operations."""
+
     def decorator(func):
         async def async_wrapper(*args, **kwargs):
             start_time = time.time()

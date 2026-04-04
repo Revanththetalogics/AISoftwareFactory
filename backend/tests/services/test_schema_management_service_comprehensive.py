@@ -31,8 +31,8 @@ class TestSchemaManagementService:
     def test_init(self, schema_service):
         """Test SchemaManagementService initialization."""
         assert schema_service is not None
-        assert hasattr(schema_service, 'schemas')
-        assert hasattr(schema_service, 'migrations')
+        assert hasattr(schema_service, "schemas")
+        assert hasattr(schema_service, "migrations")
         assert isinstance(schema_service.schemas, dict)
         assert isinstance(schema_service.migrations, dict)
 
@@ -67,26 +67,15 @@ class TestSchemaManagementService:
             {
                 "name": "test_table",
                 "columns": [
-                    {
-                        "name": "id",
-                        "type": "integer",
-                        "primary_key": True,
-                        "nullable": False
-                    },
-                    {
-                        "name": "name",
-                        "type": "string",
-                        "nullable": False
-                    }
+                    {"name": "id", "type": "integer", "primary_key": True, "nullable": False},
+                    {"name": "name", "type": "string", "nullable": False},
                 ],
-                "description": "Test table"
+                "description": "Test table",
             }
         ]
 
         result = await schema_service.create_schema(
-            name="test_schema",
-            tables=tables_data,
-            description="Test schema description"
+            name="test_schema", tables=tables_data, description="Test schema description"
         )
 
         assert result is not None
@@ -117,16 +106,8 @@ class TestSchemaManagementService:
             {
                 "name": "orders",
                 "columns": [
-                    {
-                        "name": "id",
-                        "type": "integer",
-                        "primary_key": True
-                    },
-                    {
-                        "name": "user_id",
-                        "type": "integer",
-                        "nullable": False
-                    }
+                    {"name": "id", "type": "integer", "primary_key": True},
+                    {"name": "user_id", "type": "integer", "nullable": False},
                 ],
                 "constraints": [
                     {
@@ -134,9 +115,9 @@ class TestSchemaManagementService:
                         "type": "foreign_key",
                         "columns": ["user_id"],
                         "referenced_table": "users",
-                        "referenced_columns": ["id"]
+                        "referenced_columns": ["id"],
                     }
-                ]
+                ],
             }
         ]
 
@@ -159,24 +140,10 @@ class TestSchemaManagementService:
             {
                 "name": "indexed_table",
                 "columns": [
-                    {
-                        "name": "id",
-                        "type": "integer",
-                        "primary_key": True
-                    },
-                    {
-                        "name": "email",
-                        "type": "string"
-                    }
+                    {"name": "id", "type": "integer", "primary_key": True},
+                    {"name": "email", "type": "string"},
                 ],
-                "indexes": [
-                    {
-                        "name": "idx_email",
-                        "columns": ["email"],
-                        "type": "btree",
-                        "unique": True
-                    }
-                ]
+                "indexes": [{"name": "idx_email", "columns": ["email"], "type": "btree", "unique": True}],
             }
         ]
 
@@ -226,29 +193,19 @@ class TestSchemaManagementService:
     async def test_update_schema_success(self, schema_service):
         """Test updating existing schema."""
         # Create initial schema
-        tables_data = [
-            {
-                "name": "original_table",
-                "columns": [{"name": "id", "type": "integer"}]
-            }
-        ]
+        tables_data = [{"name": "original_table", "columns": [{"name": "id", "type": "integer"}]}]
         await schema_service.create_schema("update_test", tables_data)
 
         # Update with new tables
         new_tables_data = [
             {
                 "name": "updated_table",
-                "columns": [
-                    {"name": "id", "type": "integer", "primary_key": True},
-                    {"name": "name", "type": "string"}
-                ]
+                "columns": [{"name": "id", "type": "integer", "primary_key": True}, {"name": "name", "type": "string"}],
             }
         ]
 
         result = await schema_service.update_schema(
-            schema_name="update_test",
-            tables=new_tables_data,
-            description="Updated description"
+            schema_name="update_test", tables=new_tables_data, description="Updated description"
         )
 
         assert result is not None
@@ -268,8 +225,7 @@ class TestSchemaManagementService:
 
         # Update only description
         result = await schema_service.update_schema(
-            schema_name="partial_update_test",
-            description="New description only"
+            schema_name="partial_update_test", description="New description only"
         )
 
         assert result is not None
@@ -315,7 +271,7 @@ class TestSchemaManagementService:
             name="test_migration",
             sql_up="CREATE TABLE test (id INTEGER);",
             sql_down="DROP TABLE test;",
-            description="Test migration description"
+            description="Test migration description",
         )
 
         assert result is not None
@@ -332,8 +288,7 @@ class TestSchemaManagementService:
     async def test_create_migration_without_rollback(self, schema_service):
         """Test creating migration without rollback SQL."""
         result = await schema_service.create_migration(
-            name="one_way_migration",
-            sql_up="ALTER TABLE users ADD COLUMN age INTEGER;"
+            name="one_way_migration", sql_up="ALTER TABLE users ADD COLUMN age INTEGER;"
         )
 
         assert result is not None
@@ -343,10 +298,7 @@ class TestSchemaManagementService:
     async def test_apply_migration_success(self, schema_service):
         """Test applying migration successfully."""
         # Create migration first
-        migration = await schema_service.create_migration(
-            name="apply_test",
-            sql_up="SELECT 1;"
-        )
+        migration = await schema_service.create_migration(name="apply_test", sql_up="SELECT 1;")
 
         # Apply it
         result = await schema_service.apply_migration(migration.id)
@@ -368,9 +320,7 @@ class TestSchemaManagementService:
         """Test rolling back migration successfully."""
         # Create and apply migration first
         migration = await schema_service.create_migration(
-            name="rollback_test",
-            sql_up="SELECT 1;",
-            sql_down="SELECT 2;"
+            name="rollback_test", sql_up="SELECT 1;", sql_down="SELECT 2;"
         )
 
         await schema_service.apply_migration(migration.id)
@@ -389,10 +339,7 @@ class TestSchemaManagementService:
     async def test_rollback_migration_no_rollback_sql(self, schema_service):
         """Test rolling back migration without rollback SQL."""
         # Create migration without rollback SQL
-        migration = await schema_service.create_migration(
-            name="no_rollback_test",
-            sql_up="SELECT 1;"
-        )
+        migration = await schema_service.create_migration(name="no_rollback_test", sql_up="SELECT 1;")
 
         await schema_service.apply_migration(migration.id)
 
@@ -443,10 +390,7 @@ class TestSchemaManagementService:
         schema1_tables = [
             {
                 "name": "users",
-                "columns": [
-                    {"name": "id", "type": "integer", "primary_key": True},
-                    {"name": "name", "type": "string"}
-                ]
+                "columns": [{"name": "id", "type": "integer", "primary_key": True}, {"name": "name", "type": "string"}],
             }
         ]
 
@@ -456,15 +400,13 @@ class TestSchemaManagementService:
                 "columns": [
                     {"name": "id", "type": "integer", "primary_key": True},
                     {"name": "name", "type": "string"},
-                    {"name": "email", "type": "string"}  # New column
-                ]
+                    {"name": "email", "type": "string"},  # New column
+                ],
             },
             {
                 "name": "orders",  # New table
-                "columns": [
-                    {"name": "id", "type": "integer", "primary_key": True}
-                ]
-            }
+                "columns": [{"name": "id", "type": "integer", "primary_key": True}],
+            },
         ]
 
         await schema_service.create_schema("source_schema", schema1_tables)
@@ -472,9 +414,7 @@ class TestSchemaManagementService:
 
         # Generate migration
         result = await schema_service.generate_migration_from_diff(
-            from_schema="source_schema",
-            to_schema="target_schema",
-            migration_name="diff_migration_test"
+            from_schema="source_schema", to_schema="target_schema", migration_name="diff_migration_test"
         )
 
         assert result is not None
@@ -488,9 +428,7 @@ class TestSchemaManagementService:
         """Test generating migration with missing schema."""
         with pytest.raises(ValueError) as exc_info:
             await schema_service.generate_migration_from_diff(
-                from_schema="nonexistent_source",
-                to_schema="target_schema",
-                migration_name="test"
+                from_schema="nonexistent_source", to_schema="target_schema", migration_name="test"
             )
 
         assert "Source or target schema not found" in str(exc_info.value)
@@ -502,10 +440,7 @@ class TestSchemaManagementService:
         tables_data = [
             {
                 "name": "export_test",
-                "columns": [
-                    {"name": "id", "type": "integer", "primary_key": True},
-                    {"name": "name", "type": "string"}
-                ]
+                "columns": [{"name": "id", "type": "integer", "primary_key": True}, {"name": "name", "type": "string"}],
             }
         ]
 
@@ -523,14 +458,7 @@ class TestSchemaManagementService:
     async def test_export_schema_json_format(self, schema_service):
         """Test exporting schema as JSON."""
         # Create a simple schema
-        tables_data = [
-            {
-                "name": "json_test",
-                "columns": [
-                    {"name": "id", "type": "integer", "primary_key": True}
-                ]
-            }
-        ]
+        tables_data = [{"name": "json_test", "columns": [{"name": "id", "type": "integer", "primary_key": True}]}]
 
         await schema_service.create_schema("json_export_schema", tables_data)
 
@@ -582,7 +510,7 @@ class TestSchemaManagementService:
             columns=[
                 Column("id", ColumnType.INTEGER, primary_key=True, nullable=False),
                 Column("name", ColumnType.STRING, nullable=False),
-                Column("age", ColumnType.INTEGER, default_value="18")
+                Column("age", ColumnType.INTEGER, default_value="18"),
             ],
             constraints=[
                 Constraint(
@@ -590,9 +518,9 @@ class TestSchemaManagementService:
                     type=ConstraintType.FOREIGN_KEY,
                     columns=["id"],
                     referenced_table="users",
-                    referenced_columns=["id"]
+                    referenced_columns=["id"],
                 )
-            ]
+            ],
         )
 
         result = schema_service._generate_create_table_sql(table)
@@ -609,18 +537,12 @@ class TestSchemaManagementService:
         schema = Schema(
             name="test_schema",
             tables=[
-                Table(
-                    name="table1",
-                    columns=[Column("id", ColumnType.INTEGER, primary_key=True)]
-                ),
-                Table(
-                    name="table2",
-                    columns=[Column("name", ColumnType.STRING)]
-                )
+                Table(name="table1", columns=[Column("id", ColumnType.INTEGER, primary_key=True)]),
+                Table(name="table2", columns=[Column("name", ColumnType.STRING)]),
             ],
             version="1.0.0",
             created_at=datetime.now(UTC).isoformat(),
-            updated_at=datetime.now(UTC).isoformat()
+            updated_at=datetime.now(UTC).isoformat(),
         )
 
         result = schema_service._to_sql(schema)

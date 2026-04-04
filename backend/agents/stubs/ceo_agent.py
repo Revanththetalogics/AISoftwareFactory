@@ -149,7 +149,8 @@ class CEOAgent(BaseAgent):
         try:
             import json
             import re
-            match = re.search(r'\{.*\}', raw, re.DOTALL)
+
+            match = re.search(r"\{.*\}", raw, re.DOTALL)
             if match:
                 parsed = json.loads(match.group())
                 return parsed
@@ -176,7 +177,8 @@ class CEOAgent(BaseAgent):
         try:
             import json
             import re
-            match = re.search(r'\{.*\}', raw, re.DOTALL)
+
+            match = re.search(r"\{.*\}", raw, re.DOTALL)
             if match:
                 return json.loads(match.group())
         except Exception:  # noqa: S110
@@ -202,7 +204,8 @@ class CEOAgent(BaseAgent):
         try:
             import json
             import re
-            match = re.search(r'\{.*\}', raw, re.DOTALL)
+
+            match = re.search(r"\{.*\}", raw, re.DOTALL)
             if match:
                 return json.loads(match.group())
         except Exception:  # noqa: S110
@@ -229,7 +232,8 @@ class CEOAgent(BaseAgent):
         try:
             import json
             import re
-            match = re.search(r'\{.*\}', raw, re.DOTALL)
+
+            match = re.search(r"\{.*\}", raw, re.DOTALL)
             if match:
                 return json.loads(match.group())
         except Exception:  # noqa: S110

@@ -20,6 +20,7 @@ logger = get_logger(__name__)
 @dataclass
 class ScheduledTask:
     """A scheduled task with metadata."""
+
     task_id: str
     name: str
     scheduled_at: datetime
@@ -51,7 +52,7 @@ class Scheduler:
         scheduled_at: datetime | None = None,
         priority: int = 5,
         dependencies: list[str] | None = None,
-        metadata: dict[str, Any] | None = None
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         """
         Schedule a task for execution.
@@ -76,7 +77,7 @@ class Scheduler:
             priority=priority,
             execute=execute,
             dependencies=dependencies or [],
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
 
         self._scheduled_tasks[task_id] = task
@@ -114,10 +115,7 @@ class Scheduler:
         for task in self._scheduled_tasks.values():
             if task.scheduled_at <= now:
                 # Check dependencies
-                deps_met = all(
-                    dep not in self._scheduled_tasks
-                    for dep in task.dependencies
-                )
+                deps_met = all(dep not in self._scheduled_tasks for dep in task.dependencies)
                 if deps_met:
                     ready.append(task)
 
@@ -137,11 +135,7 @@ class Scheduler:
                         await task.execute()
                         await self.cancel_task(task.task_id)
                     except Exception as e:
-                        self._logger.error(
-                            "Task execution failed",
-                            task_id=task.task_id,
-                            error=str(e)
-                        )
+                        self._logger.error("Task execution failed", task_id=task.task_id, error=str(e))
 
                 await asyncio.sleep(1)
             except Exception as e:

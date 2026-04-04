@@ -7,14 +7,14 @@ import xml.etree.ElementTree as ET  # nosec: B314 - internal tool, not parsing u
 def analyze_coverage():
     """Analyze coverage report and print modules with lowest coverage."""
     try:
-        tree = ET.parse('coverage.xml')  # nosec: B314 - internal tool, not parsing untrusted XML
+        tree = ET.parse("coverage.xml")  # noqa: S314  # nosec: B314 - internal tool reads trusted coverage.xml
         root = tree.getroot()
 
         files = []
-        for package in root.findall('.//package'):
-            for cls in package.findall('class'):
-                name = cls.get('filename')
-                rate = float(cls.get('line-rate', 0))
+        for package in root.findall(".//package"):
+            for cls in package.findall("class"):
+                name = cls.get("filename")
+                rate = float(cls.get("line-rate", 0))
                 if rate < 1.0:
                     files.append((name, rate))
 
@@ -33,6 +33,7 @@ def analyze_coverage():
         print("coverage.xml not found. Run tests with --cov=. first.")
     except Exception as e:
         print(f"Error analyzing coverage: {e}")
+
 
 if __name__ == "__main__":
     analyze_coverage()

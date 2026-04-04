@@ -19,7 +19,8 @@ from backend.testing.agents.test_generator import (
 def mock_llm():
     """Fixture for mocked LLM provider."""
     llm = Mock()
-    llm.generate = AsyncMock(return_value="""import pytest
+    llm.generate = AsyncMock(
+        return_value="""import pytest
 
 def test_function_happy_path():
     result = function_under_test(1, 2)
@@ -28,14 +29,15 @@ def test_function_happy_path():
 def test_function_edge_case():
     result = function_under_test(0, 0)
     assert result == 0
-""")
+"""
+    )
     return llm
 
 
 @pytest.fixture
 def test_generator_agent(mock_llm):
     """Fixture for TestGeneratorAgent with mocked LLM."""
-    with patch('backend.testing.agents.test_generator.LLMFactory.create_llm', return_value=mock_llm):
+    with patch("backend.testing.agents.test_generator.LLMFactory.create_llm", return_value=mock_llm):
         agent = TestGeneratorAgent()
         agent._llm = mock_llm
         return agent
@@ -44,7 +46,7 @@ def test_generator_agent(mock_llm):
 @pytest.fixture
 def temp_python_file():
     """Create a temporary Python file for testing."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write('''def add(a: int, b: int) -> int:
     """Add two numbers."""
     return a + b
@@ -79,8 +81,8 @@ class Calculator:
 @pytest.fixture
 def temp_syntax_error_file():
     """Create a temporary Python file with syntax error."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-        f.write('this is not valid python {{{{')
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        f.write("this is not valid python {{{{")
         f.flush()
         yield f.name
     os.unlink(f.name)
@@ -324,10 +326,12 @@ class TestTestGeneratorAgent:
     @pytest.mark.asyncio
     async def test_suggest_test_improvements(self, test_generator_agent):
         """Test suggesting improvements for existing tests."""
-        test_generator_agent._llm.generate = AsyncMock(return_value="""[
+        test_generator_agent._llm.generate = AsyncMock(
+            return_value="""[
             {"type": "missing_edge_case", "description": "Test with empty input"},
             {"type": "weak_assertion", "description": "Use more specific assertions"}
-        ]""")
+        ]"""
+        )
 
         suggestions = await test_generator_agent.suggest_test_improvements(
             existing_test_code="def test_func(): assert func() == True",
@@ -604,7 +608,7 @@ class TestTestGeneratorExtendedCoverage:
 
         mock_llm = Mock()
         mock_llm.generate = AsyncMock(return_value="def test(): pass")
-        with patch('backend.testing.agents.test_generator.LLMFactory.create_llm', return_value=mock_llm):
+        with patch("backend.testing.agents.test_generator.LLMFactory.create_llm", return_value=mock_llm):
             agent = TestGeneratorAgent()
             agent._llm = mock_llm
             return agent
@@ -613,14 +617,14 @@ class TestTestGeneratorExtendedCoverage:
         """Test line 425: BoolOp complexity calculation."""
         import ast
 
-        code = '''
+        code = """
 def complex_function(a, b, c, d, e):
     if a and b and c:  # BoolOp with 3 values: +2
         return 1
     if a or b or c or d or e:  # BoolOp with 5 values: +4
         return 2
     return 0
-'''
+"""
         tree = ast.parse(code)
         func_node = tree.body[0]
 
@@ -638,13 +642,13 @@ def complex_function(a, b, c, d, e):
         """Test BoolOp complexity with nested conditions."""
         import ast
 
-        code = '''
+        code = """
 def nested_func(x, y, z):
     while x and y:  # While: +1, BoolOp (2 values): +1
         for i in range(10):  # For: +1
             if z or x:  # If: +1, BoolOp (2 values): +1
                 pass
-'''
+"""
         tree = ast.parse(code)
         func_node = tree.body[0]
 
@@ -663,10 +667,10 @@ def nested_func(x, y, z):
         """Test single BoolOp with 2 operands."""
         import ast
 
-        code = '''
+        code = """
 def simple_func(a, b):
     return a and b  # BoolOp with 2 values: +1
-'''
+"""
         tree = ast.parse(code)
         func_node = tree.body[0]
 

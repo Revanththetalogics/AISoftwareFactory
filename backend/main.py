@@ -48,7 +48,7 @@ async def _connect_with_retry(
     connect_fn: Callable[[], Awaitable[None]],
     max_retries: int = 3,
     delay: float = 2.0,
-    critical: bool = False
+    critical: bool = False,
 ) -> bool:
     """
     Attempt to connect to a service with retries.
@@ -74,22 +74,18 @@ async def _connect_with_retry(
         except Exception as e:
             if attempt < max_retries:
                 logger.warning(
-                    f"{name}: Connection attempt {attempt}/{max_retries} failed: {e}. "
-                    f"Retrying in {delay}s..."
+                    f"{name}: Connection attempt {attempt}/{max_retries} failed: {e}. Retrying in {delay}s..."
                 )
                 await asyncio.sleep(delay)
             else:
                 if critical:
-                    logger.error(
-                        f"{name}: CRITICAL - Failed to connect after {max_retries} attempts: {e}"
-                    )
+                    logger.error(f"{name}: CRITICAL - Failed to connect after {max_retries} attempts: {e}")
                     raise RuntimeError(
                         f"Failed to connect to critical service {name} after {max_retries} attempts"
                     ) from e
                 else:
                     logger.warning(
-                        f"{name}: Failed to connect after {max_retries} attempts: {e}. "
-                        "Service will be unavailable."
+                        f"{name}: Failed to connect after {max_retries} attempts: {e}. Service will be unavailable."
                     )
                     return False
 
@@ -101,9 +97,6 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown logic (equivalent to @app.on_event("shutdown"))
     await _shutdown_logic()
-
-
-
 
 
 def create_application() -> FastAPI:
@@ -131,7 +124,7 @@ def create_application() -> FastAPI:
         redoc_url="/redoc" if settings.is_development else None,
         openapi_url="/openapi.json" if settings.is_development else None,
         debug=settings.DEBUG,
-        lifespan=lifespan  # Use lifespan instead of on_event decorators
+        lifespan=lifespan,  # Use lifespan instead of on_event decorators
     )
 
     # Setup exception handlers
@@ -142,13 +135,13 @@ def create_application() -> FastAPI:
 
     # 8. Enhanced Request/Response Logging (new middleware)
     settings = get_settings()
-    logging_config = LOGGING_CONFIGS.get(settings.ENVIRONMENT, LOGGING_CONFIGS['production'])
+    logging_config = LOGGING_CONFIGS.get(settings.ENVIRONMENT, LOGGING_CONFIGS["production"])
 
     app.add_middleware(
         RequestResponseLoggingMiddleware,
-        log_request_body=logging_config['log_request_body'],
-        log_response_body=logging_config['log_response_body'],
-        exclude_paths=logging_config['exclude_paths']
+        log_request_body=logging_config["log_request_body"],
+        log_response_body=logging_config["log_response_body"],
+        exclude_paths=logging_config["exclude_paths"],
     )
 
     # 7. Correlation ID (innermost - runs last on requests)
@@ -205,10 +198,7 @@ def create_application() -> FastAPI:
         )
     else:
         # No CORS in production without explicit origins
-        logger.warning(
-            "CORS not configured - no CORS_ORIGINS set. "
-            "Cross-origin requests will be blocked."
-        )
+        logger.warning("CORS not configured - no CORS_ORIGINS set. Cross-origin requests will be blocked.")
 
     # Include API routes
     app.include_router(api_router)
@@ -239,17 +229,19 @@ async def validate_database_schema() -> None:
 
     from backend.db.session import AsyncSessionLocal
 
-    critical_tables = ['users', 'projects', 'workflows', 'tasks', 'agents', 'deployments', 'audit_logs']
+    critical_tables = ["users", "projects", "workflows", "tasks", "agents", "deployments", "audit_logs"]
 
     async with AsyncSessionLocal() as session:
         try:
             # Query information_schema directly — reliable across all transaction states
-            result = await session.execute(text("""
+            result = await session.execute(
+                text("""
                 SELECT table_name
                 FROM information_schema.tables
                 WHERE table_schema = 'public'
                   AND table_type = 'BASE TABLE'
-            """))
+            """)
+            )
             existing_tables = {row[0] for row in result.fetchall()}
             missing_tables = [t for t in critical_tables if t not in existing_tables]
         except Exception as e:
@@ -260,29 +252,25 @@ async def validate_database_schema() -> None:
             logger.warning(
                 "Missing database tables detected",
                 missing_tables=missing_tables,
-                hint="Run 'alembic upgrade head' to create tables"
+                hint="Run 'alembic upgrade head' to create tables",
             )
         else:
-            logger.info(
-                "Database schema validation: OK",
-                tables_verified=len(critical_tables)
-            )
+            logger.info("Database schema validation: OK", tables_verified=len(critical_tables))
 
         # Check for critical indexes on users table
         try:
-            result = await session.execute(text("""
+            result = await session.execute(
+                text("""
                 SELECT indexname FROM pg_indexes
                 WHERE tablename = 'users'
-            """))
+            """)
+            )
             indexes = [row[0] for row in result.fetchall()]
-            expected_indexes = ['ix_users_username', 'ix_users_email', 'idx_users_active']
+            expected_indexes = ["ix_users_username", "ix_users_email", "idx_users_active"]
             missing_indexes = [idx for idx in expected_indexes if idx not in indexes]
 
             if missing_indexes:
-                logger.warning(
-                    "Missing recommended indexes on users table",
-                    missing_indexes=missing_indexes
-                )
+                logger.warning("Missing recommended indexes on users table", missing_indexes=missing_indexes)
         except Exception as e:
             logger.debug("Could not verify indexes", error=str(e))
 
@@ -314,10 +302,7 @@ async def _startup_logic() -> None:
         default_keys = ("your-secret-key-change-in-production", "change-me-in-production")
         if settings.SECRET_KEY in default_keys:
             if settings.ENVIRONMENT not in ("development", "testing"):
-                logger.critical(
-                    "FATAL: Default SECRET_KEY detected in %s environment!",
-                    settings.ENVIRONMENT
-                )
+                logger.critical("FATAL: Default SECRET_KEY detected in %s environment!", settings.ENVIRONMENT)
                 raise SystemExit(
                     f"Cannot start with default SECRET_KEY in {settings.ENVIRONMENT} environment. "
                     "Please set a secure SECRET_KEY environment variable."
@@ -326,7 +311,7 @@ async def _startup_logic() -> None:
                 logger.warning(
                     "Using default SECRET_KEY in %s environment. "
                     "This is acceptable for development but must be changed for production.",
-                    settings.ENVIRONMENT
+                    settings.ENVIRONMENT,
                 )
 
         logger.info("Configuration validated successfully")
@@ -337,9 +322,9 @@ async def _startup_logic() -> None:
 
     # Log service connection details (mask password in database URL)
     db_url_display = settings.DATABASE_URL
-    if '@' in db_url_display:
-        parts = db_url_display.split('@')
-        creds = parts[0].split('://')
+    if "@" in db_url_display:
+        parts = db_url_display.split("@")
+        creds = parts[0].split("://")
         if len(creds) > 1:
             db_url_display = f"{creds[0]}://***@{parts[1]}"
 
@@ -355,6 +340,7 @@ async def _startup_logic() -> None:
 
     async def _init_database():
         from backend.db import init_db
+
         await init_db()
 
     try:
@@ -363,7 +349,7 @@ async def _startup_logic() -> None:
             connect_fn=_init_database,
             max_retries=3,
             delay=2.0,
-            critical=True  # Database is critical - fail startup if can't connect
+            critical=True,  # Database is critical - fail startup if can't connect
         )
         if db_connected:
             db_status = "connected"
@@ -375,19 +361,20 @@ async def _startup_logic() -> None:
                 logger.warning(
                     "Database schema validation warning",
                     error=str(schema_exc),
-                    hint="Run 'alembic upgrade head' to apply migrations"
+                    hint="Run 'alembic upgrade head' to apply migrations",
                 )
 
             # Create default admin user if no users exist
             try:
                 from backend.services.auth_service import AuthService
+
                 auth_service = AuthService()
                 admin_user = await auth_service.create_default_admin()
                 if admin_user:
                     logger.info(
                         "Default admin user created - CHANGE PASSWORD IMMEDIATELY",
                         username=admin_user.username,
-                        email=admin_user.email
+                        email=admin_user.email,
                     )
             except Exception as exc:
                 logger.warning("Could not create default admin user", error=str(exc))
@@ -402,6 +389,7 @@ async def _startup_logic() -> None:
 
     async def _init_redis():
         import redis.asyncio as redis_lib
+
         redis_client = redis_lib.from_url(settings.REDIS_URL)
         await redis_client.ping()
         await redis_client.close()
@@ -411,7 +399,7 @@ async def _startup_logic() -> None:
         connect_fn=_init_redis,
         max_retries=3,
         delay=1.0,
-        critical=False  # Redis is non-critical - warn and continue
+        critical=False,  # Redis is non-critical - warn and continue
     )
     if redis_connected:
         redis_status = "connected"
@@ -421,6 +409,7 @@ async def _startup_logic() -> None:
 
     async def _init_ollama():
         import httpx
+
         # Use httpx for safe HTTP requests with proper validation
         async with httpx.AsyncClient(verify=True) as client:
             response = await client.get(f"{settings.OLLAMA_URL}/api/tags", timeout=5.0)
@@ -431,7 +420,7 @@ async def _startup_logic() -> None:
         connect_fn=_init_ollama,
         max_retries=2,
         delay=2.0,
-        critical=False  # Ollama is optional - warn and continue
+        critical=False,  # Ollama is optional - warn and continue
     )
     if ollama_connected:
         ollama_status = "connected"
@@ -439,15 +428,13 @@ async def _startup_logic() -> None:
     # Initialize OpenTelemetry tracing
     if settings.OTEL_ENABLED:
         tracing_provider = setup_tracing(
-            app,
-            service_name=settings.OTEL_SERVICE_NAME,
-            otlp_endpoint=settings.OTEL_EXPORTER_ENDPOINT or None
+            app, service_name=settings.OTEL_SERVICE_NAME, otlp_endpoint=settings.OTEL_EXPORTER_ENDPOINT or None
         )
         if tracing_provider:
             logger.info(
                 "OpenTelemetry tracing initialized",
                 service_name=settings.OTEL_SERVICE_NAME,
-                exporter_endpoint=settings.OTEL_EXPORTER_ENDPOINT or "none"
+                exporter_endpoint=settings.OTEL_EXPORTER_ENDPOINT or "none",
             )
 
     # Service status summary
@@ -460,38 +447,76 @@ async def _startup_logic() -> None:
 
     logger.info("Application startup complete")
 
-async def _shutdown_logic() -> None:
+
+class _ShutdownLogicCallable:
     """
-    Handle graceful application shutdown.
+    Callable shutdown logic that works both synchronously and asynchronously.
 
-    This function is called when the application shuts down and performs
-    cleanup tasks including:
-    - Closing database connection pools
-    - Closing Redis connections
-    - Flushing logs
+    - Called without await: executes synchronously (engine.dispose() called sync)
+    - Called with await: the return value is awaitable, executes async (await engine.dispose())
     """
-    logger.info("Application shutting down gracefully...")
 
-    # Close database connections
-    try:
-        from backend.db.session import engine
-        if engine:
-            engine.dispose()
-            logger.info("Database connections closed")
-    except Exception as exc:
-        logger.warning("Error closing database connections", error=str(exc))
+    def __call__(self) -> "_ShutdownLogicCallable":
+        """Execute synchronous shutdown steps. Returns self for await compatibility."""
+        logger.info("Application shutting down gracefully...")
 
-    # Close Redis connections
-    try:
-        import redis.asyncio as redis_lib
-        settings = get_settings()
-        redis_client = redis_lib.from_url(settings.REDIS_URL)
-        redis_client.close()
-        logger.info("Redis connections closed")
-    except Exception as exc:
-        logger.debug("Redis cleanup skipped", error=str(exc))
+        # Close database connections (synchronous dispose)
+        try:
+            from backend.db.session import engine  # noqa: PLC0415
 
-    logger.info("Application shutdown complete")
+            if engine:
+                engine.dispose()
+                logger.info("Database connections closed")
+        except Exception as exc:
+            logger.warning("Error closing database connections", error=str(exc))
+
+        # Close Redis connections
+        try:
+            import redis.asyncio as redis_lib  # noqa: PLC0415
+
+            _settings = get_settings()
+            redis_client = redis_lib.from_url(_settings.REDIS_URL)
+            redis_client.close()
+            logger.info("Redis connections closed")
+        except Exception as exc:
+            logger.debug("Redis cleanup skipped", error=str(exc))
+
+        logger.info("Application shutdown complete")
+        return self
+
+    def __await__(self):
+        """Make this object awaitable for async contexts (e.g. await _shutdown_logic())."""
+        return self._async_body().__await__()
+
+    async def _async_body(self) -> None:
+        """Async body executed when awaited - uses await engine.dispose()."""
+        logger.info("Application shutting down gracefully...")
+
+        # Close database connections (awaited async dispose)
+        try:
+            from backend.db.session import engine  # noqa: PLC0415
+
+            if engine:
+                await engine.dispose()
+                logger.info("Database connections closed")
+        except Exception as exc:
+            logger.warning("Error closing database connections", error=str(exc))
+
+        # Close Redis connections
+        try:
+            import redis.asyncio as redis_lib  # noqa: PLC0415
+
+            _settings = get_settings()
+            redis_client = redis_lib.from_url(_settings.REDIS_URL)
+            redis_client.close()
+            logger.info("Redis connections closed")
+        except Exception as exc:
+            logger.debug("Redis cleanup skipped", error=str(exc))
+
+        logger.info("Application shutdown complete")
+
+
+_shutdown_logic = _ShutdownLogicCallable()
 
 
 @app.get("/")

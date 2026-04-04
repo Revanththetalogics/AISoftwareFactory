@@ -223,46 +223,40 @@ class TestValidateUrlSafe:
         # When 127.0.0.1 is resolved, it should be blocked
         assert validate_url_safe("http://127.0.0.1") is False
 
-    @patch('backend.utils.validation.socket.getaddrinfo')
+    @patch("backend.utils.validation.socket.getaddrinfo")
     def test_dns_resolving_to_private_ip_blocked(self, mock_getaddrinfo):
         """Test URL resolving to private IP is blocked."""
         # Mock DNS to return a private IP
-        mock_getaddrinfo.return_value = [
-            (2, 1, 6, '', ('10.0.0.1', 80))
-        ]
+        mock_getaddrinfo.return_value = [(2, 1, 6, "", ("10.0.0.1", 80))]
 
         result = validate_url_safe("http://internal.example.com")
 
         assert result is False
 
-    @patch('backend.utils.validation.socket.getaddrinfo')
+    @patch("backend.utils.validation.socket.getaddrinfo")
     def test_dns_resolving_to_localhost_blocked(self, mock_getaddrinfo):
         """Test URL resolving to 127.0.0.1 is blocked."""
-        mock_getaddrinfo.return_value = [
-            (2, 1, 6, '', ('127.0.0.1', 80))
-        ]
+        mock_getaddrinfo.return_value = [(2, 1, 6, "", ("127.0.0.1", 80))]
 
         result = validate_url_safe("http://attacker-controlled.com")
 
         assert result is False
 
-    @patch('backend.utils.validation.socket.getaddrinfo')
+    @patch("backend.utils.validation.socket.getaddrinfo")
     def test_dns_resolving_to_link_local_blocked(self, mock_getaddrinfo):
         """Test URL resolving to link-local IP (169.254.x.x) is blocked."""
         mock_getaddrinfo.return_value = [
-            (2, 1, 6, '', ('169.254.169.254', 80))  # AWS metadata endpoint
+            (2, 1, 6, "", ("169.254.169.254", 80))  # AWS metadata endpoint
         ]
 
         result = validate_url_safe("http://metadata.example.com")
 
         assert result is False
 
-    @patch('backend.utils.validation.socket.getaddrinfo')
+    @patch("backend.utils.validation.socket.getaddrinfo")
     def test_dns_resolving_to_ipv6_loopback_blocked(self, mock_getaddrinfo):
         """Test URL resolving to IPv6 loopback is blocked."""
-        mock_getaddrinfo.return_value = [
-            (10, 1, 6, '', ('::1', 80, 0, 0))
-        ]
+        mock_getaddrinfo.return_value = [(10, 1, 6, "", ("::1", 80, 0, 0))]
 
         result = validate_url_safe("http://ipv6-loopback.example.com")
 
@@ -642,7 +636,7 @@ class TestValidateUrlFormatException:
         from backend.utils.validation import validate_url_format
 
         # Mock urlparse to raise an exception
-        with patch('backend.utils.validation.urlparse') as mock_urlparse:
+        with patch("backend.utils.validation.urlparse") as mock_urlparse:
             mock_urlparse.side_effect = Exception("Parse error")
             result = validate_url_format("http://example.com")
 
@@ -657,19 +651,17 @@ class TestValidateUrlSafeException:
         from backend.utils.validation import validate_url_safe
 
         # Mock urlparse to raise an unexpected exception
-        with patch('backend.utils.validation.urlparse') as mock_urlparse:
+        with patch("backend.utils.validation.urlparse") as mock_urlparse:
             mock_urlparse.side_effect = Exception("Unexpected error")
             result = validate_url_safe("http://example.com")
 
         assert result is False
 
-    @patch('backend.utils.validation.socket.getaddrinfo')
+    @patch("backend.utils.validation.socket.getaddrinfo")
     def test_validate_url_safe_invalid_ip_format_continues(self, mock_getaddrinfo):
         """Test URL safe validation continues when IP format is invalid (covers line 173-175)."""
         # Return an address info with invalid IP format
-        mock_getaddrinfo.return_value = [
-            (2, 1, 6, '', ('not-a-valid-ip', 80))
-        ]
+        mock_getaddrinfo.return_value = [(2, 1, 6, "", ("not-a-valid-ip", 80))]
 
         result = validate_url_safe("http://external.example.com")
 

@@ -25,11 +25,13 @@ logger = get_logger(__name__)
 
 class PluginConfig(BaseModel):
     """Plugin configuration update request model."""
+
     config: dict[str, Any]
 
 
 class PluginAction(BaseModel):
     """Plugin action request model."""
+
     action: str
     parameters: dict[str, Any] | None = None
 
@@ -46,11 +48,7 @@ async def discover_plugins():
         manifests = await plugin_manager.discover_plugins()
         manifests_data = [manifest.__dict__ for manifest in manifests]
 
-        return APIResponse(
-            success=True,
-            data=manifests_data,
-            message=f"Discovered {len(manifests_data)} plugins"
-        )
+        return APIResponse(success=True, data=manifests_data, message=f"Discovered {len(manifests_data)} plugins")
     except Exception as e:
         logger.error("Failed to discover plugins", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to discover plugins: {str(e)}")
@@ -76,11 +74,7 @@ async def load_plugin(plugin_id: str, config: PluginConfig | None = None):
         plugin_dict["manifest"] = plugin_instance.manifest.__dict__
         plugin_dict.pop("module", None)  # Don't expose the module object
 
-        return APIResponse(
-            success=True,
-            data=plugin_dict,
-            message=f"Plugin '{plugin_id}' loaded successfully"
-        )
+        return APIResponse(success=True, data=plugin_dict, message=f"Plugin '{plugin_id}' loaded successfully")
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -103,10 +97,7 @@ async def unload_plugin(plugin_id: str):
         success = await plugin_manager.unload_plugin(plugin_id)
 
         if success:
-            return APIResponse(
-                success=True,
-                message=f"Plugin '{plugin_id}' unloaded successfully"
-            )
+            return APIResponse(success=True, message=f"Plugin '{plugin_id}' unloaded successfully")
         else:
             raise HTTPException(status_code=404, detail="Plugin not found or not loaded")
 
@@ -133,11 +124,7 @@ async def list_loaded_plugins():
             plugin_dict.pop("module", None)  # Don't expose the module object
             plugins_data.append(plugin_dict)
 
-        return APIResponse(
-            success=True,
-            data=plugins_data,
-            message=f"Retrieved {len(plugins_data)} loaded plugins"
-        )
+        return APIResponse(success=True, data=plugins_data, message=f"Retrieved {len(plugins_data)} loaded plugins")
     except Exception as e:
         logger.error("Failed to list plugins", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to list plugins: {str(e)}")
@@ -164,11 +151,7 @@ async def get_plugin(plugin_id: str):
         plugin_dict["manifest"] = plugin.manifest.__dict__
         plugin_dict.pop("module", None)  # Don't expose the module object
 
-        return APIResponse(
-            success=True,
-            data=plugin_dict,
-            message=f"Retrieved plugin '{plugin_id}'"
-        )
+        return APIResponse(success=True, data=plugin_dict, message=f"Retrieved plugin '{plugin_id}'")
     except HTTPException:
         raise
     except Exception as e:
@@ -202,11 +185,7 @@ async def update_plugin_config(plugin_id: str, config: PluginConfig):
         plugin_dict["manifest"] = updated_plugin.manifest.__dict__
         plugin_dict.pop("module", None)
 
-        return APIResponse(
-            success=True,
-            data=plugin_dict,
-            message=f"Configuration updated for plugin '{plugin_id}'"
-        )
+        return APIResponse(success=True, data=plugin_dict, message=f"Configuration updated for plugin '{plugin_id}'")
     except HTTPException:
         raise
     except Exception as e:
@@ -235,7 +214,7 @@ async def execute_plugin_action(plugin_id: str, action: PluginAction):
             raise HTTPException(status_code=400, detail="Plugin is not active")
 
         # Check if plugin has custom execute function
-        if not hasattr(plugin.module, 'execute'):
+        if not hasattr(plugin.module, "execute"):
             raise HTTPException(status_code=400, detail="Plugin does not support custom execution")
 
         execute_func = plugin.module.execute
@@ -243,12 +222,8 @@ async def execute_plugin_action(plugin_id: str, action: PluginAction):
 
         return APIResponse(
             success=True,
-            data={
-                "plugin_id": plugin_id,
-                "action": action.action,
-                "result": result
-            },
-            message=f"Executed action '{action.action}' on plugin '{plugin_id}'"
+            data={"plugin_id": plugin_id, "action": action.action, "result": result},
+            message=f"Executed action '{action.action}' on plugin '{plugin_id}'",
         )
     except HTTPException:
         raise
@@ -275,12 +250,8 @@ async def execute_hook(hook_type: str, payload: dict[str, Any] | None = None):
 
         return APIResponse(
             success=True,
-            data={
-                "hook_type": hook_type,
-                "executions": results,
-                "total_executions": len(results)
-            },
-            message=f"Executed hook '{hook_type}' on {len(results)} plugins"
+            data={"hook_type": hook_type, "executions": results, "total_executions": len(results)},
+            message=f"Executed hook '{hook_type}' on {len(results)} plugins",
         )
     except ValueError:
         raise HTTPException(status_code=400, detail=f"Invalid hook type: {hook_type}")
@@ -300,11 +271,7 @@ async def get_hook_types():
     try:
         hook_types = [{"name": hook.name, "value": hook.value} for hook in HookType]
 
-        return APIResponse(
-            success=True,
-            data=hook_types,
-            message="Retrieved available hook types"
-        )
+        return APIResponse(success=True, data=hook_types, message="Retrieved available hook types")
     except Exception as e:
         logger.error("Failed to get hook types", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get hook types: {str(e)}")
@@ -321,11 +288,7 @@ async def get_plugin_types():
     try:
         plugin_types = [{"name": pt.name, "value": pt.value} for pt in PluginType]
 
-        return APIResponse(
-            success=True,
-            data=plugin_types,
-            message="Retrieved available plugin types"
-        )
+        return APIResponse(success=True, data=plugin_types, message="Retrieved available plugin types")
     except Exception as e:
         logger.error("Failed to get plugin types", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get plugin types: {str(e)}")
@@ -342,11 +305,7 @@ async def get_plugin_statistics():
     try:
         stats = await plugin_manager.get_plugin_stats()
 
-        return APIResponse(
-            success=True,
-            data=stats,
-            message="Retrieved plugin system statistics"
-        )
+        return APIResponse(success=True, data=stats, message="Retrieved plugin system statistics")
     except Exception as e:
         logger.error("Failed to get plugin stats", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get plugin stats: {str(e)}")
@@ -366,6 +325,7 @@ async def install_plugin(file: UploadFile = File(...)):
     try:
         # Save uploaded file temporarily
         import tempfile
+
         with tempfile.NamedTemporaryFile(delete=False, suffix=f"_{file.filename}") as temp_file:
             temp_path = temp_file.name
             content = await file.read()
@@ -376,12 +336,11 @@ async def install_plugin(file: UploadFile = File(...)):
 
         # Clean up temporary file
         import os
+
         os.unlink(temp_path)
 
         return APIResponse(
-            success=True,
-            data=manifest.__dict__,
-            message=f"Plugin '{manifest.name}' installed successfully"
+            success=True, data=manifest.__dict__, message=f"Plugin '{manifest.name}' installed successfully"
         )
     except Exception as e:
         logger.error("Failed to install plugin", error=str(e))
@@ -402,10 +361,7 @@ async def toggle_sandbox(enabled: bool):
     try:
         plugin_manager.enable_sandbox(enabled)
 
-        return APIResponse(
-            success=True,
-            message=f"Plugin sandbox {'enabled' if enabled else 'disabled'}"
-        )
+        return APIResponse(success=True, message=f"Plugin sandbox {'enabled' if enabled else 'disabled'}")
     except Exception as e:
         logger.error("Failed to toggle sandbox", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to toggle sandbox: {str(e)}")
@@ -425,18 +381,14 @@ async def get_recent_events(limit: int = 50):
     try:
         # Get recent events from plugin manager
         # This would need to be exposed in the plugin manager
-        events = getattr(plugin_manager, 'events', [])[-limit:]
+        events = getattr(plugin_manager, "events", [])[-limit:]
         events_data = []
 
         for event in events:
             event_dict = event.__dict__.copy()
             events_data.append(event_dict)
 
-        return APIResponse(
-            success=True,
-            data=events_data,
-            message=f"Retrieved {len(events_data)} recent events"
-        )
+        return APIResponse(success=True, data=events_data, message=f"Retrieved {len(events_data)} recent events")
     except Exception as e:
         logger.error("Failed to get recent events", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to get recent events: {str(e)}")
@@ -459,14 +411,12 @@ async def delete_plugin(plugin_id: str):
 
         # Remove plugin directory
         import shutil
+
         plugin_dir = plugin_manager.plugins_directory / plugin_id
         if plugin_dir.exists():
             shutil.rmtree(plugin_dir)
 
-        return APIResponse(
-            success=True,
-            message=f"Plugin '{plugin_id}' deleted successfully"
-        )
+        return APIResponse(success=True, message=f"Plugin '{plugin_id}' deleted successfully")
     except Exception as e:
         logger.error("Failed to delete plugin", error=str(e), plugin_id=plugin_id)
         raise HTTPException(status_code=500, detail=f"Failed to delete plugin: {str(e)}")

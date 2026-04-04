@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 class TaskStatus(StrEnum):
     """Status of a task execution."""
+
     PENDING = "pending"
     QUEUED = "queued"
     RUNNING = "running"
@@ -26,6 +27,7 @@ class TaskStatus(StrEnum):
 
 class TaskPriority(int, Enum):
     """Priority levels for tasks."""
+
     CRITICAL = 1
     HIGH = 2
     MEDIUM = 3
@@ -47,6 +49,7 @@ class TaskResult(BaseModel):
         started_at: When execution started
         completed_at: When execution completed
     """
+
     success: bool = Field(..., description="Whether task succeeded")
     output: dict[str, Any] = Field(default_factory=dict, description="Task output")
     error: str | None = Field(default=None, description="Error message")
@@ -57,9 +60,7 @@ class TaskResult(BaseModel):
     completed_at: datetime | None = Field(default=None, description="Completion timestamp")
 
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
 
 
 class Task(BaseModel):
@@ -89,6 +90,7 @@ class Task(BaseModel):
         created_by: User who created the task
         metadata: Additional metadata
     """
+
     task_id: str = Field(..., description="Unique task identifier")
     name: str = Field(..., description="Task name")
     description: str = Field(default="", description="Task description")
@@ -112,17 +114,11 @@ class Task(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
 
     def is_complete(self) -> bool:
         """Check if task is complete."""
-        return self.status in [
-            TaskStatus.COMPLETED,
-            TaskStatus.FAILED,
-            TaskStatus.CANCELLED
-        ]
+        return self.status in [TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED]
 
     def can_execute(self) -> bool:
         """Check if task can be executed."""

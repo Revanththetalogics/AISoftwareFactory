@@ -98,10 +98,10 @@ class TestCoreHelpers:
         logger = get_logger(__name__)
 
         assert logger is not None
-        assert hasattr(logger, 'info')
-        assert hasattr(logger, 'debug')
-        assert hasattr(logger, 'warning')
-        assert hasattr(logger, 'error')
+        assert hasattr(logger, "info")
+        assert hasattr(logger, "debug")
+        assert hasattr(logger, "warning")
+        assert hasattr(logger, "error")
 
 
 if __name__ == "__main__":

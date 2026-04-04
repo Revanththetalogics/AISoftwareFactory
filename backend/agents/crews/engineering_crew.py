@@ -37,7 +37,7 @@ class EngineeringCrew(BaseAgent):
             backstory="""You are an experienced software developer with expertise
             in multiple programming languages and frameworks. You write clean,
             efficient, and well-documented code following best practices.""",
-            verbose=True
+            verbose=True,
         )
 
         # Code Reviewer Agent
@@ -47,7 +47,7 @@ class EngineeringCrew(BaseAgent):
             backstory="""You are a meticulous code reviewer who ensures all code
             meets quality standards, follows style guides, and is free of bugs
             and security vulnerabilities.""",
-            verbose=True
+            verbose=True,
         )
 
         # QA Engineer Agent
@@ -57,22 +57,15 @@ class EngineeringCrew(BaseAgent):
             backstory="""You are a QA engineer who creates comprehensive test
             plans and ensures software meets requirements through thorough
             testing and validation.""",
-            verbose=True
+            verbose=True,
         )
 
         # Create crew
-        crew = Crew(
-            agents=[senior_dev, reviewer, qa_engineer],
-            tasks=[],
-            verbose=True
-        )
+        crew = Crew(agents=[senior_dev, reviewer, qa_engineer], tasks=[], verbose=True)
 
         return crew
 
-    async def implement_feature(
-        self,
-        feature_spec: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def implement_feature(self, feature_spec: dict[str, Any]) -> dict[str, Any]:
         """
         Implement a feature based on specification.
 
@@ -87,10 +80,10 @@ class EngineeringCrew(BaseAgent):
         implementation_task = Task(
             description=f"""Implement the following feature:
 
-            Feature: {feature_spec.get('name', 'Unknown')}
-            Description: {feature_spec.get('description', 'No description')}
-            Requirements: {feature_spec.get('requirements', [])}
-            Acceptance Criteria: {feature_spec.get('acceptance_criteria', [])}
+            Feature: {feature_spec.get("name", "Unknown")}
+            Description: {feature_spec.get("description", "No description")}
+            Requirements: {feature_spec.get("requirements", [])}
+            Acceptance Criteria: {feature_spec.get("acceptance_criteria", [])}
 
             Provide:
             1. Implementation plan
@@ -99,23 +92,15 @@ class EngineeringCrew(BaseAgent):
             4. Testing approach
             """,
             expected_output="Complete feature implementation",
-            agent=crew.agents[0]  # Senior dev
+            agent=crew.agents[0],  # Senior dev
         )
 
         crew.tasks = [implementation_task]
         result = crew.kickoff()
 
-        return {
-            "implementation": result,
-            "crew": "Engineering Crew",
-            "feature": feature_spec.get('name')
-        }
+        return {"implementation": result, "crew": "Engineering Crew", "feature": feature_spec.get("name")}
 
-    async def review_code(
-        self,
-        code: str,
-        context: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    async def review_code(self, code: str, context: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         Review code for quality and issues.
 
@@ -135,7 +120,7 @@ class EngineeringCrew(BaseAgent):
             {code[:2000]}  # Limit code length
             ```
 
-            Context: {context or 'No additional context'}
+            Context: {context or "No additional context"}
 
             Provide:
             1. Code quality assessment
@@ -145,23 +130,15 @@ class EngineeringCrew(BaseAgent):
             5. Approval status (approved/needs changes)
             """,
             expected_output="Code review report",
-            agent=crew.agents[1]  # Reviewer
+            agent=crew.agents[1],  # Reviewer
         )
 
         crew.tasks = [review_task]
         result = crew.kickoff()
 
-        return {
-            "review": result,
-            "crew": "Engineering Crew",
-            "lines_reviewed": len(code.splitlines())
-        }
+        return {"review": result, "crew": "Engineering Crew", "lines_reviewed": len(code.splitlines())}
 
-    async def create_tests(
-        self,
-        code: str,
-        test_type: str = "unit"
-    ) -> dict[str, Any]:
+    async def create_tests(self, code: str, test_type: str = "unit") -> dict[str, Any]:
         """
         Create tests for code.
 
@@ -188,14 +165,10 @@ class EngineeringCrew(BaseAgent):
             4. Test data setup
             """,
             expected_output="Complete test suite",
-            agent=crew.agents[2]  # QA Engineer
+            agent=crew.agents[2],  # QA Engineer
         )
 
         crew.tasks = [test_task]
         result = crew.kickoff()
 
-        return {
-            "tests": result,
-            "crew": "Engineering Crew",
-            "test_type": test_type
-        }
+        return {"tests": result, "crew": "Engineering Crew", "test_type": test_type}

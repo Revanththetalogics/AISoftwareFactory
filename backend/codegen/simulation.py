@@ -18,6 +18,7 @@ logger = get_logger(__name__)
 
 class TestStatus(StrEnum):
     """Status of a simulation test."""
+
     PENDING = "pending"
     RUNNING = "running"
     PASSED = "passed"
@@ -28,6 +29,7 @@ class TestStatus(StrEnum):
 
 class TestType(StrEnum):
     """Types of simulation tests."""
+
     UNIT = "unit"
     INTEGRATION = "integration"
     SYNTAX = "syntax"
@@ -50,6 +52,7 @@ class TestResult:
         details: Additional test details
         timestamp: When test was run
     """
+
     test_name: str
     test_type: TestType
     status: TestStatus = TestStatus.PENDING
@@ -83,6 +86,7 @@ class SimulationReport:
         completed_at: When simulation completed
         summary: Summary statistics
     """
+
     project_name: str
     results: list[TestResult] = field(default_factory=list)
     started_at: datetime = field(default_factory=datetime.now)
@@ -355,6 +359,7 @@ class SimulationLayer:
 
         if language == "python":
             import ast
+
             try:
                 ast.parse(code)
             except SyntaxError as exc:
@@ -362,6 +367,7 @@ class SimulationLayer:
 
         elif language == "json":
             import json
+
             try:
                 json.loads(code)
             except json.JSONDecodeError as exc:

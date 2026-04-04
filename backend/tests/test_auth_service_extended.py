@@ -23,7 +23,7 @@ from backend.services.auth_service import AuthService, auth_service, get_auth_se
 @pytest.fixture(autouse=True)
 def mock_pwd_context():
     """Mock the password context to avoid bcrypt backend issues."""
-    with patch('backend.services.auth_service.pwd_context') as mock_context:
+    with patch("backend.services.auth_service.pwd_context") as mock_context:
         # Simple hash function for testing
         mock_context.hash = lambda password: f"$2b$12$hashed_{password}"
         mock_context.verify = lambda plain, hashed: hashed == f"$2b$12$hashed_{plain}"
@@ -270,7 +270,7 @@ class TestGetUserByUsername:
         """Test get_user_by_username returns user when found."""
         service = AuthService()
 
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_local:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_local:
             mock_session = AsyncMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
@@ -290,7 +290,7 @@ class TestGetUserByUsername:
         """Test get_user_by_username returns None when not found."""
         service = AuthService()
 
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_local:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_local:
             mock_session = AsyncMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
@@ -323,7 +323,7 @@ class TestGetUserById:
         """Test get_user_by_id returns user when found."""
         service = AuthService()
 
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_local:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_local:
             mock_session = AsyncMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
@@ -343,7 +343,7 @@ class TestGetUserById:
         """Test get_user_by_id returns None when not found."""
         service = AuthService()
 
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_local:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_local:
             mock_session = AsyncMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
@@ -381,9 +381,9 @@ class TestAuthenticateUser:
         password = "correct_password"
         mock_active_user.hashed_password = service.get_password_hash(password)
 
-        with patch.object(service, 'get_user_by_username', new_callable=AsyncMock) as mock_get_user:
-            with patch.object(service, 'get_user_by_email', new_callable=AsyncMock) as mock_get_email:
-                with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_local:
+        with patch.object(service, "get_user_by_username", new_callable=AsyncMock) as mock_get_user:
+            with patch.object(service, "get_user_by_email", new_callable=AsyncMock) as mock_get_email:
+                with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_local:
                     mock_get_user.return_value = mock_active_user
                     mock_get_email.return_value = None
 
@@ -406,8 +406,8 @@ class TestAuthenticateUser:
         service = AuthService()
         mock_active_user.hashed_password = service.get_password_hash("correct_password")
 
-        with patch.object(service, 'get_user_by_username', new_callable=AsyncMock) as mock_get_user:
-            with patch.object(service, 'get_user_by_email', new_callable=AsyncMock) as mock_get_email:
+        with patch.object(service, "get_user_by_username", new_callable=AsyncMock) as mock_get_user:
+            with patch.object(service, "get_user_by_email", new_callable=AsyncMock) as mock_get_email:
                 mock_get_user.return_value = mock_active_user
                 mock_get_email.return_value = None
 
@@ -420,8 +420,8 @@ class TestAuthenticateUser:
         """Test authenticate_user with nonexistent user returns None."""
         service = AuthService()
 
-        with patch.object(service, 'get_user_by_username', new_callable=AsyncMock) as mock_get_user:
-            with patch.object(service, 'get_user_by_email', new_callable=AsyncMock) as mock_get_email:
+        with patch.object(service, "get_user_by_username", new_callable=AsyncMock) as mock_get_user:
+            with patch.object(service, "get_user_by_email", new_callable=AsyncMock) as mock_get_email:
                 mock_get_user.return_value = None
                 mock_get_email.return_value = None
 
@@ -440,8 +440,8 @@ class TestAuthenticateUser:
         inactive_user.is_active = False
         inactive_user.hashed_password = service.get_password_hash("password")
 
-        with patch.object(service, 'get_user_by_username', new_callable=AsyncMock) as mock_get_user:
-            with patch.object(service, 'get_user_by_email', new_callable=AsyncMock) as mock_get_email:
+        with patch.object(service, "get_user_by_username", new_callable=AsyncMock) as mock_get_user:
+            with patch.object(service, "get_user_by_email", new_callable=AsyncMock) as mock_get_email:
                 mock_get_user.return_value = inactive_user
                 mock_get_email.return_value = None
 
@@ -456,9 +456,9 @@ class TestAuthenticateUser:
         password = "correct_password"
         mock_active_user.hashed_password = service.get_password_hash(password)
 
-        with patch.object(service, 'get_user_by_username', new_callable=AsyncMock) as mock_get_user:
-            with patch.object(service, 'get_user_by_email', new_callable=AsyncMock) as mock_get_email:
-                with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_local:
+        with patch.object(service, "get_user_by_username", new_callable=AsyncMock) as mock_get_user:
+            with patch.object(service, "get_user_by_email", new_callable=AsyncMock) as mock_get_email:
+                with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_local:
                     mock_get_user.return_value = None  # Not found by username
                     mock_get_email.return_value = mock_active_user  # Found by email
 
@@ -482,7 +482,7 @@ class TestCreateDefaultAdmin:
         """Test create_default_admin creates admin when no users exist."""
         service = AuthService()
 
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_local:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_local:
             mock_session = AsyncMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
@@ -509,7 +509,7 @@ class TestCreateDefaultAdmin:
         existing_user = Mock()
         existing_user.id = "existing-user"
 
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_local:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_local:
             mock_session = AsyncMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
@@ -536,7 +536,7 @@ class TestCreateUser:
         """Test create_user creates new user successfully."""
         service = AuthService()
 
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_local:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_local:
             mock_session = AsyncMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
@@ -568,7 +568,7 @@ class TestCreateUser:
 
         existing_user = Mock()
 
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_local:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_local:
             mock_session = AsyncMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
@@ -595,7 +595,7 @@ class TestCreateUser:
 
         existing_user = Mock()
 
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_local:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_local:
             mock_session = AsyncMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
@@ -604,6 +604,7 @@ class TestCreateUser:
             # First execute returns None (username doesn't exist)
             # Second execute returns existing user (email exists)
             call_count = [0]
+
             def execute_side_effect(*args, **kwargs):
                 call_count[0] += 1
                 mock_result = Mock()
@@ -639,7 +640,7 @@ class TestGetUserByEmail:
         mock_user.email = "test@example.com"
         mock_user.is_active = True
 
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_local:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_local:
             mock_session = AsyncMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
@@ -659,7 +660,7 @@ class TestGetUserByEmail:
         """Test get_user_by_email returns None when not found."""
         service = AuthService()
 
-        with patch('backend.services.auth_service.AsyncSessionLocal') as mock_session_local:
+        with patch("backend.services.auth_service.AsyncSessionLocal") as mock_session_local:
             mock_session = AsyncMock()
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)

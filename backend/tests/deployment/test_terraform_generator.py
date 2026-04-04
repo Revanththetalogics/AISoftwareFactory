@@ -2,7 +2,6 @@
 Tests for Terraform Generator.
 """
 
-
 from backend.deployment.terraform_generator import (
     ResourceConfig,
     TerraformGenerator,

@@ -76,7 +76,7 @@ class TestActiveUsersTracking:
         collector.update_active_users(10)
 
         health = collector.get_system_health()
-        assert health['active_users'] == 10
+        assert health["active_users"] == 10
 
     def test_add_user_session(self):
         """Test add_user_session method (lines 227-228)."""
@@ -170,11 +170,11 @@ class TestRecentErrorsAndHealth:
 
         health = collector.get_system_health()
 
-        assert health['active_users'] == 5
-        assert health['concurrent_requests'] == 3
-        assert 'api_error_rate' in health
-        assert 'recent_errors' in health
-        assert 'uptime_seconds' in health
+        assert health["active_users"] == 5
+        assert health["concurrent_requests"] == 3
+        assert "api_error_rate" in health
+        assert "recent_errors" in health
+        assert "uptime_seconds" in health
 
     def test_calculate_error_rate_no_errors(self):
         """Test _calculate_error_rate with no errors (lines 265-273)."""
@@ -210,14 +210,14 @@ class TestBusinessKPIs:
     def test_update_business_kpis_project_completion(self):
         """Test update_business_kpis with project_completion_rate."""
         collector = get_metrics_collector()
-        collector.update_business_kpis({'project_completion_rate': 0.85})
+        collector.update_business_kpis({"project_completion_rate": 0.85})
 
         assert collector.project_completion_rate._value.get() == 0.85
 
     def test_update_business_kpis_workflow_duration(self):
         """Test update_business_kpis with average_workflow_duration."""
         collector = get_metrics_collector()
-        collector.update_business_kpis({'average_workflow_duration': 120.5})
+        collector.update_business_kpis({"average_workflow_duration": 120.5})
 
         # Summary metrics track observations, so just verify no error
         assert True
@@ -225,10 +225,7 @@ class TestBusinessKPIs:
     def test_update_business_kpis_multiple(self):
         """Test update_business_kpis with multiple metrics."""
         collector = get_metrics_collector()
-        collector.update_business_kpis({
-            'project_completion_rate': 0.90,
-            'average_workflow_duration': 150.0
-        })
+        collector.update_business_kpis({"project_completion_rate": 0.90, "average_workflow_duration": 150.0})
 
         assert collector.project_completion_rate._value.get() == 0.90
 
@@ -240,12 +237,7 @@ class TestLLMMetrics:
         """Test record_llm_call with success."""
         collector = get_metrics_collector()
         collector.record_llm_call(
-            provider="openai",
-            operation="chat",
-            duration=2.5,
-            status="success",
-            prompt_tokens=100,
-            completion_tokens=50
+            provider="openai", operation="chat", duration=2.5, status="success", prompt_tokens=100, completion_tokens=50
         )
 
         # Just verify no error
@@ -254,12 +246,7 @@ class TestLLMMetrics:
     def test_record_llm_call_error(self):
         """Test record_llm_call with error status."""
         collector = get_metrics_collector()
-        collector.record_llm_call(
-            provider="ollama",
-            operation="generate",
-            duration=5.0,
-            status="error"
-        )
+        collector.record_llm_call(provider="ollama", operation="generate", duration=5.0, status="error")
 
         # Just verify no error
         assert True
@@ -267,11 +254,7 @@ class TestLLMMetrics:
     def test_record_llm_call_no_tokens(self):
         """Test record_llm_call without tokens."""
         collector = get_metrics_collector()
-        collector.record_llm_call(
-            provider="openai",
-            operation="embed",
-            duration=0.5
-        )
+        collector.record_llm_call(provider="openai", operation="embed", duration=0.5)
 
         # Just verify no error
         assert True
@@ -279,12 +262,7 @@ class TestLLMMetrics:
     def test_record_llm_call_with_prompt_tokens_only(self):
         """Test record_llm_call with only prompt tokens."""
         collector = get_metrics_collector()
-        collector.record_llm_call(
-            provider="openai",
-            operation="chat",
-            duration=1.0,
-            prompt_tokens=100
-        )
+        collector.record_llm_call(provider="openai", operation="chat", duration=1.0, prompt_tokens=100)
 
         # Just verify no error
         assert True
@@ -364,6 +342,7 @@ class TestMetricsMiddleware:
     @pytest.mark.asyncio
     async def test_middleware_http_request(self):
         """Test middleware handles HTTP request (lines 373-392)."""
+
         async def mock_app(scope, receive, send):
             # Simulate sending response
             await send({"type": "http.response.start", "status": 200})
@@ -383,6 +362,7 @@ class TestMetricsMiddleware:
     @pytest.mark.asyncio
     async def test_middleware_exception_handling(self):
         """Test middleware handles exceptions (lines 394-404)."""
+
         async def mock_app(scope, receive, send):
             raise ValueError("Test error")
 
@@ -398,6 +378,7 @@ class TestMetricsMiddleware:
     @pytest.mark.asyncio
     async def test_middleware_decrements_request_count_on_error(self):
         """Test middleware decrements request count on error."""
+
         async def mock_app(scope, receive, send):
             raise RuntimeError("Server error")
 
@@ -446,6 +427,7 @@ class TestTrackDbOperationDecorator:
     @pytest.mark.asyncio
     async def test_track_db_operation_async_success(self):
         """Test track_db_operation with async function success (lines 411-421)."""
+
         @track_db_operation("SELECT", "users")
         async def async_query():
             return ["user1", "user2"]
@@ -457,6 +439,7 @@ class TestTrackDbOperationDecorator:
     @pytest.mark.asyncio
     async def test_track_db_operation_async_exception(self):
         """Test track_db_operation with async function exception."""
+
         @track_db_operation("INSERT", "users")
         async def async_failing_query():
             raise ValueError("Insert failed")
@@ -466,6 +449,7 @@ class TestTrackDbOperationDecorator:
 
     def test_track_db_operation_sync_success(self):
         """Test track_db_operation with sync function success (lines 423-433)."""
+
         @track_db_operation("UPDATE", "projects")
         def sync_query():
             return {"updated": True}
@@ -476,6 +460,7 @@ class TestTrackDbOperationDecorator:
 
     def test_track_db_operation_sync_exception(self):
         """Test track_db_operation with sync function exception."""
+
         @track_db_operation("DELETE", "tasks")
         def sync_failing_query():
             raise RuntimeError("Delete failed")
@@ -485,6 +470,7 @@ class TestTrackDbOperationDecorator:
 
     def test_track_db_operation_detects_async(self):
         """Test track_db_operation correctly detects async function (line 435)."""
+
         @track_db_operation("SELECT", "test")
         async def async_fn():
             return "async"
@@ -555,5 +541,5 @@ class TestMetricsCollectorInit:
         assert collector.timeout_total is not None
 
         # Verify internal tracking
-        assert hasattr(collector, '_active_request_count')
-        assert hasattr(collector, '_user_sessions')
+        assert hasattr(collector, "_active_request_count")
+        assert hasattr(collector, "_user_sessions")

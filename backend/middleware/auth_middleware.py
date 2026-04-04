@@ -6,7 +6,6 @@ on all non-public routes. Supports both Bearer token and httpOnly cookie
 authentication. Route-level dependencies still perform the actual JWT validation.
 """
 
-
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
@@ -112,16 +111,12 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         # Validate Bearer token format if header is present
         if auth_header:
             if not auth_header.startswith("Bearer "):
-                return self._unauthorized_response(
-                    request, "Invalid Authorization header format"
-                )
+                return self._unauthorized_response(request, "Invalid Authorization header format")
 
             # Extract token (basic validation that it's not empty)
             token = auth_header[7:]  # Remove "Bearer " prefix
             if not token or token.isspace():
-                return self._unauthorized_response(
-                    request, "Empty Bearer token"
-                )
+                return self._unauthorized_response(request, "Empty Bearer token")
         elif auth_cookie:
             # Validate cookie token is not empty
             if not auth_cookie or auth_cookie.isspace():

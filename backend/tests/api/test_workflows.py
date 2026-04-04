@@ -39,6 +39,7 @@ async def mock_get_db():
 async def mock_get_current_user():
     """Mock current user dependency."""
     from backend.api.dependencies import User
+
     return User(
         user_id="user-dev-001",
         username="developer",
@@ -50,10 +51,7 @@ async def mock_get_current_user():
 def get_auth_headers():
     """Generate authentication headers for tests."""
     auth_service = AuthService()
-    token = auth_service.create_access_token({
-        "sub": "user-dev-001",
-        "username": "developer"
-    })
+    token = auth_service.create_access_token({"sub": "user-dev-001", "username": "developer"})
     return {"Authorization": f"Bearer {token}"}
 
 

@@ -25,6 +25,7 @@ logger = get_logger(__name__)
 
 class BrowserType(Enum):
     """Supported browser types."""
+
     CHROMIUM = "chromium"
     FIREFOX = "firefox"
     WEBKIT = "webkit"
@@ -32,6 +33,7 @@ class BrowserType(Enum):
 
 class TestStatus(Enum):
     """Test execution status."""
+
     PASSED = "passed"
     FAILED = "failed"
     SKIPPED = "skipped"
@@ -42,6 +44,7 @@ class TestStatus(Enum):
 @dataclass
 class VisualDiff:
     """Visual difference information."""
+
     baseline_path: str
     current_path: str
     diff_path: str
@@ -63,6 +66,7 @@ class VisualDiff:
 @dataclass
 class E2ETestResult:
     """Result of an E2E test."""
+
     test_name: str
     status: TestStatus
     duration_ms: float
@@ -98,6 +102,7 @@ class E2ETestResult:
 @dataclass
 class GeneratedE2ETest:
     """Generated E2E test."""
+
     id: str
     name: str
     description: str
@@ -217,11 +222,7 @@ class FrontendTesterAgent(BaseAgent):
             )
 
     async def generate_e2e_tests_from_flow(
-        self,
-        page_path: str,
-        user_flow: list[str],
-        page_description: str = "",
-        generate_assertions: bool = True
+        self, page_path: str, user_flow: list[str], page_description: str = "", generate_assertions: bool = True
     ) -> list[GeneratedE2ETest]:
         """
         Generate E2E tests from a user flow description.
@@ -243,7 +244,7 @@ Page: {page_path}
 Description: {page_description}
 
 User Flow:
-{chr(10).join(f"{i+1}. {step}" for i, step in enumerate(user_flow))}
+{chr(10).join(f"{i + 1}. {step}" for i, step in enumerate(user_flow))}
 
 Generate Playwright test code that:
 1. Navigates to the page
@@ -285,10 +286,7 @@ Return the complete test file code with imports and test cases."""
             return []
 
     async def generate_tests_from_component(
-        self,
-        component_name: str,
-        component_props: dict[str, Any],
-        component_usage_examples: list[str]
+        self, component_name: str, component_props: dict[str, Any], component_usage_examples: list[str]
     ) -> list[GeneratedE2ETest]:
         """
         Generate tests for a React component.
@@ -339,10 +337,7 @@ Return the complete test file code."""
             return []
 
     async def run_visual_regression_test(
-        self,
-        page_path: str,
-        viewport_sizes: list[dict[str, int]] = None,
-        threshold: float = 0.1
+        self, page_path: str, viewport_sizes: list[dict[str, int]] = None, threshold: float = 0.1
     ) -> list[E2ETestResult]:
         """
         Run visual regression tests.
@@ -362,8 +357,8 @@ Return the complete test file code."""
         if viewport_sizes is None:
             viewport_sizes = [
                 {"width": 1920, "height": 1080},  # Desktop
-                {"width": 768, "height": 1024},   # Tablet
-                {"width": 375, "height": 667},    # Mobile
+                {"width": 768, "height": 1024},  # Tablet
+                {"width": 375, "height": 667},  # Mobile
             ]
 
         results = []
@@ -385,24 +380,28 @@ Return the complete test file code."""
                         await page.wait_for_load_state("networkidle")
 
                         # Take screenshot
-                        screenshot_path = f"screenshots/{page_path.replace('/', '_')}_{viewport['width']}x{viewport['height']}.png"
+                        screenshot_path = (
+                            f"screenshots/{page_path.replace('/', '_')}_{viewport['width']}x{viewport['height']}.png"
+                        )
                         Path("screenshots").mkdir(exist_ok=True)
                         await page.screenshot(path=screenshot_path, full_page=True)
 
                         # Compare with baseline
-                        baseline_path = f"baselines/{page_path.replace('/', '_')}_{viewport['width']}x{viewport['height']}.png"
+                        baseline_path = (
+                            f"baselines/{page_path.replace('/', '_')}_{viewport['width']}x{viewport['height']}.png"
+                        )
 
                         visual_diff = None
                         if Path(baseline_path).exists():
-                            visual_diff = await self._compare_screenshots(
-                                baseline_path, screenshot_path, threshold
-                            )
+                            visual_diff = await self._compare_screenshots(baseline_path, screenshot_path, threshold)
 
                         duration = (datetime.utcnow() - start_time).total_seconds() * 1000
 
                         result = E2ETestResult(
                             test_name=f"visual_{page_path}_{viewport['width']}x{viewport['height']}",
-                            status=TestStatus.PASSED if not visual_diff or not visual_diff.is_significant else TestStatus.FAILED,
+                            status=TestStatus.PASSED
+                            if not visual_diff or not visual_diff.is_significant
+                            else TestStatus.FAILED,
                             duration_ms=duration,
                             browser="chromium",
                             url=f"{self._base_url}{page_path}",
@@ -432,10 +431,7 @@ Return the complete test file code."""
 
         return results
 
-    async def run_accessibility_audit(
-        self,
-        page_path: str
-    ) -> dict[str, Any]:
+    async def run_accessibility_audit(self, page_path: str) -> dict[str, Any]:
         """
         Run accessibility audit using axe-core.
 
@@ -483,12 +479,7 @@ Return the complete test file code."""
             self._logger.error("Accessibility audit failed", error=str(e))
             return {"error": str(e)}
 
-    async def heal_selector(
-        self,
-        broken_selector: str,
-        page_content: str,
-        element_description: str
-    ) -> str | None:
+    async def heal_selector(self, broken_selector: str, page_content: str, element_description: str) -> str | None:
         """
         Heal a broken selector using AI.
 
@@ -551,10 +542,7 @@ Return only the selector string."""
         failed = sum(1 for t in self._test_history if t.status == TestStatus.FAILED)
         flaky = sum(1 for t in self._test_history if t.status == TestStatus.FLAKY)
 
-        avg_duration = (
-            sum(t.duration_ms for t in self._test_history) / total
-            if total > 0 else 0
-        )
+        avg_duration = sum(t.duration_ms for t in self._test_history) / total if total > 0 else 0
 
         return {
             "total_tests": total,
@@ -573,6 +561,7 @@ Return only the selector string."""
         """Check if Playwright is available."""
         try:
             import playwright  # noqa: F401
+
             return True
         except ImportError:
             return False
@@ -596,15 +585,11 @@ Return only the selector string."""
 
         return selectors
 
-    async def _compare_screenshots(
-        self,
-        baseline_path: str,
-        current_path: str,
-        threshold: float
-    ) -> VisualDiff:
+    async def _compare_screenshots(self, baseline_path: str, current_path: str, threshold: float) -> VisualDiff:
         """Compare two screenshots and return diff information using PIL pixel diff."""
         try:
             from PIL import Image, ImageChops
+
             baseline = Image.open(baseline_path).convert("RGB")
             current = Image.open(current_path).convert("RGB")
             # Resize current to match baseline if sizes differ

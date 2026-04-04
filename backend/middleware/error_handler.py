@@ -24,6 +24,7 @@ from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+
 class ErrorHandlerMiddleware:
     """Enhanced error handling middleware."""
 
@@ -54,12 +55,7 @@ class ErrorHandlerMiddleware:
             response = await self.handle_exception(exc, request_id, scope)
             await response(scope, receive, send)
 
-    async def handle_exception(
-        self,
-        exc: Exception,
-        request_id: str,
-        scope: dict[str, Any]
-    ) -> JSONResponse:
+    async def handle_exception(self, exc: Exception, request_id: str, scope: dict[str, Any]) -> JSONResponse:
         """Handle different types of exceptions."""
 
         # Extract request info for logging
@@ -82,10 +78,7 @@ class ErrorHandlerMiddleware:
             return self._handle_generic_exception(exc, request_id, request_info)
 
     def _handle_backend_exception(
-        self,
-        exc: AISoftwareFactoryException,
-        request_id: str,
-        request_info: dict[str, Any]
+        self, exc: AISoftwareFactoryException, request_id: str, request_info: dict[str, Any]
     ) -> JSONResponse:
         """Handle BackendException and subclasses."""
 
@@ -100,17 +93,10 @@ class ErrorHandlerMiddleware:
         response_content["request_id"] = request_id
 
         return JSONResponse(
-            status_code=http_exc.status_code,
-            content=response_content,
-            headers={"X-Request-ID": request_id}
+            status_code=http_exc.status_code, content=response_content, headers={"X-Request-ID": request_id}
         )
 
-    def _handle_http_exception(
-        self,
-        exc: HTTPException,
-        request_id: str,
-        request_info: dict[str, Any]
-    ) -> JSONResponse:
+    def _handle_http_exception(self, exc: HTTPException, request_id: str, request_info: dict[str, Any]) -> JSONResponse:
         """Handle FastAPI HTTPException."""
 
         # Log HTTP exceptions (4xx are warnings, 5xx are errors)
@@ -123,8 +109,8 @@ class ErrorHandlerMiddleware:
                 "status_code": exc.status_code,
                 "method": request_info.get("method"),
                 "path": request_info.get("path"),
-                "client": request_info.get("client")
-            }
+                "client": request_info.get("client"),
+            },
         )
 
         # Ensure consistent error response format
@@ -137,21 +123,14 @@ class ErrorHandlerMiddleware:
                     "code": "HTTP_ERROR",
                     "message": str(exc.detail),
                     "status_code": exc.status_code,
-                    "timestamp": datetime.now(UTC).isoformat()
-                }
+                    "timestamp": datetime.now(UTC).isoformat(),
+                },
             }
 
-        return JSONResponse(
-            status_code=exc.status_code,
-            content=response_content,
-            headers={"X-Request-ID": request_id}
-        )
+        return JSONResponse(status_code=exc.status_code, content=response_content, headers={"X-Request-ID": request_id})
 
     def _handle_validation_error(
-        self,
-        exc: ValidationError,
-        request_id: str,
-        request_info: dict[str, Any]
+        self, exc: ValidationError, request_id: str, request_info: dict[str, Any]
     ) -> JSONResponse:
         """Handle validation errors specifically."""
 
@@ -162,8 +141,8 @@ class ErrorHandlerMiddleware:
                 "field": exc.details.get("field"),
                 "value": exc.details.get("value"),
                 "method": request_info.get("method"),
-                "path": request_info.get("path")
-            }
+                "path": request_info.get("path"),
+            },
         )
 
         return JSONResponse(
@@ -175,18 +154,13 @@ class ErrorHandlerMiddleware:
                     "message": exc.message,
                     "status_code": exc.status_code,
                     "details": exc.details,
-                    "timestamp": datetime.now(UTC).isoformat()
-                }
+                    "timestamp": datetime.now(UTC).isoformat(),
+                },
             },
-            headers={"X-Request-ID": request_id}
+            headers={"X-Request-ID": request_id},
         )
 
-    def _handle_generic_exception(
-        self,
-        exc: Exception,
-        request_id: str,
-        request_info: dict[str, Any]
-    ) -> JSONResponse:
+    def _handle_generic_exception(self, exc: Exception, request_id: str, request_info: dict[str, Any]) -> JSONResponse:
         """Handle unexpected exceptions."""
 
         # Log the full traceback for debugging
@@ -197,8 +171,8 @@ class ErrorHandlerMiddleware:
                 "method": request_info.get("method"),
                 "path": request_info.get("path"),
                 "client": request_info.get("client"),
-                "traceback": traceback.format_exc()
-            }
+                "traceback": traceback.format_exc(),
+            },
         )
 
         # Return generic error response
@@ -210,11 +184,13 @@ class ErrorHandlerMiddleware:
                     "code": "INTERNAL_ERROR",
                     "message": "An unexpected error occurred",
                     "status_code": 500,
+                    "details": {},
                     "timestamp": datetime.now(UTC).isoformat(),
-                    "request_id": request_id
-                }
+                    "request_id": request_id,
+                },
+                "request_id": request_id,
             },
-            headers={"X-Request-ID": request_id}
+            headers={"X-Request-ID": request_id},
         )
 
     def _extract_request_info(self, scope: dict[str, Any]) -> dict[str, Any]:
@@ -224,15 +200,10 @@ class ErrorHandlerMiddleware:
             "path": scope.get("path", "UNKNOWN"),
             "client": scope.get("client", ["UNKNOWN", 0])[0] if scope.get("client") else "UNKNOWN",
             "scheme": scope.get("scheme", "http"),
-            "http_version": scope.get("http_version", "1.1")
+            "http_version": scope.get("http_version", "1.1"),
         }
 
-    def _log_backend_exception(
-        self,
-        exc: AISoftwareFactoryException,
-        request_id: str,
-        request_info: dict[str, Any]
-    ):
+    def _log_backend_exception(self, exc: AISoftwareFactoryException, request_id: str, request_info: dict[str, Any]):
         """Log backend exception with appropriate level."""
 
         # Determine log level based on status code
@@ -250,12 +221,13 @@ class ErrorHandlerMiddleware:
                 "request_id": request_id,
                 "error_code": exc.error_code,
                 "status_code": exc.status_code,
-                "details": getattr(exc, 'details', {}),
+                "details": getattr(exc, "details", {}),
                 "method": request_info.get("method"),
                 "path": request_info.get("path"),
-                "client": request_info.get("client")
-            }
+                "client": request_info.get("client"),
+            },
         )
+
 
 def setup_exception_handlers(app):
     """Setup exception handlers for the FastAPI app."""
@@ -263,10 +235,18 @@ def setup_exception_handlers(app):
     app.add_exception_handler(AISoftwareFactoryException, _handle_custom_exception)
     app.add_exception_handler(Exception, _handle_general_exception)
 
+
+def _get_request_id(request) -> str:
+    """Extract request_id from request state safely."""
+    try:
+        return str(getattr(request.state, "request_id", "unknown"))
+    except Exception:
+        return "unknown"
+
+
 async def _handle_custom_exception(request, exc: AISoftwareFactoryException):
     """Handle custom AISoftwareFactoryException."""
-    # Extract request_id from request state if available
-    request_id = getattr(request, 'state', {}).get('request_id', 'unknown')
+    request_id = _get_request_id(request)
 
     return JSONResponse(
         status_code=exc.status_code,
@@ -276,19 +256,31 @@ async def _handle_custom_exception(request, exc: AISoftwareFactoryException):
                 "code": exc.error_code,
                 "message": exc.message,
                 "status_code": exc.status_code,
-                "details": getattr(exc, 'details', {}),
-                "timestamp": datetime.now(UTC).isoformat()
+                "details": getattr(exc, "details", {}),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
-            "request_id": request_id
-        }
+            "request_id": request_id,
+        },
     )
+
 
 async def _handle_general_exception(request, exc: Exception):
     """Handle general exceptions."""
     logger.error(f"Unhandled exception: {str(exc)}", extra={"traceback": traceback.format_exc()})
 
-    # Extract request_id from request state if available
-    request_id = getattr(request, 'state', {}).get('request_id', 'unknown')
+    request_id = _get_request_id(request)
+
+    try:
+        from backend.core.config import get_settings
+
+        settings = get_settings()
+        is_dev = getattr(settings, "is_development", False) or getattr(settings, "is_testing", False)
+    except Exception:
+        is_dev = False
+
+    message = (
+        f"An unexpected error occurred: {type(exc).__name__}: {str(exc)}" if is_dev else "An unexpected error occurred"
+    )
 
     return JSONResponse(
         status_code=500,
@@ -296,10 +288,11 @@ async def _handle_general_exception(request, exc: Exception):
             "success": False,
             "error": {
                 "code": "INTERNAL_ERROR",
-                "message": str(exc) if hasattr(exc, '__str__') else "An unexpected error occurred",
+                "message": message,
                 "status_code": 500,
-                "timestamp": datetime.now(UTC).isoformat()
+                "details": {},
+                "timestamp": datetime.now(UTC).isoformat(),
             },
-            "request_id": request_id
-        }
+            "request_id": request_id,
+        },
     )

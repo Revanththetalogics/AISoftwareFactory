@@ -1,4 +1,5 @@
 """OpenTelemetry distributed tracing configuration."""
+
 import logging
 
 from opentelemetry import trace
@@ -44,7 +45,7 @@ def get_current_trace_id() -> str:
     """Get current trace ID for log correlation."""
     span = trace.get_current_span()
     if span and span.get_span_context().trace_id:
-        return format(span.get_span_context().trace_id, '032x')
+        return format(span.get_span_context().trace_id, "032x")
     return ""
 
 
@@ -52,5 +53,5 @@ def get_current_span_id() -> str:
     """Get current span ID for log correlation."""
     span = trace.get_current_span()
     if span and span.get_span_context().span_id:
-        return format(span.get_span_context().span_id, '016x')
+        return format(span.get_span_context().span_id, "016x")
     return ""

@@ -60,9 +60,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         settings = get_settings()
 
-        self.default_rate = default_rate or getattr(settings, 'RATE_LIMIT_DEFAULT', 100)
-        self.admin_rate = admin_rate or getattr(settings, 'RATE_LIMIT_ADMIN', 500)
-        self.window_seconds = window_seconds or getattr(settings, 'RATE_LIMIT_WINDOW_SECONDS', 60)
+        self.default_rate = default_rate or getattr(settings, "RATE_LIMIT_DEFAULT", 100)
+        self.admin_rate = admin_rate or getattr(settings, "RATE_LIMIT_ADMIN", 500)
+        self.window_seconds = window_seconds or getattr(settings, "RATE_LIMIT_WINDOW_SECONDS", 60)
 
         # Format: {user_key: (request_count, window_start)}
         self.buckets: dict[str, tuple[int, float]] = defaultdict(lambda: (0, 0.0))
@@ -73,7 +73,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 "default_rate": self.default_rate,
                 "admin_rate": self.admin_rate,
                 "window_seconds": self.window_seconds,
-            }
+            },
         )
 
     def _get_user_key(self, request: Request) -> str:
@@ -123,6 +123,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if auth_header.startswith("Bearer "):
             try:
                 import jwt as pyjwt
+
                 token = auth_header[7:]
                 payload = pyjwt.decode(token, options={"verify_signature": False})
                 if payload.get("role") == "admin":
@@ -160,8 +161,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         """Remove expired bucket entries to prevent memory growth."""
         now = time.time()
         expired_keys = [
-            key for key, (_, window_start) in self.buckets.items()
-            if now - window_start > self.window_seconds * 2
+            key for key, (_, window_start) in self.buckets.items() if now - window_start > self.window_seconds * 2
         ]
         for key in expired_keys:
             del self.buckets[key]
@@ -180,8 +180,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Skip rate limiting for health checks and metrics
         path = request.url.path
         excluded_paths = (
-            "/health", "/ready", "/live", "/metrics",
-            "/api/v1/health", "/docs", "/redoc", "/openapi.json"
+            "/health",
+            "/ready",
+            "/live",
+            "/metrics",
+            "/api/v1/health",
+            "/docs",
+            "/redoc",
+            "/openapi.json",
         )
         if path in excluded_paths:
             return await call_next(request)
@@ -205,7 +211,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     "path": path,
                     "rate_limit": rate_limit,
                     "request_id": request_id,
-                }
+                },
             )
 
             return JSONResponse(
@@ -225,7 +231,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     "X-RateLimit-Limit": str(rate_limit),
                     "X-RateLimit-Remaining": "0",
                     "X-RateLimit-Reset": str(int(time.time()) + retry_after),
-                }
+                },
             )
 
         response = await call_next(request)
@@ -233,8 +239,6 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Add rate limit headers to successful responses
         response.headers["X-RateLimit-Limit"] = str(rate_limit)
         response.headers["X-RateLimit-Remaining"] = str(remaining)
-        response.headers["X-RateLimit-Reset"] = str(
-            int(time.time()) + self.window_seconds
-        )
+        response.headers["X-RateLimit-Reset"] = str(int(time.time()) + self.window_seconds)
 
         return response

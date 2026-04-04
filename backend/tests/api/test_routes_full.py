@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 # Agent Routes Tests
 # ==============================================================================
 
+
 class TestAgentRoutes:
     """Tests for agent routes edge cases."""
 
@@ -62,13 +63,9 @@ class TestAgentRoutes:
         """Test listing agents when none exist."""
         from backend.api.routes.agents import list_agents
 
-        with patch('backend.api.routes.agents.get_current_user', return_value=mock_user):
+        with patch("backend.api.routes.agents.get_current_user", return_value=mock_user):
             result = await list_agents(
-                role=None,
-                agent_status=None,
-                user=mock_user,
-                db=mock_db,
-                agent_service=mock_agent_service
+                role=None, agent_status=None, user=mock_user, db=mock_db, agent_service=mock_agent_service
             )
 
         assert result == []
@@ -81,22 +78,18 @@ class TestAgentRoutes:
 
         mock_agent_service.list_agents.return_value = [sample_agent]
 
-        with patch('backend.api.routes.agents.get_current_user', return_value=mock_user):
+        with patch("backend.api.routes.agents.get_current_user", return_value=mock_user):
             result = await list_agents(
                 role="backend_engineer",
                 agent_status="idle",
                 user=mock_user,
                 db=mock_db,
-                agent_service=mock_agent_service
+                agent_service=mock_agent_service,
             )
 
         assert len(result) == 1
         assert result[0].role == "backend_engineer"
-        mock_agent_service.list_agents.assert_called_once_with(
-            role="backend_engineer",
-            status="idle",
-            db=mock_db
-        )
+        mock_agent_service.list_agents.assert_called_once_with(role="backend_engineer", status="idle", db=mock_db)
 
     @pytest.mark.asyncio
     async def test_get_agent_not_found(self, mock_db, mock_agent_service, mock_user):
@@ -106,12 +99,7 @@ class TestAgentRoutes:
         mock_agent_service.get_agent.return_value = None
 
         with pytest.raises(HTTPException) as exc_info:
-            await get_agent(
-                agent_id="nonexistent-agent",
-                user=mock_user,
-                db=mock_db,
-                agent_service=mock_agent_service
-            )
+            await get_agent(agent_id="nonexistent-agent", user=mock_user, db=mock_db, agent_service=mock_agent_service)
 
         assert exc_info.value.status_code == 404
         assert "not found" in exc_info.value.detail.lower()
@@ -123,12 +111,7 @@ class TestAgentRoutes:
 
         mock_agent_service.get_agent.return_value = sample_agent
 
-        result = await get_agent(
-            agent_id="agent-123",
-            user=mock_user,
-            db=mock_db,
-            agent_service=mock_agent_service
-        )
+        result = await get_agent(agent_id="agent-123", user=mock_user, db=mock_db, agent_service=mock_agent_service)
 
         assert result.agent_id == "agent-123"
         assert result.name == "Test Agent"
@@ -146,7 +129,7 @@ class TestAgentRoutes:
             capabilities=["python"],
             user=mock_user,
             db=mock_db,
-            agent_service=mock_agent_service
+            agent_service=mock_agent_service,
         )
 
         assert result.name == "Test Agent"
@@ -163,11 +146,7 @@ class TestAgentRoutes:
 
         with pytest.raises(HTTPException) as exc_info:
             await assign_task(
-                agent_id="nonexistent",
-                request=request,
-                user=mock_user,
-                db=mock_db,
-                agent_service=mock_agent_service
+                agent_id="nonexistent", request=request, user=mock_user, db=mock_db, agent_service=mock_agent_service
             )
 
         assert exc_info.value.status_code == 404
@@ -184,11 +163,7 @@ class TestAgentRoutes:
 
         with pytest.raises(HTTPException) as exc_info:
             await assign_task(
-                agent_id="agent-123",
-                request=request,
-                user=mock_user,
-                db=mock_db,
-                agent_service=mock_agent_service
+                agent_id="agent-123", request=request, user=mock_user, db=mock_db, agent_service=mock_agent_service
             )
 
         assert exc_info.value.status_code == 409
@@ -202,18 +177,10 @@ class TestAgentRoutes:
 
         sample_agent.status = "idle"
         mock_agent_service.get_agent.return_value = sample_agent
-        request = AgentTaskRequest(
-            task_type="code_review",
-            description="Review test.py",
-            context={"file": "test.py"}
-        )
+        request = AgentTaskRequest(task_type="code_review", description="Review test.py", context={"file": "test.py"})
 
         result = await assign_task(
-            agent_id="agent-123",
-            request=request,
-            user=mock_user,
-            db=mock_db,
-            agent_service=mock_agent_service
+            agent_id="agent-123", request=request, user=mock_user, db=mock_db, agent_service=mock_agent_service
         )
 
         assert result.agent_id == "agent-123"
@@ -235,6 +202,7 @@ class TestAgentRoutes:
 # ==============================================================================
 # Deployment Routes Tests
 # ==============================================================================
+
 
 class TestDeploymentRoutes:
     """Tests for deployment routes edge cases."""
@@ -271,7 +239,7 @@ class TestDeploymentRoutes:
             DeploymentRequest(
                 project_id="test-project",
                 environment="invalid_env",  # Invalid
-                version="1.0.0"
+                version="1.0.0",
             )
 
     @pytest.mark.asyncio
@@ -284,10 +252,10 @@ class TestDeploymentRoutes:
             project_id="test-project",
             environment="dev",  # Valid: dev, staging, or production
             version="1.0.0",
-            config={"debug": True}
+            config={"debug": True},
         )
 
-        with patch('backend.api.routes.deployments._orchestrator') as mock_orch:
+        with patch("backend.api.routes.deployments._orchestrator") as mock_orch:
             mock_result = MagicMock()
             mock_result.deployment_id = "deploy-123"
             mock_result.project_name = "test-project"
@@ -308,14 +276,10 @@ class TestDeploymentRoutes:
         """Test listing deployments when none exist."""
         from backend.api.routes.deployments import list_deployments
 
-        with patch('backend.api.routes.deployments._orchestrator') as mock_orch:
+        with patch("backend.api.routes.deployments._orchestrator") as mock_orch:
             mock_orch.list_deployments.return_value = []
 
-            result = await list_deployments(
-                project_id=None,
-                environment=None,
-                user=mock_user
-            )
+            result = await list_deployments(project_id=None, environment=None, user=mock_user)
 
         assert result == []
 
@@ -324,15 +288,11 @@ class TestDeploymentRoutes:
         """Test listing deployments with invalid environment filter."""
         from backend.api.routes.deployments import list_deployments
 
-        with patch('backend.api.routes.deployments._orchestrator') as mock_orch:
+        with patch("backend.api.routes.deployments._orchestrator") as mock_orch:
             mock_orch.list_deployments.return_value = []
 
             # Invalid environment should be ignored, not raise error
-            result = await list_deployments(
-                project_id=None,
-                environment="invalid_env",
-                user=mock_user
-            )
+            result = await list_deployments(project_id=None, environment="invalid_env", user=mock_user)
 
         assert result == []
 
@@ -341,7 +301,7 @@ class TestDeploymentRoutes:
         """Test getting non-existent deployment."""
         from backend.api.routes.deployments import get_deployment
 
-        with patch('backend.api.routes.deployments._orchestrator') as mock_orch:
+        with patch("backend.api.routes.deployments._orchestrator") as mock_orch:
             mock_orch.get_deployment.return_value = None
 
             with pytest.raises(HTTPException) as exc_info:
@@ -354,7 +314,7 @@ class TestDeploymentRoutes:
         """Test cancelling non-existent deployment."""
         from backend.api.routes.deployments import cancel_deployment
 
-        with patch('backend.api.routes.deployments._orchestrator') as mock_orch:
+        with patch("backend.api.routes.deployments._orchestrator") as mock_orch:
             mock_orch.cancel_deployment.return_value = False
 
             with pytest.raises(HTTPException) as exc_info:
@@ -398,7 +358,7 @@ class TestDeploymentRoutes:
         """Test getting existing deployment (covers line 140)."""
         from backend.api.routes.deployments import get_deployment
 
-        with patch('backend.api.routes.deployments._orchestrator') as mock_orch:
+        with patch("backend.api.routes.deployments._orchestrator") as mock_orch:
             mock_orch.get_deployment.return_value = sample_deployment
 
             result = await get_deployment(deployment_id="deploy-123", user=mock_user)
@@ -416,7 +376,7 @@ class TestDeploymentRoutes:
         # After cancellation, deployment keeps its status but is no longer active
         sample_deployment.status = DeploymentStatus.PENDING
 
-        with patch('backend.api.routes.deployments._orchestrator') as mock_orch:
+        with patch("backend.api.routes.deployments._orchestrator") as mock_orch:
             mock_orch.cancel_deployment.return_value = True
             mock_orch.get_deployment.return_value = sample_deployment
 
@@ -431,14 +391,10 @@ class TestDeploymentRoutes:
         """Test listing deployments with valid filters."""
         from backend.api.routes.deployments import list_deployments
 
-        with patch('backend.api.routes.deployments._orchestrator') as mock_orch:
+        with patch("backend.api.routes.deployments._orchestrator") as mock_orch:
             mock_orch.list_deployments.return_value = [sample_deployment]
 
-            result = await list_deployments(
-                project_id="test-project",
-                environment="dev",
-                user=mock_user
-            )
+            result = await list_deployments(project_id="test-project", environment="dev", user=mock_user)
 
         assert len(result) == 1
         assert result[0].deployment_id == "deploy-123"
@@ -447,6 +403,7 @@ class TestDeploymentRoutes:
 # ==============================================================================
 # Project Routes Tests
 # ==============================================================================
+
 
 class TestProjectRoutes:
     """Tests for project routes edge cases."""
@@ -496,15 +453,11 @@ class TestProjectRoutes:
         """Test getting non-existent project."""
         from backend.api.routes.projects import get_project
 
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.get_project = AsyncMock(return_value=None)
 
             with pytest.raises(HTTPException) as exc_info:
-                await get_project(
-                    project_id="nonexistent",
-                    user=mock_user,
-                    db=mock_db
-                )
+                await get_project(project_id="nonexistent", user=mock_user, db=mock_db)
 
         assert exc_info.value.status_code == 404
 
@@ -515,15 +468,11 @@ class TestProjectRoutes:
 
         sample_project.owner_id = "other-user-123"
 
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.get_project = AsyncMock(return_value=sample_project)
 
             with pytest.raises(HTTPException) as exc_info:
-                await get_project(
-                    project_id="project-123",
-                    user=mock_user,
-                    db=mock_db
-                )
+                await get_project(project_id="project-123", user=mock_user, db=mock_db)
 
         assert exc_info.value.status_code == 403
         assert "Not authorized" in exc_info.value.detail
@@ -535,15 +484,11 @@ class TestProjectRoutes:
 
         sample_project.owner_id = "other-user-123"
 
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.get_project = AsyncMock(return_value=sample_project)
 
             # Admin should have access even without ownership
-            result = await get_project(
-                project_id="project-123",
-                user=mock_admin_user,
-                db=mock_db
-            )
+            result = await get_project(project_id="project-123", user=mock_admin_user, db=mock_db)
 
         assert result.id == "project-123"
 
@@ -553,17 +498,12 @@ class TestProjectRoutes:
         from backend.api.models import ProjectUpdate
         from backend.api.routes.projects import update_project
 
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.get_project = AsyncMock(return_value=None)
             request = ProjectUpdate(name="New Name")
 
             with pytest.raises(HTTPException) as exc_info:
-                await update_project(
-                    project_id="nonexistent",
-                    request=request,
-                    user=mock_user,
-                    db=mock_db
-                )
+                await update_project(project_id="nonexistent", request=request, user=mock_user, db=mock_db)
 
         assert exc_info.value.status_code == 404
 
@@ -575,17 +515,12 @@ class TestProjectRoutes:
 
         sample_project.owner_id = "other-user-123"
 
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.get_project = AsyncMock(return_value=sample_project)
             request = ProjectUpdate(name="New Name")
 
             with pytest.raises(HTTPException) as exc_info:
-                await update_project(
-                    project_id="project-123",
-                    request=request,
-                    user=mock_user,
-                    db=mock_db
-                )
+                await update_project(project_id="project-123", request=request, user=mock_user, db=mock_db)
 
         assert exc_info.value.status_code == 403
 
@@ -594,15 +529,11 @@ class TestProjectRoutes:
         """Test deleting non-existent project."""
         from backend.api.routes.projects import delete_project
 
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.get_project = AsyncMock(return_value=None)
 
             with pytest.raises(HTTPException) as exc_info:
-                await delete_project(
-                    project_id="nonexistent",
-                    user=mock_user,
-                    db=mock_db
-                )
+                await delete_project(project_id="nonexistent", user=mock_user, db=mock_db)
 
         assert exc_info.value.status_code == 404
 
@@ -613,15 +544,11 @@ class TestProjectRoutes:
 
         sample_project.owner_id = "other-user-123"
 
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.get_project = AsyncMock(return_value=sample_project)
 
             with pytest.raises(HTTPException) as exc_info:
-                await delete_project(
-                    project_id="project-123",
-                    user=mock_user,
-                    db=mock_db
-                )
+                await delete_project(project_id="project-123", user=mock_user, db=mock_db)
 
         assert exc_info.value.status_code == 403
 
@@ -630,16 +557,12 @@ class TestProjectRoutes:
         """Test delete operation failure."""
         from backend.api.routes.projects import delete_project
 
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.get_project = AsyncMock(return_value=sample_project)
             mock_service.delete_project = AsyncMock(return_value=False)
 
             with pytest.raises(HTTPException) as exc_info:
-                await delete_project(
-                    project_id="project-123",
-                    user=mock_user,
-                    db=mock_db
-                )
+                await delete_project(project_id="project-123", user=mock_user, db=mock_db)
 
         assert exc_info.value.status_code == 500
         assert "Failed to delete" in exc_info.value.detail
@@ -649,15 +572,11 @@ class TestProjectRoutes:
         """Test activating non-existent project."""
         from backend.api.routes.projects import activate_project
 
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.get_project = AsyncMock(return_value=None)
 
             with pytest.raises(HTTPException) as exc_info:
-                await activate_project(
-                    project_id="nonexistent",
-                    user=mock_user,
-                    db=mock_db
-                )
+                await activate_project(project_id="nonexistent", user=mock_user, db=mock_db)
 
         assert exc_info.value.status_code == 404
 
@@ -668,15 +587,11 @@ class TestProjectRoutes:
 
         sample_project.owner_id = "other-user-123"
 
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.get_project = AsyncMock(return_value=sample_project)
 
             with pytest.raises(HTTPException) as exc_info:
-                await activate_project(
-                    project_id="project-123",
-                    user=mock_user,
-                    db=mock_db
-                )
+                await activate_project(project_id="project-123", user=mock_user, db=mock_db)
 
         assert exc_info.value.status_code == 403
 
@@ -687,15 +602,11 @@ class TestProjectRoutes:
 
         sample_project.status = "active"  # Already active
 
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.get_project = AsyncMock(return_value=sample_project)
 
             with pytest.raises(HTTPException) as exc_info:
-                await activate_project(
-                    project_id="project-123",
-                    user=mock_user,
-                    db=mock_db
-                )
+                await activate_project(project_id="project-123", user=mock_user, db=mock_db)
 
         assert exc_info.value.status_code == 400
         assert "Cannot activate" in exc_info.value.detail
@@ -720,40 +631,32 @@ class TestProjectRoutes:
         updated_project.metadata = {}
         updated_project.extra_metadata = {}
 
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.get_project = AsyncMock(return_value=sample_project)
             mock_service.update_project = AsyncMock(return_value=updated_project)
 
             request = ProjectUpdate(name="Updated Project", status=ProjectStatus.ACTIVE)
-            result = await update_project(
-                project_id="project-123",
-                request=request,
-                user=mock_user,
-                db=mock_db
-            )
+            result = await update_project(project_id="project-123", request=request, user=mock_user, db=mock_db)
 
         assert result.status == ProjectStatus.ACTIVE
         # Verify status was converted to string value in update call
         mock_service.update_project.assert_called_once()
         call_args = mock_service.update_project.call_args
-        assert "status" in call_args.kwargs.get("updates", call_args[1].get("updates", {})) or \
-               (len(call_args.args) > 1 and "status" in str(call_args))
+        assert "status" in call_args.kwargs.get("updates", call_args[1].get("updates", {})) or (
+            len(call_args.args) > 1 and "status" in str(call_args)
+        )
 
     @pytest.mark.asyncio
     async def test_delete_project_success(self, mock_db, mock_user, sample_project):
         """Test successful project deletion (covers line 290)."""
         from backend.api.routes.projects import delete_project
 
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.get_project = AsyncMock(return_value=sample_project)
             mock_service.delete_project = AsyncMock(return_value=True)
 
             # Should complete without exception
-            result = await delete_project(
-                project_id="project-123",
-                user=mock_user,
-                db=mock_db
-            )
+            result = await delete_project(project_id="project-123", user=mock_user, db=mock_db)
 
         # delete_project returns None on success
         assert result is None
@@ -780,17 +683,14 @@ class TestProjectRoutes:
         activated_project.metadata = {}
         activated_project.extra_metadata = {}
 
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.get_project = AsyncMock(return_value=sample_project)
             mock_service.update_project = AsyncMock(return_value=activated_project)
 
-            result = await activate_project(
-                project_id="project-123",
-                user=mock_user,
-                db=mock_db
-            )
+            result = await activate_project(project_id="project-123", user=mock_user, db=mock_db)
 
         from backend.api.models import ProjectStatus
+
         assert result.status == ProjectStatus.ACTIVE
         assert result.current_phase == "requirements"
         mock_service.update_project.assert_called_once()
@@ -799,6 +699,7 @@ class TestProjectRoutes:
 # ==============================================================================
 # Workflow Routes Tests
 # ==============================================================================
+
 
 class TestWorkflowRoutes:
     """Tests for workflow routes edge cases."""
@@ -851,10 +752,7 @@ class TestWorkflowRoutes:
 
         with pytest.raises(HTTPException) as exc_info:
             await get_workflow_status(
-                workflow_id="nonexistent",
-                user=mock_user,
-                db=mock_db,
-                workflow_service=mock_workflow_service
+                workflow_id="nonexistent", user=mock_user, db=mock_db, workflow_service=mock_workflow_service
             )
 
         assert exc_info.value.status_code == 404
@@ -867,10 +765,7 @@ class TestWorkflowRoutes:
         mock_workflow_service.get_workflow.return_value = sample_workflow
 
         result = await get_workflow_status(
-            workflow_id="workflow-123",
-            user=mock_user,
-            db=mock_db,
-            workflow_service=mock_workflow_service
+            workflow_id="workflow-123", user=mock_user, db=mock_db, workflow_service=mock_workflow_service
         )
 
         assert result.workflow_id == "workflow-123"
@@ -884,10 +779,7 @@ class TestWorkflowRoutes:
 
         with pytest.raises(HTTPException) as exc_info:
             await cancel_workflow(
-                workflow_id="nonexistent",
-                user=mock_user,
-                db=mock_db,
-                workflow_service=mock_workflow_service
+                workflow_id="nonexistent", user=mock_user, db=mock_db, workflow_service=mock_workflow_service
             )
 
         assert exc_info.value.status_code == 404
@@ -904,10 +796,7 @@ class TestWorkflowRoutes:
 
         with pytest.raises(HTTPException) as exc_info:
             await cancel_workflow(
-                workflow_id="workflow-123",
-                user=mock_user,
-                db=mock_db,
-                workflow_service=mock_workflow_service
+                workflow_id="workflow-123", user=mock_user, db=mock_db, workflow_service=mock_workflow_service
             )
 
         assert exc_info.value.status_code == 400
@@ -936,10 +825,7 @@ class TestWorkflowRoutes:
         mock_workflow_service.update_workflow_status.return_value = cancelled_workflow
 
         result = await cancel_workflow(
-            workflow_id="workflow-123",
-            user=mock_user,
-            db=mock_db,
-            workflow_service=mock_workflow_service
+            workflow_id="workflow-123", user=mock_user, db=mock_db, workflow_service=mock_workflow_service
         )
 
         assert result.status == "cancelled"
@@ -967,10 +853,7 @@ class TestWorkflowRoutes:
 
         # Test with invalid status - should be ignored
         result = await list_workflows(
-            project_id="project-123",
-            workflow_status="invalid_status",
-            user=mock_user,
-            db=mock_db
+            project_id="project-123", workflow_status="invalid_status", user=mock_user, db=mock_db
         )
 
         assert result == []
@@ -991,7 +874,7 @@ class TestWorkflowRoutes:
             project_id="project-123",
             workflow_status="running",  # Valid status
             user=mock_user,
-            db=mock_db
+            db=mock_db,
         )
 
         assert len(result) == 1
@@ -1007,13 +890,13 @@ class TestWorkflowRoutes:
         mock_workflow_service.create_workflow.return_value = sample_workflow
 
         # Mock the background execution function
-        with patch('backend.api.routes.workflows._execute_workflow_real', new_callable=AsyncMock) as mock_exec:
+        with patch("backend.api.routes.workflows._execute_workflow_real", new_callable=AsyncMock) as mock_exec:
             from backend.api.models import WorkflowExecuteRequest
 
             request = WorkflowExecuteRequest(
                 project_id="project-123",
                 phase="requirements",
-                async_execution=False  # Synchronous execution
+                async_execution=False,  # Synchronous execution
             )
 
             background_tasks = BackgroundTasks()
@@ -1023,7 +906,7 @@ class TestWorkflowRoutes:
                 background_tasks=background_tasks,
                 user=mock_user,
                 db=mock_db,
-                workflow_service=mock_workflow_service
+                workflow_service=mock_workflow_service,
             )
 
             # With async_execution=False, _execute_workflow_real should be called directly
@@ -1043,7 +926,7 @@ class TestWorkflowRoutes:
         request = WorkflowExecuteRequest(
             project_id="project-123",
             phase="implementation",
-            async_execution=True  # Async execution
+            async_execution=True,  # Async execution
         )
 
         background_tasks = BackgroundTasks()
@@ -1053,7 +936,7 @@ class TestWorkflowRoutes:
             background_tasks=background_tasks,
             user=mock_user,
             db=mock_db,
-            workflow_service=mock_workflow_service
+            workflow_service=mock_workflow_service,
         )
 
         assert result.workflow_id == "workflow-123"
@@ -1067,7 +950,7 @@ class TestExecuteWorkflowReal:
         """Test workflow execution when workflow not found (covers lines 67-68)."""
         from backend.api.routes.workflows import _execute_workflow_real
 
-        with patch('backend.api.routes.workflows.DatabaseWorkflowService') as mock_service_class:
+        with patch("backend.api.routes.workflows.DatabaseWorkflowService") as mock_service_class:
             mock_service = AsyncMock()
             mock_service.update_workflow_status.return_value = None  # Workflow not found
             mock_service_class.return_value = mock_service
@@ -1085,12 +968,12 @@ class TestExecuteWorkflowReal:
         mock_workflow = MagicMock()
         mock_workflow.id = "workflow-123"
 
-        with patch('backend.api.routes.workflows.DatabaseWorkflowService') as mock_service_class:
+        with patch("backend.api.routes.workflows.DatabaseWorkflowService") as mock_service_class:
             mock_service = AsyncMock()
             mock_service.update_workflow_status.return_value = mock_workflow
             mock_service_class.return_value = mock_service
 
-            with patch('backend.api.routes.workflows.WorkflowEngine') as mock_engine_class:
+            with patch("backend.api.routes.workflows.WorkflowEngine") as mock_engine_class:
                 mock_engine = MagicMock()
                 mock_engine.run = AsyncMock(side_effect=Exception("Engine error"))
                 mock_engine_class.return_value = mock_engine
@@ -1101,10 +984,7 @@ class TestExecuteWorkflowReal:
                 # Verify update_workflow_status was called with FAILED
                 calls = mock_service.update_workflow_status.call_args_list
                 # At least one call should be for FAILED status
-                assert any(
-                    'FAILED' in str(call) or 'failed' in str(call).lower()
-                    for call in calls
-                )
+                assert any("FAILED" in str(call) or "failed" in str(call).lower() for call in calls)
 
     @pytest.mark.asyncio
     async def test_execute_workflow_real_success_complete(self):
@@ -1115,12 +995,12 @@ class TestExecuteWorkflowReal:
         mock_workflow = MagicMock()
         mock_workflow.id = "workflow-123"
 
-        with patch('backend.api.routes.workflows.DatabaseWorkflowService') as mock_service_class:
+        with patch("backend.api.routes.workflows.DatabaseWorkflowService") as mock_service_class:
             mock_service = AsyncMock()
             mock_service.update_workflow_status.return_value = mock_workflow
             mock_service_class.return_value = mock_service
 
-            with patch('backend.api.routes.workflows.WorkflowEngine') as mock_engine_class:
+            with patch("backend.api.routes.workflows.WorkflowEngine") as mock_engine_class:
                 mock_engine = MagicMock()
 
                 # Create mock final state
@@ -1144,12 +1024,12 @@ class TestExecuteWorkflowReal:
         mock_workflow = MagicMock()
         mock_workflow.id = "workflow-123"
 
-        with patch('backend.api.routes.workflows.DatabaseWorkflowService') as mock_service_class:
+        with patch("backend.api.routes.workflows.DatabaseWorkflowService") as mock_service_class:
             mock_service = AsyncMock()
             mock_service.update_workflow_status.return_value = mock_workflow
             mock_service_class.return_value = mock_service
 
-            with patch('backend.api.routes.workflows.WorkflowEngine') as mock_engine_class:
+            with patch("backend.api.routes.workflows.WorkflowEngine") as mock_engine_class:
                 mock_engine = MagicMock()
 
                 # Create mock final state with FAILED phase
@@ -1168,6 +1048,7 @@ class TestExecuteWorkflowReal:
 # ==============================================================================
 # Helper Function Tests
 # ==============================================================================
+
 
 class TestRouteHelpers:
     """Tests for route helper functions."""

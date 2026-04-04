@@ -16,6 +16,7 @@ logger = get_logger(__name__)
 
 class CloudProvider(StrEnum):
     """Supported cloud providers."""
+
     AWS = "aws"
     AZURE = "azure"
     GCP = "gcp"
@@ -31,6 +32,7 @@ class ResourceConfig:
         resource_type: Terraform resource type
         config: Resource configuration dict
     """
+
     name: str
     resource_type: str
     config: dict[str, Any] = field(default_factory=dict)
@@ -157,7 +159,7 @@ variable "app_port" {{
 '''
 
         # Outputs
-        files["outputs.tf"] = '''output "vpc_id" {
+        files["outputs.tf"] = """output "vpc_id" {
   description = "VPC ID"
   value       = module.vpc.vpc_id
 }
@@ -171,10 +173,10 @@ output "public_subnets" {
   description = "Public subnet IDs"
   value       = module.vpc.public_subnets
 }
-'''
+"""
 
         if enable_ecs:
-            files["ecs.tf"] = '''# ECS Cluster
+            files["ecs.tf"] = """# ECS Cluster
 resource "aws_ecs_cluster" "main" {
   name = "${var.project_name}-${var.environment}"
 
@@ -278,10 +280,10 @@ resource "aws_iam_role" "ecs_task" {
     }]
   })
 }
-'''
+"""
 
         if enable_rds:
-            files["rds.tf"] = '''# RDS Subnet Group
+            files["rds.tf"] = """# RDS Subnet Group
 resource "aws_db_subnet_group" "main" {
   name       = "${var.project_name}-${var.environment}"
   subnet_ids = module.vpc.private_subnets
@@ -347,7 +349,7 @@ resource "random_password" "db_password" {
   length  = 16
   special = true
 }
-'''
+"""
 
         self._logger.info(
             "AWS Terraform configuration generated",
@@ -454,7 +456,7 @@ variable "location" {{
 }}
 '''
 
-        files["outputs.tf"] = '''output "resource_group_name" {
+        files["outputs.tf"] = """output "resource_group_name" {
   description = "Resource group name"
   value       = azurerm_resource_group.main.name
 }
@@ -463,7 +465,7 @@ output "virtual_network_id" {
   description = "Virtual network ID"
   value       = azurerm_virtual_network.main.id
 }
-'''
+"""
 
         self._logger.info(
             "Azure Terraform configuration generated",
@@ -588,7 +590,7 @@ variable "region" {{
 }}
 '''
 
-        files["outputs.tf"] = '''output "cloud_run_url" {
+        files["outputs.tf"] = """output "cloud_run_url" {
   description = "Cloud Run service URL"
   value       = google_cloud_run_service.app.status[0].url
 }
@@ -597,7 +599,7 @@ output "network_id" {
   description = "VPC Network ID"
   value       = google_compute_network.main.id
 }
-'''
+"""
 
         self._logger.info(
             "GCP Terraform configuration generated",

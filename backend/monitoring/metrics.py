@@ -24,6 +24,7 @@ from prometheus_client import (
 logger = get_logger(__name__)
 settings = get_settings()
 
+
 class MetricsCollector:
     """Centralized metrics collection and management."""
 
@@ -33,141 +34,89 @@ class MetricsCollector:
 
         # HTTP Request Metrics
         self.http_requests_total = Counter(
-            'http_requests_total',
-            'Total HTTP requests',
-            ['method', 'endpoint', 'status_code'],
-            registry=self.registry
+            "http_requests_total", "Total HTTP requests", ["method", "endpoint", "status_code"], registry=self.registry
         )
 
         self.http_request_duration = Histogram(
-            'http_request_duration_seconds',
-            'HTTP request duration in seconds',
-            ['method', 'endpoint'],
+            "http_request_duration_seconds",
+            "HTTP request duration in seconds",
+            ["method", "endpoint"],
             registry=self.registry,
-            buckets=(0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0)
+            buckets=(0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0),
         )
 
         self.http_request_size = Summary(
-            'http_request_size_bytes',
-            'HTTP request size in bytes',
-            ['method', 'endpoint'],
-            registry=self.registry
+            "http_request_size_bytes", "HTTP request size in bytes", ["method", "endpoint"], registry=self.registry
         )
 
         self.http_response_size = Summary(
-            'http_response_size_bytes',
-            'HTTP response size in bytes',
-            ['method', 'endpoint'],
-            registry=self.registry
+            "http_response_size_bytes", "HTTP response size in bytes", ["method", "endpoint"], registry=self.registry
         )
 
         # System Metrics
-        self.system_cpu_percent = Gauge(
-            'system_cpu_percent',
-            'System CPU usage percentage',
-            registry=self.registry
-        )
+        self.system_cpu_percent = Gauge("system_cpu_percent", "System CPU usage percentage", registry=self.registry)
 
         self.system_memory_percent = Gauge(
-            'system_memory_percent',
-            'System memory usage percentage',
-            registry=self.registry
+            "system_memory_percent", "System memory usage percentage", registry=self.registry
         )
 
-        self.system_disk_percent = Gauge(
-            'system_disk_percent',
-            'System disk usage percentage',
-            registry=self.registry
-        )
+        self.system_disk_percent = Gauge("system_disk_percent", "System disk usage percentage", registry=self.registry)
 
         # Application Metrics
-        self.active_users = Gauge(
-            'active_users',
-            'Number of currently active users',
-            registry=self.registry
-        )
+        self.active_users = Gauge("active_users", "Number of currently active users", registry=self.registry)
 
-        self.database_connections = Gauge(
-            'database_connections',
-            'Active database connections',
-            registry=self.registry
-        )
+        self.database_connections = Gauge("database_connections", "Active database connections", registry=self.registry)
 
-        self.redis_connections = Gauge(
-            'redis_connections',
-            'Active Redis connections',
-            registry=self.registry
-        )
+        self.redis_connections = Gauge("redis_connections", "Active Redis connections", registry=self.registry)
 
-        self.queue_length = Gauge(
-            'queue_length',
-            'Length of processing queues',
-            ['queue_name'],
-            registry=self.registry
-        )
+        self.queue_length = Gauge("queue_length", "Length of processing queues", ["queue_name"], registry=self.registry)
 
         # Business Metrics
         self.projects_created = Counter(
-            'projects_created_total',
-            'Total number of projects created',
-            registry=self.registry
+            "projects_created_total", "Total number of projects created", registry=self.registry
         )
 
         self.code_generations = Counter(
-            'code_generations_total',
-            'Total number of code generations',
-            ['language', 'framework'],
-            registry=self.registry
+            "code_generations_total",
+            "Total number of code generations",
+            ["language", "framework"],
+            registry=self.registry,
         )
 
         self.simulations_run = Counter(
-            'simulations_run_total',
-            'Total number of simulations run',
-            registry=self.registry
+            "simulations_run_total", "Total number of simulations run", registry=self.registry
         )
 
         self.knowledge_documents = Gauge(
-            'knowledge_documents_total',
-            'Total number of knowledge base documents',
-            registry=self.registry
+            "knowledge_documents_total", "Total number of knowledge base documents", registry=self.registry
         )
 
         # Performance Metrics
         self.api_latency = Histogram(
-            'api_latency_seconds',
-            'API endpoint latency',
-            ['endpoint', 'method'],
+            "api_latency_seconds",
+            "API endpoint latency",
+            ["endpoint", "method"],
             registry=self.registry,
-            buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0)
+            buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0),
         )
 
         self.database_query_duration = Histogram(
-            'database_query_duration_seconds',
-            'Database query duration',
-            ['query_type'],
+            "database_query_duration_seconds",
+            "Database query duration",
+            ["query_type"],
             registry=self.registry,
-            buckets=(0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0)
+            buckets=(0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0),
         )
 
-        self.cache_hit_ratio = Gauge(
-            'cache_hit_ratio',
-            'Cache hit ratio percentage',
-            registry=self.registry
-        )
+        self.cache_hit_ratio = Gauge("cache_hit_ratio", "Cache hit ratio percentage", registry=self.registry)
 
         # Error Metrics
         self.errors_total = Counter(
-            'errors_total',
-            'Total number of errors',
-            ['error_type', 'endpoint'],
-            registry=self.registry
+            "errors_total", "Total number of errors", ["error_type", "endpoint"], registry=self.registry
         )
 
         self.retry_attempts = Counter(
-            'retry_attempts_total',
-            'Total number of retry attempts',
-            ['operation'],
-            registry=self.registry
+            "retry_attempts_total", "Total number of retry attempts", ["operation"], registry=self.registry
         )
 
         # Custom metrics collectors
@@ -220,7 +169,7 @@ class MetricsCollector:
             self.system_memory_percent.set(memory.percent)
 
             # Disk usage
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
             self.system_disk_percent.set((disk.used / disk.total) * 100)
 
         except Exception as e:
@@ -259,8 +208,10 @@ class MetricsCollector:
         """Get the metrics registry."""
         return self.registry
 
+
 # Global metrics collector instance
 metrics_collector = MetricsCollector()
+
 
 # Metrics middleware
 class MetricsMiddleware:
@@ -279,11 +230,7 @@ class MetricsMiddleware:
         path = scope["path"]
 
         # Track request
-        metrics_collector.http_requests_total.labels(
-            method=method,
-            endpoint=path,
-            status_code="unknown"
-        ).inc()
+        metrics_collector.http_requests_total.labels(method=method, endpoint=path, status_code="unknown").inc()
 
         async def wrapped_send(message):
             if message["type"] == "http.response.start":
@@ -302,19 +249,12 @@ class MetricsMiddleware:
 
         await self.app(scope, receive, wrapped_send)
 
+
 # Alerting system
 class AlertRule:
     """Represents an alert rule for monitoring."""
 
-    def __init__(
-        self,
-        name: str,
-        query: str,
-        threshold: float,
-        duration: str,
-        severity: str,
-        description: str
-    ):
+    def __init__(self, name: str, query: str, threshold: float, duration: str, severity: str, description: str):
         self.name = name
         self.query = query
         self.threshold = threshold
@@ -323,6 +263,7 @@ class AlertRule:
         self.description = description
         self.last_triggered = None
         self.active = False
+
 
 class AlertManager:
     """Manages alert rules and notifications."""
@@ -410,7 +351,7 @@ class AlertManager:
             "severity": rule.severity,
             "description": rule.description,
             "threshold": rule.threshold,
-            "timestamp": rule.last_triggered.isoformat()
+            "timestamp": rule.last_triggered.isoformat(),
         }
 
         logger.warning(f"Alert triggered: {rule.name}")
@@ -427,47 +368,58 @@ class AlertManager:
         rule.active = False
         logger.info(f"Alert resolved: {rule.name}")
 
+
 # Global alert manager instance
 alert_manager = AlertManager()
+
 
 # Predefined alert rules
 def setup_default_alerts():
     """Setup default alert rules."""
-    alert_manager.add_rule(AlertRule(
-        name="high_cpu_usage",
-        query="system_cpu_percent > 80",
-        threshold=80.0,
-        duration="5m",
-        severity="warning",
-        description="CPU usage is above 80%"
-    ))
+    alert_manager.add_rule(
+        AlertRule(
+            name="high_cpu_usage",
+            query="system_cpu_percent > 80",
+            threshold=80.0,
+            duration="5m",
+            severity="warning",
+            description="CPU usage is above 80%",
+        )
+    )
 
-    alert_manager.add_rule(AlertRule(
-        name="high_memory_usage",
-        query="system_memory_percent > 85",
-        threshold=85.0,
-        duration="5m",
-        severity="warning",
-        description="Memory usage is above 85%"
-    ))
+    alert_manager.add_rule(
+        AlertRule(
+            name="high_memory_usage",
+            query="system_memory_percent > 85",
+            threshold=85.0,
+            duration="5m",
+            severity="warning",
+            description="Memory usage is above 85%",
+        )
+    )
 
-    alert_manager.add_rule(AlertRule(
-        name="high_error_rate",
-        query="rate(errors_total[5m]) > 10",
-        threshold=10.0,
-        duration="5m",
-        severity="critical",
-        description="Error rate is above 10 errors per minute"
-    ))
+    alert_manager.add_rule(
+        AlertRule(
+            name="high_error_rate",
+            query="rate(errors_total[5m]) > 10",
+            threshold=10.0,
+            duration="5m",
+            severity="critical",
+            description="Error rate is above 10 errors per minute",
+        )
+    )
 
-    alert_manager.add_rule(AlertRule(
-        name="service_unavailable",
-        query="up == 0",
-        threshold=0.0,
-        duration="1m",
-        severity="critical",
-        description="Service is down"
-    ))
+    alert_manager.add_rule(
+        AlertRule(
+            name="service_unavailable",
+            query="up == 0",
+            threshold=0.0,
+            duration="1m",
+            severity="critical",
+            description="Service is down",
+        )
+    )
+
 
 # Initialize default alerts
 setup_default_alerts()

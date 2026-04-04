@@ -25,7 +25,7 @@ class TestInitDb:
         mock_engine_context.__aenter__ = AsyncMock(return_value=mock_conn)
         mock_engine_context.__aexit__ = AsyncMock(return_value=None)
 
-        with patch('backend.db.session.engine') as mock_engine:
+        with patch("backend.db.session.engine") as mock_engine:
             mock_engine.begin.return_value = mock_engine_context
 
             # Import after patching
@@ -55,7 +55,7 @@ class TestGetDb:
         mock_session_context.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session_context.__aexit__ = AsyncMock(return_value=None)
 
-        with patch('backend.db.session.AsyncSessionLocal', return_value=mock_session_context):
+        with patch("backend.db.session.AsyncSessionLocal", return_value=mock_session_context):
             from backend.db.session import get_db
 
             # Use the async generator
@@ -86,7 +86,7 @@ class TestGetDb:
         mock_session_context.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session_context.__aexit__ = AsyncMock(return_value=None)
 
-        with patch('backend.db.session.AsyncSessionLocal', return_value=mock_session_context):
+        with patch("backend.db.session.AsyncSessionLocal", return_value=mock_session_context):
             from backend.db.session import get_db
 
             gen = get_db()
@@ -115,7 +115,7 @@ class TestGetDbContext:
         mock_session_context.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session_context.__aexit__ = AsyncMock(return_value=None)
 
-        with patch('backend.db.session.AsyncSessionLocal', return_value=mock_session_context):
+        with patch("backend.db.session.AsyncSessionLocal", return_value=mock_session_context):
             from backend.db.session import get_db_context
 
             async with get_db_context() as session:
@@ -137,7 +137,7 @@ class TestGetDbContext:
         mock_session_context.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session_context.__aexit__ = AsyncMock(return_value=None)
 
-        with patch('backend.db.session.AsyncSessionLocal', return_value=mock_session_context):
+        with patch("backend.db.session.AsyncSessionLocal", return_value=mock_session_context):
             from backend.db.session import get_db_context
 
             with pytest.raises(ValueError, match="Test error"):

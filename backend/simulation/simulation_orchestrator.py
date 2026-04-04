@@ -20,6 +20,7 @@ logger = get_logger(__name__)
 @dataclass
 class SimulationConfig:
     """Simulation configuration."""
+
     run_security_scan: bool = True
     run_performance_test: bool = True
     run_integration_test: bool = True
@@ -51,7 +52,7 @@ class SimulationOrchestrator:
         code: str,
         language: str = "python",
         requirements: list[str] | None = None,
-        config: SimulationConfig | None = None
+        config: SimulationConfig | None = None,
     ) -> dict[str, Any]:
         """
         Run complete simulation workflow.
@@ -77,19 +78,17 @@ class SimulationOrchestrator:
                 "language": language,
                 "security_scan": config.run_security_scan,
                 "performance_test": config.run_performance_test,
-                "integration_test": config.run_integration_test
+                "integration_test": config.run_integration_test,
             },
             "tests": {},
             "validation": {},
-            "reports": []
+            "reports": [],
         }
 
         # 1. Run test suite
         if config.run_security_scan:
             self._logger.info("Running test suite")
-            test_result = await self._test_runner.run_full_suite(
-                code, language, requirements
-            )
+            test_result = await self._test_runner.run_full_suite(code, language, requirements)
             results["tests"] = self._test_runner.generate_report(test_result)
 
         # 2. Run validation
@@ -107,10 +106,10 @@ class SimulationOrchestrator:
                     "test_success_rate": results["tests"].get("summary", {}).get("success_rate", 0),
                     "validation_score": results["validation"].get("score", 0),
                     "overall_pass": (
-                        results["tests"].get("summary", {}).get("failed", 0) == 0 and
-                        results["validation"].get("overall_status") == "pass"
-                    )
-                }
+                        results["tests"].get("summary", {}).get("failed", 0) == 0
+                        and results["validation"].get("overall_status") == "pass"
+                    ),
+                },
             }
 
             for fmt in config.output_formats:
@@ -127,10 +126,7 @@ class SimulationOrchestrator:
         results["end_time"] = datetime.now(UTC).isoformat()
         results["status"] = "completed"
 
-        self._logger.info(
-            "Simulation workflow completed",
-            simulation_id=results["simulation_id"]
-        )
+        self._logger.info("Simulation workflow completed", simulation_id=results["simulation_id"])
 
         return results
 
@@ -150,5 +146,5 @@ class SimulationOrchestrator:
             "overall_pass": results.get("validation", {}).get("overall_status") == "pass",
             "test_success_rate": results.get("tests", {}).get("summary", {}).get("success_rate", 0),
             "validation_score": results.get("validation", {}).get("score", 0),
-            "reports_generated": len(results.get("reports", []))
+            "reports_generated": len(results.get("reports", [])),
         }

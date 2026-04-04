@@ -17,6 +17,7 @@ logger = get_logger(__name__)
 
 class ColumnType(str, Enum):
     """Supported column types."""
+
     STRING = "string"
     TEXT = "text"
     INTEGER = "integer"
@@ -32,6 +33,7 @@ class ColumnType(str, Enum):
 
 class ConstraintType(str, Enum):
     """Supported constraint types."""
+
     PRIMARY_KEY = "primary_key"
     FOREIGN_KEY = "foreign_key"
     UNIQUE = "unique"
@@ -41,6 +43,7 @@ class ConstraintType(str, Enum):
 
 class IndexType(str, Enum):
     """Supported index types."""
+
     BTREE = "btree"
     HASH = "hash"
     GIN = "gin"
@@ -50,6 +53,7 @@ class IndexType(str, Enum):
 @dataclass
 class Column:
     """Represents a database column."""
+
     name: str
     type: ColumnType
     nullable: bool = True
@@ -67,6 +71,7 @@ class Column:
 @dataclass
 class Constraint:
     """Represents a table constraint."""
+
     name: str
     type: ConstraintType
     columns: list[str]
@@ -78,6 +83,7 @@ class Constraint:
 @dataclass
 class Index:
     """Represents a database index."""
+
     name: str
     columns: list[str]
     type: IndexType = IndexType.BTREE
@@ -87,6 +93,7 @@ class Index:
 @dataclass
 class Table:
     """Represents a database table."""
+
     name: str
     columns: list[Column]
     constraints: list[Constraint] = None
@@ -103,6 +110,7 @@ class Table:
 @dataclass
 class Schema:
     """Represents a complete database schema."""
+
     name: str
     tables: list[Table]
     version: str
@@ -119,6 +127,7 @@ class Schema:
 @dataclass
 class Migration:
     """Represents a schema migration."""
+
     id: str
     name: str
     version: str
@@ -153,7 +162,7 @@ class SchemaManagementService:
                 Column("created_at", ColumnType.DATETIME, default_value="CURRENT_TIMESTAMP"),
                 Column("updated_at", ColumnType.DATETIME, default_value="CURRENT_TIMESTAMP"),
             ],
-            description="User accounts and authentication"
+            description="User accounts and authentication",
         )
 
         projects_table = Table(
@@ -173,10 +182,10 @@ class SchemaManagementService:
                     type=ConstraintType.FOREIGN_KEY,
                     columns=["owner_id"],
                     referenced_table="users",
-                    referenced_columns=["id"]
+                    referenced_columns=["id"],
                 )
             ],
-            description="Software projects managed by the system"
+            description="Software projects managed by the system",
         )
 
         default_schema = Schema(
@@ -185,17 +194,12 @@ class SchemaManagementService:
             version="1.0.0",
             created_at=datetime.now(UTC).isoformat(),
             updated_at=datetime.now(UTC).isoformat(),
-            description="Default application schema"
+            description="Default application schema",
         )
 
         self.schemas["default"] = default_schema
 
-    async def create_schema(
-        self,
-        name: str,
-        tables: list[dict[str, Any]],
-        description: str | None = None
-    ) -> Schema:
+    async def create_schema(self, name: str, tables: list[dict[str, Any]], description: str | None = None) -> Schema:
         """Create a new database schema."""
         try:
             # Convert table dictionaries to Table objects
@@ -209,7 +213,7 @@ class SchemaManagementService:
                         default_value=col.get("default_value"),
                         primary_key=col.get("primary_key", False),
                         unique=col.get("unique", False),
-                        foreign_key=col.get("foreign_key")
+                        foreign_key=col.get("foreign_key"),
                     )
                     for col in table_data.get("columns", [])
                 ]
@@ -221,7 +225,7 @@ class SchemaManagementService:
                         columns=constraint["columns"],
                         referenced_table=constraint.get("referenced_table"),
                         referenced_columns=constraint.get("referenced_columns"),
-                        check_condition=constraint.get("check_condition")
+                        check_condition=constraint.get("check_condition"),
                     )
                     for constraint in table_data.get("constraints", [])
                 ]
@@ -231,7 +235,7 @@ class SchemaManagementService:
                         name=index["name"],
                         columns=index["columns"],
                         type=IndexType(index.get("type", "btree")),
-                        unique=index.get("unique", False)
+                        unique=index.get("unique", False),
                     )
                     for index in table_data.get("indexes", [])
                 ]
@@ -241,7 +245,7 @@ class SchemaManagementService:
                     columns=columns,
                     constraints=constraints,
                     indexes=indexes,
-                    description=table_data.get("description")
+                    description=table_data.get("description"),
                 )
                 table_objects.append(table)
 
@@ -251,7 +255,7 @@ class SchemaManagementService:
                 version="1.0.0",
                 created_at=datetime.now(UTC).isoformat(),
                 updated_at=datetime.now(UTC).isoformat(),
-                description=description
+                description=description,
             )
 
             self.schemas[name] = schema
@@ -272,10 +276,7 @@ class SchemaManagementService:
         return list(self.schemas.values())
 
     async def update_schema(
-        self,
-        schema_name: str,
-        tables: list[dict[str, Any]] | None = None,
-        description: str | None = None
+        self, schema_name: str, tables: list[dict[str, Any]] | None = None, description: str | None = None
     ) -> Schema | None:
         """Update an existing schema."""
         schema = self.schemas.get(schema_name)
@@ -295,16 +296,12 @@ class SchemaManagementService:
                             default_value=col.get("default_value"),
                             primary_key=col.get("primary_key", False),
                             unique=col.get("unique", False),
-                            foreign_key=col.get("foreign_key")
+                            foreign_key=col.get("foreign_key"),
                         )
                         for col in table_data.get("columns", [])
                     ]
 
-                    table = Table(
-                        name=table_data["name"],
-                        columns=columns,
-                        description=table_data.get("description")
-                    )
+                    table = Table(name=table_data["name"], columns=columns, description=table_data.get("description"))
                     table_objects.append(table)
 
                 schema.tables = table_objects
@@ -331,11 +328,7 @@ class SchemaManagementService:
         return False
 
     async def create_migration(
-        self,
-        name: str,
-        sql_up: str,
-        sql_down: str | None = None,
-        description: str | None = None
+        self, name: str, sql_up: str, sql_down: str | None = None, description: str | None = None
     ) -> Migration:
         """Create a new migration."""
         try:
@@ -349,7 +342,7 @@ class SchemaManagementService:
                 sql_up=sql_up,
                 sql_down=sql_down,
                 created_at=datetime.now(UTC).isoformat(),
-                description=description
+                description=description,
             )
 
             self.migrations[migration_id] = migration
@@ -404,12 +397,7 @@ class SchemaManagementService:
 
         return sorted(migrations, key=lambda m: m.created_at, reverse=True)
 
-    async def generate_migration_from_diff(
-        self,
-        from_schema: str,
-        to_schema: str,
-        migration_name: str
-    ) -> Migration:
+    async def generate_migration_from_diff(self, from_schema: str, to_schema: str, migration_name: str) -> Migration:
         """Generate migration SQL from schema difference."""
         try:
             from_schema_obj = self.schemas.get(from_schema)
@@ -446,13 +434,12 @@ class SchemaManagementService:
                 sql_up=sql_up,
                 sql_down=sql_down,
                 created_at=datetime.now(UTC).isoformat(),
-                description=f"Auto-generated migration from {from_schema} to {to_schema}"
+                description=f"Auto-generated migration from {from_schema} to {to_schema}",
             )
 
             self.migrations[migration.id] = migration
 
-            logger.info("Generated migration from schema diff",
-                       from_schema=from_schema, to_schema=to_schema)
+            logger.info("Generated migration from schema diff", from_schema=from_schema, to_schema=to_schema)
             return migration
 
         except Exception as e:
@@ -507,12 +494,10 @@ class SchemaManagementService:
             if constraint.type == ConstraintType.FOREIGN_KEY:
                 cols = ", ".join(constraint.columns)
                 ref_cols = ", ".join(constraint.referenced_columns or [])
-                constraints_sql.append(
-                    f"    FOREIGN KEY ({cols}) REFERENCES {constraint.referenced_table}({ref_cols})"
-                )
+                constraints_sql.append(f"    FOREIGN KEY ({cols}) REFERENCES {constraint.referenced_table}({ref_cols})")
 
         all_definitions = columns_sql + constraints_sql
-        definitions_str = ',\n'.join(all_definitions)
+        definitions_str = ",\n".join(all_definitions)
         return f"CREATE TABLE {table.name} (\n{definitions_str}\n);"
 
     def _to_sql(self, schema: Schema) -> str:
@@ -528,5 +513,3 @@ class SchemaManagementService:
 
 # Global service instance
 schema_management_service = SchemaManagementService()
-
-

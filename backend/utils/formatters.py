@@ -55,7 +55,7 @@ def format_bytes(bytes_value: int) -> str:
     Returns:
         Human readable size string
     """
-    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+    for unit in ["B", "KB", "MB", "GB", "TB"]:
         if bytes_value < 1024.0:
             return f"{bytes_value:.1f} {unit}"
         bytes_value /= 1024.0
@@ -76,4 +76,4 @@ def truncate_string(text: str, max_length: int = 100, suffix: str = "...") -> st
     """
     if len(text) <= max_length:
         return text
-    return text[:max_length - len(suffix)] + suffix
+    return text[: max_length - len(suffix)] + suffix

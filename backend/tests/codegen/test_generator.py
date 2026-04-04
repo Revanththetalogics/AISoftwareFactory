@@ -206,6 +206,7 @@ class TestCodeGeneratorExtendedCoverage:
     def setup_method(self):
         """Create fresh generator for each test."""
         from backend.codegen.generator import CodeGenerator
+
         self.generator = CodeGenerator()
 
     def test_generate_from_template_generic_exception_lines_376_382(self):
@@ -226,7 +227,7 @@ class TestCodeGeneratorExtendedCoverage:
             raise RuntimeError("Unexpected error during rendering")
 
         # Patch the template directly in the generator's templates dict
-        with patch.object(self.generator._templates["bad_template"], 'render', side_effect=raise_runtime_error):
+        with patch.object(self.generator._templates["bad_template"], "render", side_effect=raise_runtime_error):
             result = self.generator.generate(
                 "bad_template",
                 {"value": "test"},  # Variables as dict

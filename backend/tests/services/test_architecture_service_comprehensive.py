@@ -27,8 +27,8 @@ class TestArchitectureVisualizationService:
     def test_init(self, architecture_service):
         """Test ArchitectureVisualizationService initialization."""
         assert architecture_service is not None
-        assert hasattr(architecture_service, 'diagrams')
-        assert hasattr(architecture_service, 'templates')
+        assert hasattr(architecture_service, "diagrams")
+        assert hasattr(architecture_service, "templates")
         assert isinstance(architecture_service.diagrams, dict)
         assert isinstance(architecture_service.templates, dict)
 
@@ -70,7 +70,7 @@ class TestArchitectureVisualizationService:
                 "width": 150,
                 "height": 100,
                 "status": "active",
-                "metadata": {"version": "1.0.0"}
+                "metadata": {"version": "1.0.0"},
             }
         ]
 
@@ -82,7 +82,7 @@ class TestArchitectureVisualizationService:
                 "type": "stores_in",
                 "label": "writes to",
                 "status": "active",
-                "metadata": {"protocol": "postgresql"}
+                "metadata": {"protocol": "postgresql"},
             }
         ]
 
@@ -91,7 +91,7 @@ class TestArchitectureVisualizationService:
             diagram_type=DiagramType.SYSTEM_OVERVIEW,
             nodes=nodes_data,
             relationships=relationships_data,
-            description="Test system architecture diagram"
+            description="Test system architecture diagram",
         )
 
         assert result is not None
@@ -137,30 +137,17 @@ class TestArchitectureVisualizationService:
     @pytest.mark.asyncio
     async def test_create_diagram_minimal_data(self, architecture_service):
         """Test creating diagram with minimal required data."""
-        nodes_data = [
-            {
-                "id": "minimal-node",
-                "name": "Minimal Node",
-                "type": "service",
-                "x": 0,
-                "y": 0
-            }
-        ]
+        nodes_data = [{"id": "minimal-node", "name": "Minimal Node", "type": "service", "x": 0, "y": 0}]
 
         relationships_data = [
-            {
-                "id": "minimal-rel",
-                "source_id": "minimal-node",
-                "target_id": "other-node",
-                "type": "depends_on"
-            }
+            {"id": "minimal-rel", "source_id": "minimal-node", "target_id": "other-node", "type": "depends_on"}
         ]
 
         result = await architecture_service.create_diagram(
             name="Minimal Diagram",
             diagram_type=DiagramType.MICROSERVICES,
             nodes=nodes_data,
-            relationships=relationships_data
+            relationships=relationships_data,
         )
 
         assert result is not None
@@ -180,7 +167,7 @@ class TestArchitectureVisualizationService:
             name="Get Test",
             diagram_type=DiagramType.SYSTEM_OVERVIEW,
             nodes=nodes_data,
-            relationships=relationships_data
+            relationships=relationships_data,
         )
 
         result = await architecture_service.get_diagram(created_diagram.id)
@@ -202,7 +189,9 @@ class TestArchitectureVisualizationService:
         nodes_data = [{"id": "test", "name": "Test", "type": "service", "x": 0, "y": 0}]
         relationships_data = [{"id": "rel", "source_id": "test", "target_id": "target", "type": "depends_on"}]
 
-        await architecture_service.create_diagram("Diagram 1", DiagramType.SYSTEM_OVERVIEW, nodes_data, relationships_data)
+        await architecture_service.create_diagram(
+            "Diagram 1", DiagramType.SYSTEM_OVERVIEW, nodes_data, relationships_data
+        )
         await architecture_service.create_diagram("Diagram 2", DiagramType.DEPLOYMENT, nodes_data, relationships_data)
 
         result = await architecture_service.list_diagrams()
@@ -220,8 +209,12 @@ class TestArchitectureVisualizationService:
         relationships_data = [{"id": "rel", "source_id": "test", "target_id": "target", "type": "depends_on"}]
 
         # Create diagrams of different types
-        await architecture_service.create_diagram("System Diagram", DiagramType.SYSTEM_OVERVIEW, nodes_data, relationships_data)
-        await architecture_service.create_diagram("Deployment Diagram", DiagramType.DEPLOYMENT, nodes_data, relationships_data)
+        await architecture_service.create_diagram(
+            "System Diagram", DiagramType.SYSTEM_OVERVIEW, nodes_data, relationships_data
+        )
+        await architecture_service.create_diagram(
+            "Deployment Diagram", DiagramType.DEPLOYMENT, nodes_data, relationships_data
+        )
 
         # Filter by system overview
         result = await architecture_service.list_diagrams(DiagramType.SYSTEM_OVERVIEW)
@@ -235,32 +228,20 @@ class TestArchitectureVisualizationService:
     async def test_update_diagram_success(self, architecture_service):
         """Test updating existing diagram."""
         # Create initial diagram
-        nodes_data = [
-            {"id": "old-node", "name": "Old Node", "type": "service", "x": 100, "y": 100}
-        ]
-        relationships_data = [
-            {"id": "old-rel", "source_id": "old-node", "target_id": "target", "type": "depends_on"}
-        ]
+        nodes_data = [{"id": "old-node", "name": "Old Node", "type": "service", "x": 100, "y": 100}]
+        relationships_data = [{"id": "old-rel", "source_id": "old-node", "target_id": "target", "type": "depends_on"}]
 
         original = await architecture_service.create_diagram(
             name="Original Diagram",
             diagram_type=DiagramType.SYSTEM_OVERVIEW,
             nodes=nodes_data,
-            relationships=relationships_data
+            relationships=relationships_data,
         )
         original_version = original.version
 
         # Update with new data
         new_nodes_data = [
-            {
-                "id": "new-node",
-                "name": "New Node",
-                "type": "database",
-                "x": 200,
-                "y": 200,
-                "width": 180,
-                "height": 120
-            }
+            {"id": "new-node", "name": "New Node", "type": "database", "x": 200, "y": 200, "width": 180, "height": 120}
         ]
 
         new_relationships_data = [
@@ -269,7 +250,7 @@ class TestArchitectureVisualizationService:
                 "source_id": "new-node",
                 "target_id": "another-target",
                 "type": "stores_in",
-                "label": "stores data"
+                "label": "stores data",
             }
         ]
 
@@ -278,7 +259,7 @@ class TestArchitectureVisualizationService:
             name="Updated Diagram",
             nodes=new_nodes_data,
             relationships=new_relationships_data,
-            description="Updated description"
+            description="Updated description",
         )
 
         assert result is not None
@@ -306,14 +287,12 @@ class TestArchitectureVisualizationService:
             name="Partial Update Test",
             diagram_type=DiagramType.SYSTEM_OVERVIEW,
             nodes=nodes_data,
-            relationships=relationships_data
+            relationships=relationships_data,
         )
 
         # Update only name and description
         result = await architecture_service.update_diagram(
-            diagram_id=original.id,
-            name="New Name Only",
-            description="New description only"
+            diagram_id=original.id, name="New Name Only", description="New description only"
         )
 
         assert result is not None
@@ -341,7 +320,7 @@ class TestArchitectureVisualizationService:
             name="Delete Test",
             diagram_type=DiagramType.SYSTEM_OVERVIEW,
             nodes=nodes_data,
-            relationships=relationships_data
+            relationships=relationships_data,
         )
 
         # Verify it exists
@@ -393,15 +372,13 @@ class TestArchitectureVisualizationService:
         system_info = {
             "services": [
                 {"name": "User Service", "version": "1.2.0", "status": "active"},
-                {"name": "Order Service", "version": "1.1.0", "status": "active"}
+                {"name": "Order Service", "version": "1.1.0", "status": "active"},
             ],
             "databases": [
                 {"name": "User DB", "engine": "postgresql", "size": "100GB"},
-                {"name": "Order DB", "engine": "mysql", "size": "50GB"}
+                {"name": "Order DB", "engine": "mysql", "size": "50GB"},
             ],
-            "caches": [
-                {"name": "Redis Cache", "type": "redis", "size": "10GB"}
-            ]
+            "caches": [{"name": "Redis Cache", "type": "redis", "size": "10GB"}],
         }
 
         result = await architecture_service.generate_system_diagram(system_info)
@@ -434,10 +411,7 @@ class TestArchitectureVisualizationService:
     @pytest.mark.asyncio
     async def test_generate_system_diagram_minimal_info(self, architecture_service):
         """Test generating system diagram with minimal system information."""
-        system_info = {
-            "services": [{"name": "API Service"}],
-            "databases": [{"name": "Main DB"}]
-        }
+        system_info = {"services": [{"name": "API Service"}], "databases": [{"name": "Main DB"}]}
 
         result = await architecture_service.generate_system_diagram(system_info)
 
@@ -449,9 +423,7 @@ class TestArchitectureVisualizationService:
     async def test_export_diagram_json_format(self, architecture_service):
         """Test exporting diagram as JSON."""
         # Create a diagram first
-        nodes_data = [
-            {"id": "export-test", "name": "Export Test", "type": "service", "x": 100, "y": 100}
-        ]
+        nodes_data = [{"id": "export-test", "name": "Export Test", "type": "service", "x": 100, "y": 100}]
         relationships_data = [
             {"id": "export-rel", "source_id": "export-test", "target_id": "target", "type": "depends_on"}
         ]
@@ -460,7 +432,7 @@ class TestArchitectureVisualizationService:
             name="Export Test",
             diagram_type=DiagramType.SYSTEM_OVERVIEW,
             nodes=nodes_data,
-            relationships=relationships_data
+            relationships=relationships_data,
         )
 
         result = await architecture_service.export_diagram(diagram.id, "json")
@@ -476,9 +448,7 @@ class TestArchitectureVisualizationService:
     async def test_export_diagram_mermaid_format(self, architecture_service):
         """Test exporting diagram as Mermaid format."""
         # Create a diagram first
-        nodes_data = [
-            {"id": "mermaid-node", "name": "Mermaid Test", "type": "service", "x": 100, "y": 100}
-        ]
+        nodes_data = [{"id": "mermaid-node", "name": "Mermaid Test", "type": "service", "x": 100, "y": 100}]
         relationships_data = [
             {"id": "mermaid-rel", "source_id": "mermaid-node", "target_id": "target", "type": "depends_on"}
         ]
@@ -487,7 +457,7 @@ class TestArchitectureVisualizationService:
             name="Mermaid Test",
             diagram_type=DiagramType.SYSTEM_OVERVIEW,
             nodes=nodes_data,
-            relationships=relationships_data
+            relationships=relationships_data,
         )
 
         result = await architecture_service.export_diagram(diagram.id, "mermaid")
@@ -511,7 +481,7 @@ class TestArchitectureVisualizationService:
             name="Format Test",
             diagram_type=DiagramType.SYSTEM_OVERVIEW,
             nodes=nodes_data,
-            relationships=relationships_data
+            relationships=relationships_data,
         )
 
         with pytest.raises(ValueError) as exc_info:
@@ -544,7 +514,9 @@ class TestArchitectureVisualizationService:
         assert rel.metadata == {}
 
         # With metadata
-        rel_with_meta = Relationship("rel-id", "source", "target", RelationshipType.DEPENDS_ON, metadata={"protocol": "http"})
+        rel_with_meta = Relationship(
+            "rel-id", "source", "target", RelationshipType.DEPENDS_ON, metadata={"protocol": "http"}
+        )
         assert rel_with_meta.metadata == {"protocol": "http"}
 
     def test_diagram_post_init(self):
@@ -554,18 +526,26 @@ class TestArchitectureVisualizationService:
 
         # Without metadata
         diagram = ArchitectureDiagram(
-            "diag-id", "Test Diagram", DiagramType.SYSTEM_OVERVIEW,
-            nodes, relationships,
-            datetime.now(UTC).isoformat(), datetime.now(UTC).isoformat()
+            "diag-id",
+            "Test Diagram",
+            DiagramType.SYSTEM_OVERVIEW,
+            nodes,
+            relationships,
+            datetime.now(UTC).isoformat(),
+            datetime.now(UTC).isoformat(),
         )
         assert diagram.metadata == {}
 
         # With metadata
         diagram_with_meta = ArchitectureDiagram(
-            "diag-id", "Test Diagram", DiagramType.SYSTEM_OVERVIEW,
-            nodes, relationships,
-            datetime.now(UTC).isoformat(), datetime.now(UTC).isoformat(),
-            metadata={"author": "test"}
+            "diag-id",
+            "Test Diagram",
+            DiagramType.SYSTEM_OVERVIEW,
+            nodes,
+            relationships,
+            datetime.now(UTC).isoformat(),
+            datetime.now(UTC).isoformat(),
+            metadata={"author": "test"},
         )
         assert diagram_with_meta.metadata == {"author": "test"}
 

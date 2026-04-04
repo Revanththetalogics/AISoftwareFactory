@@ -17,6 +17,7 @@ logger = get_logger(__name__)
 @dataclass
 class TestCase:
     """Integration test case."""
+
     name: str
     setup: Callable | None = None
     execute: Callable = None
@@ -27,6 +28,7 @@ class TestCase:
 @dataclass
 class TestResult:
     """Test execution result."""
+
     name: str
     success: bool
     duration: float
@@ -69,12 +71,7 @@ class IntegrationTester:
         import time
 
         if test_name not in self._test_cases:
-            return TestResult(
-                name=test_name,
-                success=False,
-                duration=0,
-                error="Test not found"
-            )
+            return TestResult(name=test_name, success=False, duration=0, error="Test not found")
 
         test = self._test_cases[test_name]
         start_time = time.time()
@@ -97,12 +94,7 @@ class IntegrationTester:
 
             duration = time.time() - start_time
 
-            return TestResult(
-                name=test_name,
-                success=success,
-                duration=duration,
-                details=validation
-            )
+            return TestResult(name=test_name, success=success, duration=duration, details=validation)
 
         except Exception as e:
             duration = time.time() - start_time
@@ -112,18 +104,9 @@ class IntegrationTester:
                 try:
                     await test.teardown()
                 except Exception as teardown_error:
-                    self._logger.error(
-                        "Teardown failed",
-                        test_name=test_name,
-                        error=str(teardown_error)
-                    )
+                    self._logger.error("Teardown failed", test_name=test_name, error=str(teardown_error))
 
-            return TestResult(
-                name=test_name,
-                success=False,
-                duration=duration,
-                error=str(e)
-            )
+            return TestResult(name=test_name, success=False, duration=duration, error=str(e))
 
     async def run_all_tests(self) -> list[TestResult]:
         """
@@ -140,11 +123,7 @@ class IntegrationTester:
 
         return results
 
-    async def test_api_workflow(
-        self,
-        base_url: str,
-        workflow: list[dict[str, Any]]
-    ) -> TestResult:
+    async def test_api_workflow(self, base_url: str, workflow: list[dict[str, Any]]) -> TestResult:
         """
         Test an API workflow.
 
@@ -176,19 +155,10 @@ class IntegrationTester:
                                 name="api_workflow",
                                 success=False,
                                 duration=time.time() - start_time,
-                                error=f"Expected {expected_status}, got {resp.status}"
+                                error=f"Expected {expected_status}, got {resp.status}",
                             )
 
-            return TestResult(
-                name="api_workflow",
-                success=True,
-                duration=time.time() - start_time
-            )
+            return TestResult(name="api_workflow", success=True, duration=time.time() - start_time)
 
         except Exception as e:
-            return TestResult(
-                name="api_workflow",
-                success=False,
-                duration=time.time() - start_time,
-                error=str(e)
-            )
+            return TestResult(name="api_workflow", success=False, duration=time.time() - start_time, error=str(e))

@@ -15,6 +15,7 @@ logger = get_logger(__name__)
 
 class CIPlatform(StrEnum):
     """Supported CI/CD platforms."""
+
     GITHUB_ACTIONS = "github_actions"
     GITLAB_CI = "gitlab_ci"
     AZURE_DEVOPS = "azure_devops"
@@ -22,6 +23,7 @@ class CIPlatform(StrEnum):
 
 class TriggerEvent(StrEnum):
     """Pipeline trigger events."""
+
     PUSH = "push"
     PULL_REQUEST = "pull_request"
     SCHEDULE = "schedule"
@@ -40,6 +42,7 @@ class PipelineStep:
         environment: Environment variables
         condition: Execution condition
     """
+
     name: str
     command: str
     working_directory: str | None = None
@@ -60,6 +63,7 @@ class PipelineJob:
         environment: Job environment
         if_condition: Job condition
     """
+
     name: str
     runs_on: str = "ubuntu-latest"
     steps: list[PipelineStep] = field(default_factory=list)
@@ -114,7 +118,7 @@ class CICDGenerator:
         python_versions = python_versions or ["3.10", "3.11", "3.12"]
         branches = branches or ["main", "master"]
 
-        workflow = f'''name: CI/CD Pipeline
+        workflow = f"""name: CI/CD Pipeline
 
 on:
   push:
@@ -160,10 +164,10 @@ jobs:
       with:
         file: ./coverage.xml
         fail_ci_if_error: false
-'''
+"""
 
         if enable_docker:
-            workflow += '''
+            workflow += """
   build:
     needs: test
     runs-on: ubuntu-latest
@@ -191,10 +195,10 @@ jobs:
           ${"{"} secrets.DOCKERHUB_USERNAME {"}"}/{"{"} github.event.repository.name {"}"}:${"{"} github.sha {"}"}
         cache-from: type=gha
         cache-to: type=gha,mode=max
-'''
+"""
 
         if enable_deploy:
-            workflow += f'''
+            workflow += f"""
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -208,7 +212,7 @@ jobs:
       run: |
         echo "Deploying to {deploy_platform}..."
         # Add deployment commands here
-'''
+"""
 
         self._logger.info(
             "GitHub Actions workflow generated",
@@ -248,7 +252,7 @@ jobs:
             "pnpm": "pnpm install --frozen-lockfile",
         }.get(package_manager, "npm ci")
 
-        workflow = f'''name: CI/CD Pipeline
+        workflow = f"""name: CI/CD Pipeline
 
 on:
   push:
@@ -286,7 +290,7 @@ jobs:
 
     - name: Build
       run: {package_manager} run build
-'''
+"""
 
         return workflow
 
@@ -305,7 +309,7 @@ jobs:
         Returns:
             GitLab CI YAML
         """
-        return f'''image: python:{python_version}-slim
+        return f"""image: python:{python_version}-slim
 
 stages:
   - test
@@ -358,7 +362,7 @@ deploy:
     - main
     - master
   when: manual
-'''
+"""
 
     def generate_azure_pipelines(
         self,
@@ -384,7 +388,7 @@ deploy:
 
     def _generate_azure_python(self, project_name: str) -> str:
         """Generate Azure pipeline for Python."""
-        return '''trigger:
+        return """trigger:
   branches:
     include:
       - main
@@ -432,11 +436,11 @@ steps:
   inputs:
     codeCoverageTool: Cobertura
     summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
-'''
+"""
 
     def _generate_azure_node(self, project_name: str) -> str:
         """Generate Azure pipeline for Node.js."""
-        return '''trigger:
+        return """trigger:
   branches:
     include:
       - main
@@ -469,4 +473,4 @@ steps:
 
 - script: npm run build
   displayName: 'Build'
-'''
+"""

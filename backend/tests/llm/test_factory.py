@@ -121,4 +121,5 @@ class TestLLMFactoryIntegration:
             provider = LLMFactory.create_llm(default_provider)
 
             from backend.llm.ollama_provider import OllamaProvider
+
             assert isinstance(provider, OllamaProvider)

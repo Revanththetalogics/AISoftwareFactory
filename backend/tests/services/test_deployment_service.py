@@ -4,7 +4,6 @@ Comprehensive tests for deployment service module.
 Tests for DeploymentService covering all methods and edge cases.
 """
 
-
 import pytest
 from backend.services.deployment_service import DeploymentService
 
@@ -20,9 +19,7 @@ class TestDeploymentService:
     async def test_create_deployment_basic(self):
         """Test basic deployment creation."""
         deployment = await self.service.create_deployment(
-            project_id="proj-123",
-            environment="development",
-            version="1.0.0"
+            project_id="proj-123", environment="development", version="1.0.0"
         )
 
         assert deployment is not None
@@ -38,10 +35,7 @@ class TestDeploymentService:
         config = {"replicas": 3, "cpu": "500m"}
 
         deployment = await self.service.create_deployment(
-            project_id="proj-123",
-            environment="production",
-            version="1.0.0",
-            config=config
+            project_id="proj-123", environment="production", version="1.0.0", config=config
         )
 
         assert deployment["config"] == config
@@ -50,11 +44,7 @@ class TestDeploymentService:
     @pytest.mark.asyncio
     async def test_create_deployment_without_config(self):
         """Test deployment creation without config defaults to empty dict."""
-        deployment = await self.service.create_deployment(
-            project_id="proj-123",
-            environment="staging",
-            version="1.0.0"
-        )
+        deployment = await self.service.create_deployment(project_id="proj-123", environment="staging", version="1.0.0")
 
         assert deployment["config"] == {}
 
@@ -62,9 +52,7 @@ class TestDeploymentService:
     async def test_create_deployment_fields(self):
         """Test all deployment fields are set correctly."""
         deployment = await self.service.create_deployment(
-            project_id="proj-123",
-            environment="development",
-            version="2.0.0"
+            project_id="proj-123", environment="development", version="2.0.0"
         )
 
         assert "deployment_id" in deployment
@@ -78,9 +66,7 @@ class TestDeploymentService:
     async def test_get_deployment_existing(self):
         """Test getting an existing deployment."""
         created = await self.service.create_deployment(
-            project_id="proj-123",
-            environment="development",
-            version="1.0.0"
+            project_id="proj-123", environment="development", version="1.0.0"
         )
 
         retrieved = await self.service.get_deployment(created["deployment_id"])
@@ -135,10 +121,7 @@ class TestDeploymentService:
         await self.service.create_deployment("proj-1", "production", "1.0.0")
         await self.service.create_deployment("proj-2", "development", "1.0.0")
 
-        deployments = await self.service.list_deployments(
-            project_id="proj-1",
-            environment="development"
-        )
+        deployments = await self.service.list_deployments(project_id="proj-1", environment="development")
 
         assert len(deployments) == 1
         assert deployments[0]["project_id"] == "proj-1"
@@ -161,15 +144,10 @@ class TestDeploymentService:
     async def test_update_deployment_status_basic(self):
         """Test updating deployment status."""
         deployment = await self.service.create_deployment(
-            project_id="proj-123",
-            environment="development",
-            version="1.0.0"
+            project_id="proj-123", environment="development", version="1.0.0"
         )
 
-        updated = await self.service.update_deployment_status(
-            deployment["deployment_id"],
-            status="running"
-        )
+        updated = await self.service.update_deployment_status(deployment["deployment_id"], status="running")
 
         assert updated is not None
         assert updated["status"] == "running"
@@ -177,10 +155,7 @@ class TestDeploymentService:
     @pytest.mark.asyncio
     async def test_update_deployment_status_not_found(self):
         """Test updating status of nonexistent deployment."""
-        result = await self.service.update_deployment_status(
-            "nonexistent-id",
-            status="running"
-        )
+        result = await self.service.update_deployment_status("nonexistent-id", status="running")
 
         assert result is None
 
@@ -188,20 +163,13 @@ class TestDeploymentService:
     async def test_update_deployment_status_with_steps(self):
         """Test updating deployment status with steps."""
         deployment = await self.service.create_deployment(
-            project_id="proj-123",
-            environment="development",
-            version="1.0.0"
+            project_id="proj-123", environment="development", version="1.0.0"
         )
 
-        steps = [
-            {"name": "Build", "status": "completed"},
-            {"name": "Deploy", "status": "in_progress"}
-        ]
+        steps = [{"name": "Build", "status": "completed"}, {"name": "Deploy", "status": "in_progress"}]
 
         updated = await self.service.update_deployment_status(
-            deployment["deployment_id"],
-            status="running",
-            steps=steps
+            deployment["deployment_id"], status="running", steps=steps
         )
 
         assert updated is not None
@@ -211,15 +179,11 @@ class TestDeploymentService:
     async def test_update_deployment_status_with_error(self):
         """Test updating deployment status with error message."""
         deployment = await self.service.create_deployment(
-            project_id="proj-123",
-            environment="development",
-            version="1.0.0"
+            project_id="proj-123", environment="development", version="1.0.0"
         )
 
         updated = await self.service.update_deployment_status(
-            deployment["deployment_id"],
-            status="failed",
-            error_message="Container failed to start"
+            deployment["deployment_id"], status="failed", error_message="Container failed to start"
         )
 
         assert updated is not None
@@ -231,15 +195,11 @@ class TestDeploymentService:
     async def test_update_deployment_status_with_url(self):
         """Test updating deployment status with URL."""
         deployment = await self.service.create_deployment(
-            project_id="proj-123",
-            environment="production",
-            version="1.0.0"
+            project_id="proj-123", environment="production", version="1.0.0"
         )
 
         updated = await self.service.update_deployment_status(
-            deployment["deployment_id"],
-            status="success",
-            url="https://app.example.com"
+            deployment["deployment_id"], status="success", url="https://app.example.com"
         )
 
         assert updated is not None
@@ -251,15 +211,10 @@ class TestDeploymentService:
     async def test_update_deployment_status_success_sets_completed_at(self):
         """Test that success status sets completed_at."""
         deployment = await self.service.create_deployment(
-            project_id="proj-123",
-            environment="development",
-            version="1.0.0"
+            project_id="proj-123", environment="development", version="1.0.0"
         )
 
-        updated = await self.service.update_deployment_status(
-            deployment["deployment_id"],
-            status="success"
-        )
+        updated = await self.service.update_deployment_status(deployment["deployment_id"], status="success")
 
         assert updated["completed_at"] is not None
 
@@ -267,15 +222,10 @@ class TestDeploymentService:
     async def test_update_deployment_status_failed_sets_completed_at(self):
         """Test that failed status sets completed_at."""
         deployment = await self.service.create_deployment(
-            project_id="proj-123",
-            environment="development",
-            version="1.0.0"
+            project_id="proj-123", environment="development", version="1.0.0"
         )
 
-        updated = await self.service.update_deployment_status(
-            deployment["deployment_id"],
-            status="failed"
-        )
+        updated = await self.service.update_deployment_status(deployment["deployment_id"], status="failed")
 
         assert updated["completed_at"] is not None
 
@@ -283,15 +233,10 @@ class TestDeploymentService:
     async def test_update_deployment_status_rolled_back_sets_completed_at(self):
         """Test that rolled_back status sets completed_at."""
         deployment = await self.service.create_deployment(
-            project_id="proj-123",
-            environment="development",
-            version="1.0.0"
+            project_id="proj-123", environment="development", version="1.0.0"
         )
 
-        updated = await self.service.update_deployment_status(
-            deployment["deployment_id"],
-            status="rolled_back"
-        )
+        updated = await self.service.update_deployment_status(deployment["deployment_id"], status="rolled_back")
 
         assert updated["completed_at"] is not None
 
@@ -299,15 +244,10 @@ class TestDeploymentService:
     async def test_update_deployment_status_running_no_completed_at(self):
         """Test that running status does not set completed_at."""
         deployment = await self.service.create_deployment(
-            project_id="proj-123",
-            environment="development",
-            version="1.0.0"
+            project_id="proj-123", environment="development", version="1.0.0"
         )
 
-        updated = await self.service.update_deployment_status(
-            deployment["deployment_id"],
-            status="running"
-        )
+        updated = await self.service.update_deployment_status(deployment["deployment_id"], status="running")
 
         assert updated["completed_at"] is None
 
@@ -315,9 +255,7 @@ class TestDeploymentService:
     async def test_delete_deployment_success(self):
         """Test deleting a deployment successfully."""
         deployment = await self.service.create_deployment(
-            project_id="proj-123",
-            environment="development",
-            version="1.0.0"
+            project_id="proj-123", environment="development", version="1.0.0"
         )
 
         result = await self.service.delete_deployment(deployment["deployment_id"])
@@ -357,9 +295,7 @@ class TestDeploymentServiceEnvironments:
     async def test_development_environment(self):
         """Test deployment to development environment."""
         deployment = await self.service.create_deployment(
-            project_id="proj-123",
-            environment="development",
-            version="1.0.0"
+            project_id="proj-123", environment="development", version="1.0.0"
         )
 
         assert deployment["environment"] == "development"
@@ -367,11 +303,7 @@ class TestDeploymentServiceEnvironments:
     @pytest.mark.asyncio
     async def test_staging_environment(self):
         """Test deployment to staging environment."""
-        deployment = await self.service.create_deployment(
-            project_id="proj-123",
-            environment="staging",
-            version="1.0.0"
-        )
+        deployment = await self.service.create_deployment(project_id="proj-123", environment="staging", version="1.0.0")
 
         assert deployment["environment"] == "staging"
 
@@ -379,9 +311,7 @@ class TestDeploymentServiceEnvironments:
     async def test_production_environment(self):
         """Test deployment to production environment."""
         deployment = await self.service.create_deployment(
-            project_id="proj-123",
-            environment="production",
-            version="1.0.0"
+            project_id="proj-123", environment="production", version="1.0.0"
         )
 
         assert deployment["environment"] == "production"

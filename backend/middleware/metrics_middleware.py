@@ -89,10 +89,7 @@ class PrometheusMetricsMiddleware(BaseHTTPMiddleware):
 
             # Record success metrics
             self.collector.record_api_request(
-                method=method,
-                endpoint=path,
-                status_code=response.status_code,
-                duration=duration
+                method=method, endpoint=path, status_code=response.status_code, duration=duration
             )
 
             return response
@@ -102,27 +99,16 @@ class PrometheusMetricsMiddleware(BaseHTTPMiddleware):
             duration = time.time() - start_time
 
             # Record error metrics
-            self.collector.record_api_error(
-                method=method,
-                endpoint=path,
-                error_type=type(exc).__name__
-            )
+            self.collector.record_api_error(method=method, endpoint=path, error_type=type(exc).__name__)
 
             # Also record as a request with 500 status
-            self.collector.record_api_request(
-                method=method,
-                endpoint=path,
-                status_code=500,
-                duration=duration
-            )
+            self.collector.record_api_request(method=method, endpoint=path, status_code=500, duration=duration)
 
             raise
 
         finally:
             # Decrement active requests
-            self.collector._active_request_count = max(
-                0, self.collector._active_request_count - 1
-            )
+            self.collector._active_request_count = max(0, self.collector._active_request_count - 1)
             self.collector.concurrent_requests.set(self.collector._active_request_count)
 
     def _normalize_path(self, path: str) -> str:
@@ -142,13 +128,10 @@ class PrometheusMetricsMiddleware(BaseHTTPMiddleware):
 
         # Replace UUIDs
         path = re.sub(
-            r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}',
-            '{id}',
-            path,
-            flags=re.IGNORECASE
+            r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", "{id}", path, flags=re.IGNORECASE
         )
 
         # Replace numeric IDs in path segments
-        path = re.sub(r'/\d+(?=/|$)', '/{id}', path)
+        path = re.sub(r"/\d+(?=/|$)", "/{id}", path)
 
         return path

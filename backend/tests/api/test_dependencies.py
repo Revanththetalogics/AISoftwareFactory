@@ -2,7 +2,6 @@
 Tests for API Dependencies.
 """
 
-
 import pytest
 from fastapi import HTTPException
 

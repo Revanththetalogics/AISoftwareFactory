@@ -4,7 +4,6 @@ Tests for custom exception hierarchy.
 This module tests the custom exception classes and their functionality.
 """
 
-
 from backend.core.exceptions import (
     AISoftwareFactoryException,
     AuthenticationError,
@@ -32,11 +31,7 @@ class TestAISoftwareFactoryException:
 
     def test_custom_values(self):
         """Test that custom values are set correctly."""
-        exc = AISoftwareFactoryException(
-            message="Custom message",
-            error_code="CUSTOM_ERROR",
-            status_code=400
-        )
+        exc = AISoftwareFactoryException(message="Custom message", error_code="CUSTOM_ERROR", status_code=400)
 
         assert exc.message == "Custom message"
         assert exc.error_code == "CUSTOM_ERROR"
@@ -44,22 +39,11 @@ class TestAISoftwareFactoryException:
 
     def test_to_dict(self):
         """Test conversion to dictionary."""
-        exc = AISoftwareFactoryException(
-            message="Test message",
-            error_code="TEST_ERROR"
-        )
+        exc = AISoftwareFactoryException(message="Test message", error_code="TEST_ERROR")
 
-        result = {
-            "error_code": exc.error_code,
-            "message": exc.message,
-            "status_code": exc.status_code
-        }
+        result = {"error_code": exc.error_code, "message": exc.message, "status_code": exc.status_code}
 
-        assert result == {
-            "error_code": "TEST_ERROR",
-            "message": "Test message",
-            "status_code": 500
-        }
+        assert result == {"error_code": "TEST_ERROR", "message": "Test message", "status_code": 500}
 
     def test_str_representation(self):
         """Test string representation."""
@@ -227,7 +211,7 @@ class TestExceptionInheritance:
             (ServiceUnavailableError, ["service"]),
             (ConflictError, ["Resource conflict"]),
             (RateLimitError, ["Rate limit exceeded"]),
-            (ExternalServiceError, ["External service error"])
+            (ExternalServiceError, ["External service error"]),
         ]
 
         for exc_class, args in test_cases:

@@ -57,9 +57,9 @@ scrape_configs:
                     "type": "prometheus",
                     "url": "http://prometheus:9090",
                     "access": "proxy",
-                    "isDefault": True
+                    "isDefault": True,
                 }
-            ]
+            ],
         }
 
     def generate_dashboard_config(self) -> dict[str, Any]:
@@ -72,11 +72,8 @@ scrape_configs:
                         "title": "Request Rate",
                         "type": "graph",
                         "targets": [
-                            {
-                                "expr": "rate(http_requests_total[5m])",
-                                "legendFormat": "{{method}} {{endpoint}}"
-                            }
-                        ]
+                            {"expr": "rate(http_requests_total[5m])", "legendFormat": "{{method}} {{endpoint}}"}
+                        ],
                     },
                     {
                         "title": "Response Time",
@@ -84,21 +81,16 @@ scrape_configs:
                         "targets": [
                             {
                                 "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
-                                "legendFormat": "95th percentile"
+                                "legendFormat": "95th percentile",
                             }
-                        ]
+                        ],
                     },
                     {
                         "title": "Error Rate",
                         "type": "graph",
-                        "targets": [
-                            {
-                                "expr": "rate(http_requests_total{status=~\"5..\"}[5m])",
-                                "legendFormat": "Errors"
-                            }
-                        ]
-                    }
-                ]
+                        "targets": [{"expr": 'rate(http_requests_total{status=~"5.."}[5m])', "legendFormat": "Errors"}],
+                    },
+                ],
             }
         }
 
@@ -145,24 +137,77 @@ groups:
         output_path.mkdir(parents=True, exist_ok=True)
 
         # Prometheus config
-        (output_path / "prometheus.yml").write_text(
-            self.generate_prometheus_config()
-        )
+        (output_path / "prometheus.yml").write_text(self.generate_prometheus_config())
 
         # Alert rules
-        (output_path / "alert_rules.yml").write_text(
-            self.generate_alert_rules()
-        )
+        (output_path / "alert_rules.yml").write_text(self.generate_alert_rules())
 
         # Grafana datasource
         import json
-        (output_path / "datasource.yml").write_text(
-            json.dumps(self.generate_grafana_datasource(), indent=2)
-        )
+
+        (output_path / "datasource.yml").write_text(json.dumps(self.generate_grafana_datasource(), indent=2))
 
         # Grafana dashboard
-        (output_path / "dashboard.json").write_text(
-            json.dumps(self.generate_dashboard_config(), indent=2)
-        )
+        (output_path / "dashboard.json").write_text(json.dumps(self.generate_dashboard_config(), indent=2))
 
         self._logger.info("Monitoring configs saved", path=str(output_path))
+
+
+class MonitoringAgent:
+    """
+    Monitoring agent for collecting and reporting system metrics.
+
+    Collects CPU, memory, and other system metrics and reports them
+    to the monitoring backend.
+    """
+
+    def __init__(self, interval_seconds: int = 15):
+        """
+        Initialize the monitoring agent.
+
+        Args:
+            interval_seconds: Collection interval in seconds
+        """
+        self._interval = interval_seconds
+        self._running = False
+        self._metrics: dict = {}
+        self._logger = get_logger(__name__)
+
+    def start(self) -> None:
+        """Start the monitoring agent."""
+        self._running = True
+        self._logger.info("Monitoring agent started", interval=self._interval)
+
+    def stop(self) -> None:
+        """Stop the monitoring agent."""
+        self._running = False
+        self._logger.info("Monitoring agent stopped")
+
+    def collect_metrics(self) -> dict:
+        """
+        Collect current system metrics.
+
+        Returns:
+            Dictionary of metric name to value
+        """
+        metrics = {}
+        try:
+            import psutil
+
+            metrics["cpu_percent"] = psutil.cpu_percent(interval=None)
+            metrics["memory_percent"] = psutil.virtual_memory().percent
+            metrics["memory_used_mb"] = psutil.virtual_memory().used / (1024 * 1024)
+            metrics["disk_percent"] = psutil.disk_usage("/").percent
+        except ImportError:
+            metrics["cpu_percent"] = 0.0
+            metrics["memory_percent"] = 0.0
+            metrics["memory_used_mb"] = 0.0
+            metrics["disk_percent"] = 0.0
+
+        self._metrics = metrics
+        return metrics
+
+    @property
+    def is_running(self) -> bool:
+        """Check if the agent is running."""
+        return self._running

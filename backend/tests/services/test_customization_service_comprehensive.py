@@ -2,7 +2,6 @@
 Comprehensive tests for CustomizationService to increase coverage.
 """
 
-
 import pytest
 from backend.services.customization_service import (
     ColorScheme,
@@ -27,10 +26,10 @@ class TestCustomizationService:
     def test_init(self, customization_service):
         """Test CustomizationService initialization."""
         assert customization_service is not None
-        assert hasattr(customization_service, 'themes')
-        assert hasattr(customization_service, 'layouts')
-        assert hasattr(customization_service, 'user_preferences')
-        assert hasattr(customization_service, 'custom_components')
+        assert hasattr(customization_service, "themes")
+        assert hasattr(customization_service, "layouts")
+        assert hasattr(customization_service, "user_preferences")
+        assert hasattr(customization_service, "custom_components")
         assert isinstance(customization_service.themes, dict)
         assert isinstance(customization_service.layouts, dict)
         assert isinstance(customization_service.user_preferences, dict)
@@ -113,7 +112,7 @@ class TestCustomizationService:
             background_color="#0F172A",
             text_color="#F1F5F9",
             border_color="#334155",
-            created_by="user123"
+            created_by="user123",
         )
 
         assert result is not None
@@ -176,9 +175,14 @@ class TestCustomizationService:
         """Test listing themes excluding custom themes."""
         # Create a custom theme first
         await customization_service.create_theme(
-            name="Custom Test", mode=ThemeMode.LIGHT,
-            primary_color="#000", secondary_color="#111", accent_color="#222",
-            background_color="#FFF", text_color="#000", border_color="#333"
+            name="Custom Test",
+            mode=ThemeMode.LIGHT,
+            primary_color="#000",
+            secondary_color="#111",
+            accent_color="#222",
+            background_color="#FFF",
+            text_color="#000",
+            border_color="#333",
         )
 
         result = await customization_service.list_themes(include_custom=False)
@@ -193,17 +197,19 @@ class TestCustomizationService:
         """Test updating existing custom theme."""
         # Create a custom theme first
         theme = await customization_service.create_theme(
-            name="Updatable Theme", mode=ThemeMode.LIGHT,
-            primary_color="#000", secondary_color="#111", accent_color="#222",
-            background_color="#FFF", text_color="#000", border_color="#333"
+            name="Updatable Theme",
+            mode=ThemeMode.LIGHT,
+            primary_color="#000",
+            secondary_color="#111",
+            accent_color="#222",
+            background_color="#FFF",
+            text_color="#000",
+            border_color="#333",
         )
 
         # Update it
         result = await customization_service.update_theme(
-            theme_id=theme.id,
-            name="Updated Theme Name",
-            primary_color="#FF0000",
-            background_color="#000000"
+            theme_id=theme.id, name="Updated Theme Name", primary_color="#FF0000", background_color="#000000"
         )
 
         assert result is not None
@@ -233,9 +239,14 @@ class TestCustomizationService:
         """Test deleting custom theme successfully."""
         # Create a custom theme
         theme = await customization_service.create_theme(
-            name="Deletable Theme", mode=ThemeMode.LIGHT,
-            primary_color="#000", secondary_color="#111", accent_color="#222",
-            background_color="#FFF", text_color="#000", border_color="#333"
+            name="Deletable Theme",
+            mode=ThemeMode.LIGHT,
+            primary_color="#000",
+            secondary_color="#111",
+            accent_color="#222",
+            background_color="#FFF",
+            text_color="#000",
+            border_color="#333",
         )
 
         # Verify it exists
@@ -266,9 +277,14 @@ class TestCustomizationService:
         """Test that deleting theme updates affected user preferences."""
         # Create custom theme
         theme = await customization_service.create_theme(
-            name="User Theme", mode=ThemeMode.LIGHT,
-            primary_color="#000", secondary_color="#111", accent_color="#222",
-            background_color="#FFF", text_color="#000", border_color="#333"
+            name="User Theme",
+            mode=ThemeMode.LIGHT,
+            primary_color="#000",
+            secondary_color="#111",
+            accent_color="#222",
+            background_color="#FFF",
+            text_color="#000",
+            border_color="#333",
         )
 
         # Set user preference to use this theme
@@ -295,7 +311,7 @@ class TestCustomizationService:
             content_spacing=40,
             card_border_radius=16,
             font_size="x-large",
-            created_by="user456"
+            created_by="user456",
         )
 
         assert result is not None
@@ -352,8 +368,12 @@ class TestCustomizationService:
         """Test listing layouts excluding custom layouts."""
         # Create a custom layout first
         await customization_service.create_layout(
-            name="Custom Layout", layout_type=LayoutType.CUSTOM,
-            sidebar_width=200, content_spacing=10, card_border_radius=4, font_size="small"
+            name="Custom Layout",
+            layout_type=LayoutType.CUSTOM,
+            sidebar_width=200,
+            content_spacing=10,
+            card_border_radius=4,
+            font_size="small",
         )
 
         result = await customization_service.list_layouts(include_custom=False)
@@ -388,9 +408,7 @@ class TestCustomizationService:
 
         # Update some preferences
         await customization_service.update_user_preferences(
-            "existinguser",
-            theme_id="theme_dark",
-            notifications_enabled=False
+            "existinguser", theme_id="theme_dark", notifications_enabled=False
         )
 
         # Get again
@@ -422,7 +440,7 @@ class TestCustomizationService:
             sidebar_collapsed=True,
             recent_colors=["#EF4444", "#F97316", "#EAB308"],
             favorite_themes=["theme_dark", "theme_green_nature"],
-            custom_css=".custom { color: red; }"
+            custom_css=".custom { color: red; }",
         )
 
         assert result is not None
@@ -447,9 +465,9 @@ class TestCustomizationService:
             name="Custom Button",
             component_type="button",
             html_template='<button class="custom-btn">{{text}}</button>',
-            css_styles='.custom-btn { background: blue; color: white; }',
+            css_styles=".custom-btn { background: blue; color: white; }",
             javascript_code='console.log("Custom button loaded");',
-            created_by="dev123"
+            created_by="dev123",
         )
 
         assert result is not None
@@ -457,7 +475,7 @@ class TestCustomizationService:
         assert result.name == "Custom Button"
         assert result.type == "button"
         assert result.html_template == '<button class="custom-btn">{{text}}</button>'
-        assert result.css_styles == '.custom-btn { background: blue; color: white; }'
+        assert result.css_styles == ".custom-btn { background: blue; color: white; }"
         assert result.javascript_code == 'console.log("Custom button loaded");'
         assert result.created_by == "dev123"
         assert result.is_active is True
@@ -472,8 +490,12 @@ class TestCustomizationService:
         """Test getting existing custom component."""
         # Create component first
         component = await customization_service.create_custom_component(
-            name="Test Component", component_type="div",
-            html_template="<div>Test</div>", css_styles="", javascript_code="", created_by="test"
+            name="Test Component",
+            component_type="div",
+            html_template="<div>Test</div>",
+            css_styles="",
+            javascript_code="",
+            created_by="test",
         )
 
         result = await customization_service.get_custom_component(component.id)
@@ -493,14 +515,22 @@ class TestCustomizationService:
         """Test listing custom components (active only by default)."""
         # Create active component
         active_component = await customization_service.create_custom_component(
-            name="Active Component", component_type="span",
-            html_template="<span>Active</span>", css_styles="", javascript_code="", created_by="test"
+            name="Active Component",
+            component_type="span",
+            html_template="<span>Active</span>",
+            css_styles="",
+            javascript_code="",
+            created_by="test",
         )
 
         # Create inactive component
         inactive_component = await customization_service.create_custom_component(
-            name="Inactive Component", component_type="p",
-            html_template="<p>Inactive</p>", css_styles="", javascript_code="", created_by="test"
+            name="Inactive Component",
+            component_type="p",
+            html_template="<p>Inactive</p>",
+            css_styles="",
+            javascript_code="",
+            created_by="test",
         )
         # Make it inactive
         await customization_service.toggle_component_status(inactive_component.id, False)
@@ -537,8 +567,12 @@ class TestCustomizationService:
         """Test toggling component status successfully."""
         # Create component (active by default)
         component = await customization_service.create_custom_component(
-            name="Toggle Test", component_type="button",
-            html_template="", css_styles="", javascript_code="", created_by="test"
+            name="Toggle Test",
+            component_type="button",
+            html_template="",
+            css_styles="",
+            javascript_code="",
+            created_by="test",
         )
 
         # Verify it's active
@@ -643,10 +677,10 @@ class TestCustomizationService:
                 "accent_color": "#06B6D4",
                 "background_color": "#0F172A",
                 "text_color": "#F1F5F9",
-                "border_color": "#334155"
+                "border_color": "#334155",
             },
             "exported_at": "2024-01-01T00:00:00Z",
-            "version": "1.0"
+            "version": "1.0",
         }
 
         result = await customization_service.import_theme(theme_data, "importer123")
@@ -663,11 +697,7 @@ class TestCustomizationService:
     @pytest.mark.asyncio
     async def test_import_theme_minimal_data(self, customization_service):
         """Test importing theme with minimal data (uses defaults)."""
-        theme_data = {
-            "theme": {
-                "name": "Minimal Import"
-            }
-        }
+        theme_data = {"theme": {"name": "Minimal Import"}}
 
         result = await customization_service.import_theme(theme_data, "importer456")
 
@@ -682,9 +712,15 @@ class TestCustomizationService:
         """Test Theme post-initialization."""
         # Without timestamps
         theme = Theme(
-            id="test-theme", name="Test Theme", mode=ThemeMode.LIGHT,
-            primary_color="#000", secondary_color="#111", accent_color="#222",
-            background_color="#FFF", text_color="#000", border_color="#333"
+            id="test-theme",
+            name="Test Theme",
+            mode=ThemeMode.LIGHT,
+            primary_color="#000",
+            secondary_color="#111",
+            accent_color="#222",
+            background_color="#FFF",
+            text_color="#000",
+            border_color="#333",
         )
         assert len(theme.created_at) > 0
         assert len(theme.updated_at) > 0
@@ -695,10 +731,17 @@ class TestCustomizationService:
         custom_created = "2024-01-01T00:00:00Z"
         custom_updated = "2024-01-02T00:00:00Z"
         theme_with_times = Theme(
-            id="test-theme-2", name="Test Theme 2", mode=ThemeMode.DARK,
-            primary_color="#000", secondary_color="#111", accent_color="#222",
-            background_color="#FFF", text_color="#000", border_color="#333",
-            created_at=custom_created, updated_at=custom_updated
+            id="test-theme-2",
+            name="Test Theme 2",
+            mode=ThemeMode.DARK,
+            primary_color="#000",
+            secondary_color="#111",
+            accent_color="#222",
+            background_color="#FFF",
+            text_color="#000",
+            border_color="#333",
+            created_at=custom_created,
+            updated_at=custom_updated,
         )
         assert theme_with_times.created_at == custom_created
         assert theme_with_times.updated_at == custom_updated
@@ -707,8 +750,13 @@ class TestCustomizationService:
         """Test Layout post-initialization."""
         # Without timestamps
         layout = Layout(
-            id="test-layout", name="Test Layout", type=LayoutType.COMPACT,
-            sidebar_width=200, content_spacing=10, card_border_radius=5, font_size="small"
+            id="test-layout",
+            name="Test Layout",
+            type=LayoutType.COMPACT,
+            sidebar_width=200,
+            content_spacing=10,
+            card_border_radius=5,
+            font_size="small",
         )
         assert len(layout.created_at) > 0
         assert len(layout.updated_at) > 0
@@ -716,9 +764,14 @@ class TestCustomizationService:
         # With timestamps provided
         custom_created = "2024-01-01T00:00:00Z"
         layout_with_times = Layout(
-            id="test-layout-2", name="Test Layout 2", type=LayoutType.DEFAULT,
-            sidebar_width=300, content_spacing=20, card_border_radius=10, font_size="medium",
-            created_at=custom_created
+            id="test-layout-2",
+            name="Test Layout 2",
+            type=LayoutType.DEFAULT,
+            sidebar_width=300,
+            content_spacing=20,
+            card_border_radius=10,
+            font_size="medium",
+            created_at=custom_created,
         )
         assert layout_with_times.created_at == custom_created
 
@@ -726,11 +779,19 @@ class TestCustomizationService:
         """Test UserPreferences post-initialization."""
         # Without timestamps
         prefs = UserPreferences(
-            user_id="testuser", theme_id="theme_light", layout_id="layout_default",
-            language="en-US", timezone="UTC", notifications_enabled=True,
-            auto_save_enabled=True, keyboard_shortcuts_enabled=True,
-            animations_enabled=True, compact_mode=False, sidebar_collapsed=False,
-            recent_colors=["#000"], favorite_themes=["theme_light"]
+            user_id="testuser",
+            theme_id="theme_light",
+            layout_id="layout_default",
+            language="en-US",
+            timezone="UTC",
+            notifications_enabled=True,
+            auto_save_enabled=True,
+            keyboard_shortcuts_enabled=True,
+            animations_enabled=True,
+            compact_mode=False,
+            sidebar_collapsed=False,
+            recent_colors=["#000"],
+            favorite_themes=["theme_light"],
         )
         assert len(prefs.created_at) > 0
         assert len(prefs.updated_at) > 0
@@ -738,12 +799,20 @@ class TestCustomizationService:
         # With timestamps provided
         custom_created = "2024-01-01T00:00:00Z"
         prefs_with_times = UserPreferences(
-            user_id="testuser2", theme_id="theme_dark", layout_id="layout_compact",
-            language="es-ES", timezone="Europe/Madrid", notifications_enabled=False,
-            auto_save_enabled=False, keyboard_shortcuts_enabled=False,
-            animations_enabled=False, compact_mode=True, sidebar_collapsed=True,
-            recent_colors=["#FFF"], favorite_themes=["theme_dark"],
-            created_at=custom_created
+            user_id="testuser2",
+            theme_id="theme_dark",
+            layout_id="layout_compact",
+            language="es-ES",
+            timezone="Europe/Madrid",
+            notifications_enabled=False,
+            auto_save_enabled=False,
+            keyboard_shortcuts_enabled=False,
+            animations_enabled=False,
+            compact_mode=True,
+            sidebar_collapsed=True,
+            recent_colors=["#FFF"],
+            favorite_themes=["theme_dark"],
+            created_at=custom_created,
         )
         assert prefs_with_times.created_at == custom_created
 

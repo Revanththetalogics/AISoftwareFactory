@@ -21,11 +21,7 @@ class TestConnectWithRetry:
         connect_fn = AsyncMock()
 
         result = await _connect_with_retry(
-            name="TestService",
-            connect_fn=connect_fn,
-            max_retries=3,
-            delay=0.01,
-            critical=False
+            name="TestService", connect_fn=connect_fn, max_retries=3, delay=0.01, critical=False
         )
 
         assert result is True
@@ -40,15 +36,11 @@ class TestConnectWithRetry:
         connect_fn.side_effect = [
             Exception("First fail"),
             Exception("Second fail"),
-            None  # Success on third
+            None,  # Success on third
         ]
 
         result = await _connect_with_retry(
-            name="TestService",
-            connect_fn=connect_fn,
-            max_retries=3,
-            delay=0.01,
-            critical=False
+            name="TestService", connect_fn=connect_fn, max_retries=3, delay=0.01, critical=False
         )
 
         assert result is True
@@ -62,11 +54,7 @@ class TestConnectWithRetry:
         connect_fn = AsyncMock(side_effect=Exception("Connection failed"))
 
         result = await _connect_with_retry(
-            name="TestService",
-            connect_fn=connect_fn,
-            max_retries=2,
-            delay=0.01,
-            critical=False
+            name="TestService", connect_fn=connect_fn, max_retries=2, delay=0.01, critical=False
         )
 
         assert result is False
@@ -81,11 +69,7 @@ class TestConnectWithRetry:
 
         with pytest.raises(RuntimeError) as exc_info:
             await _connect_with_retry(
-                name="CriticalService",
-                connect_fn=connect_fn,
-                max_retries=2,
-                delay=0.01,
-                critical=True
+                name="CriticalService", connect_fn=connect_fn, max_retries=2, delay=0.01, critical=True
             )
 
         assert "Failed to connect to critical service" in str(exc_info.value)
@@ -99,7 +83,7 @@ class TestCreateApplication:
         """Test application creation."""
         from backend.main import create_application
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(
                 APP_NAME="Test App",
                 APP_VERSION="1.0.0",
@@ -109,7 +93,7 @@ class TestCreateApplication:
                 ENABLE_METRICS=False,
                 RATE_LIMIT_DEFAULT=100,
                 RATE_LIMIT_ADMIN=200,
-                RATE_LIMIT_WINDOW_SECONDS=60
+                RATE_LIMIT_WINDOW_SECONDS=60,
             )
 
             app = create_application()
@@ -121,7 +105,7 @@ class TestCreateApplication:
         """Test application without CORS origins in development."""
         from backend.main import create_application
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(
                 APP_NAME="Test App",
                 APP_VERSION="1.0.0",
@@ -131,7 +115,7 @@ class TestCreateApplication:
                 ENABLE_METRICS=False,
                 RATE_LIMIT_DEFAULT=100,
                 RATE_LIMIT_ADMIN=200,
-                RATE_LIMIT_WINDOW_SECONDS=60
+                RATE_LIMIT_WINDOW_SECONDS=60,
             )
 
             app = create_application()
@@ -142,7 +126,7 @@ class TestCreateApplication:
         """Test application without CORS in production (logs warning)."""
         from backend.main import create_application
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(
                 APP_NAME="Test App",
                 APP_VERSION="1.0.0",
@@ -152,7 +136,7 @@ class TestCreateApplication:
                 ENABLE_METRICS=False,
                 RATE_LIMIT_DEFAULT=100,
                 RATE_LIMIT_ADMIN=200,
-                RATE_LIMIT_WINDOW_SECONDS=60
+                RATE_LIMIT_WINDOW_SECONDS=60,
             )
 
             app = create_application()
@@ -163,7 +147,7 @@ class TestCreateApplication:
         """Test application with metrics enabled."""
         from backend.main import create_application
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(
                 APP_NAME="Test App",
                 APP_VERSION="1.0.0",
@@ -173,7 +157,7 @@ class TestCreateApplication:
                 ENABLE_METRICS=True,
                 RATE_LIMIT_DEFAULT=100,
                 RATE_LIMIT_ADMIN=200,
-                RATE_LIMIT_WINDOW_SECONDS=60
+                RATE_LIMIT_WINDOW_SECONDS=60,
             )
 
             app = create_application()
@@ -191,14 +175,10 @@ class TestValidateDatabaseSchema:
 
         mock_session = AsyncMock()
         mock_result = Mock()
-        mock_result.fetchall = Mock(return_value=[
-            ("ix_users_username",),
-            ("ix_users_email",),
-            ("idx_users_active",)
-        ])
+        mock_result.fetchall = Mock(return_value=[("ix_users_username",), ("ix_users_email",), ("idx_users_active",)])
         mock_session.execute = AsyncMock(return_value=mock_result)
 
-        with patch('backend.db.session.AsyncSessionLocal') as mock_session_local:
+        with patch("backend.db.session.AsyncSessionLocal") as mock_session_local:
             mock_session_local.return_value.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session_local.return_value.__aexit__ = AsyncMock(return_value=None)
 
@@ -214,7 +194,7 @@ class TestValidateDatabaseSchema:
         # First set of calls for table validation (fail)
         mock_session.execute = AsyncMock(side_effect=Exception("Table not found"))
 
-        with patch('backend.db.session.AsyncSessionLocal') as mock_session_local:
+        with patch("backend.db.session.AsyncSessionLocal") as mock_session_local:
             mock_session_local.return_value.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session_local.return_value.__aexit__ = AsyncMock(return_value=None)
 
@@ -232,6 +212,7 @@ class TestValidateDatabaseSchema:
         mock_index_result.fetchall = Mock(return_value=[("ix_users_username",)])
 
         call_count = [0]
+
         async def side_effect(*args, **kwargs):
             call_count[0] += 1
             if call_count[0] <= 7:  # Table checks
@@ -240,7 +221,7 @@ class TestValidateDatabaseSchema:
 
         mock_session.execute = AsyncMock(side_effect=side_effect)
 
-        with patch('backend.db.session.AsyncSessionLocal') as mock_session_local:
+        with patch("backend.db.session.AsyncSessionLocal") as mock_session_local:
             mock_session_local.return_value.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session_local.return_value.__aexit__ = AsyncMock(return_value=None)
 
@@ -253,6 +234,7 @@ class TestValidateDatabaseSchema:
 
         mock_session = AsyncMock()
         call_count = [0]
+
         async def side_effect(*args, **kwargs):
             call_count[0] += 1
             if call_count[0] <= 7:  # Table checks succeed
@@ -261,7 +243,7 @@ class TestValidateDatabaseSchema:
 
         mock_session.execute = AsyncMock(side_effect=side_effect)
 
-        with patch('backend.db.session.AsyncSessionLocal') as mock_session_local:
+        with patch("backend.db.session.AsyncSessionLocal") as mock_session_local:
             mock_session_local.return_value.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session_local.return_value.__aexit__ = AsyncMock(return_value=None)
 
@@ -276,7 +258,7 @@ class TestStartupEvent:
         """Test startup with default secret key in development."""
         from backend.main import startup_event
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(
                 APP_NAME="Test App",
                 APP_VERSION="1.0.0",
@@ -286,14 +268,14 @@ class TestStartupEvent:
                 DATABASE_URL="postgresql://user:pass@localhost/db",
                 REDIS_URL="redis://localhost:6379",
                 OLLAMA_URL="http://localhost:11434",
-                OTEL_ENABLED=False
+                OTEL_ENABLED=False,
             )
 
-            with patch('backend.main._connect_with_retry') as mock_connect:
+            with patch("backend.main._connect_with_retry") as mock_connect:
                 mock_connect.return_value = True
 
-                with patch('backend.main.validate_database_schema', new_callable=AsyncMock):
-                    with patch('backend.services.auth_service.AuthService') as mock_auth:
+                with patch("backend.main.validate_database_schema", new_callable=AsyncMock):
+                    with patch("backend.services.auth_service.AuthService") as mock_auth:
                         mock_auth.return_value.create_default_admin = AsyncMock(return_value=None)
 
                         await startup_event()
@@ -303,14 +285,14 @@ class TestStartupEvent:
         """Test startup fails with default secret key in production."""
         from backend.main import startup_event
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(
                 APP_NAME="Test App",
                 APP_VERSION="1.0.0",
                 ENVIRONMENT="production",
                 DEBUG=False,
                 SECRET_KEY="your-secret-key-change-in-production",
-                DATABASE_URL="postgresql://user:pass@localhost/db"
+                DATABASE_URL="postgresql://user:pass@localhost/db",
             )
 
             with pytest.raises(SystemExit):
@@ -321,7 +303,7 @@ class TestStartupEvent:
         """Test startup handles database connection failure."""
         from backend.main import startup_event
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(
                 APP_NAME="Test App",
                 APP_VERSION="1.0.0",
@@ -331,10 +313,10 @@ class TestStartupEvent:
                 DATABASE_URL="postgresql://user:pass@localhost/db",
                 REDIS_URL="redis://localhost:6379",
                 OLLAMA_URL="http://localhost:11434",
-                OTEL_ENABLED=False
+                OTEL_ENABLED=False,
             )
 
-            with patch('backend.main._connect_with_retry', new_callable=AsyncMock) as mock_connect:
+            with patch("backend.main._connect_with_retry", new_callable=AsyncMock) as mock_connect:
                 mock_connect.side_effect = RuntimeError("Database connection failed")
 
                 with pytest.raises(RuntimeError):
@@ -345,7 +327,7 @@ class TestStartupEvent:
         """Test startup continues when Redis connection fails."""
         from backend.main import startup_event
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(
                 APP_NAME="Test App",
                 APP_VERSION="1.0.0",
@@ -355,10 +337,11 @@ class TestStartupEvent:
                 DATABASE_URL="postgresql://user:pass@localhost/db",
                 REDIS_URL="redis://localhost:6379",
                 OLLAMA_URL="http://localhost:11434",
-                OTEL_ENABLED=False
+                OTEL_ENABLED=False,
             )
 
             call_count = [0]
+
             async def mock_connect(name, connect_fn, max_retries, delay, critical):
                 call_count[0] += 1
                 if name == "Database":
@@ -368,9 +351,9 @@ class TestStartupEvent:
                 else:
                     return False  # Ollama fails
 
-            with patch('backend.main._connect_with_retry', side_effect=mock_connect):
-                with patch('backend.main.validate_database_schema', new_callable=AsyncMock):
-                    with patch('backend.services.auth_service.AuthService') as mock_auth:
+            with patch("backend.main._connect_with_retry", side_effect=mock_connect):
+                with patch("backend.main.validate_database_schema", new_callable=AsyncMock):
+                    with patch("backend.services.auth_service.AuthService") as mock_auth:
                         mock_auth.return_value.create_default_admin = AsyncMock(return_value=None)
 
                         await startup_event()
@@ -380,7 +363,7 @@ class TestStartupEvent:
         """Test startup with OpenTelemetry enabled."""
         from backend.main import startup_event
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(
                 APP_NAME="Test App",
                 APP_VERSION="1.0.0",
@@ -392,15 +375,15 @@ class TestStartupEvent:
                 OLLAMA_URL="http://localhost:11434",
                 OTEL_ENABLED=True,
                 OTEL_SERVICE_NAME="test-service",
-                OTEL_EXPORTER_ENDPOINT="http://localhost:4317"
+                OTEL_EXPORTER_ENDPOINT="http://localhost:4317",
             )
 
-            with patch('backend.main._connect_with_retry', return_value=True):
-                with patch('backend.main.validate_database_schema', new_callable=AsyncMock):
-                    with patch('backend.services.auth_service.AuthService') as mock_auth:
+            with patch("backend.main._connect_with_retry", return_value=True):
+                with patch("backend.main.validate_database_schema", new_callable=AsyncMock):
+                    with patch("backend.services.auth_service.AuthService") as mock_auth:
                         mock_auth.return_value.create_default_admin = AsyncMock(return_value=None)
 
-                        with patch('backend.main.setup_tracing') as mock_tracing:
+                        with patch("backend.main.setup_tracing") as mock_tracing:
                             mock_tracing.return_value = Mock()
 
                             await startup_event()
@@ -416,7 +399,7 @@ class TestStartupEvent:
         mock_admin_user.username = "admin"
         mock_admin_user.email = "admin@example.com"
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(
                 APP_NAME="Test App",
                 APP_VERSION="1.0.0",
@@ -426,12 +409,12 @@ class TestStartupEvent:
                 DATABASE_URL="postgresql://user:pass@localhost/db",
                 REDIS_URL="redis://localhost:6379",
                 OLLAMA_URL="http://localhost:11434",
-                OTEL_ENABLED=False
+                OTEL_ENABLED=False,
             )
 
-            with patch('backend.main._connect_with_retry', return_value=True):
-                with patch('backend.main.validate_database_schema', new_callable=AsyncMock):
-                    with patch('backend.services.auth_service.AuthService') as mock_auth_class:
+            with patch("backend.main._connect_with_retry", return_value=True):
+                with patch("backend.main.validate_database_schema", new_callable=AsyncMock):
+                    with patch("backend.services.auth_service.AuthService") as mock_auth_class:
                         mock_auth = Mock()
                         mock_auth.create_default_admin = AsyncMock(return_value=mock_admin_user)
                         mock_auth_class.return_value = mock_auth
@@ -443,7 +426,7 @@ class TestStartupEvent:
         """Test startup handles admin creation failure gracefully."""
         from backend.main import startup_event
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(
                 APP_NAME="Test App",
                 APP_VERSION="1.0.0",
@@ -453,16 +436,14 @@ class TestStartupEvent:
                 DATABASE_URL="postgresql://user:pass@localhost/db",
                 REDIS_URL="redis://localhost:6379",
                 OLLAMA_URL="http://localhost:11434",
-                OTEL_ENABLED=False
+                OTEL_ENABLED=False,
             )
 
-            with patch('backend.main._connect_with_retry', return_value=True):
-                with patch('backend.main.validate_database_schema', new_callable=AsyncMock):
-                    with patch('backend.services.auth_service.AuthService') as mock_auth_class:
+            with patch("backend.main._connect_with_retry", return_value=True):
+                with patch("backend.main.validate_database_schema", new_callable=AsyncMock):
+                    with patch("backend.services.auth_service.AuthService") as mock_auth_class:
                         mock_auth = Mock()
-                        mock_auth.create_default_admin = AsyncMock(
-                            side_effect=Exception("Admin creation failed")
-                        )
+                        mock_auth.create_default_admin = AsyncMock(side_effect=Exception("Admin creation failed"))
                         mock_auth_class.return_value = mock_auth
 
                         # Should not raise, just log warning
@@ -473,7 +454,7 @@ class TestStartupEvent:
         """Test startup handles schema validation failure gracefully."""
         from backend.main import startup_event
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(
                 APP_NAME="Test App",
                 APP_VERSION="1.0.0",
@@ -483,14 +464,14 @@ class TestStartupEvent:
                 DATABASE_URL="postgresql://user:pass@localhost/db",
                 REDIS_URL="redis://localhost:6379",
                 OLLAMA_URL="http://localhost:11434",
-                OTEL_ENABLED=False
+                OTEL_ENABLED=False,
             )
 
-            with patch('backend.main._connect_with_retry', return_value=True):
-                with patch('backend.main.validate_database_schema', new_callable=AsyncMock) as mock_validate:
+            with patch("backend.main._connect_with_retry", return_value=True):
+                with patch("backend.main.validate_database_schema", new_callable=AsyncMock) as mock_validate:
                     mock_validate.side_effect = Exception("Schema validation failed")
 
-                    with patch('backend.services.auth_service.AuthService') as mock_auth_class:
+                    with patch("backend.services.auth_service.AuthService") as mock_auth_class:
                         mock_auth = Mock()
                         mock_auth.create_default_admin = AsyncMock(return_value=None)
                         mock_auth_class.return_value = mock_auth
@@ -509,11 +490,11 @@ class TestShutdownEvent:
 
         mock_engine = AsyncMock()
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(REDIS_URL="redis://localhost:6379")
 
-            with patch('backend.db.session.engine', mock_engine):
-                with patch('redis.asyncio.from_url') as mock_redis:
+            with patch("backend.db.session.engine", mock_engine):
+                with patch("redis.asyncio.from_url") as mock_redis:
                     mock_redis_client = AsyncMock()
                     mock_redis.return_value = mock_redis_client
 
@@ -529,11 +510,11 @@ class TestShutdownEvent:
         mock_engine = AsyncMock()
         mock_engine.dispose = AsyncMock(side_effect=Exception("Close error"))
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(REDIS_URL="redis://localhost:6379")
 
-            with patch('backend.db.session.engine', mock_engine):
-                with patch('redis.asyncio.from_url') as mock_redis:
+            with patch("backend.db.session.engine", mock_engine):
+                with patch("redis.asyncio.from_url") as mock_redis:
                     mock_redis_client = AsyncMock()
                     mock_redis.return_value = mock_redis_client
 
@@ -547,11 +528,11 @@ class TestShutdownEvent:
 
         mock_engine = AsyncMock()
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(REDIS_URL="redis://localhost:6379")
 
-            with patch('backend.db.session.engine', mock_engine):
-                with patch('redis.asyncio.from_url') as mock_redis:
+            with patch("backend.db.session.engine", mock_engine):
+                with patch("redis.asyncio.from_url") as mock_redis:
                     mock_redis.side_effect = Exception("Redis error")
 
                     # Should not raise
@@ -562,11 +543,11 @@ class TestShutdownEvent:
         """Test shutdown when engine is None."""
         from backend.main import shutdown_event
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(REDIS_URL="redis://localhost:6379")
 
-            with patch('backend.db.session.engine', None):
-                with patch('redis.asyncio.from_url') as mock_redis:
+            with patch("backend.db.session.engine", None):
+                with patch("redis.asyncio.from_url") as mock_redis:
                     mock_redis_client = AsyncMock()
                     mock_redis.return_value = mock_redis_client
 
@@ -578,15 +559,13 @@ class TestRootEndpoint:
 
     def test_root_endpoint_development(self):
         """Test root endpoint in development mode."""
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(
-                APP_NAME="Test App",
-                APP_VERSION="1.0.0",
-                ENVIRONMENT="development",
-                is_development=True
+                APP_NAME="Test App", APP_VERSION="1.0.0", ENVIRONMENT="development", is_development=True
             )
 
             from backend.main import app
+
             client = TestClient(app, raise_server_exceptions=False)
 
             response = client.get("/")
@@ -599,15 +578,13 @@ class TestRootEndpoint:
 
     def test_root_endpoint_production(self):
         """Test root endpoint in production mode."""
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(
-                APP_NAME="Test App",
-                APP_VERSION="1.0.0",
-                ENVIRONMENT="production",
-                is_development=False
+                APP_NAME="Test App", APP_VERSION="1.0.0", ENVIRONMENT="production", is_development=False
             )
 
             from backend.main import app
+
             client = TestClient(app, raise_server_exceptions=False)
 
             response = client.get("/")
@@ -625,7 +602,7 @@ class TestDatabaseURLMasking:
         """Test that password is masked in database URL logs."""
         from backend.main import startup_event
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(
                 APP_NAME="Test App",
                 APP_VERSION="1.0.0",
@@ -635,12 +612,12 @@ class TestDatabaseURLMasking:
                 DATABASE_URL="postgresql://user:secretpassword@localhost/db",
                 REDIS_URL="redis://localhost:6379",
                 OLLAMA_URL="http://localhost:11434",
-                OTEL_ENABLED=False
+                OTEL_ENABLED=False,
             )
 
-            with patch('backend.main._connect_with_retry', return_value=True):
-                with patch('backend.main.validate_database_schema', new_callable=AsyncMock):
-                    with patch('backend.services.auth_service.AuthService') as mock_auth_class:
+            with patch("backend.main._connect_with_retry", return_value=True):
+                with patch("backend.main.validate_database_schema", new_callable=AsyncMock):
+                    with patch("backend.services.auth_service.AuthService") as mock_auth_class:
                         mock_auth = Mock()
                         mock_auth.create_default_admin = AsyncMock(return_value=None)
                         mock_auth_class.return_value = mock_auth
@@ -657,7 +634,7 @@ class TestStartupConfigurationError:
         """Test that configuration validation exceptions are re-raised (lines 305-306)."""
         from backend.main import startup_event
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             # Make get_settings raise an exception after initial access
             first_call = [True]
 
@@ -683,7 +660,7 @@ class TestStartupConfigurationError:
                 ENVIRONMENT="staging",
                 DEBUG=False,
                 SECRET_KEY="your-secret-key-change-in-production",  # Default key in staging
-                DATABASE_URL="postgresql://user:pass@localhost/db"
+                DATABASE_URL="postgresql://user:pass@localhost/db",
             )
 
             with pytest.raises(SystemExit):
@@ -694,7 +671,7 @@ class TestStartupConfigurationError:
         """Test configuration validation logs and re-raises exceptions (lines 305-306)."""
         from backend.main import startup_event
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             # Create a mock that raises AttributeError on SECRET_KEY access
             mock_config = Mock()
             mock_config.APP_NAME = "Test App"
@@ -716,7 +693,7 @@ class TestStartupInnerFunctions:
         """Test _init_redis inner function (lines 374-377)."""
         from backend.main import startup_event
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(
                 APP_NAME="Test App",
                 APP_VERSION="1.0.0",
@@ -726,7 +703,7 @@ class TestStartupInnerFunctions:
                 DATABASE_URL="postgresql://user@localhost/db",
                 REDIS_URL="redis://localhost:6379",
                 OLLAMA_URL="http://localhost:11434",
-                OTEL_ENABLED=False
+                OTEL_ENABLED=False,
             )
 
             redis_init_called = []
@@ -745,14 +722,14 @@ class TestStartupInnerFunctions:
                 else:
                     return False
 
-            with patch('backend.main._connect_with_retry', side_effect=mock_connect_with_retry):
-                with patch('backend.main.validate_database_schema', new_callable=AsyncMock):
-                    with patch('backend.services.auth_service.AuthService') as mock_auth_class:
+            with patch("backend.main._connect_with_retry", side_effect=mock_connect_with_retry):
+                with patch("backend.main.validate_database_schema", new_callable=AsyncMock):
+                    with patch("backend.services.auth_service.AuthService") as mock_auth_class:
                         mock_auth = Mock()
                         mock_auth.create_default_admin = AsyncMock(return_value=None)
                         mock_auth_class.return_value = mock_auth
 
-                        with patch('redis.asyncio.from_url') as mock_redis:
+                        with patch("redis.asyncio.from_url") as mock_redis:
                             mock_client = AsyncMock()
                             mock_redis.return_value = mock_client
 
@@ -765,7 +742,7 @@ class TestStartupInnerFunctions:
 
         from backend.main import startup_event
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(
                 APP_NAME="Test App",
                 APP_VERSION="1.0.0",
@@ -775,7 +752,7 @@ class TestStartupInnerFunctions:
                 DATABASE_URL="postgresql://user@localhost/db",
                 REDIS_URL="redis://localhost:6379",
                 OLLAMA_URL="http://localhost:11434",
-                OTEL_ENABLED=False
+                OTEL_ENABLED=False,
             )
 
             ollama_init_called = []
@@ -795,17 +772,19 @@ class TestStartupInnerFunctions:
                     return False
                 return False
 
-            with patch('backend.main._connect_with_retry', side_effect=mock_connect_with_retry):
-                with patch('backend.main.validate_database_schema', new_callable=AsyncMock):
-                    with patch('backend.services.auth_service.AuthService') as mock_auth_class:
+            with patch("backend.main._connect_with_retry", side_effect=mock_connect_with_retry):
+                with patch("backend.main.validate_database_schema", new_callable=AsyncMock):
+                    with patch("backend.services.auth_service.AuthService") as mock_auth_class:
                         mock_auth = Mock()
                         mock_auth.create_default_admin = AsyncMock(return_value=None)
                         mock_auth_class.return_value = mock_auth
 
-                        with patch('urllib.request.urlopen') as mock_urlopen:
+                        with patch("urllib.request.urlopen") as mock_urlopen:
                             mock_urlopen.return_value = Mock()
 
-                            with patch.object(asyncio.get_event_loop(), 'run_in_executor', new_callable=AsyncMock) as mock_executor:
+                            with patch.object(
+                                asyncio.get_event_loop(), "run_in_executor", new_callable=AsyncMock
+                            ) as mock_executor:
                                 mock_executor.return_value = Mock()
 
                                 await startup_event()
@@ -815,7 +794,7 @@ class TestStartupInnerFunctions:
         """Test _init_database inner function execution (lines 327-328)."""
         from backend.main import startup_event
 
-        with patch('backend.main.get_settings') as mock_settings:
+        with patch("backend.main.get_settings") as mock_settings:
             mock_settings.return_value = Mock(
                 APP_NAME="Test App",
                 APP_VERSION="1.0.0",
@@ -825,7 +804,7 @@ class TestStartupInnerFunctions:
                 DATABASE_URL="postgresql://user@localhost/db",
                 REDIS_URL="redis://localhost:6379",
                 OLLAMA_URL="http://localhost:11434",
-                OTEL_ENABLED=False
+                OTEL_ENABLED=False,
             )
 
             db_init_called = []
@@ -835,7 +814,7 @@ class TestStartupInnerFunctions:
                     # Execute the connect_fn to cover lines 327-328
                     db_init_called.append(True)
                     # Actually call connect_fn to execute _init_database
-                    with patch('backend.db.init_db', new_callable=AsyncMock) as mock_init:
+                    with patch("backend.db.init_db", new_callable=AsyncMock) as mock_init:
                         await connect_fn()
                         mock_init.assert_awaited_once()
                     return True
@@ -845,9 +824,9 @@ class TestStartupInnerFunctions:
                     return False
                 return False
 
-            with patch('backend.main._connect_with_retry', side_effect=mock_connect_with_retry):
-                with patch('backend.main.validate_database_schema', new_callable=AsyncMock):
-                    with patch('backend.services.auth_service.AuthService') as mock_auth_class:
+            with patch("backend.main._connect_with_retry", side_effect=mock_connect_with_retry):
+                with patch("backend.main.validate_database_schema", new_callable=AsyncMock):
+                    with patch("backend.services.auth_service.AuthService") as mock_auth_class:
                         mock_auth = Mock()
                         mock_auth.create_default_admin = AsyncMock(return_value=None)
                         mock_auth_class.return_value = mock_auth
@@ -869,21 +848,17 @@ class TestMainModule:
         import backend.main as main_module
 
         # Verify the module has expected attributes
-        assert hasattr(main_module, 'app')
-        assert hasattr(main_module, 'create_application')
-        assert hasattr(main_module, 'startup_event')
-        assert hasattr(main_module, 'shutdown_event')
+        assert hasattr(main_module, "app")
+        assert hasattr(main_module, "create_application")
+        assert hasattr(main_module, "startup_event")
+        assert hasattr(main_module, "shutdown_event")
 
     def test_main_if_name_main(self):
         """Test __main__ block setup (lines 502-506)."""
-        with patch('uvicorn.run'):
-            with patch('backend.main.get_settings') as mock_settings:
+        with patch("uvicorn.run"):
+            with patch("backend.main.get_settings") as mock_settings:
                 mock_settings.return_value = Mock(
-                    HOST="127.0.0.1",
-                    PORT=8000,
-                    is_development=True,
-                    WORKERS=4,
-                    LOG_LEVEL="INFO"
+                    HOST="127.0.0.1", PORT=8000, is_development=True, WORKERS=4, LOG_LEVEL="INFO"
                 )
 
                 # Simulate __main__ execution

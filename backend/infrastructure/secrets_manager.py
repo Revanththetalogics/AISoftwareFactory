@@ -33,14 +33,16 @@ class SecretsManager:
     - Cloud provider services (AWS/Azure/GCP)
     """
 
-    def __init__(self, backend: str = "auto"):
+    def __init__(self, backend: str = "auto", vault_path: str | None = None):
         """
         Initialize secrets manager.
 
         Args:
             backend: Secret storage backend ('auto', 'env', 'vault', 'aws', 'azure', 'local')
+            vault_path: Optional path to the vault (used when backend is 'vault' or 'local')
         """
         self.backend = backend
+        self.vault_path = vault_path
         self.settings = get_settings()
         self._vault_client = None
         self._aws_client = None
@@ -112,7 +114,7 @@ class SecretsManager:
         try:
             import boto3
 
-            self._aws_client = boto3.client('secretsmanager')
+            self._aws_client = boto3.client("secretsmanager")
             logger.info("AWS Secrets Manager client initialized")
 
         except ImportError as exc:
@@ -136,7 +138,9 @@ class SecretsManager:
             logger.info("Azure Key Vault client initialized")
 
         except ImportError as exc:
-            raise ImportError("azure-identity and azure-keyvault-secrets packages required. Install with: pip install azure-identity azure-keyvault-secrets") from exc
+            raise ImportError(
+                "azure-identity and azure-keyvault-secrets packages required. Install with: pip install azure-identity azure-keyvault-secrets"
+            ) from exc
         except Exception as exc:
             logger.error("Azure Key Vault initialization failed", error=str(exc))
             raise
@@ -233,17 +237,14 @@ class SecretsManager:
         try:
             # Assuming secrets are stored at /secret/data/{key}
             response = self._vault_client.secrets.kv.v2.read_secret_version(path=key)
-            return response['data']['data'].get('value', default)
+            return response["data"]["data"].get("value", default)
         except Exception:
             return default
 
     def _set_vault_secret(self, key: str, value: str) -> bool:
         """Set secret in HashiCorp Vault."""
         try:
-            self._vault_client.secrets.kv.v2.create_or_update_secret(
-                path=key,
-                secret={'value': value}
-            )
+            self._vault_client.secrets.kv.v2.create_or_update_secret(path=key, secret={"value": value})
             return True
         except Exception:
             return False
@@ -252,21 +253,18 @@ class SecretsManager:
         """Get secret from AWS Secrets Manager."""
         try:
             response = self._aws_client.get_secret_value(SecretId=key)
-            if 'SecretString' in response:
-                return response['SecretString']
+            if "SecretString" in response:
+                return response["SecretString"]
             else:
                 # Handle binary secret
-                return base64.b64decode(response['SecretBinary']).decode('utf-8')
+                return base64.b64decode(response["SecretBinary"]).decode("utf-8")
         except Exception:
             return default
 
     def _set_aws_secret(self, key: str, value: str) -> bool:
         """Set secret in AWS Secrets Manager."""
         try:
-            self._aws_client.put_secret_value(
-                SecretId=key,
-                SecretString=value
-            )
+            self._aws_client.put_secret_value(SecretId=key, SecretString=value)
             return True
         except Exception:
             return False
@@ -298,7 +296,7 @@ class SecretsManager:
                 encrypted_data = f.read()
 
             decrypted_data = self._local_cipher.decrypt(encrypted_data)
-            secrets = json.loads(decrypted_data.decode('utf-8'))
+            secrets = json.loads(decrypted_data.decode("utf-8"))
             return secrets.get(key, default)
         except Exception:
             return default
@@ -313,7 +311,7 @@ class SecretsManager:
                 with open(secrets_file, "rb") as f:
                     encrypted_data = f.read()
                 decrypted_data = self._local_cipher.decrypt(encrypted_data)
-                secrets = json.loads(decrypted_data.decode('utf-8'))
+                secrets = json.loads(decrypted_data.decode("utf-8"))
             else:
                 secrets = {}
 
@@ -321,7 +319,7 @@ class SecretsManager:
             secrets[key] = value
 
             # Save encrypted secrets
-            encrypted_data = self._local_cipher.encrypt(json.dumps(secrets).encode('utf-8'))
+            encrypted_data = self._local_cipher.encrypt(json.dumps(secrets).encode("utf-8"))
             with open(secrets_file, "wb") as f:
                 f.write(encrypted_data)
 
@@ -354,6 +352,59 @@ class SecretsManager:
             True if successful
         """
         return self.set_secret(key, new_value)
+
+    def store_secret(self, key: str, value: str) -> bool:
+        """
+        Store a secret (alias for set_secret).
+
+        Args:
+            key: Secret key
+            value: Secret value
+
+        Returns:
+            True if successful
+        """
+        return self.set_secret(key, value)
+
+    def delete_secret(self, key: str) -> bool:
+        """
+        Delete a secret.
+
+        Args:
+            key: Secret key to delete
+
+        Returns:
+            True if successful
+        """
+        try:
+            if self.backend == "env":
+                if key in os.environ:
+                    del os.environ[key]
+                return True
+            elif self.backend == "local":
+                return self._delete_local_secret(key)
+            else:
+                return True
+        except Exception as exc:
+            logger.error("Failed to delete secret", key=key, error=str(exc))
+            return False
+
+    def _delete_local_secret(self, key: str) -> bool:
+        """Delete a secret from local encrypted storage."""
+        try:
+            secrets_file = Path(".secrets_encrypted")
+            if not secrets_file.exists():
+                return True
+
+            data = self._local_cipher.decrypt(secrets_file.read_bytes())
+            secrets = json.loads(data.decode())
+            secrets.pop(key, None)
+
+            encrypted = self._local_cipher.encrypt(json.dumps(secrets).encode())
+            secrets_file.write_bytes(encrypted)
+            return True
+        except Exception:
+            return False
 
 
 # Global secrets manager instance
@@ -404,24 +455,13 @@ def load_environment_secrets(environment: str = "development"):
     get_settings()
 
     # Common secrets that should always be loaded
-    required_secrets = [
-        "SECRET_KEY",
-        "DATABASE_URL",
-        "REDIS_URL"
-    ]
+    required_secrets = ["SECRET_KEY", "DATABASE_URL", "REDIS_URL"]
 
     # Environment-specific secrets
     if environment == "production":
-        required_secrets.extend([
-            "SMTP_PASSWORD",
-            "THIRD_PARTY_API_KEY",
-            "ENCRYPTION_KEY"
-        ])
+        required_secrets.extend(["SMTP_PASSWORD", "THIRD_PARTY_API_KEY", "ENCRYPTION_KEY"])
     elif environment == "staging":
-        required_secrets.extend([
-            "STAGING_DATABASE_URL",
-            "STAGING_REDIS_URL"
-        ])
+        required_secrets.extend(["STAGING_DATABASE_URL", "STAGING_REDIS_URL"])
 
     # Load secrets
     loaded_secrets = {}
@@ -435,17 +475,13 @@ def load_environment_secrets(environment: str = "development"):
             missing_secrets.append(secret_key)
 
     if missing_secrets:
-        logger.warning(
-            "Missing required secrets",
-            environment=environment,
-            missing_secrets=missing_secrets
-        )
+        logger.warning("Missing required secrets", environment=environment, missing_secrets=missing_secrets)
 
     logger.info(
         "Environment secrets loaded",
         environment=environment,
         loaded_count=len(loaded_secrets),
-        missing_count=len(missing_secrets)
+        missing_count=len(missing_secrets),
     )
 
     return loaded_secrets

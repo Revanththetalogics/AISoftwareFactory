@@ -18,6 +18,7 @@ logger = get_logger(__name__)
 
 class UserRole(str, Enum):
     """User roles with administrative permissions."""
+
     SUPER_ADMIN = "super_admin"
     ADMIN = "admin"
     MODERATOR = "moderator"
@@ -27,6 +28,7 @@ class UserRole(str, Enum):
 
 class SystemStatus(str, Enum):
     """Overall system status indicators."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNSTABLE = "unstable"
@@ -35,6 +37,7 @@ class SystemStatus(str, Enum):
 
 class MaintenanceMode(str, Enum):
     """Maintenance mode states."""
+
     OFF = "off"
     READ_ONLY = "read_only"
     MAINTENANCE = "maintenance"
@@ -43,6 +46,7 @@ class MaintenanceMode(str, Enum):
 @dataclass
 class AdminUser:
     """Represents an administrative user."""
+
     id: str
     username: str
     email: str
@@ -56,6 +60,7 @@ class AdminUser:
 @dataclass
 class SystemMetrics:
     """Current system performance metrics."""
+
     cpu_usage: float
     memory_usage: float
     disk_usage: float
@@ -70,6 +75,7 @@ class SystemMetrics:
 @dataclass
 class SystemHealth:
     """Comprehensive system health status."""
+
     overall_status: SystemStatus
     services: dict[str, str]  # service_name -> status
     databases: dict[str, str]  # db_name -> status
@@ -81,6 +87,7 @@ class SystemHealth:
 @dataclass
 class AuditLog:
     """Administrative audit log entry."""
+
     id: str
     user_id: str
     action: str
@@ -95,6 +102,7 @@ class AuditLog:
 @dataclass
 class MaintenanceSchedule:
     """Scheduled maintenance window."""
+
     id: str
     title: str
     description: str
@@ -128,10 +136,7 @@ class AdminPanelService:
             is_active=True,
             last_login=datetime.now(UTC).isoformat(),
             created_at=datetime.now(UTC).isoformat(),
-            permissions=[
-                "manage_users", "manage_system", "view_logs",
-                "configure_settings", "perform_maintenance"
-            ]
+            permissions=["manage_users", "manage_system", "view_logs", "configure_settings", "perform_maintenance"],
         )
 
         admin = AdminUser(
@@ -142,7 +147,7 @@ class AdminPanelService:
             is_active=True,
             last_login=(datetime.now(UTC) - timedelta(hours=2)).isoformat(),
             created_at=datetime.now(UTC).isoformat(),
-            permissions=["manage_users", "view_logs", "configure_settings"]
+            permissions=["manage_users", "view_logs", "configure_settings"],
         )
 
         moderator = AdminUser(
@@ -153,14 +158,10 @@ class AdminPanelService:
             is_active=True,
             last_login=(datetime.now(UTC) - timedelta(days=1)).isoformat(),
             created_at=datetime.now(UTC).isoformat(),
-            permissions=["view_logs", "moderate_content"]
+            permissions=["view_logs", "moderate_content"],
         )
 
-        self.admin_users = {
-            super_admin.id: super_admin,
-            admin.id: admin,
-            moderator.id: moderator
-        }
+        self.admin_users = {super_admin.id: super_admin, admin.id: admin, moderator.id: moderator}
 
         # Sample audit logs
         audit_entries = [
@@ -173,7 +174,7 @@ class AdminPanelService:
                 details={"username": "new_user", "role": "developer"},
                 ip_address="192.168.1.100",
                 user_agent="Mozilla/5.0...",
-                timestamp=(datetime.now(UTC) - timedelta(hours=1)).isoformat()
+                timestamp=(datetime.now(UTC) - timedelta(hours=1)).isoformat(),
             ),
             AuditLog(
                 id=f"log_{uuid.uuid4().hex[:8]}",
@@ -184,8 +185,8 @@ class AdminPanelService:
                 details={"reason": "scheduled_maintenance", "duration": "5 minutes"},
                 ip_address="192.168.1.100",
                 user_agent="curl/7.68.0",
-                timestamp=(datetime.now(UTC) - timedelta(hours=3)).isoformat()
-            )
+                timestamp=(datetime.now(UTC) - timedelta(hours=3)).isoformat(),
+            ),
         ]
 
         self.audit_logs.extend(audit_entries)
@@ -218,15 +219,12 @@ class AdminPanelService:
                 cpu_usage=23.5,  # Percentage
                 memory_usage=67.2,  # Percentage
                 disk_usage=45.8,  # Percentage
-                network_io={
-                    "bytes_in": 1024000.0,
-                    "bytes_out": 512000.0
-                },
+                network_io={"bytes_in": 1024000.0, "bytes_out": 512000.0},
                 request_count=1250,
                 error_rate=0.02,  # 2%
                 response_time_avg=156.7,  # milliseconds
                 uptime="15 days, 4:32:18",
-                timestamp=now.isoformat()
+                timestamp=now.isoformat(),
             )
 
             return metrics
@@ -248,26 +246,18 @@ class AdminPanelService:
                     "auth_service": "healthy",
                     "database": "healthy",
                     "redis_cache": "degraded",
-                    "message_queue": "healthy"
+                    "message_queue": "healthy",
                 },
-                databases={
-                    "main_db": "healthy",
-                    "analytics_db": "healthy",
-                    "logs_db": "healthy"
-                },
-                external_services={
-                    "github_api": "healthy",
-                    "docker_registry": "healthy",
-                    "cloud_storage": "healthy"
-                },
+                databases={"main_db": "healthy", "analytics_db": "healthy", "logs_db": "healthy"},
+                external_services={"github_api": "healthy", "docker_registry": "healthy", "cloud_storage": "healthy"},
                 alerts=[
                     {
                         "severity": "warning",
                         "message": "Redis cache performance degraded",
-                        "timestamp": (now - timedelta(minutes=15)).isoformat()
+                        "timestamp": (now - timedelta(minutes=15)).isoformat(),
                     }
                 ],
-                last_checked=now.isoformat()
+                last_checked=now.isoformat(),
             )
 
             return health
@@ -277,10 +267,7 @@ class AdminPanelService:
             raise
 
     async def get_audit_logs(
-        self,
-        limit: int = 50,
-        user_id: str | None = None,
-        action: str | None = None
+        self, limit: int = 50, user_id: str | None = None, action: str | None = None
     ) -> list[AuditLog]:
         """Get administrative audit logs."""
         try:
@@ -310,7 +297,7 @@ class AdminPanelService:
         resource_id: str,
         details: dict[str, Any],
         ip_address: str,
-        user_agent: str
+        user_agent: str,
     ) -> AuditLog:
         """Log an administrative action."""
         try:
@@ -323,7 +310,7 @@ class AdminPanelService:
                 details=details,
                 ip_address=ip_address,
                 user_agent=user_agent,
-                timestamp=datetime.now(UTC).isoformat()
+                timestamp=datetime.now(UTC).isoformat(),
             )
 
             self.audit_logs.append(log_entry)
@@ -347,7 +334,7 @@ class AdminPanelService:
         end_time: str,
         mode: MaintenanceMode,
         affected_services: list[str],
-        created_by: str
+        created_by: str,
     ) -> MaintenanceSchedule:
         """Create a scheduled maintenance window."""
         try:
@@ -363,7 +350,7 @@ class AdminPanelService:
                 affected_services=affected_services,
                 created_by=created_by,
                 created_at=datetime.now(UTC).isoformat(),
-                is_active=True
+                is_active=True,
             )
 
             self.maintenance_schedules[schedule_id] = schedule
@@ -375,10 +362,7 @@ class AdminPanelService:
             logger.error("Failed to create maintenance schedule", error=str(e))
             raise
 
-    async def get_maintenance_schedules(
-        self,
-        active_only: bool = True
-    ) -> list[MaintenanceSchedule]:
+    async def get_maintenance_schedules(self, active_only: bool = True) -> list[MaintenanceSchedule]:
         """Get maintenance schedules."""
         try:
             schedules = list(self.maintenance_schedules.values())
@@ -426,12 +410,7 @@ class AdminPanelService:
             raise
 
     async def create_admin_user(
-        self,
-        username: str,
-        email: str,
-        role: UserRole,
-        permissions: list[str],
-        created_by: str
+        self, username: str, email: str, role: UserRole, permissions: list[str], created_by: str
     ) -> AdminUser:
         """Create a new administrative user."""
         try:
@@ -450,7 +429,7 @@ class AdminPanelService:
                 is_active=True,
                 last_login=None,
                 created_at=datetime.now(UTC).isoformat(),
-                permissions=permissions
+                permissions=permissions,
             )
 
             self.admin_users[user_id] = user
@@ -461,13 +440,9 @@ class AdminPanelService:
                 action="admin_user_created",
                 resource_type="admin_user",
                 resource_id=user_id,
-                details={
-                    "username": username,
-                    "email": email,
-                    "role": role.value
-                },
+                details={"username": username, "email": email, "role": role.value},
                 ip_address="system",
-                user_agent="admin_panel"
+                user_agent="admin_panel",
             )
 
             logger.info(f"Created admin user: {username}", user_id=user_id)
@@ -477,11 +452,7 @@ class AdminPanelService:
             logger.error("Failed to create admin user", error=str(e))
             raise
 
-    async def update_admin_user(
-        self,
-        user_id: str,
-        **updates
-    ) -> AdminUser:
+    async def update_admin_user(self, user_id: str, **updates) -> AdminUser:
         """Update an administrative user."""
         try:
             user = self.admin_users.get(user_id)
@@ -489,9 +460,7 @@ class AdminPanelService:
                 raise ValueError("Admin user not found")
 
             # Update allowed fields
-            updatable_fields = [
-                'username', 'email', 'role', 'is_active', 'permissions'
-            ]
+            updatable_fields = ["username", "email", "role", "is_active", "permissions"]
 
             for field in updatable_fields:
                 if field in updates:
@@ -520,17 +489,31 @@ class AdminPanelService:
                 "administrative": {
                     "total_admins": len(users),
                     "active_admins": len([u for u in users if u.is_active]),
-                    "roles_distribution": self._get_roles_distribution()
+                    "roles_distribution": self._get_roles_distribution(),
                 },
                 "activity": {
                     "recent_actions": len(logs),
-                    "actions_today": len([log for log in logs if "T" in log.timestamp and log.timestamp.split("T")[0] == datetime.now(UTC).strftime("%Y-%m-%d")]),
-                    "unique_users_today": len(set(log.user_id for log in logs if "T" in log.timestamp and log.timestamp.split("T")[0] == datetime.now(UTC).strftime("%Y-%m-%d")))
+                    "actions_today": len(
+                        [
+                            log
+                            for log in logs
+                            if "T" in log.timestamp
+                            and log.timestamp.split("T")[0] == datetime.now(UTC).strftime("%Y-%m-%d")
+                        ]
+                    ),
+                    "unique_users_today": len(
+                        set(
+                            log.user_id
+                            for log in logs
+                            if "T" in log.timestamp
+                            and log.timestamp.split("T")[0] == datetime.now(UTC).strftime("%Y-%m-%d")
+                        )
+                    ),
                 },
                 "maintenance": {
                     "active_schedules": len([s for s in maintenance if s.is_active]),
-                    "current_mode": (await self.get_current_maintenance_mode()).value
-                }
+                    "current_mode": (await self.get_current_maintenance_mode()).value,
+                },
             }
 
             return stats
@@ -559,7 +542,7 @@ class AdminPanelService:
                 "end_time": end_time.isoformat(),
                 "duration_seconds": duration,
                 "size_bytes": 1024 * 1024 * 150,  # 150 MB simulated
-                "files_count": 1250
+                "files_count": 1250,
             }
 
             # Log the backup action
@@ -570,7 +553,7 @@ class AdminPanelService:
                 resource_id=backup_id,
                 details=backup_info,
                 ip_address="localhost",
-                user_agent="backup_service"
+                user_agent="backup_service",
             )
 
             logger.info(f"System backup completed: {backup_type}", backup_id=backup_id)
@@ -596,7 +579,7 @@ class AdminPanelService:
                 resource_id=service_name,
                 details={"service": service_name},
                 ip_address="localhost",
-                user_agent="admin_panel"
+                user_agent="admin_panel",
             )
 
             return True

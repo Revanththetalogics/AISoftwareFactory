@@ -18,6 +18,7 @@ logger = get_logger(__name__)
 @dataclass
 class SandboxResult:
     """Result from sandbox execution."""
+
     success: bool
     stdout: str
     stderr: str
@@ -46,12 +47,7 @@ class Sandbox:
         self._temp_dir: Path | None = None
         self._logger = get_logger(__name__)
 
-    async def execute(
-        self,
-        code: str,
-        language: str = "python",
-        files: dict[str, str] | None = None
-    ) -> SandboxResult:
+    async def execute(self, code: str, language: str = "python", files: dict[str, str] | None = None) -> SandboxResult:
         """
         Execute code in sandbox.
 
@@ -99,18 +95,14 @@ class Sandbox:
                         stdout="",
                         stderr=f"Unsupported language: {language}",
                         exit_code=-1,
-                        execution_time=time.time() - start_time
+                        execution_time=time.time() - start_time,
                     )
 
                 return result
 
             except Exception as e:
                 return SandboxResult(
-                    success=False,
-                    stdout="",
-                    stderr=str(e),
-                    exit_code=-1,
-                    execution_time=time.time() - start_time
+                    success=False, stdout="", stderr=str(e), exit_code=-1, execution_time=time.time() - start_time
                 )
 
     async def _run_python(self, code_file: Path) -> SandboxResult:
@@ -121,11 +113,7 @@ class Sandbox:
 
         try:
             process = subprocess.run(
-                ["python", str(code_file)],
-                cwd=self._temp_dir,
-                capture_output=True,
-                text=True,
-                timeout=self._timeout
+                ["python", str(code_file)], cwd=self._temp_dir, capture_output=True, text=True, timeout=self._timeout
             )
 
             return SandboxResult(
@@ -133,7 +121,7 @@ class Sandbox:
                 stdout=process.stdout,
                 stderr=process.stderr,
                 exit_code=process.returncode,
-                execution_time=time.time() - start_time
+                execution_time=time.time() - start_time,
             )
 
         except subprocess.TimeoutExpired:
@@ -142,7 +130,7 @@ class Sandbox:
                 stdout="",
                 stderr=f"Execution timed out after {self._timeout}s",
                 exit_code=-1,
-                execution_time=time.time() - start_time
+                execution_time=time.time() - start_time,
             )
 
     async def _run_javascript(self, code_file: Path) -> SandboxResult:
@@ -153,11 +141,7 @@ class Sandbox:
 
         try:
             process = subprocess.run(
-                ["node", str(code_file)],
-                cwd=self._temp_dir,
-                capture_output=True,
-                text=True,
-                timeout=self._timeout
+                ["node", str(code_file)], cwd=self._temp_dir, capture_output=True, text=True, timeout=self._timeout
             )
 
             return SandboxResult(
@@ -165,7 +149,7 @@ class Sandbox:
                 stdout=process.stdout,
                 stderr=process.stderr,
                 exit_code=process.returncode,
-                execution_time=time.time() - start_time
+                execution_time=time.time() - start_time,
             )
 
         except subprocess.TimeoutExpired:
@@ -174,7 +158,7 @@ class Sandbox:
                 stdout="",
                 stderr=f"Execution timed out after {self._timeout}s",
                 exit_code=-1,
-                execution_time=time.time() - start_time
+                execution_time=time.time() - start_time,
             )
         except FileNotFoundError:
             return SandboxResult(
@@ -182,5 +166,5 @@ class Sandbox:
                 stdout="",
                 stderr="Node.js not found",
                 exit_code=-1,
-                execution_time=time.time() - start_time
+                execution_time=time.time() - start_time,
             )

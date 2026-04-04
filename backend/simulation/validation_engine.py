@@ -17,6 +17,7 @@ logger = get_logger(__name__)
 
 class ValidationStatus(Enum):
     """Validation status."""
+
     PASS = "pass"
     FAIL = "fail"
     WARNING = "warning"
@@ -25,6 +26,7 @@ class ValidationStatus(Enum):
 @dataclass
 class ValidationRule:
     """Validation rule definition."""
+
     name: str
     check: Callable
     required: bool = True
@@ -34,6 +36,7 @@ class ValidationRule:
 @dataclass
 class ValidationResult:
     """Validation result."""
+
     rule_name: str
     status: ValidationStatus
     message: str
@@ -58,19 +61,13 @@ class ValidationEngine:
 
     def _add_default_rules(self):
         """Add default validation rules."""
-        self.add_rule(ValidationRule(
-            name="syntax_check",
-            check=self._check_syntax,
-            required=True,
-            weight=2.0
-        ))
+        self.add_rule(ValidationRule(name="syntax_check", check=self._check_syntax, required=True, weight=2.0))
 
-        self.add_rule(ValidationRule(
-            name="no_critical_vulnerabilities",
-            check=self._check_vulnerabilities,
-            required=True,
-            weight=3.0
-        ))
+        self.add_rule(
+            ValidationRule(
+                name="no_critical_vulnerabilities", check=self._check_vulnerabilities, required=True, weight=3.0
+            )
+        )
 
     def add_rule(self, rule: ValidationRule):
         """
@@ -82,11 +79,7 @@ class ValidationEngine:
         self._rules.append(rule)
         self._logger.info("Validation rule added", rule_name=rule.name)
 
-    async def validate(
-        self,
-        code: str,
-        context: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    async def validate(self, code: str, context: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         Run all validation rules.
 
@@ -117,17 +110,15 @@ class ValidationEngine:
                     failed += 1
 
             except Exception as e:
-                self._logger.error(
-                    "Validation rule failed",
-                    rule=rule.name,
-                    error=str(e)
+                self._logger.error("Validation rule failed", rule=rule.name, error=str(e))
+                results.append(
+                    ValidationResult(
+                        rule_name=rule.name,
+                        status=ValidationStatus.FAIL,
+                        message=f"Rule execution failed: {e}",
+                        score=0.0,
+                    )
                 )
-                results.append(ValidationResult(
-                    rule_name=rule.name,
-                    status=ValidationStatus.FAIL,
-                    message=f"Rule execution failed: {e}",
-                    score=0.0
-                ))
                 failed += 1
 
         score_percentage = (total_score / max_score * 100) if max_score > 0 else 0
@@ -139,44 +130,25 @@ class ValidationEngine:
             "failed_rules": failed,
             "total_rules": len(self._rules),
             "results": [
-                {
-                    "rule": r.rule_name,
-                    "status": r.status.value,
-                    "message": r.message,
-                    "score": r.score
-                }
-                for r in results
-            ]
+                {"rule": r.rule_name, "status": r.status.value, "message": r.message, "score": r.score} for r in results
+            ],
         }
 
-    async def _check_syntax(
-        self,
-        code: str,
-        context: dict[str, Any]
-    ) -> ValidationResult:
+    async def _check_syntax(self, code: str, context: dict[str, Any]) -> ValidationResult:
         """Check code syntax."""
         try:
             import ast
+
             ast.parse(code)
             return ValidationResult(
-                rule_name="syntax_check",
-                status=ValidationStatus.PASS,
-                message="Syntax is valid",
-                score=1.0
+                rule_name="syntax_check", status=ValidationStatus.PASS, message="Syntax is valid", score=1.0
             )
         except SyntaxError as e:
             return ValidationResult(
-                rule_name="syntax_check",
-                status=ValidationStatus.FAIL,
-                message=f"Syntax error: {e}",
-                score=0.0
+                rule_name="syntax_check", status=ValidationStatus.FAIL, message=f"Syntax error: {e}", score=0.0
             )
 
-    async def _check_vulnerabilities(
-        self,
-        code: str,
-        context: dict[str, Any]
-    ) -> ValidationResult:
+    async def _check_vulnerabilities(self, code: str, context: dict[str, Any]) -> ValidationResult:
         """Check for critical vulnerabilities."""
         from backend.simulation.security_scanner import SecurityScanner
 
@@ -190,12 +162,12 @@ class ValidationEngine:
                 rule_name="no_critical_vulnerabilities",
                 status=ValidationStatus.PASS,
                 message="No critical vulnerabilities found",
-                score=1.0
+                score=1.0,
             )
         else:
             return ValidationResult(
                 rule_name="no_critical_vulnerabilities",
                 status=ValidationStatus.FAIL,
                 message=f"Found {critical_count} critical vulnerabilities",
-                score=0.0
+                score=0.0,
             )

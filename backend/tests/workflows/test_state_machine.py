@@ -2,7 +2,6 @@
 Tests for State Machine.
 """
 
-
 from backend.workflows.state_machine import (
     PhaseState,
     PhaseStatus,

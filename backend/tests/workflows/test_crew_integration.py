@@ -103,9 +103,7 @@ class TestCrewIntegration:
         """Test executing phase when no crew is available."""
         integration = CrewIntegration()
 
-        with patch.object(
-            integration, "assemble_crew_for_phase", return_value=None
-        ):
+        with patch.object(integration, "assemble_crew_for_phase", return_value=None):
             result = await integration.execute_phase(
                 ProjectPhase.TESTING,
                 context={"idea": "test"},
@@ -122,12 +120,8 @@ class TestCrewIntegration:
         mock_crew = MagicMock()
         mock_crew.kickoff = MagicMock(return_value="Crew result")
 
-        with patch.object(
-            integration, "assemble_crew_for_phase", return_value=mock_crew
-        ):
-            with patch.object(
-                integration, "_create_tasks_for_phase", return_value=[MagicMock()]
-            ):
+        with patch.object(integration, "assemble_crew_for_phase", return_value=mock_crew):
+            with patch.object(integration, "_create_tasks_for_phase", return_value=[MagicMock()]):
                 result = await integration.execute_phase(
                     ProjectPhase.REQUIREMENTS,
                     context={"idea": "Build a SaaS app"},
@@ -144,12 +138,8 @@ class TestCrewIntegration:
 
         mock_crew = MagicMock()
 
-        with patch.object(
-            integration, "assemble_crew_for_phase", return_value=mock_crew
-        ):
-            with patch.object(
-                integration, "_create_tasks_for_phase", return_value=[]
-            ):
+        with patch.object(integration, "assemble_crew_for_phase", return_value=mock_crew):
+            with patch.object(integration, "_create_tasks_for_phase", return_value=[]):
                 result = await integration.execute_phase(
                     ProjectPhase.REQUIREMENTS,
                     context={},
@@ -166,12 +156,8 @@ class TestCrewIntegration:
         mock_crew = MagicMock()
         mock_crew.kickoff = MagicMock(side_effect=RuntimeError("Crew failed"))
 
-        with patch.object(
-            integration, "assemble_crew_for_phase", return_value=mock_crew
-        ):
-            with patch.object(
-                integration, "_create_tasks_for_phase", return_value=[MagicMock()]
-            ):
+        with patch.object(integration, "assemble_crew_for_phase", return_value=mock_crew):
+            with patch.object(integration, "_create_tasks_for_phase", return_value=[MagicMock()]):
                 result = await integration.execute_phase(
                     ProjectPhase.REQUIREMENTS,
                     context={"idea": "test"},
@@ -184,9 +170,7 @@ class TestCrewIntegration:
         """Test creating tasks for requirements phase."""
         integration = CrewIntegration()
 
-        with patch(
-            "backend.workflows.crew_integration.create_requirements_task"
-        ) as mock_create:
+        with patch("backend.workflows.crew_integration.create_requirements_task") as mock_create:
             mock_task = MagicMock()
             mock_create.return_value = mock_task
 
@@ -213,9 +197,7 @@ class TestCrewIntegration:
         """Test creating tasks for architecture phase."""
         integration = CrewIntegration()
 
-        with patch(
-            "backend.workflows.crew_integration.create_architecture_task"
-        ) as mock_create:
+        with patch("backend.workflows.crew_integration.create_architecture_task") as mock_create:
             mock_task = MagicMock()
             mock_create.return_value = mock_task
 
@@ -242,12 +224,8 @@ class TestCrewIntegration:
         """Test creating tasks for implementation phase."""
         integration = CrewIntegration()
 
-        with patch(
-            "backend.workflows.crew_integration.create_backend_implementation_task"
-        ) as mock_backend:
-            with patch(
-                "backend.workflows.crew_integration.create_frontend_implementation_task"
-            ) as mock_frontend:
+        with patch("backend.workflows.crew_integration.create_backend_implementation_task") as mock_backend:
+            with patch("backend.workflows.crew_integration.create_frontend_implementation_task") as mock_frontend:
                 mock_backend.return_value = MagicMock()
                 mock_frontend.return_value = MagicMock()
 
@@ -278,9 +256,7 @@ class TestCrewIntegration:
         """Test creating tasks for deployment phase."""
         integration = CrewIntegration()
 
-        with patch(
-            "backend.workflows.crew_integration.create_infrastructure_task"
-        ) as mock_create:
+        with patch("backend.workflows.crew_integration.create_infrastructure_task") as mock_create:
             mock_task = MagicMock()
             mock_create.return_value = mock_task
 
@@ -347,9 +323,7 @@ class TestCrewIntegration:
             "product_strategy": "Go-to-market strategy",
         }
 
-        updates = integration.map_crew_output_to_state(
-            ProjectPhase.REQUIREMENTS, crew_output
-        )
+        updates = integration.map_crew_output_to_state(ProjectPhase.REQUIREMENTS, crew_output)
 
         assert updates["requirements"] == "User requirements document"
         assert updates["product_strategy"] == "Go-to-market strategy"
@@ -360,9 +334,7 @@ class TestCrewIntegration:
 
         crew_output = {"requirements": "User requirements"}
 
-        updates = integration.map_crew_output_to_state(
-            ProjectPhase.REQUIREMENTS, crew_output
-        )
+        updates = integration.map_crew_output_to_state(ProjectPhase.REQUIREMENTS, crew_output)
 
         assert updates["requirements"] == "User requirements"
         assert "product_strategy" not in updates
@@ -376,9 +348,7 @@ class TestCrewIntegration:
             "technology_stack": {"backend": "Python", "frontend": "React"},
         }
 
-        updates = integration.map_crew_output_to_state(
-            ProjectPhase.ARCHITECTURE, crew_output
-        )
+        updates = integration.map_crew_output_to_state(ProjectPhase.ARCHITECTURE, crew_output)
 
         assert updates["architecture"] == "System architecture doc"
         assert updates["technology_stack"]["backend"] == "Python"
@@ -392,9 +362,7 @@ class TestCrewIntegration:
             "frontend_code": "React frontend code",
         }
 
-        updates = integration.map_crew_output_to_state(
-            ProjectPhase.IMPLEMENTATION, crew_output
-        )
+        updates = integration.map_crew_output_to_state(ProjectPhase.IMPLEMENTATION, crew_output)
 
         assert updates["backend_code"] == "Python backend code"
         assert updates["frontend_code"] == "React frontend code"
@@ -408,9 +376,7 @@ class TestCrewIntegration:
             "cicd_config": "GitHub Actions workflow",
         }
 
-        updates = integration.map_crew_output_to_state(
-            ProjectPhase.DEPLOYMENT, crew_output
-        )
+        updates = integration.map_crew_output_to_state(ProjectPhase.DEPLOYMENT, crew_output)
 
         assert updates["infrastructure"] == "Terraform configs"
         assert updates["cicd_config"] == "GitHub Actions workflow"
@@ -419,9 +385,7 @@ class TestCrewIntegration:
         """Test mapping empty output to state."""
         integration = CrewIntegration()
 
-        updates = integration.map_crew_output_to_state(
-            ProjectPhase.REQUIREMENTS, {}
-        )
+        updates = integration.map_crew_output_to_state(ProjectPhase.REQUIREMENTS, {})
 
         assert updates == {}
 

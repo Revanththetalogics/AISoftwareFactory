@@ -29,10 +29,10 @@ class TestAdminPanelService:
     def test_init(self, admin_service):
         """Test AdminPanelService initialization."""
         assert admin_service is not None
-        assert hasattr(admin_service, 'admin_users')
-        assert hasattr(admin_service, 'audit_logs')
-        assert hasattr(admin_service, 'maintenance_schedules')
-        assert hasattr(admin_service, '_current_maintenance_mode')
+        assert hasattr(admin_service, "admin_users")
+        assert hasattr(admin_service, "audit_logs")
+        assert hasattr(admin_service, "maintenance_schedules")
+        assert hasattr(admin_service, "_current_maintenance_mode")
 
         # Should have sample data initialized
         assert len(admin_service.admin_users) > 0
@@ -94,7 +94,7 @@ class TestAdminPanelService:
             is_active=False,  # Inactive
             last_login=None,
             created_at=datetime.now(UTC).isoformat(),
-            permissions=[]
+            permissions=[],
         )
         admin_service.admin_users[user_id] = inactive_user
 
@@ -201,7 +201,7 @@ class TestAdminPanelService:
             resource_id="test_123",
             details={"test": "data"},
             ip_address="192.168.1.1",
-            user_agent="test_client"
+            user_agent="test_client",
         )
 
         assert result is not None
@@ -227,7 +227,7 @@ class TestAdminPanelService:
             end_time="2024-12-01T04:00:00Z",
             mode=MaintenanceMode.READ_ONLY,
             affected_services=["database", "api"],
-            created_by="admin_1"
+            created_by="admin_1",
         )
 
         assert result is not None
@@ -251,7 +251,7 @@ class TestAdminPanelService:
             end_time="2024-12-01T01:00:00Z",
             mode=MaintenanceMode.MAINTENANCE,
             affected_services=["test"],
-            created_by="admin_1"
+            created_by="admin_1",
         )
 
         result = await admin_service.get_maintenance_schedules()
@@ -321,7 +321,7 @@ class TestAdminPanelService:
             email="new_admin@test.com",
             role=UserRole.ADMIN,
             permissions=["manage_users", "view_logs"],
-            created_by="admin_1"
+            created_by="admin_1",
         )
 
         assert result is not None
@@ -345,7 +345,7 @@ class TestAdminPanelService:
                 email="new@test.com",
                 role=UserRole.ADMIN,
                 permissions=[],
-                created_by="admin_1"
+                created_by="admin_1",
             )
 
         assert "User with this username or email already exists" in str(exc_info.value)
@@ -359,7 +359,7 @@ class TestAdminPanelService:
                 email="admin@thetaai.com",  # Already exists
                 role=UserRole.ADMIN,
                 permissions=[],
-                created_by="admin_1"
+                created_by="admin_1",
             )
 
         assert "User with this username or email already exists" in str(exc_info.value)
@@ -373,14 +373,11 @@ class TestAdminPanelService:
             email="update@test.com",
             role=UserRole.MODERATOR,
             permissions=["view_logs"],
-            created_by="admin_1"
+            created_by="admin_1",
         )
 
         # Update the user
-        updates = {
-            "role": UserRole.ADMIN,
-            "permissions": ["manage_users", "view_logs", "configure_settings"]
-        }
+        updates = {"role": UserRole.ADMIN, "permissions": ["manage_users", "view_logs", "configure_settings"]}
 
         result = await admin_service.update_admin_user(user.id, **updates)
 

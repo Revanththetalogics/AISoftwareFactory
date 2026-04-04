@@ -22,6 +22,7 @@ router = APIRouter()
 
 class HealthStatus(StrEnum):
     """Health status enumeration."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -29,6 +30,7 @@ class HealthStatus(StrEnum):
 
 class ComponentHealth(BaseModel):
     """Health status of a single component."""
+
     name: str = Field(..., description="Component name")
     status: HealthStatus = Field(..., description="Component health status")
     response_time_ms: float = Field(..., description="Response time in milliseconds")
@@ -51,15 +53,13 @@ class HealthResponse(BaseModel):
         uptime_seconds: Application uptime in seconds
         components: List of component health statuses
     """
+
     status: HealthStatus = Field(..., description="Overall health status")
     version: str = Field(..., description="Application version")
     timestamp: str = Field(..., description="ISO format timestamp")
     correlation_id: str = Field(..., description="Request correlation ID")
     uptime_seconds: float = Field(..., description="Application uptime in seconds")
-    components: list[ComponentHealth] = Field(
-        default_factory=list,
-        description="Component health statuses"
-    )
+    components: list[ComponentHealth] = Field(default_factory=list, description="Component health statuses")
 
     model_config = {
         "json_schema_extra": {
@@ -75,9 +75,9 @@ class HealthResponse(BaseModel):
                         "status": "healthy",
                         "response_time_ms": 0.5,
                         "message": "Application is running",
-                        "details": {}
+                        "details": {},
                     }
-                ]
+                ],
             }
         }
     }
@@ -85,16 +85,15 @@ class HealthResponse(BaseModel):
 
 class ReadinessResponse(BaseModel):
     """Readiness check response model."""
+
     ready: bool = Field(..., description="Whether the application is ready to serve traffic")
     timestamp: str = Field(..., description="ISO format timestamp")
-    checks: dict[str, bool] = Field(
-        default_factory=dict,
-        description="Individual readiness checks"
-    )
+    checks: dict[str, bool] = Field(default_factory=dict, description="Individual readiness checks")
 
 
 class LivenessResponse(BaseModel):
     """Liveness check response model."""
+
     alive: bool = Field(..., description="Whether the application is alive")
     timestamp: str = Field(..., description="ISO format timestamp")
 
@@ -162,7 +161,7 @@ async def health_check() -> HealthResponse:
                 details={
                     "environment": settings.ENVIRONMENT,
                     "debug": settings.DEBUG,
-                }
+                },
             )
         )
 
@@ -173,7 +172,7 @@ async def health_check() -> HealthResponse:
                 status=HealthStatus.UNHEALTHY,
                 response_time_ms=0,
                 message=f"Application check failed: {str(exc)}",
-                details={"error": str(exc)}
+                details={"error": str(exc)},
             )
         )
         logger.error("Health check failed for application", error=str(exc))
@@ -198,7 +197,7 @@ async def health_check() -> HealthResponse:
                 details={
                     "environment": settings.ENVIRONMENT,
                     "log_level": settings.LOG_LEVEL,
-                }
+                },
             )
         )
 
@@ -209,18 +208,14 @@ async def health_check() -> HealthResponse:
                 status=HealthStatus.UNHEALTHY,
                 response_time_ms=0,
                 message=f"Configuration check failed: {str(exc)}",
-                details={"error": str(exc)}
+                details={"error": str(exc)},
             )
         )
         logger.error("Health check failed for configuration", error=str(exc))
 
     # Calculate overall status
-    unhealthy_count = sum(
-        1 for c in components if c.status == HealthStatus.UNHEALTHY
-    )
-    degraded_count = sum(
-        1 for c in components if c.status == HealthStatus.DEGRADED
-    )
+    unhealthy_count = sum(1 for c in components if c.status == HealthStatus.UNHEALTHY)
+    degraded_count = sum(1 for c in components if c.status == HealthStatus.DEGRADED)
 
     if unhealthy_count > 0:
         overall_status = HealthStatus.UNHEALTHY
@@ -253,6 +248,7 @@ async def _check_redis(redis_url: str) -> bool:
     """Check Redis connectivity. Extracted for testability."""
     try:
         import redis.asyncio as aioredis  # noqa: PLC0415
+
         r = aioredis.from_url(redis_url, socket_connect_timeout=2)
         await r.ping()
         await r.aclose()
@@ -301,6 +297,7 @@ async def readiness_check() -> ReadinessResponse:
         from sqlalchemy import text
 
         from backend.db.session import engine
+
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
         checks["database"] = True

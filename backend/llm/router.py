@@ -27,6 +27,7 @@ class ModelConfig:
         context_window: Maximum context window size
         cost_per_1k_tokens: Cost per 1000 tokens (for cost tracking)
     """
+
     name: str
     provider: str
     priority: int = 1
@@ -37,24 +38,24 @@ class ModelConfig:
 
 class ModelRouter:
     """
-    Router for LLM requests with provider selection and fallback logic.
+        Router for LLM requests with provider selection and fallback logic.
 
-    The Model Router manages multiple LLM providers and routes requests
-to the best available provider based on model requirements, availability,
-    and fallback chains.
+        The Model Router manages multiple LLM providers and routes requests
+    to the best available provider based on model requirements, availability,
+        and fallback chains.
 
-    Attributes:
-        providers: Dictionary of registered providers
-        model_configs: Dictionary of model configurations
-        default_model: Default model to use
+        Attributes:
+            providers: Dictionary of registered providers
+            model_configs: Dictionary of model configurations
+            default_model: Default model to use
 
-    Example:
-        >>> router = ModelRouter()
-        >>> router.register_provider(OllamaProvider())
-        >>> response = await router.generate(
-        ...     LLMRequest(prompt="Hello!"),
-        ...     model="llama2"
-        ... )
+        Example:
+            >>> router = ModelRouter()
+            >>> router.register_provider(OllamaProvider())
+            >>> response = await router.generate(
+            ...     LLMRequest(prompt="Hello!"),
+            ...     model="llama2"
+            ... )
     """
 
     def __init__(self, default_model: str | None = None):
@@ -65,6 +66,7 @@ to the best available provider based on model requirements, availability,
             default_model: Default model to use. Defaults to settings.LLM_DEFAULT_MODEL.
         """
         from backend.core.config import get_settings
+
         settings = get_settings()
         self.providers: dict[str, BaseLLMProvider] = {}
         self.model_configs: dict[str, ModelConfig] = {}
@@ -330,9 +332,9 @@ to the best available provider based on model requirements, availability,
         # Sort providers by priority of their default models
         sorted_providers = sorted(
             self.providers.items(),
-            key=lambda x: self.model_configs.get(
-                x[1].default_model, ModelConfig(name="", provider="", priority=0)
-            ).priority,
+            key=lambda x: (
+                self.model_configs.get(x[1].default_model, ModelConfig(name="", provider="", priority=0)).priority
+            ),
             reverse=True,
         )
 
@@ -439,6 +441,7 @@ to the best available provider based on model requirements, availability,
             >>> response = llm("Write a FastAPI endpoint")
         """
         from backend.llm.agent_llm import AgentLLM  # local import to avoid circular
+
         resolved = model_name or self.select_model(task_type)
         return AgentLLM(model=resolved, router=self)
 
@@ -464,6 +467,7 @@ def get_llm_router() -> ModelRouter:
     global _router_instance
     if _router_instance is None:
         from backend.llm.factory import LLMFactory
+
         _router_instance = ModelRouter()
         provider = LLMFactory.create_llm()
         _router_instance.register_provider(provider)

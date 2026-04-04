@@ -14,12 +14,13 @@ class TestHealthChecker:
     def health_checker(self):
         """Create HealthChecker instance."""
         from backend.infrastructure.health_checker import HealthChecker
+
         return HealthChecker()
 
     def test_init(self, health_checker):
         """Test HealthChecker initialization."""
-        assert hasattr(health_checker, 'check_health')
-        assert hasattr(health_checker, 'register_service')
+        assert hasattr(health_checker, "check_health")
+        assert hasattr(health_checker, "register_service")
 
     def test_register_service_success(self, health_checker):
         """Test registering a service successfully."""
@@ -65,12 +66,13 @@ class TestMetricsCollector:
     def metrics_collector(self):
         """Create MetricsCollector instance."""
         from backend.infrastructure.metrics import MetricsCollector
+
         return MetricsCollector()
 
     def test_init(self, metrics_collector):
         """Test MetricsCollector initialization."""
-        assert hasattr(metrics_collector, 'record_metric')
-        assert hasattr(metrics_collector, 'get_metrics')
+        assert hasattr(metrics_collector, "record_metric")
+        assert hasattr(metrics_collector, "get_metrics")
 
     def test_record_metric_counter(self, metrics_collector):
         """Test recording a counter metric."""
@@ -123,17 +125,18 @@ class TestBackupManager:
     def backup_manager(self):
         """Create BackupManager instance."""
         from backend.infrastructure.backup_system import BackupManager
+
         return BackupManager(backup_dir="/var/backups")  # nosec: B108 - test data only
 
     def test_init(self, backup_manager):
         """Test BackupManager initialization."""
         assert backup_manager._backup_dir == "/var/backups"  # nosec: B108 - test data only
-        assert hasattr(backup_manager, 'create_backup')
-        assert hasattr(backup_manager, 'restore_backup')
+        assert hasattr(backup_manager, "create_backup")
+        assert hasattr(backup_manager, "restore_backup")
 
-    @patch('os.makedirs')
-    @patch('builtins.open', new_callable=mock_open)
-    @patch('json.dump')
+    @patch("os.makedirs")
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("json.dump")
     def test_create_backup_success(self, mock_dump, mock_file, mock_makedirs, backup_manager):
         """Test creating a backup successfully."""
         data = {"key": "value"}
@@ -144,8 +147,8 @@ class TestBackupManager:
         assert "test_backup" in result
         mock_makedirs.assert_called_once()
 
-    @patch('os.path.exists', return_value=True)
-    @patch('os.listdir', return_value=["backup_1.json"])
+    @patch("os.path.exists", return_value=True)
+    @patch("os.listdir", return_value=["backup_1.json"])
     def test_list_backups_success(self, mock_listdir, mock_exists, backup_manager):
         """Test listing backups successfully."""
         backups = backup_manager.list_backups()
@@ -153,7 +156,7 @@ class TestBackupManager:
         assert isinstance(backups, list)
         assert len(backups) > 0
 
-    @patch('os.path.exists')
+    @patch("os.path.exists")
     def test_restore_backup_not_found(self, mock_exists, backup_manager):
         """Test restoring non-existent backup."""
         mock_exists.return_value = False
@@ -169,13 +172,14 @@ class TestSecretsManager:
     def secrets_manager(self):
         """Create SecretsManager instance."""
         from backend.infrastructure.secrets_manager import SecretsManager
+
         return SecretsManager(vault_path="/var/vault")  # nosec: B108 - test data only
 
     def test_init(self, secrets_manager):
         """Test SecretsManager initialization."""
-        assert hasattr(secrets_manager, 'store_secret')
-        assert hasattr(secrets_manager, 'get_secret')
-        assert hasattr(secrets_manager, 'delete_secret')
+        assert hasattr(secrets_manager, "store_secret")
+        assert hasattr(secrets_manager, "get_secret")
+        assert hasattr(secrets_manager, "delete_secret")
 
     def test_store_secret_success(self, secrets_manager):
         """Test storing a secret successfully."""
@@ -223,15 +227,16 @@ class TestDockerComposeManager:
     def docker_manager(self):
         """Create DockerComposeManager instance."""
         from backend.infrastructure.docker_compose import DockerComposeManager
+
         return DockerComposeManager(compose_file="docker-compose.yml")
 
     def test_init(self, docker_manager):
         """Test DockerComposeManager initialization."""
         assert docker_manager._compose_file == "docker-compose.yml"
-        assert hasattr(docker_manager, 'up')
-        assert hasattr(docker_manager, 'down')
+        assert hasattr(docker_manager, "up")
+        assert hasattr(docker_manager, "down")
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_up_success(self, mock_run, docker_manager):
         """Test bringing up services successfully."""
         mock_run.return_value = MagicMock(returncode=0)
@@ -241,7 +246,7 @@ class TestDockerComposeManager:
         assert result is True
         mock_run.assert_called_once()
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_down_success(self, mock_run, docker_manager):
         """Test bringing down services successfully."""
         mock_run.return_value = MagicMock(returncode=0)
@@ -250,7 +255,7 @@ class TestDockerComposeManager:
 
         assert result is True
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_ps_success(self, mock_run, docker_manager):
         """Test getting service status successfully."""
         mock_run.return_value = MagicMock(returncode=0, stdout="Service running")
@@ -259,7 +264,7 @@ class TestDockerComposeManager:
 
         assert result is not None
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_logs_success(self, mock_run, docker_manager):
         """Test getting logs successfully."""
         mock_run.return_value = MagicMock(returncode=0, stdout="Log output")
@@ -276,15 +281,16 @@ class TestMonitoringAgent:
     def monitoring_agent(self):
         """Create MonitoringAgent instance."""
         from backend.infrastructure.monitoring import MonitoringAgent
+
         return MonitoringAgent()
 
     def test_init(self, monitoring_agent):
         """Test MonitoringAgent initialization."""
-        assert hasattr(monitoring_agent, 'start')
-        assert hasattr(monitoring_agent, 'stop')
-        assert hasattr(monitoring_agent, 'collect_metrics')
+        assert hasattr(monitoring_agent, "start")
+        assert hasattr(monitoring_agent, "stop")
+        assert hasattr(monitoring_agent, "collect_metrics")
 
-    @patch('backend.infrastructure.monitoring.MonitoringAgent.collect_metrics')
+    @patch("backend.infrastructure.monitoring.MonitoringAgent.collect_metrics")
     def test_start_success(self, mock_collect, monitoring_agent):
         """Test starting monitoring agent."""
         monitoring_agent.start()

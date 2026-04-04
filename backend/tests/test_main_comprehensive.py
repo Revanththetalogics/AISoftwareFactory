@@ -22,7 +22,7 @@ class TestMainApplication:
 
     def test_create_application_basic(self):
         """Test basic application creation."""
-        with patch('backend.core.config.get_settings') as mock_settings:
+        with patch("backend.core.config.get_settings") as mock_settings:
             mock_settings.return_value.APP_NAME = "AI Software Factory"
             mock_settings.return_value.APP_VERSION = "1.0.0"
             mock_settings.return_value.DEBUG = False
@@ -40,7 +40,7 @@ class TestMainApplication:
 
     def test_create_application_with_cors(self):
         """Test application creation with CORS configuration."""
-        with patch('backend.core.config.get_settings') as mock_settings:
+        with patch("backend.core.config.get_settings") as mock_settings:
             mock_settings.return_value.APP_NAME = "Test App"
             mock_settings.return_value.APP_VERSION = "1.0.0"
             mock_settings.return_value.DEBUG = False
@@ -56,7 +56,7 @@ class TestMainApplication:
 
     def test_create_application_with_metrics(self):
         """Test application creation with metrics enabled."""
-        with patch('backend.core.config.get_settings') as mock_settings:
+        with patch("backend.core.config.get_settings") as mock_settings:
             mock_settings.return_value.APP_NAME = "Test App"
             mock_settings.return_value.APP_VERSION = "1.0.0"
             mock_settings.return_value.DEBUG = False
@@ -75,12 +75,7 @@ class TestMainApplication:
         """Test successful connection on first attempt."""
         mock_connect_fn = AsyncMock()
 
-        result = await _connect_with_retry(
-            name="Test Service",
-            connect_fn=mock_connect_fn,
-            max_retries=3,
-            delay=0.1
-        )
+        result = await _connect_with_retry(name="Test Service", connect_fn=mock_connect_fn, max_retries=3, delay=0.1)
 
         assert result is True
         mock_connect_fn.assert_called_once()
@@ -97,12 +92,9 @@ class TestMainApplication:
                 raise Exception("Connection failed")
             # Success on third attempt
 
-        with patch('asyncio.sleep') as mock_sleep:
+        with patch("asyncio.sleep") as mock_sleep:
             result = await _connect_with_retry(
-                name="Test Service",
-                connect_fn=mock_connect_fn,
-                max_retries=3,
-                delay=0.1
+                name="Test Service", connect_fn=mock_connect_fn, max_retries=3, delay=0.1
             )
 
             assert result is True
@@ -115,13 +107,9 @@ class TestMainApplication:
         mock_connect_fn = AsyncMock()
         mock_connect_fn.side_effect = Exception("Connection failed")
 
-        with patch('asyncio.sleep') as mock_sleep:
+        with patch("asyncio.sleep") as mock_sleep:
             result = await _connect_with_retry(
-                name="Test Service",
-                connect_fn=mock_connect_fn,
-                max_retries=2,
-                delay=0.1,
-                critical=False
+                name="Test Service", connect_fn=mock_connect_fn, max_retries=2, delay=0.1, critical=False
             )
 
             assert result is False
@@ -134,14 +122,10 @@ class TestMainApplication:
         mock_connect_fn = AsyncMock()
         mock_connect_fn.side_effect = Exception("Connection failed")
 
-        with patch('asyncio.sleep'):
+        with patch("asyncio.sleep"):
             with pytest.raises(RuntimeError) as exc_info:
                 await _connect_with_retry(
-                    name="Critical Service",
-                    connect_fn=mock_connect_fn,
-                    max_retries=2,
-                    delay=0.1,
-                    critical=True
+                    name="Critical Service", connect_fn=mock_connect_fn, max_retries=2, delay=0.1, critical=True
                 )
 
             assert "Failed to connect to critical service Critical Service" in str(exc_info.value)
@@ -150,10 +134,11 @@ class TestMainApplication:
     @pytest.mark.asyncio
     async def test_startup_logic_basic(self):
         """Test basic startup logic execution."""
-        with patch('backend.core.config.get_settings') as mock_settings, \
-             patch('backend.main._connect_with_retry') as mock_connect, \
-             patch('backend.db.init_db'):
-
+        with (
+            patch("backend.core.config.get_settings") as mock_settings,
+            patch("backend.main._connect_with_retry") as mock_connect,
+            patch("backend.db.init_db"),
+        ):
             # Mock settings
             settings_mock = MagicMock()
             settings_mock.APP_NAME = "Test App"
@@ -186,9 +171,10 @@ class TestMainApplication:
     @pytest.mark.asyncio
     async def test_startup_logic_development_secret_key_warning(self):
         """Test secret key warning in development environment."""
-        with patch('backend.core.config.get_settings') as mock_settings, \
-             patch('backend.main._connect_with_retry') as mock_connect:
-
+        with (
+            patch("backend.core.config.get_settings") as mock_settings,
+            patch("backend.main._connect_with_retry") as mock_connect,
+        ):
             settings_mock = MagicMock()
             settings_mock.APP_NAME = "Test App"
             settings_mock.APP_VERSION = "1.0.0"
@@ -208,7 +194,7 @@ class TestMainApplication:
     @pytest.mark.asyncio
     async def test_shutdown_logic_basic(self):
         """Test basic shutdown logic execution."""
-        with patch('backend.db.session.engine') as mock_engine:
+        with patch("backend.db.session.engine") as mock_engine:
             mock_engine.dispose = MagicMock()
 
             # Run shutdown logic
@@ -220,7 +206,7 @@ class TestMainApplication:
     @pytest.mark.asyncio
     async def test_shutdown_logic_engine_none(self):
         """Test shutdown logic when engine is None."""
-        with patch('backend.db.session.engine', None):
+        with patch("backend.db.session.engine", None):
             # Should not raise exception when engine is None
             _shutdown_logic()
 
@@ -228,15 +214,13 @@ class TestMainApplication:
     async def test_validate_database_schema_success(self):
         """Test successful database schema validation."""
         mock_result = MagicMock()
-        mock_result.fetchall.return_value = [('users',), ('projects',), ('workflows',)]
+        mock_result.fetchall.return_value = [("users",), ("projects",), ("workflows",)]
 
         mock_session = AsyncMock()
         mock_session.__aenter__.return_value = mock_session
         mock_session.execute.return_value = mock_result
 
-        with patch('backend.db.session.AsyncSessionLocal') as mock_session_local, \
-             patch('sqlalchemy.text'):
-
+        with patch("backend.db.session.AsyncSessionLocal") as mock_session_local, patch("sqlalchemy.text"):
             mock_session_local.return_value = mock_session
 
             await validate_database_schema()
@@ -247,15 +231,13 @@ class TestMainApplication:
     async def test_validate_database_schema_missing_tables(self):
         """Test database schema validation with missing tables."""
         mock_result = MagicMock()
-        mock_result.fetchall.return_value = [('users',)]  # Only one table exists
+        mock_result.fetchall.return_value = [("users",)]  # Only one table exists
 
         mock_session = AsyncMock()
         mock_session.__aenter__.return_value = mock_session
         mock_session.execute.return_value = mock_result
 
-        with patch('backend.db.session.AsyncSessionLocal') as mock_session_local, \
-             patch('sqlalchemy.text'):
-
+        with patch("backend.db.session.AsyncSessionLocal") as mock_session_local, patch("sqlalchemy.text"):
             mock_session_local.return_value = mock_session
 
             await validate_database_schema()
@@ -269,7 +251,7 @@ class TestMainApplication:
         mock_session.__aenter__.return_value = mock_session
         mock_session.execute.side_effect = Exception("Database error")
 
-        with patch('backend.db.session.AsyncSessionLocal') as mock_session_local:
+        with patch("backend.db.session.AsyncSessionLocal") as mock_session_local:
             mock_session_local.return_value = mock_session
 
             await validate_database_schema()
@@ -278,7 +260,7 @@ class TestMainApplication:
 
     def test_root_endpoint(self):
         """Test root endpoint returns correct information."""
-        with patch('backend.core.config.get_settings') as mock_settings:
+        with patch("backend.core.config.get_settings") as mock_settings:
             settings_mock = MagicMock()
             settings_mock.APP_NAME = "AI Software Factory"
             settings_mock.APP_VERSION = "1.0.0"
@@ -298,7 +280,7 @@ class TestMainApplication:
 
     def test_root_endpoint_production(self):
         """Test root endpoint in production environment."""
-        with patch('backend.core.config.get_settings') as mock_settings:
+        with patch("backend.core.config.get_settings") as mock_settings:
             settings_mock = MagicMock()
             settings_mock.APP_NAME = "AI Software Factory"
             settings_mock.APP_VERSION = "1.0.0"

@@ -21,6 +21,7 @@ from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+
 class RequestResponseLoggingMiddleware(BaseHTTPMiddleware):
     """Middleware to log all HTTP requests and responses with detailed information."""
 
@@ -30,19 +31,15 @@ class RequestResponseLoggingMiddleware(BaseHTTPMiddleware):
         log_request_body: bool = False,
         log_response_body: bool = False,
         exclude_paths: list[str] = None,
-        max_body_length: int = 1000
+        max_body_length: int = 1000,
     ):
         super().__init__(app)
         self.log_request_body = log_request_body
         self.log_response_body = log_response_body
-        self.exclude_paths = exclude_paths or ['/health', '/metrics', '/favicon.ico']
+        self.exclude_paths = exclude_paths or ["/health", "/metrics", "/favicon.ico"]
         self.max_body_length = max_body_length
 
-    async def dispatch(
-        self,
-        request: Request,
-        call_next: Callable[[Request], Awaitable[Response]]
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         # Generate unique request ID
         request_id = str(uuid.uuid4())
         request.state.request_id = request_id
@@ -84,7 +81,7 @@ class RequestResponseLoggingMiddleware(BaseHTTPMiddleware):
         try:
             # Get request body if needed
             body = None
-            if self.log_request_body and request.method in ['POST', 'PUT', 'PATCH']:
+            if self.log_request_body and request.method in ["POST", "PUT", "PATCH"]:
                 body = await self._get_request_body(request)
 
             # Prepare log data
@@ -98,7 +95,7 @@ class RequestResponseLoggingMiddleware(BaseHTTPMiddleware):
                 "client_ip": self._get_client_ip(request),
                 "user_agent": request.headers.get("user-agent", "unknown"),
                 "content_type": request.headers.get("content-type", "unknown"),
-                "content_length": request.headers.get("content-length", "0")
+                "content_length": request.headers.get("content-length", "0"),
             }
 
             if body:
@@ -125,7 +122,7 @@ class RequestResponseLoggingMiddleware(BaseHTTPMiddleware):
                 "process_time_ms": round(process_time * 1000, 2),
                 "headers": self._sanitize_headers(dict(response.headers)),
                 "content_type": response.headers.get("content-type", "unknown"),
-                "content_length": response.headers.get("content-length", "0")
+                "content_length": response.headers.get("content-length", "0"),
             }
 
             if body:
@@ -144,7 +141,9 @@ class RequestResponseLoggingMiddleware(BaseHTTPMiddleware):
         except Exception as e:
             logger.error(f"Failed to log response: {e}")
 
-    async def _log_exception(self, request: Request, exception: Exception, request_id: str, process_time: float) -> None:
+    async def _log_exception(
+        self, request: Request, exception: Exception, request_id: str, process_time: float
+    ) -> None:
         """Log exceptions that occur during request processing."""
         try:
             log_data = {
@@ -154,7 +153,7 @@ class RequestResponseLoggingMiddleware(BaseHTTPMiddleware):
                 "path": request.url.path,
                 "exception_type": type(exception).__name__,
                 "exception_message": str(exception),
-                "process_time_ms": round(process_time * 1000, 2)
+                "process_time_ms": round(process_time * 1000, 2),
             }
 
             logger.error("Request processing failed", extra=log_data, exc_info=exception)
@@ -171,13 +170,13 @@ class RequestResponseLoggingMiddleware(BaseHTTPMiddleware):
 
             # Decode body
             try:
-                body_str = body_bytes.decode('utf-8')
+                body_str = body_bytes.decode("utf-8")
             except UnicodeDecodeError:
                 return f"<binary data: {len(body_bytes)} bytes>"
 
             # Truncate if too long
             if len(body_str) > self.max_body_length:
-                body_str = body_str[:self.max_body_length] + "... [truncated]"
+                body_str = body_str[: self.max_body_length] + "... [truncated]"
 
             return body_str
 
@@ -211,8 +210,12 @@ class RequestResponseLoggingMiddleware(BaseHTTPMiddleware):
     def _sanitize_headers(self, headers: dict[str, str]) -> dict[str, str]:
         """Remove sensitive headers from logging."""
         sensitive_headers = {
-            'authorization', 'cookie', 'set-cookie', 'x-api-key',
-            'x-auth-token', 'proxy-authorization'
+            "authorization",
+            "cookie",
+            "set-cookie",
+            "x-api-key",
+            "x-auth-token",
+            "proxy-authorization",
         }
 
         sanitized = {}
@@ -223,6 +226,7 @@ class RequestResponseLoggingMiddleware(BaseHTTPMiddleware):
                 sanitized[key] = value
 
         return sanitized
+
 
 class StructuredLogger:
     """Helper class for structured logging with consistent formatting."""
@@ -240,7 +244,7 @@ class StructuredLogger:
 
     def log_slow_request(self, request_info: dict[str, Any], threshold_ms: float = 1000) -> None:
         """Log slow requests."""
-        process_time = request_info.get('process_time_ms', 0)
+        process_time = request_info.get("process_time_ms", 0)
         if process_time > threshold_ms:
             self.logger.warning("Slow request detected", extra=request_info)
 
@@ -248,19 +252,19 @@ class StructuredLogger:
         """Log requests that resulted in errors."""
         self.logger.error("Error request", extra=error_info)
 
+
 # Pre-configured middleware instances
 def create_logging_middleware(
-    log_request_body: bool = False,
-    log_response_body: bool = False,
-    exclude_paths: list[str] = None
+    log_request_body: bool = False, log_response_body: bool = False, exclude_paths: list[str] = None
 ) -> RequestResponseLoggingMiddleware:
     """Factory function to create logging middleware with common settings."""
     return RequestResponseLoggingMiddleware(
         app=None,  # Will be set when included in app
         log_request_body=log_request_body,
         log_response_body=log_response_body,
-        exclude_paths=exclude_paths or ['/health', '/metrics', '/favicon.ico', '/static/']
+        exclude_paths=exclude_paths or ["/health", "/metrics", "/favicon.ico", "/static/"],
     )
+
 
 # Utility functions for log analysis
 class LogAnalyzer:
@@ -272,29 +276,29 @@ class LogAnalyzer:
         endpoint_stats = {}
 
         for log in logs:
-            if 'path' in log and 'process_time_ms' in log:
-                path = log['path']
-                time_ms = log['process_time_ms']
+            if "path" in log and "process_time_ms" in log:
+                path = log["path"]
+                time_ms = log["process_time_ms"]
 
                 if path not in endpoint_stats:
                     endpoint_stats[path] = {
-                        'count': 0,
-                        'total_time': 0,
-                        'avg_time': 0,
-                        'min_time': float('inf'),
-                        'max_time': 0,
-                        'errors': 0
+                        "count": 0,
+                        "total_time": 0,
+                        "avg_time": 0,
+                        "min_time": float("inf"),
+                        "max_time": 0,
+                        "errors": 0,
                     }
 
                 stats = endpoint_stats[path]
-                stats['count'] += 1
-                stats['total_time'] += time_ms
-                stats['avg_time'] = stats['total_time'] / stats['count']
-                stats['min_time'] = min(stats['min_time'], time_ms)
-                stats['max_time'] = max(stats['max_time'], time_ms)
+                stats["count"] += 1
+                stats["total_time"] += time_ms
+                stats["avg_time"] = stats["total_time"] / stats["count"]
+                stats["min_time"] = min(stats["min_time"], time_ms)
+                stats["max_time"] = max(stats["max_time"], time_ms)
 
-                if log.get('status_code', 0) >= 400:
-                    stats['errors'] += 1
+                if log.get("status_code", 0) >= 400:
+                    stats["errors"] += 1
 
         return endpoint_stats
 
@@ -303,26 +307,23 @@ class LogAnalyzer:
         """Get endpoints that exceed the time threshold."""
         slow_endpoints = {}
         for path, stats in endpoint_stats.items():
-            if stats['avg_time'] > threshold_ms:
+            if stats["avg_time"] > threshold_ms:
                 slow_endpoints[path] = stats
 
-        return dict(sorted(slow_endpoints.items(), key=lambda x: x[1]['avg_time'], reverse=True))
+        return dict(sorted(slow_endpoints.items(), key=lambda x: x[1]["avg_time"], reverse=True))
+
 
 # Configuration for different environments
 LOGGING_CONFIGS = {
-    'development': {
-        'log_request_body': True,
-        'log_response_body': True,
-        'exclude_paths': ['/health', '/metrics']
+    "development": {"log_request_body": True, "log_response_body": True, "exclude_paths": ["/health", "/metrics"]},
+    "production": {
+        "log_request_body": False,
+        "log_response_body": False,
+        "exclude_paths": ["/health", "/metrics", "/favicon.ico", "/static/", "/docs", "/redoc"],
     },
-    'production': {
-        'log_request_body': False,
-        'log_response_body': False,
-        'exclude_paths': ['/health', '/metrics', '/favicon.ico', '/static/', '/docs', '/redoc']
+    "staging": {
+        "log_request_body": True,
+        "log_response_body": False,
+        "exclude_paths": ["/health", "/metrics", "/favicon.ico"],
     },
-    'staging': {
-        'log_request_body': True,
-        'log_response_body': False,
-        'exclude_paths': ['/health', '/metrics', '/favicon.ico']
-    }
 }

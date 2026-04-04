@@ -36,7 +36,7 @@ class TestHealthModels:
             status=HealthStatus.HEALTHY,
             response_time_ms=10.5,
             message="Component is working",
-            details={"key": "value"}
+            details={"key": "value"},
         )
 
         assert component.name == "test_component"
@@ -47,11 +47,7 @@ class TestHealthModels:
 
     def test_component_health_minimal(self):
         """Test ComponentHealth with minimal fields."""
-        component = ComponentHealth(
-            name="test",
-            status=HealthStatus.UNHEALTHY,
-            response_time_ms=0.0
-        )
+        component = ComponentHealth(name="test", status=HealthStatus.UNHEALTHY, response_time_ms=0.0)
 
         assert component.name == "test"
         assert component.message is None
@@ -59,13 +55,7 @@ class TestHealthModels:
 
     def test_health_response_creation(self):
         """Test HealthResponse model creation."""
-        components = [
-            ComponentHealth(
-                name="app",
-                status=HealthStatus.HEALTHY,
-                response_time_ms=5.0
-            )
-        ]
+        components = [ComponentHealth(name="app", status=HealthStatus.HEALTHY, response_time_ms=5.0)]
 
         response = HealthResponse(
             status=HealthStatus.HEALTHY,
@@ -73,7 +63,7 @@ class TestHealthModels:
             timestamp="2024-01-15T10:30:00Z",
             correlation_id="test-123",
             uptime_seconds=3600.0,
-            components=components
+            components=components,
         )
 
         assert response.status == HealthStatus.HEALTHY
@@ -83,9 +73,7 @@ class TestHealthModels:
     def test_readiness_response_creation(self):
         """Test ReadinessResponse model creation."""
         response = ReadinessResponse(
-            ready=True,
-            timestamp="2024-01-15T10:30:00Z",
-            checks={"application": True, "database": True}
+            ready=True, timestamp="2024-01-15T10:30:00Z", checks={"application": True, "database": True}
         )
 
         assert response.ready is True
@@ -93,10 +81,7 @@ class TestHealthModels:
 
     def test_liveness_response_creation(self):
         """Test LivenessResponse model creation."""
-        response = LivenessResponse(
-            alive=True,
-            timestamp="2024-01-15T10:30:00Z"
-        )
+        response = LivenessResponse(alive=True, timestamp="2024-01-15T10:30:00Z")
 
         assert response.alive is True
 
@@ -130,8 +115,8 @@ class TestHealthCheckEndpoint:
     @pytest.mark.asyncio
     async def test_health_check_success(self, mock_settings):
         """Test successful health check."""
-        with patch('backend.api.health.get_settings', return_value=mock_settings):
-            with patch('backend.api.health.get_correlation_id', return_value="test-123"):
+        with patch("backend.api.health.get_settings", return_value=mock_settings):
+            with patch("backend.api.health.get_correlation_id", return_value="test-123"):
                 response = await health_check()
 
         assert response.status == HealthStatus.HEALTHY
@@ -145,15 +130,12 @@ class TestHealthCheckEndpoint:
         # Make APP_NAME raise an exception
         type(mock_settings).APP_NAME = property(lambda self: (_ for _ in ()).throw(Exception("Config error")))
 
-        with patch('backend.api.health.get_settings', return_value=mock_settings):
-            with patch('backend.api.health.get_correlation_id', return_value="test-123"):
+        with patch("backend.api.health.get_settings", return_value=mock_settings):
+            with patch("backend.api.health.get_correlation_id", return_value="test-123"):
                 response = await health_check()
 
         # Should have UNHEALTHY application component
-        app_component = next(
-            (c for c in response.components if c.name == "application"),
-            None
-        )
+        app_component = next((c for c in response.components if c.name == "application"), None)
         assert app_component is not None
         assert app_component.status == HealthStatus.UNHEALTHY
         assert "failed" in app_component.message.lower()
@@ -164,15 +146,12 @@ class TestHealthCheckEndpoint:
         mock_settings.is_production = True
         mock_settings.SECRET_KEY = "your-secret-key-change-in-production"  # Invalid
 
-        with patch('backend.api.health.get_settings', return_value=mock_settings):
-            with patch('backend.api.health.get_correlation_id', return_value="test-123"):
+        with patch("backend.api.health.get_settings", return_value=mock_settings):
+            with patch("backend.api.health.get_correlation_id", return_value="test-123"):
                 response = await health_check()
 
         # Should have UNHEALTHY configuration component
-        config_component = next(
-            (c for c in response.components if c.name == "configuration"),
-            None
-        )
+        config_component = next((c for c in response.components if c.name == "configuration"), None)
         assert config_component is not None
         assert config_component.status == HealthStatus.UNHEALTHY
 
@@ -188,15 +167,12 @@ class TestHealthCheckEndpoint:
         type(mock_settings).SECRET_KEY = property(lambda self: (_ for _ in ()).throw(Exception("Secret key error")))
         mock_settings.is_production = False
 
-        with patch('backend.api.health.get_settings', return_value=mock_settings):
-            with patch('backend.api.health.get_correlation_id', return_value="test-123"):
+        with patch("backend.api.health.get_settings", return_value=mock_settings):
+            with patch("backend.api.health.get_correlation_id", return_value="test-123"):
                 response = await health_check()
 
         # Should have UNHEALTHY configuration component
-        config_component = next(
-            (c for c in response.components if c.name == "configuration"),
-            None
-        )
+        config_component = next((c for c in response.components if c.name == "configuration"), None)
         assert config_component is not None
         assert config_component.status == HealthStatus.UNHEALTHY
         assert "error" in config_component.details
@@ -207,8 +183,8 @@ class TestHealthCheckEndpoint:
         # Make settings raise exception to trigger unhealthy state
         type(mock_settings).APP_NAME = property(lambda self: (_ for _ in ()).throw(Exception("Error")))
 
-        with patch('backend.api.health.get_settings', return_value=mock_settings):
-            with patch('backend.api.health.get_correlation_id', return_value="test-123"):
+        with patch("backend.api.health.get_settings", return_value=mock_settings):
+            with patch("backend.api.health.get_correlation_id", return_value="test-123"):
                 response = await health_check()
 
         assert response.status == HealthStatus.UNHEALTHY
@@ -220,8 +196,8 @@ class TestHealthCheckEndpoint:
         # This is tricky because the current implementation doesn't have a path to DEGRADED
         # for existing components. Let's verify the logic exists.
 
-        with patch('backend.api.health.get_settings', return_value=mock_settings):
-            with patch('backend.api.health.get_correlation_id', return_value="test-123"):
+        with patch("backend.api.health.get_settings", return_value=mock_settings):
+            with patch("backend.api.health.get_correlation_id", return_value="test-123"):
                 response = await health_check()
 
         # Verify the endpoint returns and has correct structure
@@ -245,8 +221,8 @@ class TestHealthCheckEndpoint:
         )
 
         # Mock the health check to return a response with a DEGRADED component
-        with patch('backend.api.health.get_settings', return_value=mock_settings):
-            with patch('backend.api.health.get_correlation_id', return_value="test-123"):
+        with patch("backend.api.health.get_settings", return_value=mock_settings):
+            with patch("backend.api.health.get_correlation_id", return_value="test-123"):
                 # Call health_check and then modify the result to trigger line 228
                 await health_check()
 
@@ -254,12 +230,8 @@ class TestHealthCheckEndpoint:
                 modified_components = [degraded_component]
 
                 # Verify the calculation logic that happens at lines 218-230
-                unhealthy_count = sum(
-                    1 for c in modified_components if c.status == HealthStatus.UNHEALTHY
-                )
-                degraded_count = sum(
-                    1 for c in modified_components if c.status == HealthStatus.DEGRADED
-                )
+                unhealthy_count = sum(1 for c in modified_components if c.status == HealthStatus.UNHEALTHY)
+                degraded_count = sum(1 for c in modified_components if c.status == HealthStatus.DEGRADED)
 
                 # This is the exact logic from lines 225-230
                 if unhealthy_count > 0:
@@ -296,9 +268,11 @@ class TestReadinessCheckEndpoint:
         mock_engine = MagicMock()
         mock_engine.connect = MagicMock(return_value=mock_conn_ctx)
 
-        with patch('backend.api.health.get_settings', return_value=mock_settings), \
-             patch('backend.db.session.engine', mock_engine), \
-             patch('backend.api.health._check_redis', new=AsyncMock(return_value=True)):
+        with (
+            patch("backend.api.health.get_settings", return_value=mock_settings),
+            patch("backend.db.session.engine", mock_engine),
+            patch("backend.api.health._check_redis", new=AsyncMock(return_value=True)),
+        ):
             response = await readiness_check()
 
         assert response.ready is True
@@ -311,7 +285,7 @@ class TestReadinessCheckEndpoint:
         # Make APP_NAME raise an exception
         type(mock_settings).APP_NAME = property(lambda self: (_ for _ in ()).throw(Exception("Config error")))
 
-        with patch('backend.api.health.get_settings', return_value=mock_settings):
+        with patch("backend.api.health.get_settings", return_value=mock_settings):
             response = await readiness_check()
 
         assert response.checks["application"] is False
@@ -321,7 +295,7 @@ class TestReadinessCheckEndpoint:
     @pytest.mark.asyncio
     async def test_readiness_check_all_checks(self, mock_settings):
         """Test readiness check includes all expected checks."""
-        with patch('backend.api.health.get_settings', return_value=mock_settings):
+        with patch("backend.api.health.get_settings", return_value=mock_settings):
             response = await readiness_check()
 
         assert "application" in response.checks
@@ -354,7 +328,7 @@ class TestSimpleHealthCheckEndpoint:
     @pytest.mark.asyncio
     async def test_simple_health_check(self, mock_settings):
         """Test simple health check."""
-        with patch('backend.api.health.get_settings', return_value=mock_settings):
+        with patch("backend.api.health.get_settings", return_value=mock_settings):
             response = await simple_health_check()
 
         assert response["status"] == "ok"
@@ -387,32 +361,34 @@ class TestHealthCheckIntegration:
         mock_conn_ctx.__aexit__ = AsyncMock(return_value=False)
         mock_engine = MagicMock()
         mock_engine.connect = MagicMock(return_value=mock_conn_ctx)
-        with patch('backend.api.health.get_settings', return_value=mock_healthy_settings), \
-             patch('backend.api.health.get_correlation_id', return_value="integration-test-123"), \
-             patch('backend.db.session.engine', mock_engine), \
-             patch('backend.api.health._check_redis', new=AsyncMock(return_value=True)):
-                # Health check
-                health_response = await health_check()
-                assert health_response.status == HealthStatus.HEALTHY
-                assert health_response.correlation_id == "integration-test-123"
+        with (
+            patch("backend.api.health.get_settings", return_value=mock_healthy_settings),
+            patch("backend.api.health.get_correlation_id", return_value="integration-test-123"),
+            patch("backend.db.session.engine", mock_engine),
+            patch("backend.api.health._check_redis", new=AsyncMock(return_value=True)),
+        ):
+            # Health check
+            health_response = await health_check()
+            assert health_response.status == HealthStatus.HEALTHY
+            assert health_response.correlation_id == "integration-test-123"
 
-                # Readiness check
-                readiness_response = await readiness_check()
-                assert readiness_response.ready is True
+            # Readiness check
+            readiness_response = await readiness_check()
+            assert readiness_response.ready is True
 
-                # Liveness check
-                liveness_response = await liveness_check()
-                assert liveness_response.alive is True
+            # Liveness check
+            liveness_response = await liveness_check()
+            assert liveness_response.alive is True
 
-                # Simple health check
-                simple_response = await simple_health_check()
-                assert simple_response["status"] == "ok"
+            # Simple health check
+            simple_response = await simple_health_check()
+            assert simple_response["status"] == "ok"
 
     @pytest.mark.asyncio
     async def test_health_check_timestamps(self, mock_healthy_settings):
         """Test health check timestamps are valid ISO format."""
-        with patch('backend.api.health.get_settings', return_value=mock_healthy_settings):
-            with patch('backend.api.health.get_correlation_id', return_value="test-123"):
+        with patch("backend.api.health.get_settings", return_value=mock_healthy_settings):
+            with patch("backend.api.health.get_correlation_id", return_value="test-123"):
                 health_response = await health_check()
                 readiness_response = await readiness_check()
                 liveness_response = await liveness_check()
@@ -426,8 +402,8 @@ class TestHealthCheckIntegration:
     @pytest.mark.asyncio
     async def test_health_check_uptime(self, mock_healthy_settings):
         """Test health check uptime is positive."""
-        with patch('backend.api.health.get_settings', return_value=mock_healthy_settings):
-            with patch('backend.api.health.get_correlation_id', return_value="test-123"):
+        with patch("backend.api.health.get_settings", return_value=mock_healthy_settings):
+            with patch("backend.api.health.get_correlation_id", return_value="test-123"):
                 response = await health_check()
 
         assert response.uptime_seconds >= 0
@@ -435,8 +411,8 @@ class TestHealthCheckIntegration:
     @pytest.mark.asyncio
     async def test_health_check_component_response_times(self, mock_healthy_settings):
         """Test health check component response times are reasonable."""
-        with patch('backend.api.health.get_settings', return_value=mock_healthy_settings):
-            with patch('backend.api.health.get_correlation_id', return_value="test-123"):
+        with patch("backend.api.health.get_settings", return_value=mock_healthy_settings):
+            with patch("backend.api.health.get_correlation_id", return_value="test-123"):
                 response = await health_check()
 
         for component in response.components:
@@ -460,8 +436,8 @@ class TestDegradedStatus:
         mock_settings.SECRET_KEY = "valid-key"
         mock_settings.is_production = False
 
-        with patch('backend.api.health.get_settings', return_value=mock_settings):
-            with patch('backend.api.health.get_correlation_id', return_value="test"):
+        with patch("backend.api.health.get_settings", return_value=mock_settings):
+            with patch("backend.api.health.get_correlation_id", return_value="test"):
                 response = await health_check()
 
         # Should be healthy
@@ -475,8 +451,8 @@ class TestDegradedStatus:
         # Force application check to fail
         type(mock_settings).APP_NAME = property(lambda self: (_ for _ in ()).throw(Exception("Error")))
 
-        with patch('backend.api.health.get_settings', return_value=mock_settings):
-            with patch('backend.api.health.get_correlation_id', return_value="test"):
+        with patch("backend.api.health.get_settings", return_value=mock_settings):
+            with patch("backend.api.health.get_correlation_id", return_value="test"):
                 response = await health_check()
 
         assert response.status == HealthStatus.UNHEALTHY
@@ -493,14 +469,11 @@ class TestHealthCheckErrorDetails:
         error_message = "Specific configuration error"
         type(mock_settings).APP_NAME = property(lambda self: (_ for _ in ()).throw(Exception(error_message)))
 
-        with patch('backend.api.health.get_settings', return_value=mock_settings):
-            with patch('backend.api.health.get_correlation_id', return_value="test"):
+        with patch("backend.api.health.get_settings", return_value=mock_settings):
+            with patch("backend.api.health.get_correlation_id", return_value="test"):
                 response = await health_check()
 
-        app_component = next(
-            (c for c in response.components if c.name == "application"),
-            None
-        )
+        app_component = next((c for c in response.components if c.name == "application"), None)
         assert app_component is not None
         assert "error" in app_component.details
         assert error_message in app_component.details["error"]
@@ -517,13 +490,10 @@ class TestHealthCheckErrorDetails:
         type(mock_settings).SECRET_KEY = property(lambda self: (_ for _ in ()).throw(Exception(error_message)))
         mock_settings.is_production = False
 
-        with patch('backend.api.health.get_settings', return_value=mock_settings):
-            with patch('backend.api.health.get_correlation_id', return_value="test"):
+        with patch("backend.api.health.get_settings", return_value=mock_settings):
+            with patch("backend.api.health.get_correlation_id", return_value="test"):
                 response = await health_check()
 
-        config_component = next(
-            (c for c in response.components if c.name == "configuration"),
-            None
-        )
+        config_component = next((c for c in response.components if c.name == "configuration"), None)
         assert config_component is not None
         assert "error" in config_component.details

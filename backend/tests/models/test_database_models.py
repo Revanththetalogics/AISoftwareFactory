@@ -24,8 +24,8 @@ def test_engine():
 def test_session(test_engine):
     """Create test database session."""
     Base.metadata.create_all(bind=test_engine)
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
-    session = SessionLocal()
+    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+    session = session_factory()
     try:
         yield session
     finally:
@@ -43,7 +43,7 @@ class TestDBUser:
             email="test@example.com",
             hashed_password="hashed_pwd_123",
             first_name="Test",
-            last_name="User"
+            last_name="User",
         )
 
         test_session.add(user)
@@ -69,7 +69,7 @@ class TestDBUser:
             email="admin@example.com",
             hashed_password="hashed_admin_pwd",
             is_superuser=True,
-            permissions=["admin", "read", "write", "delete"]
+            permissions=["admin", "read", "write", "delete"],
         )
 
         test_session.add(user)
@@ -86,7 +86,7 @@ class TestDBUser:
             username="inactive_user",
             email="inactive@example.com",
             hashed_password="hashed_pwd",
-            is_active=False
+            is_active=False,
         )
 
         test_session.add(user)
@@ -96,12 +96,7 @@ class TestDBUser:
 
     def test_user_last_login(self, test_session):
         """Test updating user last login."""
-        user = DBUser(
-            id="user_login",
-            username="login_user",
-            email="login@example.com",
-            hashed_password="hashed_pwd"
-        )
+        user = DBUser(id="user_login", username="login_user", email="login@example.com", hashed_password="hashed_pwd")
 
         test_session.add(user)
         test_session.commit()
@@ -132,7 +127,7 @@ class TestDBProject:
             current_phase="development",
             progress_percent=25,
             extra_metadata={"priority": "high"},
-            owner_id=owner.id
+            owner_id=owner.id,
         )
 
         test_session.add(project)
@@ -155,11 +150,7 @@ class TestDBProject:
         test_session.add(owner)
         test_session.commit()
 
-        project = DBProject(
-            id="proj_default",
-            name="Default Project",
-            owner_id=owner.id
-        )
+        project = DBProject(id="proj_default", name="Default Project", owner_id=owner.id)
 
         test_session.add(project)
         test_session.commit()
@@ -208,7 +199,7 @@ class TestDBWorkflow:
             trigger=WorkflowTrigger.WEBHOOK,
             project_id=project.id,
             steps=[{"id": "step1", "name": "Build"}, {"id": "step2", "name": "Deploy"}],
-            created_by=owner.id
+            created_by=owner.id,
         )
 
         test_session.add(workflow)
@@ -241,7 +232,7 @@ class TestDBWorkflow:
             steps=[{"id": "s1"}, {"id": "s2"}, {"id": "s3"}],
             current_step_id="s2",
             completed_steps=["s1"],
-            failed_steps=[]
+            failed_steps=[],
         )
 
         test_session.add(workflow)
@@ -266,7 +257,7 @@ class TestDBWorkflow:
             name="Timed Workflow",
             project_id=project.id,
             started_at=datetime.now(UTC),
-            completed_at=datetime.now(UTC)
+            completed_at=datetime.now(UTC),
         )
 
         test_session.add(workflow)
@@ -302,7 +293,7 @@ class TestDBTask:
             retry_count=0,
             max_retries=3,
             timeout_seconds=600,
-            created_by=owner.id
+            created_by=owner.id,
         )
 
         test_session.add(task)
@@ -334,7 +325,7 @@ class TestDBTask:
             name="Dependent Task",
             project_id=project.id,
             dependencies=["task_001", "task_003"],
-            result={"output": "completed"}
+            result={"output": "completed"},
         )
 
         test_session.add(task)
@@ -361,7 +352,7 @@ class TestDBTask:
             project_id=project.id,
             scheduled_at=scheduled_time,
             started_at=scheduled_time,
-            completed_at=datetime.now(UTC)
+            completed_at=datetime.now(UTC),
         )
 
         test_session.add(task)
@@ -384,7 +375,7 @@ class TestDBAgent:
             description="AI agent for code review",
             capabilities=["code_review", "testing", "documentation"],
             status="busy",
-            config={"model": "gpt-4", "temperature": 0.7}
+            config={"model": "gpt-4", "temperature": 0.7},
         )
 
         test_session.add(agent)
@@ -400,11 +391,7 @@ class TestDBAgent:
 
     def test_agent_idle_status(self, test_session):
         """Test agent default idle status."""
-        agent = DBAgent(
-            id="agent_002",
-            name="Developer Bot",
-            role="developer"
-        )
+        agent = DBAgent(id="agent_002", name="Developer Bot", role="developer")
 
         test_session.add(agent)
         test_session.commit()
@@ -420,7 +407,7 @@ class TestDBAgent:
             role="worker",
             status="active",
             current_task_id="task_123",
-            last_active=datetime.now(UTC)
+            last_active=datetime.now(UTC),
         )
 
         test_session.add(agent)
@@ -452,7 +439,7 @@ class TestDBDeployment:
             status="success",
             config={"replicas": 3, "cpu": "500m", "memory": "512Mi"},
             url="https://app.example.com",
-            created_by=owner.id
+            created_by=owner.id,
         )
 
         test_session.add(deployment)
@@ -483,7 +470,7 @@ class TestDBDeployment:
             version="1.0.1",
             status="failed",
             error_message="Container failed to start: OOMKilled",
-            steps=[{"name": "build", "status": "success"}, {"name": "deploy", "status": "failed"}]
+            steps=[{"name": "build", "status": "success"}, {"name": "deploy", "status": "failed"}],
         )
 
         test_session.add(deployment)
@@ -504,11 +491,7 @@ class TestDBDeployment:
         test_session.commit()
 
         deployment1 = DBDeployment(
-            id="deploy_003",
-            project_id=project.id,
-            environment="production",
-            version="1.0.0",
-            status="success"
+            id="deploy_003", project_id=project.id, environment="production", version="1.0.0", status="success"
         )
 
         test_session.add(deployment1)
@@ -516,11 +499,7 @@ class TestDBDeployment:
 
         # Try to add duplicate (should fail at DB level due to unique constraint)
         deployment2 = DBDeployment(
-            id="deploy_004",
-            project_id=project.id,
-            environment="production",
-            version="1.0.0",
-            status="pending"
+            id="deploy_004", project_id=project.id, environment="production", version="1.0.0", status="pending"
         )
 
         test_session.add(deployment2)
@@ -545,7 +524,7 @@ class TestDBAuditLog:
             resource_id="proj_001",
             details={"name": "New Project", "action": "created"},
             ip_address="192.168.1.100",
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
         )
 
         test_session.add(audit_log)
@@ -562,11 +541,7 @@ class TestDBAuditLog:
     def test_audit_log_login_action(self, test_session):
         """Test audit log for login action."""
         audit_log = DBAuditLog(
-            id="audit_002",
-            action="LOGIN",
-            resource_type="user",
-            resource_id="user_123",
-            ip_address="10.0.0.1"
+            id="audit_002", action="LOGIN", resource_type="user", resource_id="user_123", ip_address="10.0.0.1"
         )
 
         test_session.add(audit_log)
@@ -585,10 +560,10 @@ class TestDBAuditLog:
             details={
                 "changes": {
                     "status": {"old": "pending", "new": "running"},
-                    "current_step": {"old": None, "new": "step_2"}
+                    "current_step": {"old": None, "new": "step_2"},
                 },
-                "timestamp": datetime.now(UTC).isoformat()
-            }
+                "timestamp": datetime.now(UTC).isoformat(),
+            },
         )
 
         test_session.add(audit_log)
@@ -625,12 +600,7 @@ class TestModelRelationships:
         test_session.add(project)
         test_session.commit()
 
-        workflow = DBWorkflow(
-            id="rel_wf",
-            name="Relationship Workflow",
-            project_id=project.id,
-            created_by=owner.id
-        )
+        workflow = DBWorkflow(id="rel_wf", name="Relationship Workflow", project_id=project.id, created_by=owner.id)
         test_session.add(workflow)
         test_session.commit()
 
@@ -648,21 +618,12 @@ class TestModelRelationships:
         test_session.add(project)
         test_session.commit()
 
-        workflow = DBWorkflow(
-            id="rel_wf2",
-            name="Relationship Workflow 2",
-            project_id=project.id,
-            created_by=owner.id
-        )
+        workflow = DBWorkflow(id="rel_wf2", name="Relationship Workflow 2", project_id=project.id, created_by=owner.id)
         test_session.add(workflow)
         test_session.commit()
 
         task = DBTask(
-            id="rel_task",
-            name="Relationship Task",
-            project_id=project.id,
-            workflow_id=workflow.id,
-            created_by=owner.id
+            id="rel_task", name="Relationship Task", project_id=project.id, workflow_id=workflow.id, created_by=owner.id
         )
         test_session.add(task)
         test_session.commit()

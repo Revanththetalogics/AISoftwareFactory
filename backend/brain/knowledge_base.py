@@ -25,10 +25,7 @@ class KnowledgeBase:
     """
 
     def __init__(
-        self,
-        name: str,
-        vector_store: VectorStore | None = None,
-        embedding_engine: EmbeddingEngine | None = None
+        self, name: str, vector_store: VectorStore | None = None, embedding_engine: EmbeddingEngine | None = None
     ):
         """
         Initialize the knowledge base.
@@ -50,7 +47,7 @@ class KnowledgeBase:
         metadata: dict[str, Any] | None = None,
         doc_id: str | None = None,
         chunk_size: int = 500,
-        chunk_overlap: int = 50
+        chunk_overlap: int = 50,
     ) -> str:
         """
         Add a document to the knowledge base.
@@ -76,21 +73,11 @@ class KnowledgeBase:
 
         # Prepare metadata for each chunk
         chunk_metadatas = [
-            {
-                **metadata,
-                "doc_id": doc_id,
-                "chunk_index": i,
-                "total_chunks": len(chunks)
-            }
-            for i in range(len(chunks))
+            {**metadata, "doc_id": doc_id, "chunk_index": i, "total_chunks": len(chunks)} for i in range(len(chunks))
         ]
 
         # Add to vector store
-        chunk_ids = await self._vector_store.add(
-            texts=chunks,
-            embeddings=embeddings,
-            metadatas=chunk_metadatas
-        )
+        chunk_ids = await self._vector_store.add(texts=chunks, embeddings=embeddings, metadatas=chunk_metadatas)
 
         # Store document metadata
         self._documents[doc_id] = {
@@ -98,23 +85,15 @@ class KnowledgeBase:
             "metadata": metadata,
             "chunk_ids": chunk_ids,
             "chunk_count": len(chunks),
-            "created_at": datetime.now(UTC).isoformat()
+            "created_at": datetime.now(UTC).isoformat(),
         }
 
-        self._logger.info(
-            "Document added to knowledge base",
-            doc_id=doc_id,
-            chunks=len(chunks),
-            kb_name=self._name
-        )
+        self._logger.info("Document added to knowledge base", doc_id=doc_id, chunks=len(chunks), kb_name=self._name)
 
         return doc_id
 
     async def search(
-        self,
-        query: str,
-        top_k: int = 5,
-        filter_metadata: dict[str, Any] | None = None
+        self, query: str, top_k: int = 5, filter_metadata: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
         """
         Search the knowledge base.
@@ -132,9 +111,7 @@ class KnowledgeBase:
 
         # Search vector store
         results = await self._vector_store.search(
-            query_embedding=query_embedding,
-            top_k=top_k,
-            filter_metadata=filter_metadata
+            query_embedding=query_embedding, top_k=top_k, filter_metadata=filter_metadata
         )
 
         return results
@@ -163,12 +140,35 @@ class KnowledgeBase:
         self._logger.info("Document deleted", doc_id=doc_id)
         return True
 
-    def _chunk_text(
-        self,
-        text: str,
-        chunk_size: int,
-        chunk_overlap: int
-    ) -> list[str]:
+    async def remove_document(self, doc_id: str) -> bool:
+        """Alias for delete_document."""
+        return await self.delete_document(doc_id)
+
+    async def get_document(self, doc_id: str) -> dict | None:
+        """
+        Get document metadata by ID.
+
+        Args:
+            doc_id: Document ID
+
+        Returns:
+            Document metadata dict or None if not found
+        """
+        return self._documents.get(doc_id)
+
+    async def get_statistics(self) -> dict:
+        """
+        Get knowledge base statistics.
+
+        Returns:
+            Dict with statistics including document_count
+        """
+        return {
+            "document_count": len(self._documents),
+            "kb_name": self._name,
+        }
+
+    def _chunk_text(self, text: str, chunk_size: int, chunk_overlap: int) -> list[str]:
         """Split text into overlapping chunks."""
         chunks = []
         start = 0
@@ -186,5 +186,5 @@ class KnowledgeBase:
         return {
             "name": self._name,
             "document_count": len(self._documents),
-            "vector_count": self._vector_store.get_count()
+            "vector_count": self._vector_store.get_count(),
         }

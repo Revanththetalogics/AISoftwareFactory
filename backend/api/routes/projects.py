@@ -4,7 +4,6 @@ Project Management API Routes.
 This module provides REST endpoints for project CRUD operations.
 """
 
-
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -52,7 +51,7 @@ async def create_project(
         requirements=request.requirements,
         tech_stack=request.tech_stack,
         owner_id=user.user_id,
-        db=db
+        db=db,
     )
 
     logger.info(
@@ -73,7 +72,7 @@ async def create_project(
         progress_percent=project.progress_percent,
         created_at=project.created_at,
         updated_at=project.updated_at,
-        metadata=project.extra_metadata
+        metadata=project.extra_metadata,
     )
 
 
@@ -95,11 +94,7 @@ async def list_projects(
     Supports pagination and status filtering.
     """
     projects = await project_service.list_projects(
-        owner_id=user.user_id if user else None,
-        status=status.value if status else None,
-        skip=skip,
-        limit=limit,
-        db=db
+        owner_id=user.user_id if user else None, status=status.value if status else None, skip=skip, limit=limit, db=db
     )
 
     logger.info(
@@ -121,7 +116,7 @@ async def list_projects(
             progress_percent=p.progress_percent,
             created_at=p.created_at,
             updated_at=p.updated_at,
-            metadata=p.extra_metadata
+            metadata=p.extra_metadata,
         )
         for p in projects
     ]
@@ -152,7 +147,7 @@ async def get_project(
     # Allow access if user owns the project or has admin permissions
     user_id = user.user_id if user else "anonymous"
     is_owner = project.owner_id == user_id
-    is_admin = hasattr(user, 'permissions') and "admin" in user.permissions
+    is_admin = hasattr(user, "permissions") and "admin" in user.permissions
 
     if not is_owner and not is_admin:
         logger.warning(
@@ -161,10 +156,7 @@ async def get_project(
             user_id=user_id,
             owner_id=project.owner_id,
         )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to access this project"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this project")
 
     logger.info(
         "Project retrieved",
@@ -183,7 +175,7 @@ async def get_project(
         progress_percent=project.progress_percent,
         created_at=project.created_at,
         updated_at=project.updated_at,
-        metadata=project.extra_metadata
+        metadata=project.extra_metadata,
     )
 
 
@@ -213,21 +205,14 @@ async def update_project(
 
     # Check ownership/permissions
     if project.owner_id != (user.user_id if user else "anonymous"):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to update this project"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this project")
 
     # Prepare updates
     update_data = request.model_dump(exclude_unset=True)
     if "status" in update_data:
         update_data["status"] = update_data["status"].value
 
-    updated_project = await project_service.update_project(
-        project_id=project_id,
-        updates=update_data,
-        db=db
-    )
+    updated_project = await project_service.update_project(project_id=project_id, updates=update_data, db=db)
 
     logger.info(
         "Project updated",
@@ -247,7 +232,7 @@ async def update_project(
         progress_percent=updated_project.progress_percent,
         created_at=updated_project.created_at,
         updated_at=updated_project.updated_at,
-        metadata=updated_project.extra_metadata
+        metadata=updated_project.extra_metadata,
     )
 
 
@@ -276,18 +261,12 @@ async def delete_project(
 
     # Check ownership/permissions
     if project.owner_id != (user.user_id if user else "anonymous"):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to delete this project"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this project")
 
     success = await project_service.delete_project(project_id, db=db)
 
     if not success:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete project"
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to delete project")
 
     logger.info(
         "Project deleted",
@@ -321,24 +300,15 @@ async def activate_project(
 
     # Check ownership/permissions
     if project.owner_id != (user.user_id if user else "anonymous"):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to activate this project"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to activate this project")
 
     if project.status != "draft":
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Cannot activate project with status {project.status}"
+            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Cannot activate project with status {project.status}"
         )
 
     updated_project = await project_service.update_project(
-        project_id=project_id,
-        updates={
-            "status": "active",
-            "current_phase": "requirements"
-        },
-        db=db
+        project_id=project_id, updates={"status": "active", "current_phase": "requirements"}, db=db
     )
 
     logger.info(
@@ -358,7 +328,7 @@ async def activate_project(
         progress_percent=updated_project.progress_percent,
         created_at=updated_project.created_at,
         updated_at=updated_project.updated_at,
-        metadata=updated_project.extra_metadata
+        metadata=updated_project.extra_metadata,
     )
 
 
@@ -402,7 +372,7 @@ async def quickstart_project(
         },
         tech_stack=request.tech_stack or {},
         owner_id=user.user_id if user else None,
-        db=db
+        db=db,
     )
 
     logger.info(
@@ -414,12 +384,7 @@ async def quickstart_project(
 
     # Step 2: Activate the project
     await project_service.update_project(
-        project_id=project.id,
-        updates={
-            "status": "active",
-            "current_phase": "requirements"
-        },
-        db=db
+        project_id=project.id, updates={"status": "active", "current_phase": "requirements"}, db=db
     )
 
     # Step 3: Create workflow
@@ -436,7 +401,7 @@ async def quickstart_project(
         project_id=project.id,
         steps=steps,
         created_by=user.user_id if user else None,
-        db=db
+        db=db,
     )
 
     # Step 4: Start workflow execution in background
@@ -444,9 +409,7 @@ async def quickstart_project(
         """Execute the complete workflow pipeline."""
         try:
             await workflow_service.update_workflow_status(
-                workflow_id=workflow.id,
-                status=WorkflowStatus.RUNNING,
-                current_step_id="requirements"
+                workflow_id=workflow.id, status=WorkflowStatus.RUNNING, current_step_id="requirements"
             )
 
             # Initialize and run the workflow engine
@@ -458,7 +421,7 @@ async def quickstart_project(
                     "prompt": request.idea,
                     "template": request.template,
                     "tech_stack": request.tech_stack,
-                }
+                },
             )
 
             final_state = await engine.run(initial_state)
@@ -468,13 +431,13 @@ async def quickstart_project(
                 await workflow_service.update_workflow_status(
                     workflow_id=workflow.id,
                     status=WorkflowStatus.FAILED,
-                    current_step_id=final_state.current_phase.value
+                    current_step_id=final_state.current_phase.value,
                 )
             else:
                 await workflow_service.update_workflow_status(
                     workflow_id=workflow.id,
                     status=WorkflowStatus.COMPLETED,
-                    current_step_id=final_state.current_phase.value
+                    current_step_id=final_state.current_phase.value,
                 )
 
         except Exception as exc:
@@ -484,10 +447,7 @@ async def quickstart_project(
                 workflow_id=workflow.id,
                 error=str(exc),
             )
-            await workflow_service.update_workflow_status(
-                workflow_id=workflow.id,
-                status=WorkflowStatus.FAILED
-            )
+            await workflow_service.update_workflow_status(workflow_id=workflow.id, status=WorkflowStatus.FAILED)
 
     background_tasks.add_task(execute_full_workflow)
 

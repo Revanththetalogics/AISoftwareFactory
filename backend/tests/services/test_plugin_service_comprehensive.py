@@ -33,16 +33,16 @@ class TestPluginManager:
     def test_init(self, plugin_manager):
         """Test PluginManager initialization."""
         assert plugin_manager is not None
-        assert hasattr(plugin_manager, 'plugins_directory')
+        assert hasattr(plugin_manager, "plugins_directory")
         assert isinstance(plugin_manager.plugins_directory, Path)
         assert plugin_manager.plugins_directory.exists()
-        assert hasattr(plugin_manager, 'plugins')
+        assert hasattr(plugin_manager, "plugins")
         assert isinstance(plugin_manager.plugins, dict)
-        assert hasattr(plugin_manager, 'events')
+        assert hasattr(plugin_manager, "events")
         assert isinstance(plugin_manager.events, list)
-        assert hasattr(plugin_manager, 'hook_subscribers')
+        assert hasattr(plugin_manager, "hook_subscribers")
         assert isinstance(plugin_manager.hook_subscribers, dict)
-        assert hasattr(plugin_manager, '_sandbox_enabled')
+        assert hasattr(plugin_manager, "_sandbox_enabled")
 
         # Should have sample plugin created
         sample_plugin_dir = plugin_manager.plugins_directory / "sample_plugin"
@@ -120,7 +120,7 @@ class TestPluginManager:
         invalid_plugin_dir.mkdir()
 
         invalid_manifest_path = invalid_plugin_dir / "manifest.json"
-        with open(invalid_manifest_path, 'w') as f:
+        with open(invalid_manifest_path, "w") as f:
             f.write("invalid json content")
 
         result = await plugin_manager.discover_plugins()
@@ -134,8 +134,8 @@ class TestPluginManager:
     @pytest.mark.asyncio
     async def test_load_plugin_success(self, plugin_manager):
         """Test loading plugin successfully."""
-        with patch('importlib.util.spec_from_file_location') as mock_spec_from_file:
-            with patch('importlib.util.module_from_spec') as mock_module_from_spec:
+        with patch("importlib.util.spec_from_file_location") as mock_spec_from_file:
+            with patch("importlib.util.module_from_spec") as mock_module_from_spec:
                 # Mock the module and its functions
                 mock_module = MagicMock()
                 mock_module.initialize = MagicMock(return_value=True)
@@ -162,12 +162,12 @@ class TestPluginManager:
     async def test_load_plugin_already_loaded(self, plugin_manager):
         """Test loading already loaded plugin."""
         # First load
-        with patch('importlib.util.spec_from_file_location'):
-            with patch('importlib.util.module_from_spec'):
+        with patch("importlib.util.spec_from_file_location"):
+            with patch("importlib.util.module_from_spec"):
                 mock_module = MagicMock()
                 mock_module.initialize = MagicMock(return_value=True)
 
-                with patch('backend.services.plugin_service.importlib.util.module_from_spec', return_value=mock_module):
+                with patch("backend.services.plugin_service.importlib.util.module_from_spec", return_value=mock_module):
                     first_result = await plugin_manager.load_plugin("sample_plugin")
 
                     # Second load should return the same instance
@@ -196,7 +196,7 @@ class TestPluginManager:
 
         manifest["entry_point"] = "nonexistent.py"
 
-        with open(manifest_path, 'w') as f:
+        with open(manifest_path, "w") as f:
             json.dump(manifest, f)
 
         with pytest.raises(FileNotFoundError) as exc_info:
@@ -207,11 +207,11 @@ class TestPluginManager:
     @pytest.mark.asyncio
     async def test_load_plugin_missing_required_function(self, plugin_manager):
         """Test loading plugin missing required functions."""
-        with patch('importlib.util.spec_from_file_location') as mock_spec_from_file:
-            with patch('importlib.util.module_from_spec') as mock_module_from_spec:
+        with patch("importlib.util.spec_from_file_location") as mock_spec_from_file:
+            with patch("importlib.util.module_from_spec") as mock_module_from_spec:
                 # Mock module without required initialize function
                 mock_module = MagicMock()
-                delattr(mock_module, 'initialize')  # Remove initialize function
+                delattr(mock_module, "initialize")  # Remove initialize function
 
                 mock_spec = MagicMock()
                 mock_spec.loader = MagicMock()
@@ -226,12 +226,12 @@ class TestPluginManager:
     @pytest.mark.asyncio
     async def test_load_plugin_initialization_failure(self, plugin_manager):
         """Test loading plugin that fails initialization."""
-        with patch('importlib.util.spec_from_file_location'):
-            with patch('importlib.util.module_from_spec'):
+        with patch("importlib.util.spec_from_file_location"):
+            with patch("importlib.util.module_from_spec"):
                 mock_module = MagicMock()
                 mock_module.initialize = MagicMock(return_value=False)  # Fail initialization
 
-                with patch('backend.services.plugin_service.importlib.util.module_from_spec', return_value=mock_module):
+                with patch("backend.services.plugin_service.importlib.util.module_from_spec", return_value=mock_module):
                     with pytest.raises(RuntimeError) as exc_info:
                         await plugin_manager.load_plugin("sample_plugin")
 
@@ -247,13 +247,13 @@ class TestPluginManager:
     async def test_unload_plugin_success(self, plugin_manager):
         """Test unloading plugin successfully."""
         # First load a plugin
-        with patch('importlib.util.spec_from_file_location'):
-            with patch('importlib.util.module_from_spec'):
+        with patch("importlib.util.spec_from_file_location"):
+            with patch("importlib.util.module_from_spec"):
                 mock_module = MagicMock()
                 mock_module.initialize = MagicMock(return_value=True)
                 mock_module.cleanup = MagicMock()
 
-                with patch('backend.services.plugin_service.importlib.util.module_from_spec', return_value=mock_module):
+                with patch("backend.services.plugin_service.importlib.util.module_from_spec", return_value=mock_module):
                     await plugin_manager.load_plugin("sample_plugin")
 
                     # Verify it's loaded
@@ -277,13 +277,13 @@ class TestPluginManager:
     async def test_unload_plugin_cleanup_failure(self, plugin_manager):
         """Test unloading plugin when cleanup fails."""
         # Load a plugin
-        with patch('importlib.util.spec_from_file_location'):
-            with patch('importlib.util.module_from_spec'):
+        with patch("importlib.util.spec_from_file_location"):
+            with patch("importlib.util.module_from_spec"):
                 mock_module = MagicMock()
                 mock_module.initialize = MagicMock(return_value=True)
                 mock_module.cleanup = MagicMock(side_effect=Exception("Cleanup failed"))
 
-                with patch('backend.services.plugin_service.importlib.util.module_from_spec', return_value=mock_module):
+                with patch("backend.services.plugin_service.importlib.util.module_from_spec", return_value=mock_module):
                     await plugin_manager.load_plugin("sample_plugin")
 
                     # Unload should still succeed despite cleanup failure
@@ -296,15 +296,15 @@ class TestPluginManager:
     async def test_register_plugin_hooks(self, plugin_manager):
         """Test registering plugin hooks."""
         # Load a plugin first
-        with patch('importlib.util.spec_from_file_location'):
-            with patch('importlib.util.module_from_spec'):
+        with patch("importlib.util.spec_from_file_location"):
+            with patch("importlib.util.module_from_spec"):
                 mock_module = MagicMock()
                 mock_module.initialize = MagicMock(return_value=True)
                 # Add some hook functions
                 mock_module.on_startup = MagicMock()
                 mock_module.on_user_action = MagicMock()
 
-                with patch('backend.services.plugin_service.importlib.util.module_from_spec', return_value=mock_module):
+                with patch("backend.services.plugin_service.importlib.util.module_from_spec", return_value=mock_module):
                     await plugin_manager.load_plugin("sample_plugin")
 
                     # Check that hooks were registered
@@ -317,13 +317,13 @@ class TestPluginManager:
     async def test_execute_hook_success(self, plugin_manager):
         """Test executing hook successfully."""
         # Load a plugin with hook functions
-        with patch('importlib.util.spec_from_file_location'):
-            with patch('importlib.util.module_from_spec'):
+        with patch("importlib.util.spec_from_file_location"):
+            with patch("importlib.util.module_from_spec"):
                 mock_module = MagicMock()
                 mock_module.initialize = MagicMock(return_value=True)
                 mock_module.on_user_action = MagicMock(return_value={"processed": True})
 
-                with patch('backend.services.plugin_service.importlib.util.module_from_spec', return_value=mock_module):
+                with patch("backend.services.plugin_service.importlib.util.module_from_spec", return_value=mock_module):
                     await plugin_manager.load_plugin("sample_plugin")
 
                     # Execute the hook
@@ -362,18 +362,18 @@ class TestPluginManager:
             "entry_point": "main.py",
             "dependencies": [],
             "permissions": [],
-            "config_schema": {}
+            "config_schema": {},
         }
 
-        with open(second_plugin_dir / "manifest.json", 'w') as f:
+        with open(second_plugin_dir / "manifest.json", "w") as f:
             json.dump(second_manifest, f)
 
-        with open(second_plugin_dir / "main.py", 'w') as f:
+        with open(second_plugin_dir / "main.py", "w") as f:
             f.write("def initialize(config): return True\ndef on_user_action(data): return {'second': True}")
 
         # Load both plugins
-        with patch('importlib.util.spec_from_file_location'):
-            with patch('importlib.util.module_from_spec'):
+        with patch("importlib.util.spec_from_file_location"):
+            with patch("importlib.util.module_from_spec"):
                 # Mock first plugin
                 mock_module1 = MagicMock()
                 mock_module1.initialize = MagicMock(return_value=True)
@@ -384,7 +384,7 @@ class TestPluginManager:
                 mock_module2.initialize = MagicMock(return_value=True)
                 mock_module2.on_user_action = MagicMock(return_value={"second": True})
 
-                with patch('backend.services.plugin_service.importlib.util.module_from_spec') as mock_module_factory:
+                with patch("backend.services.plugin_service.importlib.util.module_from_spec") as mock_module_factory:
                     # Return different modules for different plugins
                     mock_module_factory.side_effect = [mock_module1, mock_module2, mock_module1, mock_module2]
 
@@ -403,13 +403,13 @@ class TestPluginManager:
     async def test_execute_hook_inactive_plugin(self, plugin_manager):
         """Test executing hook with inactive plugin."""
         # Load plugin
-        with patch('importlib.util.spec_from_file_location'):
-            with patch('importlib.util.module_from_spec'):
+        with patch("importlib.util.spec_from_file_location"):
+            with patch("importlib.util.module_from_spec"):
                 mock_module = MagicMock()
                 mock_module.initialize = MagicMock(return_value=True)
                 mock_module.on_user_action = MagicMock(return_value={"result": "test"})
 
-                with patch('backend.services.plugin_service.importlib.util.module_from_spec', return_value=mock_module):
+                with patch("backend.services.plugin_service.importlib.util.module_from_spec", return_value=mock_module):
                     plugin_instance = await plugin_manager.load_plugin("sample_plugin")
 
                     # Set plugin to inactive
@@ -425,13 +425,13 @@ class TestPluginManager:
     async def test_execute_hook_plugin_error(self, plugin_manager):
         """Test executing hook when plugin throws error."""
         # Load plugin
-        with patch('importlib.util.spec_from_file_location'):
-            with patch('importlib.util.module_from_spec'):
+        with patch("importlib.util.spec_from_file_location"):
+            with patch("importlib.util.module_from_spec"):
                 mock_module = MagicMock()
                 mock_module.initialize = MagicMock(return_value=True)
                 mock_module.on_user_action = MagicMock(side_effect=Exception("Plugin error"))
 
-                with patch('backend.services.plugin_service.importlib.util.module_from_spec', return_value=mock_module):
+                with patch("backend.services.plugin_service.importlib.util.module_from_spec", return_value=mock_module):
                     await plugin_manager.load_plugin("sample_plugin")
 
                     # Execute hook - should handle error gracefully
@@ -447,12 +447,12 @@ class TestPluginManager:
     async def test_get_plugin_success(self, plugin_manager):
         """Test getting specific plugin."""
         # Load a plugin
-        with patch('importlib.util.spec_from_file_location'):
-            with patch('importlib.util.module_from_spec'):
+        with patch("importlib.util.spec_from_file_location"):
+            with patch("importlib.util.module_from_spec"):
                 mock_module = MagicMock()
                 mock_module.initialize = MagicMock(return_value=True)
 
-                with patch('backend.services.plugin_service.importlib.util.module_from_spec', return_value=mock_module):
+                with patch("backend.services.plugin_service.importlib.util.module_from_spec", return_value=mock_module):
                     loaded_plugin = await plugin_manager.load_plugin("sample_plugin")
 
                     # Get the plugin
@@ -476,12 +476,12 @@ class TestPluginManager:
         assert len(result) == 0
 
         # Load a plugin
-        with patch('importlib.util.spec_from_file_location'):
-            with patch('importlib.util.module_from_spec'):
+        with patch("importlib.util.spec_from_file_location"):
+            with patch("importlib.util.module_from_spec"):
                 mock_module = MagicMock()
                 mock_module.initialize = MagicMock(return_value=True)
 
-                with patch('backend.services.plugin_service.importlib.util.module_from_spec', return_value=mock_module):
+                with patch("backend.services.plugin_service.importlib.util.module_from_spec", return_value=mock_module):
                     await plugin_manager.load_plugin("sample_plugin")
 
                     # List plugins
@@ -495,8 +495,8 @@ class TestPluginManager:
     async def test_get_plugin_stats(self, plugin_manager):
         """Test getting plugin statistics."""
         # Load plugins of different types and statuses
-        with patch('importlib.util.spec_from_file_location'):
-            with patch('importlib.util.module_from_spec'):
+        with patch("importlib.util.spec_from_file_location"):
+            with patch("importlib.util.module_from_spec"):
                 # Mock successful plugin
                 mock_module1 = MagicMock()
                 mock_module1.initialize = MagicMock(return_value=True)
@@ -505,7 +505,7 @@ class TestPluginManager:
                 mock_module2 = MagicMock()
                 mock_module2.initialize = MagicMock(return_value=False)
 
-                with patch('backend.services.plugin_service.importlib.util.module_from_spec') as mock_module_factory:
+                with patch("backend.services.plugin_service.importlib.util.module_from_spec") as mock_module_factory:
                     mock_module_factory.side_effect = [mock_module1, mock_module2, mock_module1]
 
                     try:
@@ -517,13 +517,20 @@ class TestPluginManager:
                     second_plugin_dir = plugin_manager.plugins_directory / "storage_plugin"
                     second_plugin_dir.mkdir()
                     second_manifest = {
-                        "id": "storage_plugin", "name": "Storage Plugin", "version": "1.0.0",
-                        "description": "", "author": "", "type": "storage", "entry_point": "main.py",
-                        "dependencies": [], "permissions": [], "config_schema": {}
+                        "id": "storage_plugin",
+                        "name": "Storage Plugin",
+                        "version": "1.0.0",
+                        "description": "",
+                        "author": "",
+                        "type": "storage",
+                        "entry_point": "main.py",
+                        "dependencies": [],
+                        "permissions": [],
+                        "config_schema": {},
                     }
-                    with open(second_plugin_dir / "manifest.json", 'w') as f:
+                    with open(second_plugin_dir / "manifest.json", "w") as f:
                         json.dump(second_manifest, f)
-                    with open(second_plugin_dir / "main.py", 'w') as f:
+                    with open(second_plugin_dir / "main.py", "w") as f:
                         f.write("def initialize(config): return True")
 
                     # Load second plugin successfully
@@ -547,7 +554,7 @@ class TestPluginManager:
     async def test_install_plugin_from_package(self, plugin_manager):
         """Test installing plugin from package."""
         # Mock Path object properly
-        with patch('pathlib.Path') as mock_path_class:
+        with patch("pathlib.Path") as mock_path_class:
             mock_path_instance = MagicMock()
             mock_path_instance.stem = "test_package"
             mock_path_class.return_value = mock_path_instance
@@ -576,11 +583,18 @@ class TestPluginManager:
     def test_plugin_instance_post_init(self):
         """Test PluginInstance post-initialization."""
         manifest = PluginManifest(
-            id="test", name="Test", version="1.0.0", description="Test",
-            author="Author", type=PluginType.CUSTOM, entry_point="main.py",
-            dependencies=[], permissions=[], config_schema={},
+            id="test",
+            name="Test",
+            version="1.0.0",
+            description="Test",
+            author="Author",
+            type=PluginType.CUSTOM,
+            entry_point="main.py",
+            dependencies=[],
+            permissions=[],
+            config_schema={},
             created_at=datetime.now(UTC).isoformat(),
-            updated_at=datetime.now(UTC).isoformat()
+            updated_at=datetime.now(UTC).isoformat(),
         )
 
         # Without hooks
@@ -589,7 +603,7 @@ class TestPluginManager:
             module=None,
             status=PluginStatus.INACTIVE,
             config={},
-            loaded_at=datetime.now(UTC).isoformat()
+            loaded_at=datetime.now(UTC).isoformat(),
         )
         assert instance.hooks == {}  # Should initialize empty dict
 
@@ -601,7 +615,7 @@ class TestPluginManager:
             status=PluginStatus.INACTIVE,
             config={},
             loaded_at=datetime.now(UTC).isoformat(),
-            hooks=hooks_dict
+            hooks=hooks_dict,
         )
         assert instance_with_hooks.hooks is hooks_dict
 

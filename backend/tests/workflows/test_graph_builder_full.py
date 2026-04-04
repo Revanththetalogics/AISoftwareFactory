@@ -409,8 +409,7 @@ class TestGraphBuilderComprehensive:
             return state
 
         result = (
-            builder
-            .add_node("start", action)
+            builder.add_node("start", action)
             .add_node("middle", action)
             .add_node("end", action)
             .set_entry_point("start")

@@ -35,7 +35,7 @@ class WorkflowService:
         project_id: str,
         description: str = "",
         steps: list[dict[str, Any]] | None = None,
-        created_by: str | None = None
+        created_by: str | None = None,
     ) -> Workflow:
         """
         Create a new workflow.
@@ -66,7 +66,7 @@ class WorkflowService:
             steps=workflow_steps,
             status=WorkflowStatus.PENDING,
             created_by=created_by,
-            context={}
+            context={},
         )
 
         self._workflows[workflow_id] = workflow
@@ -87,9 +87,7 @@ class WorkflowService:
         return self._workflows.get(workflow_id)
 
     async def list_workflows(
-        self,
-        project_id: str | None = None,
-        status: WorkflowStatus | None = None
+        self, project_id: str | None = None, status: WorkflowStatus | None = None
     ) -> list[Workflow]:
         """
         List workflows with optional filtering.
@@ -125,11 +123,7 @@ class WorkflowService:
             return None
 
         if not workflow.can_execute():
-            self._logger.warning(
-                "Cannot start workflow",
-                workflow_id=workflow_id,
-                status=workflow.status
-            )
+            self._logger.warning("Cannot start workflow", workflow_id=workflow_id, status=workflow.status)
             return workflow
 
         workflow.status = WorkflowStatus.RUNNING
@@ -140,20 +134,12 @@ class WorkflowService:
             await self._engine.run(workflow)
             self._logger.info("Workflow execution completed", workflow_id=workflow_id)
         except Exception as e:
-            self._logger.error(
-                "Workflow execution failed",
-                workflow_id=workflow_id,
-                error=str(e)
-            )
+            self._logger.error("Workflow execution failed", workflow_id=workflow_id, error=str(e))
             workflow.status = WorkflowStatus.FAILED
 
         return workflow
 
-    async def update_workflow_status(
-        self,
-        workflow_id: str,
-        status: str
-    ) -> Workflow | None:
+    async def update_workflow_status(self, workflow_id: str, status: str) -> Workflow | None:
         """
         Update workflow status.
 
@@ -170,17 +156,9 @@ class WorkflowService:
 
         try:
             workflow.status = WorkflowStatus(status)
-            self._logger.info(
-                "Workflow status updated",
-                workflow_id=workflow_id,
-                status=status
-            )
+            self._logger.info("Workflow status updated", workflow_id=workflow_id, status=status)
         except ValueError:
-            self._logger.error(
-                "Invalid workflow status",
-                workflow_id=workflow_id,
-                status=status
-            )
+            self._logger.error("Invalid workflow status", workflow_id=workflow_id, status=status)
             return None
 
         return workflow

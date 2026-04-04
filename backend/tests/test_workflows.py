@@ -2,7 +2,6 @@
 Tests for Workflow components.
 """
 
-
 import pytest
 
 from backend.workflows.graph_builder import GraphBuilder

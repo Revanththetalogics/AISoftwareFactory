@@ -18,6 +18,7 @@ logger = get_logger(__name__)
 
 class ThemeMode(str, Enum):
     """Available theme modes."""
+
     LIGHT = "light"
     DARK = "dark"
     SYSTEM = "system"
@@ -26,6 +27,7 @@ class ThemeMode(str, Enum):
 
 class LayoutType(str, Enum):
     """Available layout types."""
+
     DEFAULT = "default"
     COMPACT = "compact"
     SPACIOUS = "spacious"
@@ -34,6 +36,7 @@ class LayoutType(str, Enum):
 
 class ColorScheme(str, Enum):
     """Predefined color schemes."""
+
     BLUE = "blue"
     GREEN = "green"
     PURPLE = "purple"
@@ -45,6 +48,7 @@ class ColorScheme(str, Enum):
 @dataclass
 class Theme:
     """Represents a complete theme configuration."""
+
     id: str
     name: str
     mode: ThemeMode
@@ -70,6 +74,7 @@ class Theme:
 @dataclass
 class Layout:
     """Represents a layout configuration."""
+
     id: str
     name: str
     type: LayoutType
@@ -93,6 +98,7 @@ class Layout:
 @dataclass
 class UserPreferences:
     """Represents user customization preferences."""
+
     user_id: str
     theme_id: str
     layout_id: str
@@ -120,6 +126,7 @@ class UserPreferences:
 @dataclass
 class CustomComponent:
     """Represents a custom UI component."""
+
     id: str
     name: str
     type: str
@@ -156,7 +163,7 @@ class CustomizationService:
             background_color="#FFFFFF",
             text_color="#1F2937",
             border_color="#E5E7EB",
-            is_system_default=True
+            is_system_default=True,
         )
 
         # Dark theme
@@ -170,7 +177,7 @@ class CustomizationService:
             background_color="#111827",
             text_color="#F9FAFB",
             border_color="#374151",
-            is_system_default=True
+            is_system_default=True,
         )
 
         # Blue professional theme
@@ -183,7 +190,7 @@ class CustomizationService:
             accent_color="#0EA5E9",
             background_color="#F9FAFB",
             text_color="#111827",
-            border_color="#D1D5DB"
+            border_color="#D1D5DB",
         )
 
         # Green nature theme
@@ -196,14 +203,14 @@ class CustomizationService:
             accent_color="#10B981",
             background_color="#ECFDF5",
             text_color="#065F46",
-            border_color="#A7F3D0"
+            border_color="#A7F3D0",
         )
 
         self.themes = {
             light_theme.id: light_theme,
             dark_theme.id: dark_theme,
             blue_theme.id: blue_theme,
-            green_theme.id: green_theme
+            green_theme.id: green_theme,
         }
 
     def _initialize_default_layouts(self):
@@ -217,7 +224,7 @@ class CustomizationService:
             content_spacing=24,
             card_border_radius=8,
             font_size="medium",
-            is_system_default=True
+            is_system_default=True,
         )
 
         # Compact layout
@@ -229,7 +236,7 @@ class CustomizationService:
             content_spacing=16,
             card_border_radius=6,
             font_size="small",
-            is_system_default=True
+            is_system_default=True,
         )
 
         # Spacious layout
@@ -241,13 +248,13 @@ class CustomizationService:
             content_spacing=32,
             card_border_radius=12,
             font_size="large",
-            is_system_default=True
+            is_system_default=True,
         )
 
         self.layouts = {
             default_layout.id: default_layout,
             compact_layout.id: compact_layout,
-            spacious_layout.id: spacious_layout
+            spacious_layout.id: spacious_layout,
         }
 
     async def create_theme(
@@ -260,7 +267,7 @@ class CustomizationService:
         background_color: str,
         text_color: str,
         border_color: str,
-        created_by: str | None = None
+        created_by: str | None = None,
     ) -> Theme:
         """Create a new custom theme."""
         try:
@@ -277,7 +284,7 @@ class CustomizationService:
                 text_color=text_color,
                 border_color=border_color,
                 is_custom=True,
-                created_by=created_by
+                created_by=created_by,
             )
 
             self.themes[theme_id] = theme
@@ -305,11 +312,7 @@ class CustomizationService:
 
         return themes
 
-    async def update_theme(
-        self,
-        theme_id: str,
-        **updates
-    ) -> Theme:
+    async def update_theme(self, theme_id: str, **updates) -> Theme:
         """Update an existing theme."""
         try:
             theme = self.themes.get(theme_id)
@@ -321,8 +324,13 @@ class CustomizationService:
 
             # Update allowed fields
             updatable_fields = [
-                'name', 'primary_color', 'secondary_color', 'accent_color',
-                'background_color', 'text_color', 'border_color'
+                "name",
+                "primary_color",
+                "secondary_color",
+                "accent_color",
+                "background_color",
+                "text_color",
+                "border_color",
             ]
 
             for field in updatable_fields:
@@ -370,7 +378,7 @@ class CustomizationService:
         content_spacing: int,
         card_border_radius: int,
         font_size: str,
-        created_by: str | None = None
+        created_by: str | None = None,
     ) -> Layout:
         """Create a new custom layout."""
         try:
@@ -385,7 +393,7 @@ class CustomizationService:
                 card_border_radius=card_border_radius,
                 font_size=font_size,
                 is_custom=True,
-                created_by=created_by
+                created_by=created_by,
             )
 
             self.layouts[layout_id] = layout
@@ -430,7 +438,7 @@ class CustomizationService:
                 compact_mode=False,
                 sidebar_collapsed=False,
                 recent_colors=["#3B82F6", "#10B981", "#8B5CF6"],
-                favorite_themes=["theme_light", "theme_dark"]
+                favorite_themes=["theme_light", "theme_dark"],
             )
             self.user_preferences[user_id] = preferences
         else:
@@ -438,21 +446,26 @@ class CustomizationService:
 
         return preferences
 
-    async def update_user_preferences(
-        self,
-        user_id: str,
-        **updates
-    ) -> UserPreferences:
+    async def update_user_preferences(self, user_id: str, **updates) -> UserPreferences:
         """Update user preferences."""
         try:
             preferences = await self.get_user_preferences(user_id)
 
             # Update allowed fields
             updatable_fields = [
-                'theme_id', 'layout_id', 'language', 'timezone',
-                'notifications_enabled', 'auto_save_enabled', 'keyboard_shortcuts_enabled',
-                'animations_enabled', 'compact_mode', 'sidebar_collapsed',
-                'recent_colors', 'favorite_themes', 'custom_css'
+                "theme_id",
+                "layout_id",
+                "language",
+                "timezone",
+                "notifications_enabled",
+                "auto_save_enabled",
+                "keyboard_shortcuts_enabled",
+                "animations_enabled",
+                "compact_mode",
+                "sidebar_collapsed",
+                "recent_colors",
+                "favorite_themes",
+                "custom_css",
             ]
 
             for field in updatable_fields:
@@ -469,13 +482,7 @@ class CustomizationService:
             raise
 
     async def create_custom_component(
-        self,
-        name: str,
-        component_type: str,
-        html_template: str,
-        css_styles: str,
-        javascript_code: str,
-        created_by: str
+        self, name: str, component_type: str, html_template: str, css_styles: str, javascript_code: str, created_by: str
     ) -> CustomComponent:
         """Create a new custom UI component."""
         try:
@@ -491,7 +498,7 @@ class CustomizationService:
                 is_active=True,
                 created_by=created_by,
                 created_at=datetime.now(UTC).isoformat(),
-                updated_at=datetime.now(UTC).isoformat()
+                updated_at=datetime.now(UTC).isoformat(),
             )
 
             self.custom_components[component_id] = component
@@ -537,15 +544,24 @@ class CustomizationService:
     async def get_system_defaults(self) -> dict[str, Any]:
         """Get system default configurations."""
         try:
-            default_theme = next((t for t in self.themes.values() if t.is_system_default and t.mode == ThemeMode.LIGHT), None)
-            default_layout = next((layout for layout in self.layouts.values() if layout.is_system_default and layout.type == LayoutType.DEFAULT), None)
+            default_theme = next(
+                (t for t in self.themes.values() if t.is_system_default and t.mode == ThemeMode.LIGHT), None
+            )
+            default_layout = next(
+                (
+                    layout
+                    for layout in self.layouts.values()
+                    if layout.is_system_default and layout.type == LayoutType.DEFAULT
+                ),
+                None,
+            )
 
             return {
                 "default_theme": default_theme.__dict__ if default_theme else None,
                 "default_layout": default_layout.__dict__ if default_layout else None,
                 "available_modes": [mode.value for mode in ThemeMode],
                 "available_layout_types": [lt.value for lt in LayoutType],
-                "color_schemes": [cs.value for cs in ColorScheme]
+                "color_schemes": [cs.value for cs in ColorScheme],
             }
 
         except Exception as e:
@@ -559,11 +575,7 @@ class CustomizationService:
             if not theme:
                 raise ValueError(f"Theme {theme_id} not found")
 
-            export_data = {
-                "theme": theme.__dict__,
-                "exported_at": datetime.now(UTC).isoformat(),
-                "version": "1.0"
-            }
+            export_data = {"theme": theme.__dict__, "exported_at": datetime.now(UTC).isoformat(), "version": "1.0"}
 
             return export_data
 
@@ -585,7 +597,7 @@ class CustomizationService:
                 background_color=theme_info.get("background_color", "#FFFFFF"),
                 text_color=theme_info.get("text_color", "#1F2937"),
                 border_color=theme_info.get("border_color", "#E5E7EB"),
-                created_by=created_by
+                created_by=created_by,
             )
 
             logger.info(f"Imported theme: {theme.name}")

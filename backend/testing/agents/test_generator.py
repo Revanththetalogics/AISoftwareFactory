@@ -21,6 +21,7 @@ logger = get_logger(__name__)
 @dataclass
 class CodeComponent:
     """Represents a testable code component."""
+
     name: str
     component_type: str  # function, class, method
     file_path: str
@@ -37,6 +38,7 @@ class CodeComponent:
 @dataclass
 class GeneratedTest:
     """Represents a generated test case."""
+
     id: str
     name: str
     component_name: str
@@ -197,11 +199,7 @@ class TestGeneratorAgent(BaseAgent):
         return all_tests
 
     async def generate_test_from_error(
-        self,
-        error_message: str,
-        stack_trace: str,
-        code_snippet: str,
-        file_path: str
+        self, error_message: str, stack_trace: str, code_snippet: str, file_path: str
     ) -> GeneratedTest | None:
         """
         Generate a regression test from an error.
@@ -251,11 +249,7 @@ Return only the test code."""
             self._logger.error("Failed to generate regression test", error=str(e))
             return None
 
-    async def suggest_test_improvements(
-        self,
-        existing_test_code: str,
-        source_code: str
-    ) -> list[dict[str, Any]]:
+    async def suggest_test_improvements(self, existing_test_code: str, source_code: str) -> list[dict[str, Any]]:
         """
         Suggest improvements for existing tests.
 
@@ -290,6 +284,7 @@ Return as JSON array of suggestions."""
         try:
             response = await self._llm.generate(prompt)
             import json
+
             suggestions = json.loads(response)
             return suggestions
         except Exception as e:
@@ -320,7 +315,6 @@ Requirements:
 5. Include type hints in tests
 
 Generate the complete test code:""",
-
             "edge_case": """Generate edge case tests for this {component_type}:
 
 Name: {name}
@@ -335,7 +329,6 @@ Consider:
 - Very large inputs
 
 Generate pytest tests for these edge cases:""",
-
             "error_case": """Generate error handling tests for this {component_type}:
 
 Name: {name}
@@ -451,11 +444,7 @@ Generate pytest tests using pytest.raises():""",
 
         return f"({', '.join(args)}){returns}"
 
-    async def _generate_unit_tests(
-        self,
-        component: CodeComponent,
-        file_path: str
-    ) -> list[GeneratedTest]:
+    async def _generate_unit_tests(self, component: CodeComponent, file_path: str) -> list[GeneratedTest]:
         """Generate unit tests for a component."""
         # Read the full code
         with open(file_path) as f:
@@ -492,11 +481,7 @@ Generate pytest tests using pytest.raises():""",
             )
             return []
 
-    async def _generate_edge_case_tests(
-        self,
-        component: CodeComponent,
-        file_path: str
-    ) -> list[GeneratedTest]:
+    async def _generate_edge_case_tests(self, component: CodeComponent, file_path: str) -> list[GeneratedTest]:
         """Generate edge case tests."""
         prompt = self._prompts["edge_case"].format(
             component_type=component.component_type,
@@ -526,11 +511,7 @@ Generate pytest tests using pytest.raises():""",
             )
             return []
 
-    async def _generate_error_tests(
-        self,
-        component: CodeComponent,
-        file_path: str
-    ) -> list[GeneratedTest]:
+    async def _generate_error_tests(self, component: CodeComponent, file_path: str) -> list[GeneratedTest]:
         """Generate error handling tests."""
         with open(file_path) as f:
             code = f.read()
@@ -566,7 +547,7 @@ Generate pytest tests using pytest.raises():""",
 
     def _sanitize_name(self, name: str) -> str:
         """Sanitize a name for use in test function names."""
-        return re.sub(r'[^a-zA-Z0-9_]', '_', name).lower()
+        return re.sub(r"[^a-zA-Z0-9_]", "_", name).lower()
 
     async def _generate_tests_task(self, task: Task) -> dict[str, Any]:
         """Handle generate_tests task type."""

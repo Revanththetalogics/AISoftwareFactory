@@ -21,61 +21,37 @@ class TestWorkflowMethods:
 
     def test_is_complete_when_completed(self):
         """Test is_complete returns True for COMPLETED status."""
-        workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            status=WorkflowStatus.COMPLETED
-        )
+        workflow = Workflow(workflow_id="wf-123", name="Test Workflow", status=WorkflowStatus.COMPLETED)
 
         assert workflow.is_complete() is True
 
     def test_is_complete_when_failed(self):
         """Test is_complete returns True for FAILED status."""
-        workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            status=WorkflowStatus.FAILED
-        )
+        workflow = Workflow(workflow_id="wf-123", name="Test Workflow", status=WorkflowStatus.FAILED)
 
         assert workflow.is_complete() is True
 
     def test_is_complete_when_cancelled(self):
         """Test is_complete returns True for CANCELLED status."""
-        workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            status=WorkflowStatus.CANCELLED
-        )
+        workflow = Workflow(workflow_id="wf-123", name="Test Workflow", status=WorkflowStatus.CANCELLED)
 
         assert workflow.is_complete() is True
 
     def test_is_complete_when_running(self):
         """Test is_complete returns False for RUNNING status."""
-        workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            status=WorkflowStatus.RUNNING
-        )
+        workflow = Workflow(workflow_id="wf-123", name="Test Workflow", status=WorkflowStatus.RUNNING)
 
         assert workflow.is_complete() is False
 
     def test_is_complete_when_pending(self):
         """Test is_complete returns False for PENDING status."""
-        workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            status=WorkflowStatus.PENDING
-        )
+        workflow = Workflow(workflow_id="wf-123", name="Test Workflow", status=WorkflowStatus.PENDING)
 
         assert workflow.is_complete() is False
 
     def test_is_complete_when_paused(self):
         """Test is_complete returns False for PAUSED status."""
-        workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            status=WorkflowStatus.PAUSED
-        )
+        workflow = Workflow(workflow_id="wf-123", name="Test Workflow", status=WorkflowStatus.PAUSED)
 
         assert workflow.is_complete() is False
 
@@ -85,61 +61,37 @@ class TestWorkflowMethods:
 
     def test_can_execute_when_pending(self):
         """Test can_execute returns True for PENDING status."""
-        workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            status=WorkflowStatus.PENDING
-        )
+        workflow = Workflow(workflow_id="wf-123", name="Test Workflow", status=WorkflowStatus.PENDING)
 
         assert workflow.can_execute() is True
 
     def test_can_execute_when_paused(self):
         """Test can_execute returns True for PAUSED status."""
-        workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            status=WorkflowStatus.PAUSED
-        )
+        workflow = Workflow(workflow_id="wf-123", name="Test Workflow", status=WorkflowStatus.PAUSED)
 
         assert workflow.can_execute() is True
 
     def test_can_execute_when_running(self):
         """Test can_execute returns False for RUNNING status."""
-        workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            status=WorkflowStatus.RUNNING
-        )
+        workflow = Workflow(workflow_id="wf-123", name="Test Workflow", status=WorkflowStatus.RUNNING)
 
         assert workflow.can_execute() is False
 
     def test_can_execute_when_completed(self):
         """Test can_execute returns False for COMPLETED status."""
-        workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            status=WorkflowStatus.COMPLETED
-        )
+        workflow = Workflow(workflow_id="wf-123", name="Test Workflow", status=WorkflowStatus.COMPLETED)
 
         assert workflow.can_execute() is False
 
     def test_can_execute_when_failed(self):
         """Test can_execute returns False for FAILED status."""
-        workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            status=WorkflowStatus.FAILED
-        )
+        workflow = Workflow(workflow_id="wf-123", name="Test Workflow", status=WorkflowStatus.FAILED)
 
         assert workflow.can_execute() is False
 
     def test_can_execute_when_cancelled(self):
         """Test can_execute returns False for CANCELLED status."""
-        workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            status=WorkflowStatus.CANCELLED
-        )
+        workflow = Workflow(workflow_id="wf-123", name="Test Workflow", status=WorkflowStatus.CANCELLED)
 
         assert workflow.can_execute() is False
 
@@ -149,11 +101,7 @@ class TestWorkflowMethods:
 
     def test_get_next_steps_no_steps(self):
         """Test get_next_steps with no steps."""
-        workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            steps=[]
-        )
+        workflow = Workflow(workflow_id="wf-123", name="Test Workflow", steps=[])
 
         result = workflow.get_next_steps()
         assert result == []
@@ -166,11 +114,7 @@ class TestWorkflowMethods:
         ]
 
         workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            steps=steps,
-            completed_steps=[],
-            failed_steps=[]
+            workflow_id="wf-123", name="Test Workflow", steps=steps, completed_steps=[], failed_steps=[]
         )
 
         result = workflow.get_next_steps()
@@ -188,11 +132,7 @@ class TestWorkflowMethods:
         ]
 
         workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            steps=steps,
-            completed_steps=[],
-            failed_steps=[]
+            workflow_id="wf-123", name="Test Workflow", steps=steps, completed_steps=[], failed_steps=[]
         )
 
         # Only step1 should be ready (no dependencies)
@@ -210,11 +150,7 @@ class TestWorkflowMethods:
         ]
 
         workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            steps=steps,
-            completed_steps=["step1"],
-            failed_steps=[]
+            workflow_id="wf-123", name="Test Workflow", steps=steps, completed_steps=["step1"], failed_steps=[]
         )
 
         # step2 should be ready now (step1 is completed)
@@ -231,11 +167,7 @@ class TestWorkflowMethods:
         ]
 
         workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            steps=steps,
-            completed_steps=[],
-            failed_steps=["step1"]
+            workflow_id="wf-123", name="Test Workflow", steps=steps, completed_steps=[], failed_steps=["step1"]
         )
 
         # step1 is failed, only step2 should be ready
@@ -252,11 +184,7 @@ class TestWorkflowMethods:
         ]
 
         workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            steps=steps,
-            completed_steps=["step1"],
-            failed_steps=[]
+            workflow_id="wf-123", name="Test Workflow", steps=steps, completed_steps=["step1"], failed_steps=[]
         )
 
         result = workflow.get_next_steps()
@@ -272,11 +200,7 @@ class TestWorkflowMethods:
         ]
 
         workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            steps=steps,
-            completed_steps=["step1", "step2"],
-            failed_steps=[]
+            workflow_id="wf-123", name="Test Workflow", steps=steps, completed_steps=["step1", "step2"], failed_steps=[]
         )
 
         result = workflow.get_next_steps()
@@ -294,7 +218,7 @@ class TestWorkflowMethods:
             name="Test Workflow",
             steps=steps,
             completed_steps=[],
-            failed_steps=["step1"]  # step1 failed
+            failed_steps=["step1"],  # step1 failed
         )
 
         # step2 depends on step1, but step1 failed, so step2 can't run
@@ -308,11 +232,7 @@ class TestWorkflowMethods:
 
     def test_get_progress_percent_no_steps(self):
         """Test get_progress_percent with no steps."""
-        workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            steps=[]
-        )
+        workflow = Workflow(workflow_id="wf-123", name="Test Workflow", steps=[])
 
         result = workflow.get_progress_percent()
         assert result == 0.0
@@ -324,12 +244,7 @@ class TestWorkflowMethods:
             WorkflowStep(step_id="step2", name="Step 2"),
         ]
 
-        workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            steps=steps,
-            completed_steps=[]
-        )
+        workflow = Workflow(workflow_id="wf-123", name="Test Workflow", steps=steps, completed_steps=[])
 
         result = workflow.get_progress_percent()
         assert result == 0.0
@@ -341,12 +256,7 @@ class TestWorkflowMethods:
             WorkflowStep(step_id="step2", name="Step 2"),
         ]
 
-        workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            steps=steps,
-            completed_steps=["step1"]
-        )
+        workflow = Workflow(workflow_id="wf-123", name="Test Workflow", steps=steps, completed_steps=["step1"])
 
         result = workflow.get_progress_percent()
         assert result == 50.0
@@ -360,10 +270,7 @@ class TestWorkflowMethods:
         ]
 
         workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            steps=steps,
-            completed_steps=["step1", "step2", "step3"]
+            workflow_id="wf-123", name="Test Workflow", steps=steps, completed_steps=["step1", "step2", "step3"]
         )
 
         result = workflow.get_progress_percent()
@@ -380,7 +287,7 @@ class TestWorkflowMethods:
             workflow_id="wf-123",
             name="Test Workflow",
             steps=steps,
-            completed_steps=["step1"]  # 1 of 4 completed
+            completed_steps=["step1"],  # 1 of 4 completed
         )
 
         result = workflow.get_progress_percent()
@@ -396,81 +303,49 @@ class TestTaskMethods:
 
     def test_is_complete_when_completed(self):
         """Test is_complete returns True for COMPLETED status."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.COMPLETED
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.COMPLETED)
 
         assert task.is_complete() is True
 
     def test_is_complete_when_failed(self):
         """Test is_complete returns True for FAILED status."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.FAILED
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.FAILED)
 
         assert task.is_complete() is True
 
     def test_is_complete_when_cancelled(self):
         """Test is_complete returns True for CANCELLED status."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.CANCELLED
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.CANCELLED)
 
         assert task.is_complete() is True
 
     def test_is_complete_when_running(self):
         """Test is_complete returns False for RUNNING status."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.RUNNING
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.RUNNING)
 
         assert task.is_complete() is False
 
     def test_is_complete_when_pending(self):
         """Test is_complete returns False for PENDING status."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.PENDING
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.PENDING)
 
         assert task.is_complete() is False
 
     def test_is_complete_when_queued(self):
         """Test is_complete returns False for QUEUED status."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.QUEUED
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.QUEUED)
 
         assert task.is_complete() is False
 
     def test_is_complete_when_paused(self):
         """Test is_complete returns False for PAUSED status."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.PAUSED
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.PAUSED)
 
         assert task.is_complete() is False
 
     def test_is_complete_when_retrying(self):
         """Test is_complete returns False for RETRYING status."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.RETRYING
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.RETRYING)
 
         assert task.is_complete() is False
 
@@ -480,61 +355,37 @@ class TestTaskMethods:
 
     def test_can_execute_when_pending(self):
         """Test can_execute returns True for PENDING status."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.PENDING
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.PENDING)
 
         assert task.can_execute() is True
 
     def test_can_execute_when_queued(self):
         """Test can_execute returns True for QUEUED status."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.QUEUED
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.QUEUED)
 
         assert task.can_execute() is True
 
     def test_can_execute_when_running(self):
         """Test can_execute returns False for RUNNING status."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.RUNNING
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.RUNNING)
 
         assert task.can_execute() is False
 
     def test_can_execute_when_completed(self):
         """Test can_execute returns False for COMPLETED status."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.COMPLETED
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.COMPLETED)
 
         assert task.can_execute() is False
 
     def test_can_execute_when_failed(self):
         """Test can_execute returns False for FAILED status."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.FAILED
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.FAILED)
 
         assert task.can_execute() is False
 
     def test_can_execute_when_paused(self):
         """Test can_execute returns False for PAUSED status."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.PAUSED
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.PAUSED)
 
         assert task.can_execute() is False
 
@@ -544,85 +395,43 @@ class TestTaskMethods:
 
     def test_should_retry_when_not_failed(self):
         """Test should_retry returns False when status is not FAILED."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.RUNNING,
-            retry_count=0,
-            max_retries=3
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.RUNNING, retry_count=0, max_retries=3)
 
         assert task.should_retry() is False
 
     def test_should_retry_when_failed_with_retries_left(self):
         """Test should_retry returns True when failed with retries remaining."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.FAILED,
-            retry_count=1,
-            max_retries=3
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.FAILED, retry_count=1, max_retries=3)
 
         assert task.should_retry() is True
 
     def test_should_retry_when_failed_no_retries_left(self):
         """Test should_retry returns False when retries exhausted."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.FAILED,
-            retry_count=3,
-            max_retries=3
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.FAILED, retry_count=3, max_retries=3)
 
         assert task.should_retry() is False
 
     def test_should_retry_when_failed_exceeded_retries(self):
         """Test should_retry returns False when retry count exceeds max."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.FAILED,
-            retry_count=5,
-            max_retries=3
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.FAILED, retry_count=5, max_retries=3)
 
         assert task.should_retry() is False
 
     def test_should_retry_zero_max_retries(self):
         """Test should_retry with zero max retries."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.FAILED,
-            retry_count=0,
-            max_retries=0
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.FAILED, retry_count=0, max_retries=0)
 
         assert task.should_retry() is False
 
     def test_should_retry_first_failure(self):
         """Test should_retry on first failure."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.FAILED,
-            retry_count=0,
-            max_retries=3
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.FAILED, retry_count=0, max_retries=3)
 
         assert task.should_retry() is True
 
     def test_should_retry_when_completed(self):
         """Test should_retry returns False for completed task."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            status=TaskStatus.COMPLETED,
-            retry_count=0,
-            max_retries=3
-        )
+        task = Task(task_id="task-123", name="Test Task", status=TaskStatus.COMPLETED, retry_count=0, max_retries=3)
 
         assert task.should_retry() is False
 
@@ -635,12 +444,7 @@ class TestTaskMethods:
         started = datetime(2024, 1, 15, 10, 0, 0)
         completed = datetime(2024, 1, 15, 10, 5, 30)
 
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            started_at=started,
-            completed_at=completed
-        )
+        task = Task(task_id="task-123", name="Test Task", started_at=started, completed_at=completed)
 
         result = task.get_duration_seconds()
 
@@ -648,36 +452,21 @@ class TestTaskMethods:
 
     def test_get_duration_seconds_no_started_at(self):
         """Test get_duration_seconds with no started_at."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            started_at=None,
-            completed_at=datetime.now()
-        )
+        task = Task(task_id="task-123", name="Test Task", started_at=None, completed_at=datetime.now())
 
         result = task.get_duration_seconds()
         assert result is None
 
     def test_get_duration_seconds_no_completed_at(self):
         """Test get_duration_seconds with no completed_at."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            started_at=datetime.now(),
-            completed_at=None
-        )
+        task = Task(task_id="task-123", name="Test Task", started_at=datetime.now(), completed_at=None)
 
         result = task.get_duration_seconds()
         assert result is None
 
     def test_get_duration_seconds_neither_timestamp(self):
         """Test get_duration_seconds with neither timestamp."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            started_at=None,
-            completed_at=None
-        )
+        task = Task(task_id="task-123", name="Test Task", started_at=None, completed_at=None)
 
         result = task.get_duration_seconds()
         assert result is None
@@ -687,12 +476,7 @@ class TestTaskMethods:
         started = datetime(2024, 1, 15, 10, 0, 0)
         completed = datetime(2024, 1, 15, 10, 0, 1)
 
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            started_at=started,
-            completed_at=completed
-        )
+        task = Task(task_id="task-123", name="Test Task", started_at=started, completed_at=completed)
 
         result = task.get_duration_seconds()
         assert result == 1.0
@@ -702,12 +486,7 @@ class TestTaskMethods:
         started = datetime(2024, 1, 15, 10, 0, 0)
         completed = datetime(2024, 1, 16, 10, 0, 0)  # 24 hours later
 
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            started_at=started,
-            completed_at=completed
-        )
+        task = Task(task_id="task-123", name="Test Task", started_at=started, completed_at=completed)
 
         result = task.get_duration_seconds()
         assert result == 86400.0  # 24 hours in seconds
@@ -717,12 +496,7 @@ class TestTaskMethods:
         started = datetime(2024, 1, 15, 10, 0, 0, 0)
         completed = datetime(2024, 1, 15, 10, 0, 0, 500000)  # 0.5 seconds
 
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            started_at=started,
-            completed_at=completed
-        )
+        task = Task(task_id="task-123", name="Test Task", started_at=started, completed_at=completed)
 
         result = task.get_duration_seconds()
         assert result == 0.5
@@ -733,10 +507,7 @@ class TestWorkflowStep:
 
     def test_workflow_step_creation_minimal(self):
         """Test WorkflowStep creation with minimal fields."""
-        step = WorkflowStep(
-            step_id="step-123",
-            name="Test Step"
-        )
+        step = WorkflowStep(step_id="step-123", name="Test Step")
 
         assert step.step_id == "step-123"
         assert step.name == "Test Step"
@@ -759,7 +530,7 @@ class TestWorkflowStep:
             dependencies=["step-100", "step-101"],
             config={"key": "value"},
             timeout_seconds=600,
-            retry_count=5
+            retry_count=5,
         )
 
         assert step.step_id == "step-123"

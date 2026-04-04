@@ -19,10 +19,7 @@ class TestVectorStore:
         """Test adding vectors."""
         store = VectorStore()
 
-        ids = await store.add(
-            texts=["test1", "test2"],
-            embeddings=[[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]
-        )
+        ids = await store.add(texts=["test1", "test2"], embeddings=[[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
 
         assert len(ids) == 2
         assert store.get_count() == 2
@@ -32,15 +29,9 @@ class TestVectorStore:
         """Test searching vectors."""
         store = VectorStore()
 
-        await store.add(
-            texts=["hello world", "goodbye world"],
-            embeddings=[[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
-        )
+        await store.add(texts=["hello world", "goodbye world"], embeddings=[[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
 
-        results = await store.search(
-            query_embedding=[1.0, 0.0, 0.0],
-            top_k=1
-        )
+        results = await store.search(query_embedding=[1.0, 0.0, 0.0], top_k=1)
 
         assert len(results) == 1
         assert results[0]["text"] == "hello world"
@@ -90,11 +81,7 @@ class TestMemoryStore:
         """Test storing a memory."""
         store = MemoryStore()
 
-        memory_id = store.store(
-            agent_id="agent1",
-            content="Important fact",
-            memory_type="fact"
-        )
+        memory_id = store.store(agent_id="agent1", content="Important fact", memory_type="fact")
 
         assert memory_id is not None
 
@@ -131,16 +118,12 @@ class TestVectorStoreAdditional:
         """Test search with filter that doesn't match (lines 96-100)."""
         store = VectorStore()
 
-        await store.add(
-            texts=["hello world"],
-            embeddings=[[1.0, 0.0, 0.0]],
-            metadatas=[{"category": "greeting"}]
-        )
+        await store.add(texts=["hello world"], embeddings=[[1.0, 0.0, 0.0]], metadatas=[{"category": "greeting"}])
 
         results = await store.search(
             query_embedding=[1.0, 0.0, 0.0],
             top_k=5,
-            filter_metadata={"category": "farewell"}  # Doesn't match
+            filter_metadata={"category": "farewell"},  # Doesn't match
         )
 
         assert len(results) == 0
@@ -150,10 +133,7 @@ class TestVectorStoreAdditional:
         """Test deleting vectors (lines 129-141)."""
         store = VectorStore()
 
-        ids = await store.add(
-            texts=["text1", "text2", "text3"],
-            embeddings=[[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]]
-        )
+        ids = await store.add(texts=["text1", "text2", "text3"], embeddings=[[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]])
 
         assert store.get_count() == 3
 
@@ -176,10 +156,7 @@ class TestVectorStoreAdditional:
         """Test deleting mix of existing and nonexistent vectors."""
         store = VectorStore()
 
-        ids = await store.add(
-            texts=["text1"],
-            embeddings=[[0.1, 0.2]]
-        )
+        ids = await store.add(texts=["text1"], embeddings=[[0.1, 0.2]])
 
         deleted = await store.delete([ids[0], "nonexistent"])
 
@@ -205,10 +182,12 @@ class TestRetrievalEngine:
         """Create a mock knowledge base."""
         kb = Mock()
         kb._name = "test_kb"
-        kb.search = AsyncMock(return_value=[
-            {"text": "relevant document", "score": 0.9, "metadata": {"source": "test"}},
-            {"text": "another document", "score": 0.7, "metadata": {"source": "test2"}},
-        ])
+        kb.search = AsyncMock(
+            return_value=[
+                {"text": "relevant document", "score": 0.9, "metadata": {"source": "test"}},
+                {"text": "another document", "score": 0.7, "metadata": {"source": "test2"}},
+            ]
+        )
         return kb
 
     def test_init(self, mock_knowledge_base):
@@ -226,12 +205,7 @@ class TestRetrievalEngine:
 
         engine = RetrievalEngine(knowledge_base=mock_knowledge_base)
 
-        results = await engine.retrieve(
-            query="test query",
-            top_k=2,
-            vector_weight=0.7,
-            keyword_weight=0.3
-        )
+        results = await engine.retrieve(query="test query", top_k=2, vector_weight=0.7, keyword_weight=0.3)
 
         assert len(results) <= 2
         # Results should be sorted by combined score
@@ -247,19 +221,16 @@ class TestRetrievalEngine:
         from backend.brain.retrieval import RetrievalEngine
 
         # Set up search results with text that matches keywords
-        mock_knowledge_base.search = AsyncMock(return_value=[
-            {"text": "test query document", "score": 0.5, "metadata": {}},
-            {"text": "unrelated content", "score": 0.9, "metadata": {}},
-        ])
+        mock_knowledge_base.search = AsyncMock(
+            return_value=[
+                {"text": "test query document", "score": 0.5, "metadata": {}},
+                {"text": "unrelated content", "score": 0.9, "metadata": {}},
+            ]
+        )
 
         engine = RetrievalEngine(knowledge_base=mock_knowledge_base)
 
-        results = await engine.retrieve(
-            query="test query",
-            top_k=2,
-            vector_weight=0.5,
-            keyword_weight=0.5
-        )
+        results = await engine.retrieve(query="test query", top_k=2, vector_weight=0.5, keyword_weight=0.5)
 
         # The document with keyword match should be boosted
         assert len(results) > 0
@@ -293,11 +264,7 @@ class TestRetrievalEngine:
 
         engine = RetrievalEngine(knowledge_base=mock_knowledge_base)
 
-        results = await engine.retrieve_with_context(
-            query="test query",
-            context_window=2,
-            top_k=2
-        )
+        results = await engine.retrieve_with_context(query="test query", context_window=2, top_k=2)
 
         assert len(results) <= 2
         for item in results:
@@ -308,4 +275,3 @@ class TestRetrievalEngine:
             assert "context_after" in item
             assert isinstance(item["context_before"], list)
             assert isinstance(item["context_after"], list)
-

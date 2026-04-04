@@ -47,10 +47,7 @@ class TestGitService:
             with patch.object(git_service, "_get_repo_info", new=AsyncMock()) as mock_get_info:
                 mock_get_info.return_value = {"name": "test-repo", "branch": "main"}
 
-                result = await git_service.clone_repository(
-                    "https://github.com/user/repo.git",
-                    "my-repo"
-                )
+                result = await git_service.clone_repository("https://github.com/user/repo.git", "my-repo")
 
                 assert result["name"] == "test-repo"
                 assert "local_path" in result
@@ -77,7 +74,14 @@ class TestGitService:
 
                 # Should extract "my-awesome-repo" from URL
                 repo_path = git_service.working_directory / "my-awesome-repo"
-                expected_cmd = ["git", "clone", "--branch", "main", "https://github.com/user/my-awesome-repo.git", str(repo_path)]
+                expected_cmd = [
+                    "git",
+                    "clone",
+                    "--branch",
+                    "main",
+                    "https://github.com/user/my-awesome-repo.git",
+                    str(repo_path),
+                ]
 
                 call_args = mock_run.call_args[0][0]
                 assert call_args == expected_cmd
@@ -95,10 +99,7 @@ class TestGitService:
             mock_run.return_value = mock_result
 
             with patch.object(git_service, "_get_repo_info", new=AsyncMock()):
-                await git_service.clone_repository(
-                    "https://github.com/user/repo.git",
-                    "existing-repo"
-                )
+                await git_service.clone_repository("https://github.com/user/repo.git", "existing-repo")
 
                 # Directory should have been removed and recreated
                 mock_run.assert_called_once()
@@ -233,10 +234,7 @@ class TestGitService:
             mock_result.returncode = 0
             mock_run.return_value = mock_result
 
-            result = await git_service.commit_changes(
-                str(repo_path),
-                "Test commit message"
-            )
+            result = await git_service.commit_changes(str(repo_path), "Test commit message")
 
             assert result["success"] is True
             assert "committed" in result["message"].lower()
@@ -255,11 +253,7 @@ class TestGitService:
             mock_result.returncode = 0
             mock_run.return_value = mock_result
 
-            result = await git_service.commit_changes(
-                str(repo_path),
-                "Test commit",
-                files=["file1.py", "file2.py"]
-            )
+            result = await git_service.commit_changes(str(repo_path), "Test commit", files=["file1.py", "file2.py"])
 
             assert result["success"] is True
             # Verify specific files were added

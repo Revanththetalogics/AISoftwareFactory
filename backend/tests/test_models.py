@@ -2,7 +2,6 @@
 Tests for data models.
 """
 
-
 from backend.models.task import Task, TaskPriority, TaskStatus
 from backend.models.workflow import Workflow, WorkflowStatus
 
@@ -12,11 +11,7 @@ class TestWorkflow:
 
     def test_workflow_creation(self):
         """Test workflow creation."""
-        workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            description="A test workflow"
-        )
+        workflow = Workflow(workflow_id="wf-123", name="Test Workflow", description="A test workflow")
 
         assert workflow.name == "Test Workflow"
         assert workflow.status == WorkflowStatus.PENDING
@@ -24,11 +19,7 @@ class TestWorkflow:
 
     def test_workflow_to_dict(self):
         """Test workflow serialization."""
-        workflow = Workflow(
-            workflow_id="wf-123",
-            name="Test Workflow",
-            description="A test workflow"
-        )
+        workflow = Workflow(workflow_id="wf-123", name="Test Workflow", description="A test workflow")
 
         data = workflow.model_dump()
 
@@ -54,11 +45,7 @@ class TestTask:
 
     def test_task_creation(self):
         """Test task creation."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            description="A test task"
-        )
+        task = Task(task_id="task-123", name="Test Task", description="A test task")
 
         assert task.name == "Test Task"
         assert task.status == TaskStatus.PENDING
@@ -94,12 +81,7 @@ class TestTask:
 
     def test_task_to_dict(self):
         """Test task serialization."""
-        task = Task(
-            task_id="task-123",
-            name="Test Task",
-            description="A test task",
-            priority=TaskPriority.HIGH
-        )
+        task = Task(task_id="task-123", name="Test Task", description="A test task", priority=TaskPriority.HIGH)
 
         data = task.model_dump()
 

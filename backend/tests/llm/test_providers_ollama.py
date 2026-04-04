@@ -16,11 +16,7 @@ from backend.llm.providers.ollama import OllamaProvider
 @pytest.fixture
 def ollama_provider():
     """Create OllamaProvider instance for testing."""
-    return OllamaProvider(
-        base_url="http://localhost:11434",
-        default_model="llama3.2",
-        timeout=60.0
-    )
+    return OllamaProvider(base_url="http://localhost:11434", default_model="llama3.2", timeout=60.0)
 
 
 @pytest.fixture
@@ -47,7 +43,7 @@ class TestOllamaProviderInit:
         provider = OllamaProvider(
             base_url="http://custom:8080/",  # Trailing slash
             default_model="custom-model",
-            timeout=30.0
+            timeout=30.0,
         )
 
         assert provider.base_url == "http://custom:8080"  # Slash stripped
@@ -90,12 +86,7 @@ class TestOllamaProviderIsAvailable:
         """Test is_available returns True when Ollama is running."""
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "models": [
-                {"name": "llama3.2"},
-                {"name": "qwen2.5"}
-            ]
-        }
+        mock_response.json.return_value = {"models": [{"name": "llama3.2"}, {"name": "qwen2.5"}]}
         mock_httpx_client.get = AsyncMock(return_value=mock_response)
         ollama_provider._client = mock_httpx_client
 
@@ -169,7 +160,7 @@ class TestOllamaProviderGenerate:
             "eval_count": 5,
             "done_reason": "stop",
             "total_duration": 1000,
-            "load_duration": 500
+            "load_duration": 500,
         }
         mock_response.raise_for_status = MagicMock()
         mock_httpx_client.post = AsyncMock(return_value=mock_response)
@@ -208,10 +199,7 @@ class TestOllamaProviderGenerate:
         mock_httpx_client.post = AsyncMock(return_value=mock_response)
         ollama_provider._client = mock_httpx_client
 
-        request = LLMRequest(
-            prompt="Hello",
-            stop_sequences=["STOP", "END"]
-        )
+        request = LLMRequest(prompt="Hello", stop_sequences=["STOP", "END"])
         await ollama_provider.generate(request)
 
         # Verify stop sequences were included
@@ -226,7 +214,7 @@ class TestOllamaProviderGenerate:
         mock_response.json.return_value = {
             "response": "Short response",  # 14 chars
             "prompt_eval_count": 0,  # Not provided
-            "eval_count": 0  # Not provided
+            "eval_count": 0,  # Not provided
         }
         mock_response.raise_for_status = MagicMock()
         mock_httpx_client.post = AsyncMock(return_value=mock_response)
@@ -260,9 +248,7 @@ class TestOllamaProviderGenerate:
     @pytest.mark.asyncio
     async def test_generate_request_error(self, ollama_provider, mock_httpx_client):
         """Test generate handles request errors."""
-        mock_httpx_client.post = AsyncMock(
-            side_effect=httpx.RequestError("Connection refused")
-        )
+        mock_httpx_client.post = AsyncMock(side_effect=httpx.RequestError("Connection refused"))
         ollama_provider._client = mock_httpx_client
 
         request = LLMRequest(prompt="Hello")
@@ -274,9 +260,7 @@ class TestOllamaProviderGenerate:
     @pytest.mark.asyncio
     async def test_generate_general_error(self, ollama_provider, mock_httpx_client):
         """Test generate handles general errors."""
-        mock_httpx_client.post = AsyncMock(
-            side_effect=RuntimeError("Unexpected error")
-        )
+        mock_httpx_client.post = AsyncMock(side_effect=RuntimeError("Unexpected error"))
         ollama_provider._client = mock_httpx_client
 
         request = LLMRequest(prompt="Hello")
@@ -293,10 +277,7 @@ class TestOllamaProviderChat:
     async def test_chat_success(self, ollama_provider, mock_httpx_client):
         """Test successful chat completion."""
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "message": {"content": "Chat response"},
-            "done": True
-        }
+        mock_response.json.return_value = {"message": {"content": "Chat response"}, "done": True}
         mock_response.raise_for_status = MagicMock()
         mock_httpx_client.post = AsyncMock(return_value=mock_response)
         ollama_provider._client = mock_httpx_client
@@ -311,10 +292,7 @@ class TestOllamaProviderChat:
     async def test_chat_with_model(self, ollama_provider, mock_httpx_client):
         """Test chat with specified model."""
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "message": {"content": "Response"},
-            "done": True
-        }
+        mock_response.json.return_value = {"message": {"content": "Response"}, "done": True}
         mock_response.raise_for_status = MagicMock()
         mock_httpx_client.post = AsyncMock(return_value=mock_response)
         ollama_provider._client = mock_httpx_client
@@ -328,9 +306,7 @@ class TestOllamaProviderChat:
     async def test_chat_with_temperature(self, ollama_provider, mock_httpx_client):
         """Test chat with custom temperature."""
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "message": {"content": "Response"}
-        }
+        mock_response.json.return_value = {"message": {"content": "Response"}}
         mock_response.raise_for_status = MagicMock()
         mock_httpx_client.post = AsyncMock(return_value=mock_response)
         ollama_provider._client = mock_httpx_client
@@ -346,9 +322,7 @@ class TestOllamaProviderChat:
     async def test_chat_uses_default_model(self, ollama_provider, mock_httpx_client):
         """Test chat uses default model when none specified."""
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "message": {"content": "Response"}
-        }
+        mock_response.json.return_value = {"message": {"content": "Response"}}
         mock_response.raise_for_status = MagicMock()
         mock_httpx_client.post = AsyncMock(return_value=mock_response)
         ollama_provider._client = mock_httpx_client
@@ -361,9 +335,7 @@ class TestOllamaProviderChat:
     @pytest.mark.asyncio
     async def test_chat_error(self, ollama_provider, mock_httpx_client):
         """Test chat error handling."""
-        mock_httpx_client.post = AsyncMock(
-            side_effect=RuntimeError("Connection error")
-        )
+        mock_httpx_client.post = AsyncMock(side_effect=RuntimeError("Connection error"))
         ollama_provider._client = mock_httpx_client
 
         messages = [{"role": "user", "content": "Hi"}]
@@ -403,9 +375,7 @@ class TestOllamaProviderPullModel:
     @pytest.mark.asyncio
     async def test_pull_model_exception(self, ollama_provider, mock_httpx_client):
         """Test model pull with exception."""
-        mock_httpx_client.post = AsyncMock(
-            side_effect=RuntimeError("Connection error")
-        )
+        mock_httpx_client.post = AsyncMock(side_effect=RuntimeError("Connection error"))
         ollama_provider._client = mock_httpx_client
 
         result = await ollama_provider.pull_model("llama3.2")

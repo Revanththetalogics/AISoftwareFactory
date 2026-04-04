@@ -18,6 +18,7 @@ logger = get_logger(__name__)
 
 class TaskPriority(int, Enum):
     """Task priority levels."""
+
     LOW = 1
     MEDIUM = 2
     HIGH = 3
@@ -26,6 +27,7 @@ class TaskPriority(int, Enum):
 
 class TaskStatus(StrEnum):
     """Task execution status."""
+
     PENDING = "pending"
     ASSIGNED = "assigned"
     IN_PROGRESS = "in_progress"
@@ -56,6 +58,7 @@ class WorkflowTask:
         result: Task result
         error: Error message if failed
     """
+
     task_id: str = field(default_factory=lambda: str(uuid4()))
     name: str = ""
     description: str = ""
@@ -279,11 +282,7 @@ class TaskManager:
 
     def get_pending_tasks(self) -> list[WorkflowTask]:
         """Get all pending tasks sorted by priority."""
-        return [
-            self._tasks[task_id]
-            for task_id in self._pending_queue
-            if task_id in self._tasks
-        ]
+        return [self._tasks[task_id] for task_id in self._pending_queue if task_id in self._tasks]
 
     def get_assigned_tasks(self, agent_id: str | None = None) -> list[WorkflowTask]:
         """
@@ -305,17 +304,11 @@ class TaskManager:
 
     def get_tasks_by_project(self, project_id: str) -> list[WorkflowTask]:
         """Get all tasks for a project."""
-        return [
-            task for task in self._tasks.values()
-            if task.project_id == project_id
-        ]
+        return [task for task in self._tasks.values() if task.project_id == project_id]
 
     def get_tasks_by_phase(self, phase: str) -> list[WorkflowTask]:
         """Get all tasks for a phase."""
-        return [
-            task for task in self._tasks.values()
-            if task.phase == phase
-        ]
+        return [task for task in self._tasks.values() if task.phase == phase]
 
     def _sort_pending_queue(self) -> None:
         """Sort pending queue by priority (highest first)."""

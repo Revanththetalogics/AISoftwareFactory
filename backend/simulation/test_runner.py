@@ -21,6 +21,7 @@ logger = get_logger(__name__)
 @dataclass
 class TestSuiteResult:
     """Complete test suite result."""
+
     suite_name: str
     start_time: datetime
     end_time: datetime
@@ -47,10 +48,7 @@ class TestRunner:
         self._logger = get_logger(__name__)
 
     async def run_full_suite(
-        self,
-        code: str,
-        language: str = "python",
-        requirements: list[str] | None = None
+        self, code: str, language: str = "python", requirements: list[str] | None = None
     ) -> TestSuiteResult:
         """
         Run complete test suite on code.
@@ -71,14 +69,13 @@ class TestRunner:
         # 1. Sandbox execution test
         self._logger.info("Running sandbox tests")
         sandbox_result = await self._sandbox.execute(code, language)
-        results.append({
-            "test": "sandbox_execution",
-            "success": sandbox_result.success,
-            "details": {
-                "exit_code": sandbox_result.exit_code,
-                "execution_time": sandbox_result.execution_time
+        results.append(
+            {
+                "test": "sandbox_execution",
+                "success": sandbox_result.success,
+                "details": {"exit_code": sandbox_result.exit_code, "execution_time": sandbox_result.execution_time},
             }
-        })
+        )
         if sandbox_result.success:
             passed += 1
         else:
@@ -88,14 +85,13 @@ class TestRunner:
         self._logger.info("Running security scan")
         security_issues = await self._security.scan_code(code, language)
         critical_issues = [i for i in security_issues if i.severity == "critical"]
-        results.append({
-            "test": "security_scan",
-            "success": len(critical_issues) == 0,
-            "details": {
-                "total_issues": len(security_issues),
-                "critical_issues": len(critical_issues)
+        results.append(
+            {
+                "test": "security_scan",
+                "success": len(critical_issues) == 0,
+                "details": {"total_issues": len(security_issues), "critical_issues": len(critical_issues)},
             }
-        })
+        )
         if len(critical_issues) == 0:
             passed += 1
         else:
@@ -105,11 +101,13 @@ class TestRunner:
         if requirements:
             self._logger.info("Running dependency security scan")
             dep_issues = await self._security.scan_dependencies(requirements)
-            results.append({
-                "test": "dependency_scan",
-                "success": len(dep_issues) == 0,
-                "details": {"vulnerabilities": len(dep_issues)}
-            })
+            results.append(
+                {
+                    "test": "dependency_scan",
+                    "success": len(dep_issues) == 0,
+                    "details": {"vulnerabilities": len(dep_issues)},
+                }
+            )
             if len(dep_issues) == 0:
                 passed += 1
             else:
@@ -124,7 +122,7 @@ class TestRunner:
             passed=passed,
             failed=failed,
             skipped=0,
-            results=results
+            results=results,
         )
 
     def generate_report(self, result: TestSuiteResult) -> dict[str, Any]:
@@ -140,8 +138,8 @@ class TestRunner:
                 "failed": result.failed,
                 "skipped": result.skipped,
                 "success_rate": result.passed / total if total > 0 else 0,
-                "duration_seconds": duration
+                "duration_seconds": duration,
             },
             "results": result.results,
-            "timestamp": result.end_time.isoformat()
+            "timestamp": result.end_time.isoformat(),
         }

@@ -20,11 +20,7 @@ class EmbeddingEngine:
     and OpenAI API.
     """
 
-    def __init__(
-        self,
-        provider: str = "local",
-        model_name: str | None = None
-    ):
+    def __init__(self, provider: str = "local", model_name: str | None = None):
         """
         Initialize the embedding engine.
 
@@ -64,20 +60,17 @@ class EmbeddingEngine:
             from sentence_transformers import SentenceTransformer
 
             if self._model is None:
-                self._logger.info(
-                    "Loading local embedding model",
-                    model=self._model_name
-                )
+                self._logger.info("Loading local embedding model", model=self._model_name)
                 self._model = SentenceTransformer(self._model_name)
 
-            embeddings = self._model.encode(texts)
-            return [emb.tolist() for emb in embeddings]
+            embeddings = self._model.encode(texts, convert_to_numpy=True)
+            # Handle both numpy 2D arrays and flat list mocks
+            if len(embeddings) > 0 and not hasattr(embeddings[0], "__len__"):
+                return [list(embeddings)]
+            return [emb.tolist() if hasattr(emb, "tolist") else list(emb) for emb in embeddings]
 
         except ImportError:
-            self._logger.error(
-                "sentence-transformers not installed. "
-                "Install with: pip install sentence-transformers"
-            )
+            self._logger.error("sentence-transformers not installed. Install with: pip install sentence-transformers")
             raise
 
     async def _embed_openai(self, texts: list[str]) -> list[list[float]]:
@@ -85,29 +78,17 @@ class EmbeddingEngine:
         try:
             import openai
 
-            client = openai.AsyncOpenAI(
-                api_key=os.getenv("OPENAI_API_KEY")
-            )
+            client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-            response = await client.embeddings.create(
-                model=self._model_name,
-                input=texts
-            )
+            response = await client.embeddings.create(model=self._model_name, input=texts)
 
             return [item.embedding for item in response.data]
 
         except ImportError:
-            self._logger.error(
-                "openai not installed. "
-                "Install with: pip install openai"
-            )
+            self._logger.error("openai not installed. Install with: pip install openai")
             raise
 
     def get_dimension(self) -> int:
         """Get embedding dimension."""
-        dimensions = {
-            "all-MiniLM-L6-v2": 384,
-            "text-embedding-3-small": 1536,
-            "text-embedding-3-large": 3072
-        }
+        dimensions = {"all-MiniLM-L6-v2": 384, "text-embedding-3-small": 1536, "text-embedding-3-large": 3072}
         return dimensions.get(self._model_name, 384)

@@ -49,7 +49,7 @@ class TestCreateProject:
 
     def test_create_project_success(self, authenticated_client, mock_project):
         """Test creating a project."""
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.create_project = AsyncMock(return_value=mock_project)
 
             response = authenticated_client.post(
@@ -82,7 +82,7 @@ class TestListProjects:
 
     def test_list_projects(self, authenticated_client, mock_project):
         """Test listing projects."""
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.list_projects = AsyncMock(return_value=[mock_project])
 
             response = authenticated_client.get("/api/v1/projects")
@@ -93,7 +93,7 @@ class TestListProjects:
 
     def test_list_projects_with_filter(self, authenticated_client, mock_project):
         """Test filtering by status."""
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.list_projects = AsyncMock(return_value=[mock_project])
 
             response = authenticated_client.get("/api/v1/projects?status=draft")
@@ -108,7 +108,7 @@ class TestGetProject:
 
     def test_get_project_not_found(self, authenticated_client):
         """Test 404 for nonexistent project."""
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.get_project = AsyncMock(return_value=None)
 
             response = authenticated_client.get("/api/v1/projects/nonexistent")
@@ -121,7 +121,7 @@ class TestUpdateProject:
 
     def test_update_project_not_found(self, authenticated_client):
         """Test 404 for nonexistent project."""
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.get_project = AsyncMock(return_value=None)
 
             response = authenticated_client.patch(
@@ -137,7 +137,7 @@ class TestDeleteProject:
 
     def test_delete_project_not_found(self, authenticated_client):
         """Test 404 for nonexistent project."""
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.get_project = AsyncMock(return_value=None)
 
             response = authenticated_client.delete("/api/v1/projects/nonexistent")
@@ -150,7 +150,7 @@ class TestActivateProject:
 
     def test_activate_project_not_found(self, authenticated_client):
         """Test 404 for nonexistent project."""
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.get_project = AsyncMock(return_value=None)
 
             response = authenticated_client.post("/api/v1/projects/nonexistent/activate")

@@ -18,6 +18,7 @@ logger = get_logger(__name__)
 @dataclass
 class SecurityIssue:
     """A security issue found in code."""
+
     severity: str  # critical, high, medium, low
     category: str
     message: str
@@ -48,11 +49,7 @@ class SecurityScanner:
         """Initialize the security scanner."""
         self._logger = get_logger(__name__)
 
-    async def scan_code(
-        self,
-        code: str,
-        language: str = "python"
-    ) -> list[SecurityIssue]:
+    async def scan_code(self, code: str, language: str = "python") -> list[SecurityIssue]:
         """
         Scan code for security issues.
 
@@ -80,13 +77,15 @@ class SecurityScanner:
             for pattern_name, pattern in self.DANGEROUS_PATTERNS.items():
                 if re.search(pattern, line, re.IGNORECASE):
                     severity = self._get_severity(pattern_name)
-                    issues.append(SecurityIssue(
-                        severity=severity,
-                        category=pattern_name,
-                        message=f"Potentially dangerous pattern: {pattern_name}",
-                        line=line_num,
-                        code_snippet=line.strip()
-                    ))
+                    issues.append(
+                        SecurityIssue(
+                            severity=severity,
+                            category=pattern_name,
+                            message=f"Potentially dangerous pattern: {pattern_name}",
+                            line=line_num,
+                            code_snippet=line.strip(),
+                        )
+                    )
 
         return issues
 
@@ -102,12 +101,14 @@ class SecurityScanner:
                 if isinstance(node, ast.Import):
                     for alias in node.names:
                         if alias.name in ["pickle", "marshal"]:
-                            issues.append(SecurityIssue(
-                                severity="medium",
-                                category="dangerous_import",
-                                message=f"Dangerous import: {alias.name}",
-                                line=getattr(node, 'lineno', None)
-                            ))
+                            issues.append(
+                                SecurityIssue(
+                                    severity="medium",
+                                    category="dangerous_import",
+                                    message=f"Dangerous import: {alias.name}",
+                                    line=getattr(node, "lineno", None),
+                                )
+                            )
 
                 # Check for unsafe file operations
                 if isinstance(node, ast.Call):
@@ -115,31 +116,24 @@ class SecurityScanner:
                         if node.func.id in ["open", "file"]:
                             # Check for write mode
                             if any(
-                                isinstance(arg, ast.Constant) and
-                                isinstance(arg.value, str) and
-                                "w" in arg.value
+                                isinstance(arg, ast.Constant) and isinstance(arg.value, str) and "w" in arg.value
                                 for arg in node.args[1:2]
                             ):
-                                issues.append(SecurityIssue(
-                                    severity="low",
-                                    category="file_write",
-                                    message="File write operation detected",
-                                    line=getattr(node, 'lineno', None)
-                                ))
+                                issues.append(
+                                    SecurityIssue(
+                                        severity="low",
+                                        category="file_write",
+                                        message="File write operation detected",
+                                        line=getattr(node, "lineno", None),
+                                    )
+                                )
 
         except SyntaxError as e:
-            issues.append(SecurityIssue(
-                severity="high",
-                category="syntax_error",
-                message=f"Syntax error: {e}"
-            ))
+            issues.append(SecurityIssue(severity="high", category="syntax_error", message=f"Syntax error: {e}"))
 
         return issues
 
-    async def scan_dependencies(
-        self,
-        requirements: list[str]
-    ) -> list[SecurityIssue]:
+    async def scan_dependencies(self, requirements: list[str]) -> list[SecurityIssue]:
         """
         Scan dependencies for known vulnerabilities.
 
@@ -163,11 +157,13 @@ class SecurityScanner:
 
             if pkg_name in vulnerable_packages:
                 for _min_ver, _max_ver, cve in vulnerable_packages[pkg_name]:
-                    issues.append(SecurityIssue(
-                        severity="high",
-                        category="vulnerable_dependency",
-                        message=f"Package {pkg_name} may have vulnerability {cve}"
-                    ))
+                    issues.append(
+                        SecurityIssue(
+                            severity="high",
+                            category="vulnerable_dependency",
+                            message=f"Package {pkg_name} may have vulnerability {cve}",
+                        )
+                    )
 
         return issues
 
@@ -186,12 +182,7 @@ class SecurityScanner:
 
     def generate_report(self, issues: list[SecurityIssue]) -> dict[str, Any]:
         """Generate security scan report."""
-        severity_counts = {
-            "critical": 0,
-            "high": 0,
-            "medium": 0,
-            "low": 0
-        }
+        severity_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0}
 
         for issue in issues:
             severity_counts[issue.severity] = severity_counts.get(issue.severity, 0) + 1
@@ -205,8 +196,8 @@ class SecurityScanner:
                     "category": i.category,
                     "message": i.message,
                     "line": i.line,
-                    "code": i.code_snippet
+                    "code": i.code_snippet,
                 }
                 for i in issues
-            ]
+            ],
         }

@@ -47,11 +47,7 @@ class EventBroadcaster:
 
     async def broadcast(self, event_type: str, data: dict):
         """Broadcast an event to all connected clients."""
-        event = {
-            "type": event_type,
-            "data": data,
-            "timestamp": datetime.now(UTC).isoformat()
-        }
+        event = {"type": event_type, "data": data, "timestamp": datetime.now(UTC).isoformat()}
 
         # Remove disconnected clients
         dead_clients = []
@@ -100,11 +96,13 @@ async def event_stream(
         broadcaster.disconnect(queue)
 
     # Send initial connection event
-    await queue.put({
-        "type": "connected",
-        "data": {"user_id": user.user_id if user else "anonymous"},
-        "timestamp": datetime.now(UTC).isoformat(),
-    })
+    await queue.put(
+        {
+            "type": "connected",
+            "data": {"user_id": user.user_id if user else "anonymous"},
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
+    )
 
     return StreamingResponse(
         generate_events(queue),
@@ -114,7 +112,7 @@ async def event_stream(
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",  # Disable nginx buffering
         },
-        background=cleanup
+        background=cleanup,
     )
 
 
@@ -136,7 +134,7 @@ async def metrics_stream(
                     "memory": 62.1,
                     "network": 12.5,
                     "disk": 78.3,
-                    "timestamp": datetime.now(UTC).isoformat()
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
 
                 yield f"data: {json.dumps({'type': 'system_metrics', 'data': metrics})}\n\n"
@@ -151,7 +149,7 @@ async def metrics_stream(
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
         },
-        background=lambda: broadcaster.disconnect(queue)
+        background=lambda: broadcaster.disconnect(queue),
     )
 
 

@@ -15,6 +15,7 @@ logger = get_logger(__name__)
 @dataclass
 class ResourceAllocation:
     """Resource allocation for a task."""
+
     cpu_cores: float
     memory_mb: int
     gpu_count: int = 0
@@ -30,22 +31,12 @@ class ResourceManager:
 
     def __init__(self):
         """Initialize the resource manager."""
-        self._total_resources = ResourceAllocation(
-            cpu_cores=8.0,
-            memory_mb=16384,
-            gpu_count=1,
-            storage_mb=102400
-        )
+        self._total_resources = ResourceAllocation(cpu_cores=8.0, memory_mb=16384, gpu_count=1, storage_mb=102400)
         self._allocated: dict[str, ResourceAllocation] = {}
         self._logger = get_logger(__name__)
 
     def allocate(
-        self,
-        task_id: str,
-        cpu_cores: float = 1.0,
-        memory_mb: int = 512,
-        gpu_count: int = 0,
-        storage_mb: int = 1024
+        self, task_id: str, cpu_cores: float = 1.0, memory_mb: int = 512, gpu_count: int = 0, storage_mb: int = 1024
     ) -> bool:
         """
         Allocate resources for a task.
@@ -62,22 +53,19 @@ class ResourceManager:
         """
         available = self.get_available_resources()
 
-        if (cpu_cores > available.cpu_cores or
-            memory_mb > available.memory_mb or
-            gpu_count > available.gpu_count or
-            storage_mb > available.storage_mb):
+        if (
+            cpu_cores > available.cpu_cores
+            or memory_mb > available.memory_mb
+            or gpu_count > available.gpu_count
+            or storage_mb > available.storage_mb
+        ):
             self._logger.warning(
-                "Insufficient resources",
-                task_id=task_id,
-                requested={"cpu": cpu_cores, "memory": memory_mb}
+                "Insufficient resources", task_id=task_id, requested={"cpu": cpu_cores, "memory": memory_mb}
             )
             return False
 
         self._allocated[task_id] = ResourceAllocation(
-            cpu_cores=cpu_cores,
-            memory_mb=memory_mb,
-            gpu_count=gpu_count,
-            storage_mb=storage_mb
+            cpu_cores=cpu_cores, memory_mb=memory_mb, gpu_count=gpu_count, storage_mb=storage_mb
         )
 
         self._logger.info("Resources allocated", task_id=task_id)
@@ -115,7 +103,7 @@ class ResourceManager:
             cpu_cores=self._total_resources.cpu_cores - used_cpu,
             memory_mb=self._total_resources.memory_mb - used_memory,
             gpu_count=self._total_resources.gpu_count - used_gpu,
-            storage_mb=self._total_resources.storage_mb - used_storage
+            storage_mb=self._total_resources.storage_mb - used_storage,
         )
 
     def get_status(self) -> dict[str, Any]:
@@ -131,13 +119,13 @@ class ResourceManager:
                 "cpu_cores": self._total_resources.cpu_cores,
                 "memory_mb": self._total_resources.memory_mb,
                 "gpu_count": self._total_resources.gpu_count,
-                "storage_mb": self._total_resources.storage_mb
+                "storage_mb": self._total_resources.storage_mb,
             },
             "available": {
                 "cpu_cores": available.cpu_cores,
                 "memory_mb": available.memory_mb,
                 "gpu_count": available.gpu_count,
-                "storage_mb": available.storage_mb
+                "storage_mb": available.storage_mb,
             },
-            "allocated_tasks": len(self._allocated)
+            "allocated_tasks": len(self._allocated),
         }

@@ -46,3 +46,37 @@
 {"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-03-29T05:17:10.393170+00:00"}
 {"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-03-29T06:07:29.288161+00:00"}
 {"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-03-29T06:07:29.292770+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-04-02T14:51:06.133902+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-04-02T14:51:06.136785+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-04-02T15:05:45.092726+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-04-02T15:05:45.095207+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-04-02T15:47:01.918087+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-04-02T15:47:01.920323+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-04-02T17:10:08.336584+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-04-02T17:10:08.338767+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-04-02T17:14:40.033746+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-04-02T17:14:40.037313+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-04-02T17:26:24.275495+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-04-02T17:26:24.277775+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-04-02T20:07:18.905375+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-04-02T20:07:18.908181+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-04-02T21:48:25.658855+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-04-02T21:48:25.661074+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-04-03T05:25:24.610316+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-04-03T05:25:24.613114+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-04-03T06:04:59.982498+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-04-03T06:04:59.985176+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-04-03T09:05:03.443482+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-04-03T09:05:03.447240+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-04-03T11:15:58.892443+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-04-03T11:15:58.895041+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-04-03T15:50:20.692988+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-04-03T15:50:20.698010+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-04-04T05:03:28.911257+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-04-04T05:03:28.914932+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-04-04T05:52:13.261797+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-04-04T05:52:13.266716+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-04-04T09:11:05.644548+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-04-04T09:11:05.649153+00:00"}
+{"task_id": "task-123", "error": "Test error", "context": {"key": "value"}, "timestamp": "2026-04-04T09:11:05.845827+00:00"}
+{"task_id": "task-456", "error": "Another error", "context": null, "timestamp": "2026-04-04T09:11:05.850342+00:00"}

@@ -1,140 +1,212 @@
 #!/usr/bin/env pwsh
-# Pre-commit validation for ThetaAI - Software Factory
-# Runs all quality gates before allowing commits
+<#
+.SYNOPSIS
+    Run all pre-commit quality checks for the ThetaAI Software Factory project.
 
+.DESCRIPTION
+    Executes the following checks in order:
+      Backend  (backend/)
+        1. Ruff format  -- code formatting
+        2. Ruff lint    -- style, imports, security (E F W I N UP S B rules)
+        3. Pytest       -- full test suite
+
+      Frontend (frontend/)
+        4. TypeScript   -- tsc --noEmit type check
+        5. ESLint       -- eslint lint
+        6. Vitest       -- unit test suite
+
+    Exits with code 0 only if every check passes.
+
+.PARAMETER BackendOnly
+    Skip all frontend checks.
+
+.PARAMETER FrontendOnly
+    Skip all backend checks.
+
+.PARAMETER SkipTests
+    Skip pytest and vitest (run lint/type checks only).
+
+.EXAMPLE
+    .\scripts\pre-commit-check.ps1
+    .\scripts\pre-commit-check.ps1 -BackendOnly
+    .\scripts\pre-commit-check.ps1 -SkipTests
+#>
+param(
+    [switch]$BackendOnly,
+    [switch]$FrontendOnly,
+    [switch]$SkipTests
+)
+
+Set-StrictMode -Version Latest
 $ErrorActionPreference = "Continue"
-$exitCode = 0
-$workspace = Split-Path -Parent $PSScriptRoot
 
-Write-Host "=== ThetaAI Pre-Commit Validation ===" -ForegroundColor Cyan
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
-# 1. Check package-lock.json exists
-Write-Host "`n[1/7] Checking package-lock.json..." -ForegroundColor Yellow
-if (-not (Test-Path "$workspace/frontend/package-lock.json")) {
-    Write-Host "FAIL: frontend/package-lock.json missing" -ForegroundColor Red
-    $exitCode = 1
-} else {
-    Write-Host "PASS" -ForegroundColor Green
+$script:Passed  = 0
+$script:Failed  = 0
+$script:Skipped = 0
+$script:Results = @()
+
+function Write-Header {
+    param([string]$Title)
+    $line = "-" * 60
+    Write-Host ""
+    Write-Host $line                  -ForegroundColor DarkGray
+    Write-Host "  $Title"             -ForegroundColor Cyan
+    Write-Host $line                  -ForegroundColor DarkGray
 }
 
-# 2. TypeScript strict check
-Write-Host "`n[2/7] TypeScript strict check..." -ForegroundColor Yellow
-Push-Location "$workspace/frontend"
-try {
-    $tscOutput = npx tsc --noEmit 2>&1
-    if ($LASTEXITCODE -ne 0) {
+function Invoke-Check {
+    param(
+        [string]   $Name,
+        [string]   $WorkDir,
+        [string[]] $Cmd,
+        [switch]   $Skip
+    )
+
+    if ($Skip) {
+        Write-Host "  [SKIP]  $Name" -ForegroundColor DarkGray
+        $script:Skipped++
+        $script:Results += [PSCustomObject]@{ Name = $Name; Status = "SKIP" }
+        return
+    }
+
+    Write-Host ""
+    Write-Host "  Running: $($Cmd -join ' ')" -ForegroundColor DarkGray
+
+    $prevPwd = $PWD
+    Set-Location $WorkDir
+
+    $exitCode = 0
+    try {
+        & $Cmd[0] $Cmd[1..($Cmd.Length - 1)]
+        $exitCode = $LASTEXITCODE
+    }
+    catch {
+        Write-Host "  ERROR: $_" -ForegroundColor Red
         $exitCode = 1
-        Write-Host "FAIL" -ForegroundColor Red
-        Write-Host $tscOutput -ForegroundColor Red
-    } else {
-        Write-Host "PASS" -ForegroundColor Green
     }
-} catch {
-    $exitCode = 1
-    Write-Host "FAIL: $_" -ForegroundColor Red
-}
-Pop-Location
-
-# 3. ESLint
-Write-Host "`n[3/7] ESLint check..." -ForegroundColor Yellow
-Push-Location "$workspace/frontend"
-try {
-    $eslintOutput = npx eslint src/ --max-warnings=0 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        $exitCode = 1
-        Write-Host "FAIL" -ForegroundColor Red
-        Write-Host $eslintOutput -ForegroundColor Red
-    } else {
-        Write-Host "PASS" -ForegroundColor Green
+    finally {
+        Set-Location $prevPwd
     }
-} catch {
-    $exitCode = 1
-    Write-Host "FAIL: $_" -ForegroundColor Red
-}
-Pop-Location
 
-# 4. Backend ruff lint
-Write-Host "`n[4/7] Backend ruff lint..." -ForegroundColor Yellow
-Push-Location "$workspace"
-try {
-    # Only check for critical errors, not style warnings
-    $ruffOutput = python -m ruff check backend/ --select E,F,I --ignore E501,E722,B008,UP042,S105,S603,N806,B007 2>&1
-    if ($LASTEXITCODE -ne 0 -and $ruffOutput -match 'error:') {
-        $exitCode = 1
-        Write-Host "FAIL" -ForegroundColor Red
-        Write-Host $ruffOutput -ForegroundColor Red
-    } else {
-        Write-Host "PASS" -ForegroundColor Green
+    if ($exitCode -eq 0) {
+        Write-Host ""
+        Write-Host "  [PASS]  $Name" -ForegroundColor Green
+        $script:Passed++
+        $script:Results += [PSCustomObject]@{ Name = $Name; Status = "PASS" }
     }
-} catch {
-    $exitCode = 1
-    Write-Host "FAIL: $_" -ForegroundColor Red
-}
-Pop-Location
-
-# 5. Frontend tests
-Write-Host "`n[5/7] Frontend tests..." -ForegroundColor Yellow
-Push-Location "$workspace/frontend"
-try {
-    # Stream directly to avoid pipe buffer issues
-    npm test
-    if ($LASTEXITCODE -ne 0) {
-        $exitCode = 1
-        Write-Host "FAIL" -ForegroundColor Red
-    } else {
-        Write-Host "PASS" -ForegroundColor Green
+    else {
+        Write-Host ""
+        Write-Host "  [FAIL]  $Name  (exit $exitCode)" -ForegroundColor Red
+        $script:Failed++
+        $script:Results += [PSCustomObject]@{ Name = $Name; Status = "FAIL" }
     }
-} catch {
-    $exitCode = 1
-    Write-Host "FAIL: $_" -ForegroundColor Red
 }
-Pop-Location
 
-# 6. Backend tests (API suite only - full suite runs in CI)
-Write-Host "`n[6/7] Backend tests..." -ForegroundColor Yellow
-Push-Location "$workspace"
-try {
-    # Stream output directly (no capture) to avoid PowerShell pipe buffer deadlock
-    python -m pytest backend/tests/api/ -x -q --tb=short --no-header -W ignore::DeprecationWarning -W ignore::PendingDeprecationWarning
-    if ($LASTEXITCODE -ne 0) {
-        $exitCode = 1
-        Write-Host "FAIL" -ForegroundColor Red
-    } else {
-        Write-Host "PASS" -ForegroundColor Green
-    }
-} catch {
-    $exitCode = 1
-    Write-Host "FAIL: $_" -ForegroundColor Red
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+
+$ProjectRoot = Split-Path -Parent $PSScriptRoot
+$BackendDir  = Join-Path $ProjectRoot "backend"
+$FrontendDir = Join-Path $ProjectRoot "frontend"
+
+Write-Host ""
+Write-Host "  ThetaAI Software Factory" -ForegroundColor Magenta
+Write-Host "  Pre-Commit Quality Check" -ForegroundColor White
+Write-Host "  $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -ForegroundColor DarkGray
+
+# ---------------------------------------------------------------------------
+# Backend checks
+# ---------------------------------------------------------------------------
+
+if (-not $FrontendOnly) {
+    Write-Header "BACKEND  (Python / FastAPI)"
+
+    Invoke-Check `
+        -Name    "Ruff -- format check" `
+        -WorkDir $BackendDir `
+        -Cmd     @("python", "-m", "ruff", "format", "--check", ".")
+
+    Invoke-Check `
+        -Name    "Ruff -- lint" `
+        -WorkDir $BackendDir `
+        -Cmd     @("python", "-m", "ruff", "check", ".")
+
+    Invoke-Check `
+        -Name    "Pytest -- test suite" `
+        -WorkDir $BackendDir `
+        -Cmd     @("python", "-m", "pytest", "tests/", "-q", "--tb=short") `
+        -Skip:$SkipTests
 }
-Pop-Location
 
-# 7. Backend security scan
-Write-Host "`n[7/7] Security scan (bandit)..." -ForegroundColor Yellow
-Push-Location "$workspace"
-try {
-    $banditCheck = python -m bandit --version 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "SKIP: bandit not installed" -ForegroundColor Yellow
-    } else {
-        $banditOutput = python -m bandit -r backend/ -ll --quiet 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            $exitCode = 1
-            Write-Host "FAIL" -ForegroundColor Red
-            Write-Host $banditOutput -ForegroundColor Red
-        } else {
-            Write-Host "PASS" -ForegroundColor Green
-        }
-    }
-} catch {
-    Write-Host "SKIP: bandit not available" -ForegroundColor Yellow
+# ---------------------------------------------------------------------------
+# Frontend checks
+# ---------------------------------------------------------------------------
+
+if (-not $BackendOnly) {
+    Write-Header "FRONTEND  (Next.js / TypeScript)"
+
+    Invoke-Check `
+        -Name    "TypeScript -- type check" `
+        -WorkDir $FrontendDir `
+        -Cmd     @("npx", "tsc", "--noEmit")
+
+    Invoke-Check `
+        -Name    "ESLint -- lint" `
+        -WorkDir $FrontendDir `
+        -Cmd     @("npm", "run", "lint", "--", "--max-warnings=0")
+
+    Invoke-Check `
+        -Name    "Vitest -- test suite" `
+        -WorkDir $FrontendDir `
+        -Cmd     @("npm", "run", "test") `
+        -Skip:$SkipTests
 }
-Pop-Location
 
+# ---------------------------------------------------------------------------
 # Summary
-Write-Host "`n=== Pre-Commit Result ===" -ForegroundColor Cyan
-if ($exitCode -eq 0) {
-    Write-Host "ALL CHECKS PASSED" -ForegroundColor Green
-} else {
-    Write-Host "SOME CHECKS FAILED - Commit blocked" -ForegroundColor Red
+# ---------------------------------------------------------------------------
+
+$total = $script:Results.Count
+$line  = "=" * 60
+
+Write-Host ""
+Write-Host $line -ForegroundColor DarkGray
+Write-Host "  SUMMARY  ($total checks)" -ForegroundColor White
+Write-Host $line -ForegroundColor DarkGray
+
+foreach ($r in $script:Results) {
+    switch ($r.Status) {
+        "PASS" { Write-Host ("  [PASS]  " + $r.Name) -ForegroundColor Green    }
+        "FAIL" { Write-Host ("  [FAIL]  " + $r.Name) -ForegroundColor Red      }
+        "SKIP" { Write-Host ("  [SKIP]  " + $r.Name) -ForegroundColor DarkGray }
+    }
 }
-exit $exitCode
+
+Write-Host ""
+Write-Host ("  Passed : " + $script:Passed)  -ForegroundColor Green
+if ($script:Failed -gt 0) {
+    Write-Host ("  Failed : " + $script:Failed)  -ForegroundColor Red
+}
+else {
+    Write-Host ("  Failed : " + $script:Failed)  -ForegroundColor Green
+}
+Write-Host ("  Skipped: " + $script:Skipped) -ForegroundColor DarkGray
+Write-Host $line -ForegroundColor DarkGray
+
+if ($script:Failed -gt 0) {
+    Write-Host ""
+    Write-Host "  [FAILED]  Pre-commit check FAILED -- fix the issues above before committing." -ForegroundColor Red
+    Write-Host ""
+    exit 1
+}
+else {
+    Write-Host ""
+    Write-Host "  [PASSED]  All checks passed -- safe to commit." -ForegroundColor Green
+    Write-Host ""
+    exit 0
+}

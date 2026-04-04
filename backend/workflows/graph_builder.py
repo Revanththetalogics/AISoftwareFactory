@@ -17,6 +17,7 @@ logger = get_logger(__name__)
 @dataclass
 class Node:
     """A node in the workflow graph."""
+
     name: str
     action: Callable
     transitions: dict[str, str]  # condition -> next_node
@@ -36,12 +37,7 @@ class GraphBuilder:
         self._entry_point: str | None = None
         self._logger = get_logger(__name__)
 
-    def add_node(
-        self,
-        name: str,
-        action: Callable,
-        transitions: dict[str, str] | None = None
-    ) -> 'GraphBuilder':
+    def add_node(self, name: str, action: Callable, transitions: dict[str, str] | None = None) -> "GraphBuilder":
         """
         Add a node to the graph.
 
@@ -53,11 +49,7 @@ class GraphBuilder:
         Returns:
             Self for chaining
         """
-        self._nodes[name] = Node(
-            name=name,
-            action=action,
-            transitions=transitions or {}
-        )
+        self._nodes[name] = Node(name=name, action=action, transitions=transitions or {})
 
         if self._entry_point is None:
             self._entry_point = name
@@ -65,7 +57,7 @@ class GraphBuilder:
         self._logger.info("Node added", node_name=name)
         return self
 
-    def set_entry_point(self, name: str) -> 'GraphBuilder':
+    def set_entry_point(self, name: str) -> "GraphBuilder":
         """
         Set the entry point node.
 
@@ -95,10 +87,7 @@ class GraphBuilder:
 
         self._nodes[from_node].transitions[condition] = to_node
 
-    async def execute(
-        self,
-        initial_state: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def execute(self, initial_state: dict[str, Any]) -> dict[str, Any]:
         """
         Execute the workflow graph.
 
@@ -118,10 +107,7 @@ class GraphBuilder:
         while current_node_name:
             # Prevent infinite loops
             if current_node_name in visited:
-                self._logger.warning(
-                    "Loop detected in workflow",
-                    node=current_node_name
-                )
+                self._logger.warning("Loop detected in workflow", node=current_node_name)
                 break
             visited.add(current_node_name)
 
@@ -137,11 +123,7 @@ class GraphBuilder:
                 result = await node.action(state)
                 state.update(result)
             except Exception as e:
-                self._logger.error(
-                    "Node execution failed",
-                    node=node.name,
-                    error=str(e)
-                )
+                self._logger.error("Node execution failed", node=node.name, error=str(e))
                 state["error"] = str(e)
                 break
 
@@ -162,11 +144,5 @@ class GraphBuilder:
         """Get the graph structure for visualization."""
         return {
             "entry_point": self._entry_point,
-            "nodes": [
-                {
-                    "name": n.name,
-                    "transitions": n.transitions
-                }
-                for n in self._nodes.values()
-            ]
+            "nodes": [{"name": n.name, "transitions": n.transitions} for n in self._nodes.values()],
         }

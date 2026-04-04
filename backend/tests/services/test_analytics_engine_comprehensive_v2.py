@@ -29,11 +29,11 @@ class TestAnalyticsEngine:
     def test_init(self, analytics_engine):
         """Test AnalyticsEngine initialization."""
         assert analytics_engine is not None
-        assert hasattr(analytics_engine, 'queries')
-        assert hasattr(analytics_engine, 'reports')
-        assert hasattr(analytics_engine, 'predictions')
-        assert hasattr(analytics_engine, 'project_series')
-        assert hasattr(analytics_engine, 'user_series')
+        assert hasattr(analytics_engine, "queries")
+        assert hasattr(analytics_engine, "reports")
+        assert hasattr(analytics_engine, "predictions")
+        assert hasattr(analytics_engine, "project_series")
+        assert hasattr(analytics_engine, "user_series")
 
         # Should have sample data initialized
         assert len(analytics_engine.queries) == 0
@@ -73,11 +73,8 @@ class TestAnalyticsEngine:
             metrics=["projects_created"],
             dimensions=["date"],
             filters={"status": "active"},
-            time_range={
-                "start_date": "2024-01-01T00:00:00Z",
-                "end_date": "2024-01-31T23:59:59Z"
-            },
-            granularity=TimeGranularity.DAY
+            time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-01-31T23:59:59Z"},
+            granularity=TimeGranularity.DAY,
         )
 
         assert result is not None
@@ -109,9 +106,9 @@ class TestAnalyticsEngine:
             filters={},
             time_range={
                 "start_date": (now - timedelta(days=15)).isoformat(),
-                "end_date": (now + timedelta(days=1)).isoformat()
+                "end_date": (now + timedelta(days=1)).isoformat(),
             },
-            granularity=TimeGranularity.DAY
+            granularity=TimeGranularity.DAY,
         )
 
         # Execute the query
@@ -138,11 +135,8 @@ class TestAnalyticsEngine:
             metrics=["projects_created", "active_users"],
             dimensions=["date"],
             filters={},
-            time_range={
-                "start_date": "2024-01-01T00:00:00Z",
-                "end_date": "2024-01-31T23:59:59Z"
-            },
-            granularity=TimeGranularity.DAY
+            time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-01-31T23:59:59Z"},
+            granularity=TimeGranularity.DAY,
         )
 
         result = await analytics_engine.execute_query(query.id)
@@ -161,18 +155,13 @@ class TestAnalyticsEngine:
             metrics=["projects_created"],
             dimensions=["date"],
             filters={},
-            time_range={
-                "start_date": "2024-01-01T00:00:00Z",
-                "end_date": "2024-01-31T23:59:59Z"
-            },
-            granularity=TimeGranularity.DAY
+            time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-01-31T23:59:59Z"},
+            granularity=TimeGranularity.DAY,
         )
 
         # Generate report
         result = await analytics_engine.generate_report(
-            query_id=query.id,
-            report_type=ReportType.SUMMARY,
-            visualization_type="chart"
+            query_id=query.id, report_type=ReportType.SUMMARY, visualization_type="chart"
         )
 
         assert result is not None
@@ -194,10 +183,7 @@ class TestAnalyticsEngine:
     async def test_generate_report_query_not_found(self, analytics_engine):
         """Test generating report for non-existent query."""
         with pytest.raises(ValueError) as exc_info:
-            await analytics_engine.generate_report(
-                query_id="nonexistent",
-                report_type=ReportType.SUMMARY
-            )
+            await analytics_engine.generate_report(query_id="nonexistent", report_type=ReportType.SUMMARY)
 
         assert "Query nonexistent not found" in str(exc_info.value)
 
@@ -205,9 +191,7 @@ class TestAnalyticsEngine:
     async def test_predict_future_values_projects(self, analytics_engine):
         """Test predicting future values for projects metric."""
         result = await analytics_engine.predict_future_values(
-            metric="projects_created",
-            periods=5,
-            model_type="linear_regression"
+            metric="projects_created", periods=5, model_type="linear_regression"
         )
 
         assert result is not None
@@ -233,9 +217,7 @@ class TestAnalyticsEngine:
     async def test_predict_future_values_users(self, analytics_engine):
         """Test predicting future values for users metric."""
         result = await analytics_engine.predict_future_values(
-            metric="active_users",
-            periods=3,
-            model_type="linear_regression"
+            metric="active_users", periods=3, model_type="linear_regression"
         )
 
         assert result is not None
@@ -246,10 +228,7 @@ class TestAnalyticsEngine:
     async def test_predict_future_values_unknown_metric(self, analytics_engine):
         """Test predicting future values for unknown metric."""
         with pytest.raises(ValueError) as exc_info:
-            await analytics_engine.predict_future_values(
-                metric="unknown_metric",
-                periods=5
-            )
+            await analytics_engine.predict_future_values(metric="unknown_metric", periods=5)
 
         assert "Unknown metric: unknown_metric" in str(exc_info.value)
 
@@ -260,13 +239,10 @@ class TestAnalyticsEngine:
         now = datetime.now(UTC)
         time_range = {
             "start_date": (now - timedelta(days=15)).isoformat(),
-            "end_date": (now + timedelta(days=1)).isoformat()
+            "end_date": (now + timedelta(days=1)).isoformat(),
         }
 
-        result = await analytics_engine.get_trend_analysis(
-            metric="projects_created",
-            time_range=time_range
-        )
+        result = await analytics_engine.get_trend_analysis(metric="projects_created", time_range=time_range)
 
         assert isinstance(result, dict)
         # Handle both success and error cases
@@ -288,13 +264,10 @@ class TestAnalyticsEngine:
         now = datetime.now(UTC)
         time_range = {
             "start_date": (now - timedelta(days=15)).isoformat(),
-            "end_date": (now + timedelta(days=1)).isoformat()
+            "end_date": (now + timedelta(days=1)).isoformat(),
         }
 
-        result = await analytics_engine.get_trend_analysis(
-            metric="active_users",
-            time_range=time_range
-        )
+        result = await analytics_engine.get_trend_analysis(metric="active_users", time_range=time_range)
 
         assert isinstance(result, dict)
         # Handle both success and error cases
@@ -307,7 +280,7 @@ class TestAnalyticsEngine:
         with pytest.raises(ValueError) as exc_info:
             await analytics_engine.get_trend_analysis(
                 metric="unknown_metric",
-                time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-01-31T23:59:59Z"}
+                time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-01-31T23:59:59Z"},
             )
 
         assert "Unknown metric: unknown_metric" in str(exc_info.value)
@@ -318,13 +291,10 @@ class TestAnalyticsEngine:
         # Create a time range that matches very few data points
         time_range = {
             "start_date": "2024-01-01T00:00:00Z",
-            "end_date": "2024-01-02T23:59:59Z"  # Only 2 days
+            "end_date": "2024-01-02T23:59:59Z",  # Only 2 days
         }
 
-        result = await analytics_engine.get_trend_analysis(
-            metric="projects_created",
-            time_range=time_range
-        )
+        result = await analytics_engine.get_trend_analysis(metric="projects_created", time_range=time_range)
 
         # Should handle gracefully with error message
         assert isinstance(result, dict)
@@ -338,12 +308,11 @@ class TestAnalyticsEngine:
         now = datetime.now(UTC)
         time_range = {
             "start_date": (now - timedelta(days=15)).isoformat(),
-            "end_date": (now + timedelta(days=1)).isoformat()
+            "end_date": (now + timedelta(days=1)).isoformat(),
         }
 
         result = await analytics_engine.get_correlation_analysis(
-            metrics=["projects_created", "active_users"],
-            time_range=time_range
+            metrics=["projects_created", "active_users"], time_range=time_range
         )
 
         assert isinstance(result, dict)
@@ -364,14 +333,11 @@ class TestAnalyticsEngine:
         now = datetime.now(UTC)
         time_range = {
             "start_date": (now - timedelta(days=15)).isoformat(),
-            "end_date": (now + timedelta(days=1)).isoformat()
+            "end_date": (now + timedelta(days=1)).isoformat(),
         }
 
         # This should work but may return error or empty correlations
-        result = await analytics_engine.get_correlation_analysis(
-            metrics=["projects_created"],
-            time_range=time_range
-        )
+        result = await analytics_engine.get_correlation_analysis(metrics=["projects_created"], time_range=time_range)
 
         assert isinstance(result, dict)
         # Either success with empty correlations or error message
@@ -383,7 +349,7 @@ class TestAnalyticsEngine:
         with pytest.raises(ValueError) as exc_info:
             await analytics_engine.get_correlation_analysis(
                 metrics=["projects_created", "unknown_metric"],
-                time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-01-31T23:59:59Z"}
+                time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-01-31T23:59:59Z"},
             )
 
         assert "Unknown metric: unknown_metric" in str(exc_info.value)
@@ -393,15 +359,21 @@ class TestAnalyticsEngine:
         """Test listing all queries."""
         # Create a few queries
         await analytics_engine.create_analytics_query(
-            name="Query 1", metrics=["projects_created"], dimensions=[], filters={},
+            name="Query 1",
+            metrics=["projects_created"],
+            dimensions=[],
+            filters={},
             time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-01-31T23:59:59Z"},
-            granularity=TimeGranularity.DAY
+            granularity=TimeGranularity.DAY,
         )
 
         await analytics_engine.create_analytics_query(
-            name="Query 2", metrics=["active_users"], dimensions=[], filters={},
+            name="Query 2",
+            metrics=["active_users"],
+            dimensions=[],
+            filters={},
             time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-01-31T23:59:59Z"},
-            granularity=TimeGranularity.DAY
+            granularity=TimeGranularity.DAY,
         )
 
         result = await analytics_engine.list_queries()
@@ -416,9 +388,12 @@ class TestAnalyticsEngine:
         """Test listing all reports."""
         # Create a query and report
         query = await analytics_engine.create_analytics_query(
-            name="Report List Test", metrics=["projects_created"], dimensions=[], filters={},
+            name="Report List Test",
+            metrics=["projects_created"],
+            dimensions=[],
+            filters={},
             time_range={"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-01-31T23:59:59Z"},
-            granularity=TimeGranularity.DAY
+            granularity=TimeGranularity.DAY,
         )
 
         await analytics_engine.generate_report(query.id, ReportType.SUMMARY)
@@ -445,15 +420,10 @@ class TestAnalyticsEngine:
 
     def test_aggregate_time_series_day_granularity(self, analytics_engine):
         """Test time series aggregation with day granularity."""
-        time_range = {
-            "start_date": "2024-01-01T00:00:00Z",
-            "end_date": "2024-01-10T23:59:59Z"
-        }
+        time_range = {"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-01-10T23:59:59Z"}
 
         result = analytics_engine._aggregate_time_series(
-            analytics_engine.project_series,
-            time_range,
-            TimeGranularity.DAY
+            analytics_engine.project_series, time_range, TimeGranularity.DAY
         )
 
         assert isinstance(result, list)
@@ -477,7 +447,7 @@ class TestAnalyticsEngine:
 
         time_range = {
             "start_date": (now - timedelta(days=3)).isoformat(),
-            "end_date": (now + timedelta(days=2)).isoformat()
+            "end_date": (now + timedelta(days=2)).isoformat(),
         }
 
         result = analytics_engine._filter_by_time_range(data_points, time_range)

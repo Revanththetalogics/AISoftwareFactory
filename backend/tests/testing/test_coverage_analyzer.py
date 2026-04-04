@@ -25,17 +25,19 @@ from backend.testing.coverage_analyzer import (
 def mock_llm():
     """Fixture for mocked LLM provider."""
     llm = Mock()
-    llm.generate = AsyncMock(return_value="""Test recommendations:
+    llm.generate = AsyncMock(
+        return_value="""Test recommendations:
 1. Add test for edge case with empty input
 2. Add test for error handling
-3. Add test for boundary values""")
+3. Add test for boundary values"""
+    )
     return llm
 
 
 @pytest.fixture
 def coverage_analyzer(mock_llm):
     """Fixture for CoverageAnalyzer with mocked LLM."""
-    with patch('backend.testing.coverage_analyzer.LLMFactory.create_llm', return_value=mock_llm):
+    with patch("backend.testing.coverage_analyzer.LLMFactory.create_llm", return_value=mock_llm):
         analyzer = CoverageAnalyzer()
         analyzer._llm = mock_llm
         return analyzer
@@ -44,7 +46,7 @@ def coverage_analyzer(mock_llm):
 @pytest.fixture
 def temp_python_file():
     """Create a temporary Python file for testing."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write('''def add(a, b):
     """Add two numbers."""
     return a + b
@@ -541,7 +543,7 @@ class TestCoverageAnalyzer:
     @pytest.mark.asyncio
     async def test_run_mutation_testing(self, coverage_analyzer, temp_python_file):
         """Test running mutation testing."""
-        with patch.object(coverage_analyzer, '_test_mutation') as mock_test:
+        with patch.object(coverage_analyzer, "_test_mutation") as mock_test:
             mock_test.return_value = MutationResult(
                 mutation=Mock(),
                 killed=True,
@@ -564,9 +566,7 @@ class TestCoverageAnalyzer:
             total_lines=20,
             executable_lines=15,
             covered_lines=10,
-            line_coverage=[
-                LineCoverage(i, f"line {i}", True, i <= 10) for i in range(1, 16)
-            ],
+            line_coverage=[LineCoverage(i, f"line {i}", True, i <= 10) for i in range(1, 16)],
         )
 
         report = CoverageReport(
@@ -691,7 +691,7 @@ class TestCoverageAnalyzer:
     @pytest.mark.asyncio
     async def test_analyze_function_coverage_syntax_error(self, coverage_analyzer):
         """Test _analyze_function_coverage with syntax error file."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write("invalid syntax {{{{")
             f.flush()
             file_path = f.name
@@ -727,9 +727,7 @@ def func(x):
         with open(temp_python_file) as f:
             source_code = f.read()
 
-        mutations = await coverage_analyzer._generate_mutations(
-            temp_python_file, source_code, max_mutations=10
-        )
+        mutations = await coverage_analyzer._generate_mutations(temp_python_file, source_code, max_mutations=10)
 
         assert isinstance(mutations, list)
 
@@ -743,15 +741,13 @@ z = 5 * 6
 w = a == b
 v = c != d
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write(code)
             f.flush()
             file_path = f.name
 
         try:
-            mutations = await coverage_analyzer._generate_mutations(
-                file_path, code, max_mutations=2
-            )
+            mutations = await coverage_analyzer._generate_mutations(file_path, code, max_mutations=2)
             assert len(mutations) <= 2
         finally:
             os.unlink(file_path)
@@ -797,6 +793,7 @@ class TestCoverageAnalyzerExtendedCoverage:
     def mock_llm(self):
         """Fixture for mocked LLM provider."""
         from unittest.mock import AsyncMock, Mock
+
         llm = Mock()
         llm.generate = AsyncMock(return_value="Test recommendation")
         return llm
@@ -807,7 +804,8 @@ class TestCoverageAnalyzerExtendedCoverage:
         from unittest.mock import patch
 
         from backend.testing.coverage_analyzer import CoverageAnalyzer
-        with patch('backend.testing.coverage_analyzer.LLMFactory.create_llm', return_value=mock_llm):
+
+        with patch("backend.testing.coverage_analyzer.LLMFactory.create_llm", return_value=mock_llm):
             analyzer = CoverageAnalyzer()
             analyzer._llm = mock_llm
             return analyzer
@@ -831,7 +829,7 @@ class TestCoverageAnalyzerExtendedCoverage:
 
             report = await coverage_analyzer.analyze_coverage(
                 source_path=tmpdir,
-                exclude_patterns=["**/test_*"]  # Exclude test files (line 264)
+                exclude_patterns=["**/test_*"],  # Exclude test files (line 264)
             )
 
             # Test file should be excluded
@@ -855,7 +853,8 @@ class TestCoverageAnalyzerExtendedCoverage:
                     code=f"line {i}",
                     is_executable=True,
                     is_covered=True,  # All lines covered
-                ) for i in range(1, 11)
+                )
+                for i in range(1, 11)
             ],
         )
 
@@ -899,14 +898,14 @@ class TestCoverageAnalyzerExtendedCoverage:
         """Test line 585: BoolOp complexity calculation."""
         import ast
 
-        code = '''
+        code = """
 def complex_func(a, b, c, d):
     if a and b and c:  # BoolOp with 3 values
         return True
     elif a or b or c or d:  # BoolOp with 4 values
         return False
     return None
-'''
+"""
         tree = ast.parse(code)
         func_node = tree.body[0]
 
@@ -929,7 +928,7 @@ def complex_func(a, b, c, d):
 
         from backend.testing.coverage_analyzer import Mutation
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write("def add(a, b):\n    return a + b\n")
             f.flush()
             file_path = f.name
@@ -953,7 +952,7 @@ def complex_func(a, b, c, d):
             mock_result.stdout = "Test output"
             mock_result.stderr = ""
 
-            with patch('subprocess.run', return_value=mock_result):
+            with patch("subprocess.run", return_value=mock_result):
                 result = await coverage_analyzer._test_mutation(mutation, original_code)
 
                 # Mutation should be killed since tests "failed"
@@ -973,7 +972,7 @@ def complex_func(a, b, c, d):
 
         from backend.testing.coverage_analyzer import Mutation
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write("def func():\n    return 1\n")
             f.flush()
             file_path = f.name
@@ -992,7 +991,7 @@ def complex_func(a, b, c, d):
             )
 
             # Mock subprocess.run to raise an exception
-            with patch('subprocess.run', side_effect=Exception("Subprocess timeout")):
+            with patch("subprocess.run", side_effect=Exception("Subprocess timeout")):
                 result = await coverage_analyzer._test_mutation(mutation, original_code)
 
                 # Mutation should not be killed due to exception
@@ -1022,8 +1021,8 @@ class TestCoverageAnalyzerExcludePatterns:
             },
         }
 
-        with patch.object(coverage_analyzer, '_run_coverage_py', return_value=mock_coverage_data):
-            with patch.object(coverage_analyzer, '_analyze_file_coverage') as mock_analyze:
+        with patch.object(coverage_analyzer, "_run_coverage_py", return_value=mock_coverage_data):
+            with patch.object(coverage_analyzer, "_analyze_file_coverage") as mock_analyze:
                 mock_analyze.return_value = FileCoverage(
                     file_path="/path/to/src/module.py",
                     total_lines=10,

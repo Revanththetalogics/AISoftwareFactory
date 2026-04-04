@@ -104,11 +104,13 @@ class TestPipelineExtendedCoverage:
     def pipeline(self):
         """Create a Pipeline instance."""
         from backend.workflows.pipeline import Pipeline
+
         return Pipeline(name="test_pipeline")
 
     @pytest.mark.asyncio
     async def test_execute_step_sync_function_line_186(self, pipeline):
         """Test line 186: sync function execution in _execute_step."""
+
         # Define a sync (non-async) function for the step
         def sync_step_action(context):
             return {"result": "sync_result", "value": context.get("input", 0) * 2}
@@ -129,6 +131,7 @@ class TestPipelineExtendedCoverage:
     @pytest.mark.asyncio
     async def test_execute_step_async_function(self, pipeline):
         """Test async function execution in _execute_step."""
+
         # Define an async function for the step
         async def async_step_action(context):
             return {"result": "async_result"}
@@ -146,6 +149,7 @@ class TestPipelineExtendedCoverage:
     @pytest.mark.asyncio
     async def test_execute_step_mixed_functions(self, pipeline):
         """Test pipeline with both sync and async functions."""
+
         def sync_action(context):
             return {"type": "sync"}
 

@@ -2,7 +2,6 @@
 Tests for AgentOS components.
 """
 
-
 import pytest
 
 from backend.agent_os.resource_manager import ResourceManager
@@ -23,10 +22,7 @@ class TestScheduler:
         async def dummy_task():
             return "done"
 
-        task_id = await scheduler.schedule_task(
-            name="test_task",
-            execute=dummy_task
-        )
+        task_id = await scheduler.schedule_task(name="test_task", execute=dummy_task)
 
         assert task_id is not None
         assert task_id in scheduler._scheduled_tasks
@@ -39,10 +35,7 @@ class TestScheduler:
         async def dummy_task():
             return "done"
 
-        task_id = await scheduler.schedule_task(
-            name="test_task",
-            execute=dummy_task
-        )
+        task_id = await scheduler.schedule_task(name="test_task", execute=dummy_task)
 
         result = await scheduler.cancel_task(task_id)
         assert result is True
@@ -108,11 +101,7 @@ class TestResourceManager:
         """Test resource allocation."""
         manager = ResourceManager()
 
-        result = manager.allocate(
-            task_id="task1",
-            cpu_cores=2.0,
-            memory_mb=1024
-        )
+        result = manager.allocate(task_id="task1", cpu_cores=2.0, memory_mb=1024)
 
         assert result is True
 
@@ -136,7 +125,7 @@ class TestResourceManager:
         # Try to allocate more than available
         result = manager.allocate(
             task_id="task1",
-            cpu_cores=100.0  # More than total
+            cpu_cores=100.0,  # More than total
         )
 
         assert result is False

@@ -22,7 +22,8 @@ from backend.testing.agents.bug_detector import (
 def mock_llm():
     """Fixture for mocked LLM provider."""
     llm = Mock()
-    llm.generate = AsyncMock(return_value="""[
+    llm.generate = AsyncMock(
+        return_value="""[
         {
             "title": "Potential security issue",
             "category": "security",
@@ -33,14 +34,15 @@ def mock_llm():
             "suggested_fix": "Use ast.literal_eval instead",
             "confidence": 0.9
         }
-    ]""")
+    ]"""
+    )
     return llm
 
 
 @pytest.fixture
 def bug_detector_agent(mock_llm):
     """Fixture for BugDetectorAgent with mocked LLM."""
-    with patch('backend.testing.agents.bug_detector.LLMFactory.create_llm', return_value=mock_llm):
+    with patch("backend.testing.agents.bug_detector.LLMFactory.create_llm", return_value=mock_llm):
         agent = BugDetectorAgent()
         agent._llm = mock_llm
         return agent
@@ -49,8 +51,8 @@ def bug_detector_agent(mock_llm):
 @pytest.fixture
 def temp_python_file():
     """Create a temporary Python file for testing."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-        f.write('''def vulnerable_function():
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        f.write("""def vulnerable_function():
     password = "secret123"
     data = eval(input("Enter data: "))
     try:
@@ -58,7 +60,7 @@ def temp_python_file():
     except:
         pass
     return data
-''')
+""")
         f.flush()
         yield f.name
     os.unlink(f.name)
@@ -67,11 +69,11 @@ def temp_python_file():
 @pytest.fixture
 def temp_syntax_error_file():
     """Create a temporary Python file with syntax error."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-        f.write('''def broken_function(
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        f.write("""def broken_function(
     this is invalid syntax
     return None
-''')
+""")
         f.flush()
         yield f.name
     os.unlink(f.name)
@@ -163,7 +165,7 @@ class TestBugPattern:
             name="test_pattern",
             category=BugCategory.SECURITY,
             severity=BugSeverity.CRITICAL,
-            pattern=r'password\s*=',
+            pattern=r"password\s*=",
             description="Hardcoded password",
             suggestion="Use environment variables",
             confidence_boost=0.9,
@@ -309,7 +311,8 @@ class TestBugDetectorAgent:
         """Test executing analyze_test_failure task type."""
         from backend.agents.base_agent import Task
 
-        bug_detector_agent._llm.generate = AsyncMock(return_value="""{
+        bug_detector_agent._llm.generate = AsyncMock(
+            return_value="""{
             "title": "AssertionError",
             "category": "logic",
             "severity": "medium",
@@ -318,7 +321,8 @@ class TestBugDetectorAgent:
             "suggested_fix": "Fix the calculation",
             "line_number": 10,
             "confidence": 0.8
-        }""")
+        }"""
+        )
 
         task = Task(
             task_id="task_analyze",
@@ -425,7 +429,8 @@ class TestBugDetectorAgent:
     @pytest.mark.asyncio
     async def test_analyze_test_failure(self, bug_detector_agent, temp_python_file):
         """Test analyzing a test failure."""
-        bug_detector_agent._llm.generate = AsyncMock(return_value="""{
+        bug_detector_agent._llm.generate = AsyncMock(
+            return_value="""{
             "title": "Division by zero",
             "category": "logic",
             "severity": "high",
@@ -434,7 +439,8 @@ class TestBugDetectorAgent:
             "suggested_fix": "Add check for denominator",
             "line_number": 5,
             "confidence": 0.85
-        }""")
+        }"""
+        )
 
         bug = await bug_detector_agent.analyze_test_failure(
             test_name="test_division",
@@ -542,7 +548,7 @@ class TestBugDetectorAgent:
     async def test_run_static_analysis_eval_detection(self, bug_detector_agent):
         """Test static analysis detects eval usage."""
         code = "data = eval(user_input)"
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write(code)
             f.flush()
             file_path = f.name

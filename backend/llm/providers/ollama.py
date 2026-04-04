@@ -4,7 +4,6 @@ Ollama Provider for AI Software Factory.
 This module implements the Ollama LLM provider for local model inference.
 """
 
-
 import httpx
 
 from backend.core.logging import get_logger
@@ -86,9 +85,7 @@ class OllamaProvider(BaseLLMProvider):
             if available:
                 # Cache available models
                 data = response.json()
-                self._available_models = [
-                    model["name"] for model in data.get("models", [])
-                ]
+                self._available_models = [model["name"] for model in data.get("models", [])]
                 logger.info(
                     "Ollama is available",
                     models_count=len(self._available_models),
@@ -194,15 +191,11 @@ class OllamaProvider(BaseLLMProvider):
                 status_code=exc.response.status_code,
                 error=str(exc),
             )
-            return self._create_error_response(
-                f"HTTP {exc.response.status_code}: {exc.response.text}"
-            )
+            return self._create_error_response(f"HTTP {exc.response.status_code}: {exc.response.text}")
 
         except httpx.RequestError as exc:
             logger.error("Ollama request error", error=str(exc))
-            return self._create_error_response(
-                f"Connection error: {str(exc)}"
-            )
+            return self._create_error_response(f"Connection error: {str(exc)}")
 
         except Exception as exc:
             logger.error("Ollama generation error", error=str(exc))

@@ -23,8 +23,9 @@ settings = get_settings()
 
 # Performance monitoring constants
 QUERY_TIMEOUT_THRESHOLD = 1.0  # seconds
-SLOW_QUERY_THRESHOLD = 0.5     # seconds
+SLOW_QUERY_THRESHOLD = 0.5  # seconds
 CONNECTION_POOL_WARNING = 0.8  # 80% utilization
+
 
 class QueryOptimizer:
     """
@@ -81,24 +82,26 @@ class QueryOptimizer:
             execution_time = time.time() - start_time
 
             analysis = {
-                'execution_time': execution_time,
-                'is_slow': execution_time > SLOW_QUERY_THRESHOLD,
-                'is_timeout': execution_time > QUERY_TIMEOUT_THRESHOLD,
-                'result_count': len(result) if hasattr(result, '__len__') else 1,
-                'suggestions': []
+                "execution_time": execution_time,
+                "is_slow": execution_time > SLOW_QUERY_THRESHOLD,
+                "is_timeout": execution_time > QUERY_TIMEOUT_THRESHOLD,
+                "result_count": len(result) if hasattr(result, "__len__") else 1,
+                "suggestions": [],
             }
 
             # Generate optimization suggestions
             if execution_time > SLOW_QUERY_THRESHOLD:
-                analysis['suggestions'].extend([
-                    "Consider adding indexes on frequently queried columns",
-                    "Check if query can be optimized with joins instead of subqueries",
-                    "Review if all selected columns are necessary",
-                    "Consider pagination for large result sets"
-                ])
+                analysis["suggestions"].extend(
+                    [
+                        "Consider adding indexes on frequently queried columns",
+                        "Check if query can be optimized with joins instead of subqueries",
+                        "Review if all selected columns are necessary",
+                        "Consider pagination for large result sets",
+                    ]
+                )
 
             if execution_time > QUERY_TIMEOUT_THRESHOLD:
-                analysis['suggestions'].append("Query exceeds timeout threshold - immediate optimization needed")
+                analysis["suggestions"].append("Query exceeds timeout threshold - immediate optimization needed")
 
             return analysis
 
@@ -146,8 +149,9 @@ class QueryOptimizer:
         return validated_page, validated_size
 
     @staticmethod
-    async def batch_load_entities(session: AsyncSession, entity_class, ids: list[str],
-                                batch_size: int = 100) -> list[Any]:
+    async def batch_load_entities(
+        session: AsyncSession, entity_class, ids: list[str], batch_size: int = 100
+    ) -> list[Any]:
         """
         Efficiently load entities by IDs in batches to eliminate N+1 query problems.
 
@@ -181,7 +185,7 @@ class QueryOptimizer:
         all_entities = []
 
         for i in range(0, len(ids), batch_size):
-            batch_ids = ids[i:i + batch_size]
+            batch_ids = ids[i : i + batch_size]
 
             stmt = select(entity_class).where(entity_class.id.in_(batch_ids))
             result = await session.execute(stmt)
@@ -189,6 +193,7 @@ class QueryOptimizer:
             all_entities.extend(batch_entities)
 
         return all_entities
+
 
 class ConnectionPoolMonitor:
     """Monitor and optimize database connection pool usage."""
@@ -201,24 +206,23 @@ class ConnectionPoolMonitor:
         pool = self.engine.pool
 
         stats = {
-            'pool_size': pool.size(),
-            'checked_out': pool.checkedout(),
-            'checked_in': pool.checkedin(),
-            'overflow': pool.overflow() if hasattr(pool, 'overflow') else 0,
-            'utilization_percent': 0
+            "pool_size": pool.size(),
+            "checked_out": pool.checkedout(),
+            "checked_in": pool.checkedin(),
+            "overflow": pool.overflow() if hasattr(pool, "overflow") else 0,
+            "utilization_percent": 0,
         }
 
-        total_connections = stats['pool_size'] + stats['overflow']
+        total_connections = stats["pool_size"] + stats["overflow"]
         if total_connections > 0:
-            stats['utilization_percent'] = round(
-                (stats['checked_out'] / total_connections) * 100, 2
-            )
+            stats["utilization_percent"] = round((stats["checked_out"] / total_connections) * 100, 2)
 
         return stats
 
     def is_over_utilized(self, stats: dict[str, Any]) -> bool:
         """Check if connection pool is over-utilized."""
-        return stats['utilization_percent'] > (CONNECTION_POOL_WARNING * 100)
+        return stats["utilization_percent"] > (CONNECTION_POOL_WARNING * 100)
+
 
 class QueryCache:
     """Simple in-memory query cache for frequently accessed data."""
@@ -252,12 +256,10 @@ class QueryCache:
 
     def invalidate(self, query_hash: str) -> None:
         """Invalidate all cache entries for a specific query."""
-        keys_to_remove = [
-            key for key in self.cache.keys()
-            if key.startswith(f"{query_hash}:")
-        ]
+        keys_to_remove = [key for key in self.cache.keys() if key.startswith(f"{query_hash}:")]
         for key in keys_to_remove:
             del self.cache[key]
+
 
 # Performance decorator for monitoring slow queries
 def monitor_slow_queries(threshold: float = SLOW_QUERY_THRESHOLD):
@@ -267,6 +269,7 @@ def monitor_slow_queries(threshold: float = SLOW_QUERY_THRESHOLD):
     Args:
         threshold: Time threshold in seconds to consider a query slow
     """
+
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -277,22 +280,19 @@ def monitor_slow_queries(threshold: float = SLOW_QUERY_THRESHOLD):
                 execution_time = time.time() - start_time
 
                 if execution_time > threshold:
-                    logger.warning(
-                        f"Slow query detected in {func.__name__}: "
-                        f"{execution_time:.3f}s > {threshold}s"
-                    )
+                    logger.warning(f"Slow query detected in {func.__name__}: {execution_time:.3f}s > {threshold}s")
 
                 return result
 
             except Exception as e:
                 execution_time = time.time() - start_time
-                logger.error(
-                    f"Query failed in {func.__name__} after {execution_time:.3f}s: {e}"
-                )
+                logger.error(f"Query failed in {func.__name__} after {execution_time:.3f}s: {e}")
                 raise
 
         return wrapper
+
     return decorator
+
 
 # Context manager for efficient bulk operations
 @asynccontextmanager
@@ -306,8 +306,9 @@ async def bulk_operation_context(session: AsyncSession, flush_interval: int = 10
     """
 
     try:
-        yield lambda: setattr(bulk_operation_context, 'operations_count',
-                             getattr(bulk_operation_context, 'operations_count', 0) + 1)
+        yield lambda: setattr(
+            bulk_operation_context, "operations_count", getattr(bulk_operation_context, "operations_count", 0) + 1
+        )
 
         # Final flush
         await session.flush()
@@ -318,8 +319,9 @@ async def bulk_operation_context(session: AsyncSession, flush_interval: int = 10
         raise
     finally:
         # Reset counter
-        if hasattr(bulk_operation_context, 'operations_count'):
-            delattr(bulk_operation_context, 'operations_count')
+        if hasattr(bulk_operation_context, "operations_count"):
+            delattr(bulk_operation_context, "operations_count")
+
 
 # Optimized query examples
 class OptimizedQueries:
@@ -329,12 +331,7 @@ class OptimizedQueries:
     @monitor_slow_queries()
     async def get_user_with_projects(session: AsyncSession, user_id: str):
         """Get user with eagerly loaded projects."""
-        stmt = (
-            select(DBUser)
-            .options(joinedload(DBUser.projects))
-            .where(DBUser.id == user_id)
-            .limit(1)
-        )
+        stmt = select(DBUser).options(joinedload(DBUser.projects)).where(DBUser.id == user_id).limit(1)
         result = await session.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -346,9 +343,9 @@ class OptimizedQueries:
         stmt = (
             select(
                 DBProject,
-                func.count(DBTask.id).label('total_tasks'),
-                func.sum(func.case((DBTask.status == 'completed', 1), else_=0)).label('completed_tasks'),
-                func.avg(DBTask.priority).label('avg_priority')
+                func.count(DBTask.id).label("total_tasks"),
+                func.sum(func.case((DBTask.status == "completed", 1), else_=0)).label("completed_tasks"),
+                func.avg(DBTask.priority).label("avg_priority"),
             )
             .outerjoin(DBTask, DBTask.project_id == DBProject.id)
             .where(DBProject.id == project_id)
@@ -366,12 +363,13 @@ class OptimizedQueries:
         # Use PostgreSQL full-text search with trigram similarity
         stmt = (
             select(DBProject)
-            .where(DBProject.name.op('%')(search_term))
+            .where(DBProject.name.op("%")(search_term))
             .order_by(func.similarity(DBProject.name, search_term).desc())
             .limit(limit)
         )
 
         result = await session.execute(stmt)
         return result.scalars().all()
+
 
 # Models imported at top level

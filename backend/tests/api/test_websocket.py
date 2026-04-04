@@ -114,36 +114,23 @@ class TestGlobalWebSocket:
     @pytest.fixture
     def mock_user(self):
         """Create a mock authenticated user."""
-        return User(
-            user_id="user-123",
-            username="testuser",
-            email="test@example.com",
-            permissions=["read", "write"]
-        )
+        return User(user_id="user-123", username="testuser", email="test@example.com", permissions=["read", "write"])
 
     @pytest.mark.asyncio
     async def test_global_websocket_unauthenticated(self, mock_websocket):
         """Test global WebSocket rejects unauthenticated connections."""
-        with patch('backend.api.routes.websocket.get_websocket_user', return_value=None):
+        with patch("backend.api.routes.websocket.get_websocket_user", return_value=None):
             await global_websocket(mock_websocket)
 
-        mock_websocket.close.assert_called_once_with(
-            code=4001, reason="Authentication required"
-        )
+        mock_websocket.close.assert_called_once_with(code=4001, reason="Authentication required")
 
     @pytest.mark.asyncio
     async def test_global_websocket_ping(self, mock_websocket, mock_user):
         """Test global WebSocket ping/pong."""
         # Set up receive to return ping then disconnect
-        mock_websocket.receive_json = AsyncMock(
-            side_effect=[
-                {"type": "ping"},
-                WebSocketDisconnect()
-            ]
-        )
+        mock_websocket.receive_json = AsyncMock(side_effect=[{"type": "ping"}, WebSocketDisconnect()])
 
-        with patch('backend.api.routes.websocket.get_websocket_user',
-                   return_value=mock_user):
+        with patch("backend.api.routes.websocket.get_websocket_user", return_value=mock_user):
             await global_websocket(mock_websocket)
 
         # Check pong was sent
@@ -155,14 +142,10 @@ class TestGlobalWebSocket:
     async def test_global_websocket_subscribe(self, mock_websocket, mock_user):
         """Test global WebSocket subscription."""
         mock_websocket.receive_json = AsyncMock(
-            side_effect=[
-                {"type": "subscribe", "payload": {"topics": ["system", "alerts"]}},
-                WebSocketDisconnect()
-            ]
+            side_effect=[{"type": "subscribe", "payload": {"topics": ["system", "alerts"]}}, WebSocketDisconnect()]
         )
 
-        with patch('backend.api.routes.websocket.get_websocket_user',
-                   return_value=mock_user):
+        with patch("backend.api.routes.websocket.get_websocket_user", return_value=mock_user):
             await global_websocket(mock_websocket)
 
         # Check subscribed response
@@ -173,15 +156,9 @@ class TestGlobalWebSocket:
     @pytest.mark.asyncio
     async def test_global_websocket_unknown_message(self, mock_websocket, mock_user):
         """Test global WebSocket handles unknown message types."""
-        mock_websocket.receive_json = AsyncMock(
-            side_effect=[
-                {"type": "unknown_type"},
-                WebSocketDisconnect()
-            ]
-        )
+        mock_websocket.receive_json = AsyncMock(side_effect=[{"type": "unknown_type"}, WebSocketDisconnect()])
 
-        with patch('backend.api.routes.websocket.get_websocket_user',
-                   return_value=mock_user):
+        with patch("backend.api.routes.websocket.get_websocket_user", return_value=mock_user):
             await global_websocket(mock_websocket)
 
         # Check error response
@@ -194,14 +171,10 @@ class TestGlobalWebSocket:
     async def test_global_websocket_invalid_json(self, mock_websocket, mock_user):
         """Test global WebSocket handles invalid JSON."""
         mock_websocket.receive_json = AsyncMock(
-            side_effect=[
-                json.JSONDecodeError("Invalid", "", 0),
-                WebSocketDisconnect()
-            ]
+            side_effect=[json.JSONDecodeError("Invalid", "", 0), WebSocketDisconnect()]
         )
 
-        with patch('backend.api.routes.websocket.get_websocket_user',
-                   return_value=mock_user):
+        with patch("backend.api.routes.websocket.get_websocket_user", return_value=mock_user):
             await global_websocket(mock_websocket)
 
         # Check error response for invalid JSON
@@ -228,35 +201,22 @@ class TestProjectWebSocket:
     @pytest.fixture
     def mock_user(self):
         """Create a mock authenticated user."""
-        return User(
-            user_id="user-123",
-            username="testuser",
-            email="test@example.com",
-            permissions=["read", "write"]
-        )
+        return User(user_id="user-123", username="testuser", email="test@example.com", permissions=["read", "write"])
 
     @pytest.mark.asyncio
     async def test_project_websocket_unauthenticated(self, mock_websocket):
         """Test project WebSocket rejects unauthenticated connections."""
-        with patch('backend.api.routes.websocket.get_websocket_user', return_value=None):
+        with patch("backend.api.routes.websocket.get_websocket_user", return_value=None):
             await project_websocket(mock_websocket, "project-123")
 
-        mock_websocket.close.assert_called_once_with(
-            code=4001, reason="Authentication required"
-        )
+        mock_websocket.close.assert_called_once_with(code=4001, reason="Authentication required")
 
     @pytest.mark.asyncio
     async def test_project_websocket_ping(self, mock_websocket, mock_user):
         """Test project WebSocket ping/pong."""
-        mock_websocket.receive_json = AsyncMock(
-            side_effect=[
-                {"type": "ping"},
-                WebSocketDisconnect()
-            ]
-        )
+        mock_websocket.receive_json = AsyncMock(side_effect=[{"type": "ping"}, WebSocketDisconnect()])
 
-        with patch('backend.api.routes.websocket.get_websocket_user',
-                   return_value=mock_user):
+        with patch("backend.api.routes.websocket.get_websocket_user", return_value=mock_user):
             await project_websocket(mock_websocket, "project-123")
 
         # Check pong was sent
@@ -267,12 +227,7 @@ class TestProjectWebSocket:
     @pytest.mark.asyncio
     async def test_project_websocket_get_status(self, mock_websocket, mock_user):
         """Test project WebSocket get_status request."""
-        mock_websocket.receive_json = AsyncMock(
-            side_effect=[
-                {"type": "get_status"},
-                WebSocketDisconnect()
-            ]
-        )
+        mock_websocket.receive_json = AsyncMock(side_effect=[{"type": "get_status"}, WebSocketDisconnect()])
 
         mock_project = MagicMock()
         mock_project.status = "active"
@@ -284,11 +239,11 @@ class TestProjectWebSocket:
         mock_db_ctx.__aenter__ = AsyncMock(return_value=mock_db)
         mock_db_ctx.__aexit__ = AsyncMock(return_value=False)
 
-        with patch('backend.api.routes.websocket.get_websocket_user',
-                   return_value=mock_user), \
-             patch('backend.api.routes.websocket.get_db_context',
-                   return_value=mock_db_ctx), \
-             patch('backend.api.routes.websocket._project_svc') as mock_svc:
+        with (
+            patch("backend.api.routes.websocket.get_websocket_user", return_value=mock_user),
+            patch("backend.api.routes.websocket.get_db_context", return_value=mock_db_ctx),
+            patch("backend.api.routes.websocket._project_svc") as mock_svc,
+        ):
             mock_svc.get_project = AsyncMock(return_value=mock_project)
             await project_websocket(mock_websocket, "project-123")
 
@@ -301,15 +256,9 @@ class TestProjectWebSocket:
     @pytest.mark.asyncio
     async def test_project_websocket_unknown_message(self, mock_websocket, mock_user):
         """Test project WebSocket handles unknown message types."""
-        mock_websocket.receive_json = AsyncMock(
-            side_effect=[
-                {"type": "unknown_type"},
-                WebSocketDisconnect()
-            ]
-        )
+        mock_websocket.receive_json = AsyncMock(side_effect=[{"type": "unknown_type"}, WebSocketDisconnect()])
 
-        with patch('backend.api.routes.websocket.get_websocket_user',
-                   return_value=mock_user):
+        with patch("backend.api.routes.websocket.get_websocket_user", return_value=mock_user):
             await project_websocket(mock_websocket, "project-123")
 
         calls = mock_websocket.send_json.call_args_list
@@ -320,14 +269,10 @@ class TestProjectWebSocket:
     async def test_project_websocket_invalid_json(self, mock_websocket, mock_user):
         """Test project WebSocket handles invalid JSON."""
         mock_websocket.receive_json = AsyncMock(
-            side_effect=[
-                json.JSONDecodeError("Invalid", "", 0),
-                WebSocketDisconnect()
-            ]
+            side_effect=[json.JSONDecodeError("Invalid", "", 0), WebSocketDisconnect()]
         )
 
-        with patch('backend.api.routes.websocket.get_websocket_user',
-                   return_value=mock_user):
+        with patch("backend.api.routes.websocket.get_websocket_user", return_value=mock_user):
             await project_websocket(mock_websocket, "project-123")
 
         calls = mock_websocket.send_json.call_args_list
@@ -342,13 +287,14 @@ class TestProjectWebSocket:
         # Clear any existing connections
         ws_module._project_connections.clear()
 
-        with patch('backend.api.routes.websocket.get_websocket_user',
-                   return_value=mock_user):
+        with patch("backend.api.routes.websocket.get_websocket_user", return_value=mock_user):
             await project_websocket(mock_websocket, "project-cleanup-test")
 
         # Connection should be cleaned up
-        assert "project-cleanup-test" not in ws_module._project_connections or \
-               mock_websocket not in ws_module._project_connections.get("project-cleanup-test", set())
+        assert (
+            "project-cleanup-test" not in ws_module._project_connections
+            or mock_websocket not in ws_module._project_connections.get("project-cleanup-test", set())
+        )
 
 
 class TestWorkflowWebSocket:
@@ -369,35 +315,22 @@ class TestWorkflowWebSocket:
     @pytest.fixture
     def mock_user(self):
         """Create a mock authenticated user."""
-        return User(
-            user_id="user-123",
-            username="testuser",
-            email="test@example.com",
-            permissions=["read", "write"]
-        )
+        return User(user_id="user-123", username="testuser", email="test@example.com", permissions=["read", "write"])
 
     @pytest.mark.asyncio
     async def test_workflow_websocket_unauthenticated(self, mock_websocket):
         """Test workflow WebSocket rejects unauthenticated connections."""
-        with patch('backend.api.routes.websocket.get_websocket_user', return_value=None):
+        with patch("backend.api.routes.websocket.get_websocket_user", return_value=None):
             await workflow_websocket(mock_websocket, "workflow-123")
 
-        mock_websocket.close.assert_called_once_with(
-            code=4001, reason="Authentication required"
-        )
+        mock_websocket.close.assert_called_once_with(code=4001, reason="Authentication required")
 
     @pytest.mark.asyncio
     async def test_workflow_websocket_ping(self, mock_websocket, mock_user):
         """Test workflow WebSocket ping/pong."""
-        mock_websocket.receive_json = AsyncMock(
-            side_effect=[
-                {"type": "ping"},
-                WebSocketDisconnect()
-            ]
-        )
+        mock_websocket.receive_json = AsyncMock(side_effect=[{"type": "ping"}, WebSocketDisconnect()])
 
-        with patch('backend.api.routes.websocket.get_websocket_user',
-                   return_value=mock_user):
+        with patch("backend.api.routes.websocket.get_websocket_user", return_value=mock_user):
             await workflow_websocket(mock_websocket, "workflow-123")
 
         calls = mock_websocket.send_json.call_args_list
@@ -407,12 +340,7 @@ class TestWorkflowWebSocket:
     @pytest.mark.asyncio
     async def test_workflow_websocket_get_logs(self, mock_websocket, mock_user):
         """Test workflow WebSocket get_logs request."""
-        mock_websocket.receive_json = AsyncMock(
-            side_effect=[
-                {"type": "get_logs"},
-                WebSocketDisconnect()
-            ]
-        )
+        mock_websocket.receive_json = AsyncMock(side_effect=[{"type": "get_logs"}, WebSocketDisconnect()])
 
         mock_workflow = MagicMock()
         mock_workflow.context = {"logs": [{"message": "step started"}]}
@@ -422,11 +350,11 @@ class TestWorkflowWebSocket:
         mock_db_ctx.__aenter__ = AsyncMock(return_value=mock_db)
         mock_db_ctx.__aexit__ = AsyncMock(return_value=False)
 
-        with patch('backend.api.routes.websocket.get_websocket_user',
-                   return_value=mock_user), \
-             patch('backend.api.routes.websocket.get_db_context',
-                   return_value=mock_db_ctx), \
-             patch('backend.api.routes.websocket._workflow_svc') as mock_svc:
+        with (
+            patch("backend.api.routes.websocket.get_websocket_user", return_value=mock_user),
+            patch("backend.api.routes.websocket.get_db_context", return_value=mock_db_ctx),
+            patch("backend.api.routes.websocket._workflow_svc") as mock_svc,
+        ):
             mock_svc.get_workflow = AsyncMock(return_value=mock_workflow)
             await workflow_websocket(mock_websocket, "workflow-123")
 
@@ -438,15 +366,9 @@ class TestWorkflowWebSocket:
     @pytest.mark.asyncio
     async def test_workflow_websocket_unknown_message(self, mock_websocket, mock_user):
         """Test workflow WebSocket handles unknown message types."""
-        mock_websocket.receive_json = AsyncMock(
-            side_effect=[
-                {"type": "unknown_type"},
-                WebSocketDisconnect()
-            ]
-        )
+        mock_websocket.receive_json = AsyncMock(side_effect=[{"type": "unknown_type"}, WebSocketDisconnect()])
 
-        with patch('backend.api.routes.websocket.get_websocket_user',
-                   return_value=mock_user):
+        with patch("backend.api.routes.websocket.get_websocket_user", return_value=mock_user):
             await workflow_websocket(mock_websocket, "workflow-123")
 
         calls = mock_websocket.send_json.call_args_list
@@ -457,14 +379,10 @@ class TestWorkflowWebSocket:
     async def test_workflow_websocket_invalid_json(self, mock_websocket, mock_user):
         """Test workflow WebSocket handles invalid JSON."""
         mock_websocket.receive_json = AsyncMock(
-            side_effect=[
-                json.JSONDecodeError("Invalid", "", 0),
-                WebSocketDisconnect()
-            ]
+            side_effect=[json.JSONDecodeError("Invalid", "", 0), WebSocketDisconnect()]
         )
 
-        with patch('backend.api.routes.websocket.get_websocket_user',
-                   return_value=mock_user):
+        with patch("backend.api.routes.websocket.get_websocket_user", return_value=mock_user):
             await workflow_websocket(mock_websocket, "workflow-123")
 
         calls = mock_websocket.send_json.call_args_list
@@ -479,12 +397,13 @@ class TestWorkflowWebSocket:
         # Clear any existing connections
         ws_module._workflow_connections.clear()
 
-        with patch('backend.api.routes.websocket.get_websocket_user',
-                   return_value=mock_user):
+        with patch("backend.api.routes.websocket.get_websocket_user", return_value=mock_user):
             await workflow_websocket(mock_websocket, "workflow-cleanup-test")
 
-        assert "workflow-cleanup-test" not in ws_module._workflow_connections or \
-               mock_websocket not in ws_module._workflow_connections.get("workflow-cleanup-test", set())
+        assert (
+            "workflow-cleanup-test" not in ws_module._workflow_connections
+            or mock_websocket not in ws_module._workflow_connections.get("workflow-cleanup-test", set())
+        )
 
 
 class TestBroadcastFunctions:

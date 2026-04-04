@@ -152,7 +152,7 @@ class TestCheckDatabase:
 
         # Mock SQLAlchemy inspector
         mock_inspector = Mock()
-        mock_inspector.get_table_names.return_value = ['users', 'projects', 'workflows', 'tasks', 'other_table']
+        mock_inspector.get_table_names.return_value = ["users", "projects", "workflows", "tasks", "other_table"]
 
         async def mock_run_sync(fn):
             # Create a mock sync session with connection
@@ -165,7 +165,7 @@ class TestCheckDatabase:
         mock_session.run_sync = mock_run_sync
 
         # Patch the inspect function to return our mock inspector
-        with patch('sqlalchemy.inspect', return_value=mock_inspector):
+        with patch("sqlalchemy.inspect", return_value=mock_inspector):
             mock_pool = Mock()
             mock_pool.size.return_value = 10
             mock_pool.checkedin.return_value = 8
@@ -179,8 +179,10 @@ class TestCheckDatabase:
             mock_session_ctx.__aenter__.return_value = mock_session
             mock_session_ctx.__aexit__.return_value = None
 
-            with patch('backend.db.session.AsyncSessionLocal', return_value=mock_session_ctx), \
-                 patch('backend.db.session.engine', mock_engine):
+            with (
+                patch("backend.db.session.AsyncSessionLocal", return_value=mock_session_ctx),
+                patch("backend.db.session.engine", mock_engine),
+            ):
                 status, message, details = await checker.check_database()
 
                 assert status == HealthStatus.HEALTHY
@@ -198,7 +200,7 @@ class TestCheckDatabase:
 
         # Mock SQLAlchemy inspector - simulate missing tables
         mock_inspector = Mock()
-        mock_inspector.get_table_names.return_value = ['workflows', 'tasks']  # Missing 'users' and 'projects'
+        mock_inspector.get_table_names.return_value = ["workflows", "tasks"]  # Missing 'users' and 'projects'
 
         async def mock_run_sync(fn):
             # Create a mock sync session with connection
@@ -211,7 +213,7 @@ class TestCheckDatabase:
         mock_session.run_sync = mock_run_sync
 
         # Patch the inspect function to return our mock inspector
-        with patch('sqlalchemy.inspect', return_value=mock_inspector):
+        with patch("sqlalchemy.inspect", return_value=mock_inspector):
             mock_pool = Mock()
             mock_pool.size.return_value = 10
             mock_pool.checkedin.return_value = 8
@@ -225,8 +227,10 @@ class TestCheckDatabase:
             mock_session_ctx.__aenter__.return_value = mock_session
             mock_session_ctx.__aexit__.return_value = None
 
-            with patch('backend.db.session.AsyncSessionLocal', return_value=mock_session_ctx), \
-                 patch('backend.db.session.engine', mock_engine):
+            with (
+                patch("backend.db.session.AsyncSessionLocal", return_value=mock_session_ctx),
+                patch("backend.db.session.engine", mock_engine),
+            ):
                 status, message, details = await checker.check_database()
 
                 # Should be degraded due to missing tables
@@ -247,7 +251,7 @@ class TestCheckDatabase:
 
         # Mock SQLAlchemy inspector
         mock_inspector = Mock()
-        mock_inspector.get_table_names.return_value = ['users', 'projects', 'workflows', 'tasks']
+        mock_inspector.get_table_names.return_value = ["users", "projects", "workflows", "tasks"]
 
         async def mock_run_sync(fn):
             # Create a mock sync session with connection
@@ -260,7 +264,7 @@ class TestCheckDatabase:
         mock_session.run_sync = mock_run_sync
 
         # Patch the inspect function to return our mock inspector
-        with patch('sqlalchemy.inspect', return_value=mock_inspector):
+        with patch("sqlalchemy.inspect", return_value=mock_inspector):
             mock_pool = Mock()
             mock_pool.size.return_value = 10
             mock_pool.checkedin.return_value = 8
@@ -274,9 +278,11 @@ class TestCheckDatabase:
             mock_session_ctx.__aenter__.return_value = mock_session
             mock_session_ctx.__aexit__.return_value = None
 
-            with patch('backend.db.session.AsyncSessionLocal', return_value=mock_session_ctx), \
-                 patch('backend.db.session.engine', mock_engine), \
-                 patch('time.time') as mock_time:
+            with (
+                patch("backend.db.session.AsyncSessionLocal", return_value=mock_session_ctx),
+                patch("backend.db.session.engine", mock_engine),
+                patch("time.time") as mock_time,
+            ):
                 # Simulate 1500ms query time
                 mock_time.side_effect = [0, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5]
 
@@ -291,8 +297,10 @@ class TestCheckDatabase:
         """Test check_database handles exceptions (lines 208-214)."""
         checker = HealthChecker()
 
-        with patch('backend.db.session.AsyncSessionLocal', side_effect=Exception("Connection refused")), \
-             patch('backend.db.session.engine', Mock()):
+        with (
+            patch("backend.db.session.AsyncSessionLocal", side_effect=Exception("Connection refused")),
+            patch("backend.db.session.engine", Mock()),
+        ):
             status, message, details = await checker.check_database()
 
             assert status == HealthStatus.UNHEALTHY
@@ -318,8 +326,10 @@ class TestCheckDatabase:
         mock_session_ctx.__aenter__.return_value = mock_session
         mock_session_ctx.__aexit__.return_value = None
 
-        with patch('backend.db.session.AsyncSessionLocal', return_value=mock_session_ctx), \
-             patch('backend.db.session.engine', mock_engine):
+        with (
+            patch("backend.db.session.AsyncSessionLocal", return_value=mock_session_ctx),
+            patch("backend.db.session.engine", mock_engine),
+        ):
             status, message, details = await checker.check_database()
 
             assert details["pool_stats"]["size"] == "N/A"
@@ -341,8 +351,10 @@ class TestCheckRedis:
         mock_settings = Mock()
         mock_settings.REDIS_URL = "redis://localhost:6379"
 
-        with patch('redis.asyncio.from_url', return_value=mock_client), \
-             patch('backend.core.config.get_settings', return_value=mock_settings):
+        with (
+            patch("redis.asyncio.from_url", return_value=mock_client),
+            patch("backend.core.config.get_settings", return_value=mock_settings),
+        ):
             status, message, details = await checker.check_redis()
 
             assert status == HealthStatus.HEALTHY
@@ -362,9 +374,11 @@ class TestCheckRedis:
         mock_settings = Mock()
         mock_settings.REDIS_URL = "redis://localhost:6379"
 
-        with patch('redis.asyncio.from_url', return_value=mock_client), \
-             patch('backend.core.config.get_settings', return_value=mock_settings), \
-             patch('time.time') as mock_time:
+        with (
+            patch("redis.asyncio.from_url", return_value=mock_client),
+            patch("backend.core.config.get_settings", return_value=mock_settings),
+            patch("time.time") as mock_time,
+        ):
             # Simulate 150ms ping time
             mock_time.side_effect = [0, 0.15, 0.15]
 
@@ -386,8 +400,10 @@ class TestCheckRedis:
         mock_settings = Mock()
         mock_settings.REDIS_URL = "redis://localhost:6379"
 
-        with patch('redis.asyncio.from_url', return_value=mock_client), \
-             patch('backend.core.config.get_settings', return_value=mock_settings):
+        with (
+            patch("redis.asyncio.from_url", return_value=mock_client),
+            patch("backend.core.config.get_settings", return_value=mock_settings),
+        ):
             status, message, details = await checker.check_redis()
 
             # Should still be healthy if ping works
@@ -402,8 +418,10 @@ class TestCheckRedis:
         mock_settings = Mock()
         mock_settings.REDIS_URL = "redis://localhost:6379"
 
-        with patch('redis.asyncio.from_url', side_effect=Exception("Connection refused")), \
-             patch('backend.core.config.get_settings', return_value=mock_settings):
+        with (
+            patch("redis.asyncio.from_url", side_effect=Exception("Connection refused")),
+            patch("backend.core.config.get_settings", return_value=mock_settings),
+        ):
             status, message, details = await checker.check_redis()
 
             assert status == HealthStatus.UNHEALTHY
@@ -419,11 +437,11 @@ class TestCheckDiskSpace:
         checker = HealthChecker()
 
         # Simulate 100GB total, 50GB used, 50GB free
-        with patch('shutil.disk_usage') as mock_disk:
+        with patch("shutil.disk_usage") as mock_disk:
             mock_disk.return_value = (
                 100 * 1024**3,  # 100GB total
-                50 * 1024**3,   # 50GB used
-                50 * 1024**3    # 50GB free
+                50 * 1024**3,  # 50GB used
+                50 * 1024**3,  # 50GB free
             )
 
             status, message, details = await checker.check_disk_space()
@@ -437,11 +455,11 @@ class TestCheckDiskSpace:
         checker = HealthChecker()
 
         # Simulate less than 1GB free
-        with patch('shutil.disk_usage') as mock_disk:
+        with patch("shutil.disk_usage") as mock_disk:
             mock_disk.return_value = (
-                100 * 1024**3,   # 100GB total
+                100 * 1024**3,  # 100GB total
                 99.5 * 1024**3,  # 99.5GB used
-                0.5 * 1024**3    # 0.5GB free
+                0.5 * 1024**3,  # 0.5GB free
             )
 
             status, message, details = await checker.check_disk_space()
@@ -455,11 +473,11 @@ class TestCheckDiskSpace:
         checker = HealthChecker()
 
         # Simulate between 1GB and 5GB free
-        with patch('shutil.disk_usage') as mock_disk:
+        with patch("shutil.disk_usage") as mock_disk:
             mock_disk.return_value = (
                 100 * 1024**3,  # 100GB total
                 97 * 1024**3,  # 97GB used
-                3 * 1024**3    # 3GB free
+                3 * 1024**3,  # 3GB free
             )
 
             status, message, details = await checker.check_disk_space()
@@ -472,7 +490,7 @@ class TestCheckDiskSpace:
         """Test check_disk_space handles exceptions (lines 310-316)."""
         checker = HealthChecker()
 
-        with patch('shutil.disk_usage') as mock_disk:
+        with patch("shutil.disk_usage") as mock_disk:
             mock_disk.side_effect = OSError("Permission denied")
 
             status, message, details = await checker.check_disk_space()
@@ -508,7 +526,7 @@ class TestHealthCheckResult:
             message="OK",
             timestamp=datetime.now(UTC),
             latency_ms=50.0,
-            details={"key": "value"}
+            details={"key": "value"},
         )
 
         assert result.component == "test"
@@ -520,11 +538,7 @@ class TestHealthCheckResult:
     def test_health_check_result_default_details(self):
         """Test HealthCheckResult has default empty details."""
         result = HealthCheckResult(
-            component="test",
-            status=HealthStatus.HEALTHY,
-            message="OK",
-            timestamp=datetime.now(UTC),
-            latency_ms=50.0
+            component="test", status=HealthStatus.HEALTHY, message="OK", timestamp=datetime.now(UTC), latency_ms=50.0
         )
 
         assert result.details == {}

@@ -231,11 +231,13 @@ class TestFileManagerExtendedCoverage:
         import tempfile
 
         from backend.codegen.file_manager import FileManager
+
         tmpdir = tempfile.mkdtemp()
         manager = FileManager(base_path=tmpdir)
         yield manager
         # Cleanup
         import shutil
+
         shutil.rmtree(tmpdir, ignore_errors=True)
 
     def test_delete_directory_recursive_lines_260_272(self, file_manager):
@@ -300,7 +302,7 @@ class TestFileManagerExtendedCoverage:
 
         # Create a binary file that can't be read as text
         binary_path = os.path.join(file_manager.base_path, "binary.bin")
-        with open(binary_path, 'wb') as f:
+        with open(binary_path, "wb") as f:
             f.write(bytes([0x80, 0x81, 0x82]))  # Invalid UTF-8
 
         files = file_manager.list_files("", pattern="*.bin")
@@ -328,7 +330,7 @@ class TestFileManagerExtendedCoverage:
 
         # Create a binary file
         binary_path = os.path.join(file_manager.base_path, project_name, "binary.dat")
-        with open(binary_path, 'wb') as f:
+        with open(binary_path, "wb") as f:
             f.write(bytes([0xFF, 0xFE, 0x00, 0x01]))  # Invalid UTF-8
 
         structure = file_manager.get_project_structure(project_name)

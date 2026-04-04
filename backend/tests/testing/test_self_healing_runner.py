@@ -298,7 +298,7 @@ class TestSelfHealingTestRunner:
     async def test_run_suite_stop_on_failure(self, test_runner, sample_test_cases):
         """Test run_suite with stop_on_first_failure."""
         # Make first test fail
-        with patch.object(test_runner, '_execute_test') as mock_execute:
+        with patch.object(test_runner, "_execute_test") as mock_execute:
             mock_execute.return_value = {"success": False, "error": "Test failed"}
 
             result = await test_runner.run_suite(
@@ -431,27 +431,24 @@ class TestSelfHealingTestRunner:
         # Add some execution history
         test_runner._execution_history["test_1"] = [
             TestExecutionResult(
-                test_id="test_1", test_name="test_1",
-                status=TestResultStatus.PASSED, duration_ms=100,
-                attempt_number=1, healing_applied=True
+                test_id="test_1",
+                test_name="test_1",
+                status=TestResultStatus.PASSED,
+                duration_ms=100,
+                attempt_number=1,
+                healing_applied=True,
             ),
             TestExecutionResult(
-                test_id="test_1", test_name="test_1",
-                status=TestResultStatus.PASSED, duration_ms=100,
-                attempt_number=1
+                test_id="test_1", test_name="test_1", status=TestResultStatus.PASSED, duration_ms=100, attempt_number=1
             ),
         ]
         test_runner._execution_history["test_2"] = [
             TestExecutionResult(
-                test_id="test_2", test_name="test_2",
-                status=TestResultStatus.FAILED, duration_ms=100,
-                attempt_number=1
+                test_id="test_2", test_name="test_2", status=TestResultStatus.FAILED, duration_ms=100, attempt_number=1
             ),
         ]
         test_runner._flaky_tests["test_3"] = FlakyTest(
-            test_id="test_3", test_name="test_3",
-            failure_rate=0.3, last_failure=datetime.utcnow(),
-            quarantined=True
+            test_id="test_3", test_name="test_3", failure_rate=0.3, last_failure=datetime.utcnow(), quarantined=True
         )
 
         stats = test_runner.get_execution_statistics()
@@ -464,6 +461,7 @@ class TestSelfHealingTestRunner:
 
     def test_register_healing_strategy(self, test_runner):
         """Test registering custom healing strategy."""
+
         async def custom_strategy(test_case, failure_result):
             return True
 
@@ -477,9 +475,7 @@ class TestSelfHealingTestRunner:
         """Test _heal_timing_issues method."""
         failure_result = {"error": "timeout waiting for element"}
 
-        healed = await test_runner._heal_timing_issues(
-            sample_test_cases[0], failure_result
-        )
+        healed = await test_runner._heal_timing_issues(sample_test_cases[0], failure_result)
 
         assert healed is True
 
@@ -488,9 +484,7 @@ class TestSelfHealingTestRunner:
         """Test _heal_timing_issues with non-timing error."""
         failure_result = {"error": "assertion failed"}
 
-        healed = await test_runner._heal_timing_issues(
-            sample_test_cases[0], failure_result
-        )
+        healed = await test_runner._heal_timing_issues(sample_test_cases[0], failure_result)
 
         assert healed is False
 
@@ -499,9 +493,7 @@ class TestSelfHealingTestRunner:
         """Test _heal_selector_issues method."""
         failure_result = {"error": "element not found by selector"}
 
-        healed = await test_runner._heal_selector_issues(
-            sample_test_cases[0], failure_result
-        )
+        healed = await test_runner._heal_selector_issues(sample_test_cases[0], failure_result)
 
         assert healed is True
 
@@ -510,9 +502,7 @@ class TestSelfHealingTestRunner:
         """Test _heal_selector_issues with non-selector error."""
         failure_result = {"error": "database connection failed"}
 
-        healed = await test_runner._heal_selector_issues(
-            sample_test_cases[0], failure_result
-        )
+        healed = await test_runner._heal_selector_issues(sample_test_cases[0], failure_result)
 
         assert healed is False
 
@@ -521,9 +511,7 @@ class TestSelfHealingTestRunner:
         """Test _heal_network_issues method."""
         failure_result = {"error": "network connection refused"}
 
-        healed = await test_runner._heal_network_issues(
-            sample_test_cases[0], failure_result
-        )
+        healed = await test_runner._heal_network_issues(sample_test_cases[0], failure_result)
 
         assert healed is True
 
@@ -532,9 +520,7 @@ class TestSelfHealingTestRunner:
         """Test _heal_network_issues with non-network error."""
         failure_result = {"error": "index out of range"}
 
-        healed = await test_runner._heal_network_issues(
-            sample_test_cases[0], failure_result
-        )
+        healed = await test_runner._heal_network_issues(sample_test_cases[0], failure_result)
 
         assert healed is False
 
@@ -551,10 +537,9 @@ class TestSelfHealingTestRunner:
         # Add failure history for low priority test
         test_runner._execution_history["test_3"] = [
             TestExecutionResult(
-                test_id="test_3", test_name="test_3",
-                status=TestResultStatus.FAILED, duration_ms=100,
-                attempt_number=1
-            ) for _ in range(5)
+                test_id="test_3", test_name="test_3", status=TestResultStatus.FAILED, duration_ms=100, attempt_number=1
+            )
+            for _ in range(5)
         ]
 
         test_runner._sort_tests_by_priority(sample_test_cases)
@@ -565,9 +550,7 @@ class TestSelfHealingTestRunner:
     def test_store_execution_result(self, test_runner):
         """Test _store_execution_result method."""
         result = TestExecutionResult(
-            test_id="test_1", test_name="test_1",
-            status=TestResultStatus.PASSED, duration_ms=100,
-            attempt_number=1
+            test_id="test_1", test_name="test_1", status=TestResultStatus.PASSED, duration_ms=100, attempt_number=1
         )
 
         test_runner._store_execution_result(result)
@@ -579,9 +562,7 @@ class TestSelfHealingTestRunner:
         """Test _store_execution_result keeps only last 20."""
         for _i in range(25):
             result = TestExecutionResult(
-                test_id="test_1", test_name="test_1",
-                status=TestResultStatus.PASSED, duration_ms=100,
-                attempt_number=1
+                test_id="test_1", test_name="test_1", status=TestResultStatus.PASSED, duration_ms=100, attempt_number=1
             )
             test_runner._store_execution_result(result)
 
@@ -595,9 +576,7 @@ class TestSelfHealingTestRunner:
             status = TestResultStatus.FAILED if i < 4 else TestResultStatus.PASSED
             test_runner._execution_history["test_1"].append(
                 TestExecutionResult(
-                    test_id="test_1", test_name="test_1",
-                    status=status, duration_ms=100,
-                    attempt_number=1
+                    test_id="test_1", test_name="test_1", status=status, duration_ms=100, attempt_number=1
                 )
             )
 
@@ -612,10 +591,9 @@ class TestSelfHealingTestRunner:
         # Only 3 executions, need at least 5
         test_runner._execution_history["test_1"] = [
             TestExecutionResult(
-                test_id="test_1", test_name="test_1",
-                status=TestResultStatus.FAILED, duration_ms=100,
-                attempt_number=1
-            ) for _ in range(3)
+                test_id="test_1", test_name="test_1", status=TestResultStatus.FAILED, duration_ms=100, attempt_number=1
+            )
+            for _ in range(3)
         ]
 
         results = test_runner._execution_history["test_1"]
@@ -627,9 +605,7 @@ class TestSelfHealingTestRunner:
     @pytest.mark.asyncio
     async def test_run_test_with_healing_success(self, test_runner, sample_test_cases):
         """Test _run_test_with_healing when test passes."""
-        result = await test_runner._run_test_with_healing(
-            sample_test_cases[0], enable_retry=True
-        )
+        result = await test_runner._run_test_with_healing(sample_test_cases[0], enable_retry=True)
 
         assert isinstance(result, TestExecutionResult)
 
@@ -644,10 +620,8 @@ class TestSelfHealingTestRunner:
                 return {"success": False, "error": "timeout error"}
             return {"success": True}
 
-        with patch.object(test_runner, '_execute_test', side_effect=mock_execute):
-            await test_runner._run_test_with_healing(
-                sample_test_cases[0], enable_retry=True
-            )
+        with patch.object(test_runner, "_execute_test", side_effect=mock_execute):
+            await test_runner._run_test_with_healing(sample_test_cases[0], enable_retry=True)
 
             # Should have retried and eventually passed
             assert call_count[0] >= 2
@@ -657,9 +631,7 @@ class TestSelfHealingTestRunner:
         """Test _attempt_healing method."""
         failure_result = {"error": "timeout waiting for element"}
 
-        healed = await test_runner._attempt_healing(
-            sample_test_cases[0], failure_result
-        )
+        healed = await test_runner._attempt_healing(sample_test_cases[0], failure_result)
 
         assert healed is True
 
@@ -668,23 +640,20 @@ class TestSelfHealingTestRunner:
         """Test _attempt_healing when no strategy matches."""
         failure_result = {"error": "unknown error type xyz"}
 
-        healed = await test_runner._attempt_healing(
-            sample_test_cases[0], failure_result
-        )
+        healed = await test_runner._attempt_healing(sample_test_cases[0], failure_result)
 
         assert healed is False
 
     @pytest.mark.asyncio
     async def test_attempt_healing_strategy_error(self, test_runner, sample_test_cases):
         """Test _attempt_healing when strategy raises error."""
+
         async def failing_strategy(tc, result):
             raise Exception("Strategy error")
 
         test_runner._healing_strategies = [failing_strategy]
 
-        healed = await test_runner._attempt_healing(
-            sample_test_cases[0], {"error": "any error"}
-        )
+        healed = await test_runner._attempt_healing(sample_test_cases[0], {"error": "any error"})
 
         assert healed is False
 
@@ -698,10 +667,11 @@ class TestSelfHealingTestRunner:
     @pytest.mark.asyncio
     async def test_run_suite_exception_handling(self, test_runner, sample_test_cases):
         """Test run_suite handles exceptions gracefully."""
+
         async def mock_run_with_healing(tc, enable_retry=True):
             raise Exception("Test execution error")
 
-        with patch.object(test_runner, '_run_test_with_healing', side_effect=mock_run_with_healing):
+        with patch.object(test_runner, "_run_test_with_healing", side_effect=mock_run_with_healing):
             result = await test_runner.run_suite(
                 test_cases=sample_test_cases,
                 suite_name="test_suite",
@@ -718,6 +688,7 @@ class TestSelfHealingRunnerExtendedCoverage:
     def test_runner(self):
         """Fixture for SelfHealingTestRunner."""
         from backend.testing.self_healing_runner import SelfHealingTestRunner
+
         runner = SelfHealingTestRunner(
             max_retries=3,
             retry_delay_ms=10,
@@ -731,8 +702,16 @@ class TestSelfHealingRunnerExtendedCoverage:
     def sample_test_cases(self):
         """Create sample test cases."""
         from backend.testing.intelligence_engine import TestCase, TestPriority, TestType
+
         return [
-            TestCase(id="test_status", name="test_function", test_type=TestType.UNIT, target_file="/f.py", code="def test(): pass", priority=TestPriority.HIGH),
+            TestCase(
+                id="test_status",
+                name="test_function",
+                test_type=TestType.UNIT,
+                target_file="/f.py",
+                code="def test(): pass",
+                priority=TestPriority.HIGH,
+            ),
         ]
 
     @pytest.mark.asyncio
@@ -836,7 +815,7 @@ class TestSelfHealingRunnerExtendedCoverage:
         from unittest.mock import patch
 
         # Force the random failure branch (line 490-495)
-        with patch.object(random, 'random', return_value=0.05):  # 0.05 < 0.1
+        with patch.object(random, "random", return_value=0.05):  # 0.05 < 0.1
             result = await test_runner._execute_test(sample_test_cases[0])
 
             # Line 491: should return failure result

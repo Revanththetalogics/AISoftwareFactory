@@ -30,6 +30,7 @@ router = APIRouter(prefix="/testing", tags=["testing"])
 
 # Request/Response Models
 
+
 class GenerateTestsRequest(BaseModel):
     file_path: str = Field(..., description="Path to the source file")
     include_edge_cases: bool = Field(True, description="Include edge case tests")
@@ -125,6 +126,7 @@ class TestHealthResponse(BaseModel):
 
 # Dependency injection
 
+
 async def get_intelligence_engine():
     return TestIntelligenceEngine()
 
@@ -155,6 +157,7 @@ async def get_coverage_analyzer():
 
 # API Endpoints
 
+
 @router.post("/generate-tests", response_model=GenerateTestsResponse)
 async def generate_tests(
     request: GenerateTestsRequest,
@@ -170,6 +173,7 @@ async def generate_tests(
     - Error handling tests
     """
     import time
+
     start_time = time.time()
 
     try:
@@ -250,10 +254,7 @@ async def detect_bugs(
             )
 
         else:
-            raise HTTPException(
-                status_code=400,
-                detail="Either file_path or directory must be provided"
-            )
+            raise HTTPException(status_code=400, detail="Either file_path or directory must be provided")
 
     except Exception as e:
         logger.error("Bug detection failed", error=str(e))
@@ -433,7 +434,7 @@ async def run_tests(
 
         raw_results = getattr(suite_result, "results", []) or []
         serialized = []
-        for r in (raw_results if isinstance(raw_results, list) else []):
+        for r in raw_results if isinstance(raw_results, list) else []:
             try:
                 serialized.append(r.to_dict())
             except Exception:  # noqa: S110
@@ -589,6 +590,7 @@ async def unquarantine_test(
 
 # Frontend Testing Endpoints
 
+
 @router.post("/frontend/generate-e2e")
 async def generate_e2e_tests(
     page_path: str,
@@ -687,6 +689,7 @@ async def get_frontend_statistics(
 
 # Background Tasks
 
+
 @router.post("/run-full-suite")
 async def run_full_test_suite(
     background_tasks: BackgroundTasks,
@@ -703,6 +706,7 @@ async def run_full_test_suite(
     4. Analyzes coverage
     5. Applies auto-fixes
     """
+
     async def run_suite():
         logger.info("Starting full test suite execution")
         # Implementation would go here
@@ -715,8 +719,10 @@ async def run_full_test_suite(
 
 # ── Manual bug report ──────────────────────────────────────────────────────────
 
+
 class CreateBugRequest(BaseModel):
     """Manual bug report submission."""
+
     title: str = Field(..., min_length=1, max_length=200)
     description: str = Field(..., min_length=10)
     severity: str = Field(default="medium", pattern="^(low|medium|high|critical)$")
@@ -746,6 +752,7 @@ async def create_bug(
     accepts a manually authored bug report from the UI.
     """
     import uuid as _uuid
+
     bug_id = f"bug-{_uuid.uuid4().hex[:8]}"
 
     logger.info(

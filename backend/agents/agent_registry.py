@@ -165,10 +165,7 @@ class AgentRegistry:
             >>> for agent in agents:
             ...     print(agent.name)
         """
-        return [
-            agent for agent in self._agents.values()
-            if agent.has_capability(capability)
-        ]
+        return [agent for agent in self._agents.values() if agent.has_capability(capability)]
 
     def list_all(self) -> list[BaseAgent]:
         """

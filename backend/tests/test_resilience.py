@@ -216,6 +216,7 @@ class TestWithTimeout:
     @pytest.mark.asyncio
     async def test_success_within_timeout(self):
         """Test successful completion within timeout."""
+
         async def quick_func():
             return "quick result"
 
@@ -226,6 +227,7 @@ class TestWithTimeout:
     @pytest.mark.asyncio
     async def test_timeout_exceeded(self):
         """Test that timeout raises TimeoutError."""
+
         async def slow_func():
             await asyncio.sleep(1.0)
             return "slow result"
@@ -239,6 +241,7 @@ class TestWithTimeout:
     @pytest.mark.asyncio
     async def test_timeout_default_operation_name(self):
         """Test timeout with default operation name."""
+
         async def slow_func():
             await asyncio.sleep(1.0)
 
@@ -259,12 +262,7 @@ class TestWithResilience:
         async def success_func():
             return "result: success"
 
-        result = await with_resilience(
-            success_func,
-            cb,
-            timeout_seconds=5.0,
-            operation_name="test_op"
-        )
+        result = await with_resilience(success_func, cb, timeout_seconds=5.0, operation_name="test_op")
 
         assert result == "result: success"
 
@@ -276,12 +274,7 @@ class TestWithResilience:
         async def success_func():
             return "no timeout"
 
-        result = await with_resilience(
-            success_func,
-            cb,
-            timeout_seconds=None,
-            operation_name="test_op"
-        )
+        result = await with_resilience(success_func, cb, timeout_seconds=None, operation_name="test_op")
 
         assert result == "no timeout"
 
@@ -314,12 +307,7 @@ class TestWithResilience:
             return "slow"
 
         with pytest.raises(TimeoutError):
-            await with_resilience(
-                slow_func,
-                cb,
-                timeout_seconds=0.1,
-                operation_name="slow_op"
-            )
+            await with_resilience(slow_func, cb, timeout_seconds=0.1, operation_name="slow_op")
 
 
 class TestResilientDecorator:

@@ -84,10 +84,7 @@ class TestSettings:
 
         # Should fail in production with default key
         with pytest.raises(ValidationError) as exc_info:
-            Settings(
-                ENVIRONMENT="production",
-                SECRET_KEY="your-secret-key-change-in-production"
-            )
+            Settings(ENVIRONMENT="production", SECRET_KEY="your-secret-key-change-in-production")
         assert "SECRET_KEY must be changed from default in production" in str(exc_info.value)
 
         # Should work in production with custom key
@@ -98,10 +95,7 @@ class TestSettings:
         """Test that default secret key is rejected in staging (security hardening)."""
         # Should fail in staging with default key
         with pytest.raises(ValidationError) as exc_info:
-            Settings(
-                ENVIRONMENT="staging",
-                SECRET_KEY="your-secret-key-change-in-production"
-            )
+            Settings(ENVIRONMENT="staging", SECRET_KEY="your-secret-key-change-in-production")
         assert "SECRET_KEY must be changed from default in staging" in str(exc_info.value)
 
         # Should work in staging with custom key
@@ -160,11 +154,7 @@ class TestCorsOriginsProperty:
 
     def test_cors_origins_list_production_empty(self):
         """Test cors_origins_list returns empty list in production when not set (lines 230-231)."""
-        settings = Settings(
-            ENVIRONMENT="production",
-            SECRET_KEY="custom-secret-key",
-            CORS_ORIGINS=""
-        )
+        settings = Settings(ENVIRONMENT="production", SECRET_KEY="custom-secret-key", CORS_ORIGINS="")
 
         origins = settings.cors_origins_list
 
@@ -172,11 +162,7 @@ class TestCorsOriginsProperty:
 
     def test_cors_origins_list_staging_empty(self):
         """Test cors_origins_list returns empty list in staging when not set."""
-        settings = Settings(
-            ENVIRONMENT="staging",
-            SECRET_KEY="custom-secret-key",
-            CORS_ORIGINS=""
-        )
+        settings = Settings(ENVIRONMENT="staging", SECRET_KEY="custom-secret-key", CORS_ORIGINS="")
 
         origins = settings.cors_origins_list
 
@@ -195,9 +181,7 @@ class TestCorsOriginsProperty:
 
     def test_cors_origins_list_with_values(self):
         """Test cors_origins_list parses comma-separated values."""
-        settings = Settings(
-            CORS_ORIGINS="https://example.com, https://api.example.com , https://app.example.com"
-        )
+        settings = Settings(CORS_ORIGINS="https://example.com, https://api.example.com , https://app.example.com")
 
         origins = settings.cors_origins_list
 
@@ -247,12 +231,15 @@ class TestGetSettings:
 class TestEnvironmentVariables:
     """Test cases for environment variable loading."""
 
-    @patch.dict(os.environ, {
-        "APP_NAME": "Custom App",
-        "APP_VERSION": "2.0.0",
-        "DEBUG": "true",
-        "PORT": "9000",
-    })
+    @patch.dict(
+        os.environ,
+        {
+            "APP_NAME": "Custom App",
+            "APP_VERSION": "2.0.0",
+            "DEBUG": "true",
+            "PORT": "9000",
+        },
+    )
     def test_settings_from_environment(self):
         """Test that settings are loaded from environment variables."""
         # Clear cache to pick up new environment

@@ -28,13 +28,7 @@ class BaseLLMProvider(ABC):
         self.config = config or {}
 
     @abstractmethod
-    async def generate(
-        self,
-        prompt: str,
-        temperature: float = 0.7,
-        max_tokens: int | None = None,
-        **kwargs
-    ) -> str:
+    async def generate(self, prompt: str, temperature: float = 0.7, max_tokens: int | None = None, **kwargs) -> str:
         """
         Generate text from a prompt.
 
@@ -51,11 +45,7 @@ class BaseLLMProvider(ABC):
 
     @abstractmethod
     async def generate_stream(
-        self,
-        prompt: str,
-        temperature: float = 0.7,
-        max_tokens: int | None = None,
-        **kwargs
+        self, prompt: str, temperature: float = 0.7, max_tokens: int | None = None, **kwargs
     ) -> AsyncIterator[str]:
         """
         Generate text from a prompt with streaming.
@@ -73,11 +63,7 @@ class BaseLLMProvider(ABC):
 
     @abstractmethod
     async def chat(
-        self,
-        messages: list[dict[str, str]],
-        temperature: float = 0.7,
-        max_tokens: int | None = None,
-        **kwargs
+        self, messages: list[dict[str, str]], temperature: float = 0.7, max_tokens: int | None = None, **kwargs
     ) -> str:
         """
         Generate a chat response from messages.
@@ -95,11 +81,7 @@ class BaseLLMProvider(ABC):
 
     @abstractmethod
     async def chat_stream(
-        self,
-        messages: list[dict[str, str]],
-        temperature: float = 0.7,
-        max_tokens: int | None = None,
-        **kwargs
+        self, messages: list[dict[str, str]], temperature: float = 0.7, max_tokens: int | None = None, **kwargs
     ) -> AsyncIterator[str]:
         """
         Generate a chat response with streaming.

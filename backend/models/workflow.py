@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 class WorkflowStatus(StrEnum):
     """Status of a workflow execution."""
+
     PENDING = "pending"
     RUNNING = "running"
     PAUSED = "paused"
@@ -24,6 +25,7 @@ class WorkflowStatus(StrEnum):
 
 class WorkflowTrigger(StrEnum):
     """Types of workflow triggers."""
+
     MANUAL = "manual"
     SCHEDULED = "scheduled"
     WEBHOOK = "webhook"
@@ -45,6 +47,7 @@ class WorkflowStep(BaseModel):
         timeout_seconds: Maximum execution time
         retry_count: Number of retry attempts
     """
+
     step_id: str = Field(..., description="Unique step identifier")
     name: str = Field(..., description="Step name")
     description: str = Field(default="", description="Step description")
@@ -78,6 +81,7 @@ class Workflow(BaseModel):
         created_by: User who created the workflow
         metadata: Additional metadata
     """
+
     workflow_id: str = Field(..., description="Unique workflow identifier")
     name: str = Field(..., description="Workflow name")
     description: str = Field(default="", description="Workflow description")
@@ -96,9 +100,7 @@ class Workflow(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
 
     def is_complete(self) -> bool:
         """Check if workflow is complete."""

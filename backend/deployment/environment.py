@@ -15,6 +15,7 @@ logger = get_logger(__name__)
 
 class EnvironmentType(StrEnum):
     """Environment types."""
+
     DEVELOPMENT = "development"
     STAGING = "staging"
     PRODUCTION = "production"
@@ -32,6 +33,7 @@ class EnvironmentVariable:
         is_secret: Whether variable is sensitive
         description: Variable description
     """
+
     name: str
     value: str
     is_secret: bool = False
@@ -59,6 +61,7 @@ class EnvironmentConfig:
         secrets: Secret values (not serialized)
         metadata: Additional metadata
     """
+
     name: str
     environment_type: EnvironmentType
     variables: list[EnvironmentVariable] = field(default_factory=list)
@@ -200,12 +203,14 @@ class EnvironmentManager:
         if is_secret:
             env.secrets[var_name] = value
         else:
-            env.variables.append(EnvironmentVariable(
-                name=var_name,
-                value=value,
-                is_secret=False,
-                description=description,
-            ))
+            env.variables.append(
+                EnvironmentVariable(
+                    name=var_name,
+                    value=value,
+                    is_secret=False,
+                    description=description,
+                )
+            )
 
         self._logger.info(
             "Variable added",
@@ -328,13 +333,13 @@ class EnvironmentManager:
         if not env:
             return None
 
-        yaml = f'''apiVersion: v1
+        yaml = f"""apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {env_name}-config
   namespace: {namespace}
 data:
-'''
+"""
 
         for var in env.variables:
             if not var.is_secret:
@@ -363,25 +368,25 @@ data:
 
         import base64
 
-        yaml = f'''apiVersion: v1
+        yaml = f"""apiVersion: v1
 kind: Secret
 metadata:
   name: {env_name}-secrets
   namespace: {namespace}
 type: Opaque
 data:
-'''
+"""
 
         # Add secrets
         for name, value in env.secrets.items():
             encoded = base64.b64encode(value.encode()).decode()
-            yaml += f'  {name}: {encoded}\n'
+            yaml += f"  {name}: {encoded}\n"
 
         # Add secret variables
         for var in env.variables:
             if var.is_secret:
                 encoded = base64.b64encode(var.value.encode()).decode()
-                yaml += f'  {var.name}: {encoded}\n'
+                yaml += f"  {var.name}: {encoded}\n"
 
         return yaml
 

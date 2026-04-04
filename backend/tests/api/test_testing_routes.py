@@ -52,6 +52,7 @@ from backend.api.routes.testing import (
 
 class MockStatus(Enum):
     """Mock status enum."""
+
     SUCCESS = "success"
     FAILED = "failed"
     PASSED = "passed"
@@ -59,6 +60,7 @@ class MockStatus(Enum):
 
 class MockStrategy(Enum):
     """Mock strategy enum."""
+
     AI = "ai"
     PATTERN = "pattern"
 
@@ -116,10 +118,7 @@ class TestGenerateTestsEndpoint:
     def mock_user(self):
         """Create mock user."""
         return User(
-            user_id="user-123",
-            username="testuser",
-            email="test@example.com",
-            permissions=["read", "write", "execute"]
+            user_id="user-123", username="testuser", email="test@example.com", permissions=["read", "write", "execute"]
         )
 
     @pytest.fixture
@@ -132,25 +131,14 @@ class TestGenerateTestsEndpoint:
     async def test_generate_tests_success(self, mock_user, mock_agent):
         """Test successful test generation."""
         mock_test = Mock()
-        mock_test.to_dict.return_value = {
-            "name": "test_function",
-            "type": "unit",
-            "code": "def test_function(): pass"
-        }
+        mock_test.to_dict.return_value = {"name": "test_function", "type": "unit", "code": "def test_function(): pass"}
         mock_agent.generate_tests_for_file.return_value = [mock_test, mock_test]
 
         request = GenerateTestsRequest(
-            file_path="src/module.py",
-            include_edge_cases=True,
-            include_error_cases=True,
-            include_property_tests=False
+            file_path="src/module.py", include_edge_cases=True, include_error_cases=True, include_property_tests=False
         )
 
-        response = await generate_tests(
-            request=request,
-            current_user=mock_user,
-            agent=mock_agent
-        )
+        response = await generate_tests(request=request, current_user=mock_user, agent=mock_agent)
 
         assert response.tests_generated == 2
         assert response.file_path == "src/module.py"
@@ -164,11 +152,7 @@ class TestGenerateTestsEndpoint:
         request = GenerateTestsRequest(file_path="src/module.py")
 
         with pytest.raises(HTTPException) as exc_info:
-            await generate_tests(
-                request=request,
-                current_user=mock_user,
-                agent=mock_agent
-            )
+            await generate_tests(request=request, current_user=mock_user, agent=mock_agent)
 
         assert exc_info.value.status_code == 500
 
@@ -180,10 +164,7 @@ class TestDetectBugsEndpoint:
     def mock_user(self):
         """Create mock user."""
         return User(
-            user_id="user-123",
-            username="testuser",
-            email="test@example.com",
-            permissions=["read", "write", "execute"]
+            user_id="user-123", username="testuser", email="test@example.com", permissions=["read", "write", "execute"]
         )
 
     @pytest.fixture
@@ -196,32 +177,13 @@ class TestDetectBugsEndpoint:
     async def test_detect_bugs_in_directory(self, mock_user, mock_agent):
         """Test detecting bugs in directory."""
         mock_bug = Mock()
-        mock_bug.to_dict.return_value = {
-            "id": "bug-1",
-            "type": "security",
-            "severity": "high"
-        }
-        mock_agent.detect_bugs_in_directory.return_value = {
-            "file1.py": [mock_bug],
-            "file2.py": [mock_bug]
-        }
-        mock_agent.get_bug_statistics.return_value = {
-            "by_severity": {"high": 2},
-            "by_category": {"security": 2}
-        }
+        mock_bug.to_dict.return_value = {"id": "bug-1", "type": "security", "severity": "high"}
+        mock_agent.detect_bugs_in_directory.return_value = {"file1.py": [mock_bug], "file2.py": [mock_bug]}
+        mock_agent.get_bug_statistics.return_value = {"by_severity": {"high": 2}, "by_category": {"security": 2}}
 
-        request = DetectBugsRequest(
-            directory="src/",
-            use_static_analysis=True,
-            use_llm_review=True,
-            min_confidence=0.7
-        )
+        request = DetectBugsRequest(directory="src/", use_static_analysis=True, use_llm_review=True, min_confidence=0.7)
 
-        response = await detect_bugs(
-            request=request,
-            current_user=mock_user,
-            agent=mock_agent
-        )
+        response = await detect_bugs(request=request, current_user=mock_user, agent=mock_agent)
 
         assert response.bugs_found == 2
         assert response.directory == "src/"
@@ -231,29 +193,15 @@ class TestDetectBugsEndpoint:
     async def test_detect_bugs_in_file(self, mock_user, mock_agent):
         """Test detecting bugs in a specific file."""
         mock_bug = Mock()
-        mock_bug.to_dict.return_value = {
-            "id": "bug-1",
-            "type": "logic",
-            "severity": "medium"
-        }
+        mock_bug.to_dict.return_value = {"id": "bug-1", "type": "logic", "severity": "medium"}
         mock_agent.detect_bugs_in_file.return_value = [mock_bug]
-        mock_agent.get_bug_statistics.return_value = {
-            "by_severity": {"medium": 1},
-            "by_category": {"logic": 1}
-        }
+        mock_agent.get_bug_statistics.return_value = {"by_severity": {"medium": 1}, "by_category": {"logic": 1}}
 
         request = DetectBugsRequest(
-            file_path="src/module.py",
-            use_static_analysis=True,
-            use_llm_review=False,
-            min_confidence=0.5
+            file_path="src/module.py", use_static_analysis=True, use_llm_review=False, min_confidence=0.5
         )
 
-        response = await detect_bugs(
-            request=request,
-            current_user=mock_user,
-            agent=mock_agent
-        )
+        response = await detect_bugs(request=request, current_user=mock_user, agent=mock_agent)
 
         assert response.bugs_found == 1
         assert response.file_path == "src/module.py"
@@ -264,11 +212,7 @@ class TestDetectBugsEndpoint:
         request = DetectBugsRequest()
 
         with pytest.raises(HTTPException) as exc_info:
-            await detect_bugs(
-                request=request,
-                current_user=mock_user,
-                agent=mock_agent
-            )
+            await detect_bugs(request=request, current_user=mock_user, agent=mock_agent)
 
         # All exceptions are wrapped in 500 by the error handler
         assert exc_info.value.status_code == 500
@@ -282,11 +226,7 @@ class TestDetectBugsEndpoint:
         request = DetectBugsRequest(file_path="src/module.py")
 
         with pytest.raises(HTTPException) as exc_info:
-            await detect_bugs(
-                request=request,
-                current_user=mock_user,
-                agent=mock_agent
-            )
+            await detect_bugs(request=request, current_user=mock_user, agent=mock_agent)
 
         assert exc_info.value.status_code == 500
 
@@ -298,10 +238,7 @@ class TestFixBugEndpoint:
     def mock_user(self):
         """Create mock user."""
         return User(
-            user_id="user-123",
-            username="testuser",
-            email="test@example.com",
-            permissions=["read", "write", "execute"]
+            user_id="user-123", username="testuser", email="test@example.com", permissions=["read", "write", "execute"]
         )
 
     @pytest.fixture
@@ -329,14 +266,10 @@ class TestFixBugEndpoint:
             bug_description="Null pointer exception",
             suggested_fix="Add null check",
             line_number=42,
-            auto_apply=False
+            auto_apply=False,
         )
 
-        response = await fix_bug(
-            request=request,
-            current_user=mock_user,
-            agent=mock_agent
-        )
+        response = await fix_bug(request=request, current_user=mock_user, agent=mock_agent)
 
         assert response.fix_id == "fix-123"
         assert response.bug_id == "bug-456"
@@ -347,18 +280,10 @@ class TestFixBugEndpoint:
         """Test bug fix error handling."""
         mock_agent.fix_bug.side_effect = Exception("Fix failed")
 
-        request = FixBugRequest(
-            bug_id="bug-456",
-            file_path="src/module.py",
-            bug_description="Bug"
-        )
+        request = FixBugRequest(bug_id="bug-456", file_path="src/module.py", bug_description="Bug")
 
         with pytest.raises(HTTPException) as exc_info:
-            await fix_bug(
-                request=request,
-                current_user=mock_user,
-                agent=mock_agent
-            )
+            await fix_bug(request=request, current_user=mock_user, agent=mock_agent)
 
         assert exc_info.value.status_code == 500
 
@@ -370,10 +295,7 @@ class TestBatchFixEndpoint:
     def mock_user(self):
         """Create mock user."""
         return User(
-            user_id="user-123",
-            username="testuser",
-            email="test@example.com",
-            permissions=["read", "write", "execute"]
+            user_id="user-123", username="testuser", email="test@example.com", permissions=["read", "write", "execute"]
         )
 
     @pytest.fixture
@@ -385,10 +307,7 @@ class TestBatchFixEndpoint:
     async def test_batch_fix(self, mock_user, mock_agent):
         """Test batch fix endpoint."""
         response = await batch_fix(
-            bug_ids=["bug-1", "bug-2", "bug-3"],
-            auto_apply=False,
-            current_user=mock_user,
-            agent=mock_agent
+            bug_ids=["bug-1", "bug-2", "bug-3"], auto_apply=False, current_user=mock_user, agent=mock_agent
         )
 
         assert response["status"] == "not_implemented"
@@ -402,10 +321,7 @@ class TestPreviewFixEndpoint:
     def mock_user(self):
         """Create mock user."""
         return User(
-            user_id="user-123",
-            username="testuser",
-            email="test@example.com",
-            permissions=["read", "write", "execute"]
+            user_id="user-123", username="testuser", email="test@example.com", permissions=["read", "write", "execute"]
         )
 
     @pytest.fixture
@@ -417,24 +333,13 @@ class TestPreviewFixEndpoint:
     @pytest.mark.asyncio
     async def test_preview_fix_success(self, mock_user, mock_agent):
         """Test successful fix preview."""
-        mock_agent.preview_fix.return_value = {
-            "diff": "- old\n+ new",
-            "confidence": 0.85,
-            "impact": "low"
-        }
+        mock_agent.preview_fix.return_value = {"diff": "- old\n+ new", "confidence": 0.85, "impact": "low"}
 
         request = FixBugRequest(
-            bug_id="bug-456",
-            file_path="src/module.py",
-            bug_description="Bug description",
-            line_number=42
+            bug_id="bug-456", file_path="src/module.py", bug_description="Bug description", line_number=42
         )
 
-        response = await preview_fix(
-            request=request,
-            current_user=mock_user,
-            agent=mock_agent
-        )
+        response = await preview_fix(request=request, current_user=mock_user, agent=mock_agent)
 
         assert response["diff"] == "- old\n+ new"
         mock_agent.preview_fix.assert_called_once()
@@ -444,18 +349,10 @@ class TestPreviewFixEndpoint:
         """Test preview fix error handling."""
         mock_agent.preview_fix.side_effect = Exception("Preview failed")
 
-        request = FixBugRequest(
-            bug_id="bug-456",
-            file_path="src/module.py",
-            bug_description="Bug"
-        )
+        request = FixBugRequest(bug_id="bug-456", file_path="src/module.py", bug_description="Bug")
 
         with pytest.raises(HTTPException) as exc_info:
-            await preview_fix(
-                request=request,
-                current_user=mock_user,
-                agent=mock_agent
-            )
+            await preview_fix(request=request, current_user=mock_user, agent=mock_agent)
 
         assert exc_info.value.status_code == 500
 
@@ -467,10 +364,7 @@ class TestRollbackFixEndpoint:
     def mock_user(self):
         """Create mock user."""
         return User(
-            user_id="user-123",
-            username="testuser",
-            email="test@example.com",
-            permissions=["read", "write", "execute"]
+            user_id="user-123", username="testuser", email="test@example.com", permissions=["read", "write", "execute"]
         )
 
     @pytest.fixture
@@ -484,11 +378,7 @@ class TestRollbackFixEndpoint:
         """Test successful rollback."""
         mock_agent.rollback_fix.return_value = True
 
-        response = await rollback_fix(
-            fix_id="fix-123",
-            current_user=mock_user,
-            agent=mock_agent
-        )
+        response = await rollback_fix(fix_id="fix-123", current_user=mock_user, agent=mock_agent)
 
         assert response["fix_id"] == "fix-123"
         assert response["rolled_back"] is True
@@ -499,11 +389,7 @@ class TestRollbackFixEndpoint:
         mock_agent.rollback_fix.return_value = False
 
         with pytest.raises(HTTPException) as exc_info:
-            await rollback_fix(
-                fix_id="nonexistent",
-                current_user=mock_user,
-                agent=mock_agent
-            )
+            await rollback_fix(fix_id="nonexistent", current_user=mock_user, agent=mock_agent)
 
         # All exceptions are wrapped in 500 by the error handler
         assert exc_info.value.status_code == 500
@@ -515,11 +401,7 @@ class TestRollbackFixEndpoint:
         mock_agent.rollback_fix.side_effect = Exception("Rollback failed")
 
         with pytest.raises(HTTPException) as exc_info:
-            await rollback_fix(
-                fix_id="fix-123",
-                current_user=mock_user,
-                agent=mock_agent
-            )
+            await rollback_fix(fix_id="fix-123", current_user=mock_user, agent=mock_agent)
 
         assert exc_info.value.status_code == 500
 
@@ -531,10 +413,7 @@ class TestRunTestsEndpoint:
     def mock_user(self):
         """Create mock user."""
         return User(
-            user_id="user-123",
-            username="testuser",
-            email="test@example.com",
-            permissions=["read", "write", "execute"]
+            user_id="user-123", username="testuser", email="test@example.com", permissions=["read", "write", "execute"]
         )
 
     @pytest.fixture
@@ -545,18 +424,9 @@ class TestRunTestsEndpoint:
     @pytest.mark.asyncio
     async def test_run_tests_success(self, mock_user, mock_runner):
         """Test successful test run."""
-        request = RunTestsRequest(
-            test_suite="unit",
-            file_pattern="test_*.py",
-            max_retries=3,
-            parallel_workers=4
-        )
+        request = RunTestsRequest(test_suite="unit", file_pattern="test_*.py", max_retries=3, parallel_workers=4)
 
-        response = await run_tests(
-            request=request,
-            current_user=mock_user,
-            runner=mock_runner
-        )
+        response = await run_tests(request=request, current_user=mock_user, runner=mock_runner)
 
         assert response.suite_name == "unit"
         assert response.total_tests == 0  # Placeholder response
@@ -566,11 +436,7 @@ class TestRunTestsEndpoint:
         """Test run tests with default suite name."""
         request = RunTestsRequest()
 
-        response = await run_tests(
-            request=request,
-            current_user=mock_user,
-            runner=mock_runner
-        )
+        response = await run_tests(request=request, current_user=mock_user, runner=mock_runner)
 
         assert response.suite_name == "default"
 
@@ -581,15 +447,11 @@ class TestRunTestsEndpoint:
         mock_runner = AsyncMock()
 
         # Patch RunTestsResponse to raise an exception when instantiated
-        with patch('backend.api.routes.testing.RunTestsResponse') as mock_response:
+        with patch("backend.api.routes.testing.RunTestsResponse") as mock_response:
             mock_response.side_effect = Exception("Test creation error")
 
             with pytest.raises(HTTPException) as exc_info:
-                await run_tests(
-                    request=request,
-                    current_user=mock_user,
-                    runner=mock_runner
-                )
+                await run_tests(request=request, current_user=mock_user, runner=mock_runner)
 
             assert exc_info.value.status_code == 500
             assert "Test creation error" in exc_info.value.detail
@@ -602,10 +464,7 @@ class TestAnalyzeCoverageEndpoint:
     def mock_user(self):
         """Create mock user."""
         return User(
-            user_id="user-123",
-            username="testuser",
-            email="test@example.com",
-            permissions=["read", "write", "execute"]
+            user_id="user-123", username="testuser", email="test@example.com", permissions=["read", "write", "execute"]
         )
 
     @pytest.fixture
@@ -627,17 +486,9 @@ class TestAnalyzeCoverageEndpoint:
         mock_analyzer.analyze_coverage.return_value = mock_report
         mock_analyzer.identify_coverage_gaps.return_value = []
 
-        request = CoverageRequest(
-            source_path="src/",
-            test_path="tests/",
-            run_mutation_testing=False
-        )
+        request = CoverageRequest(source_path="src/", test_path="tests/", run_mutation_testing=False)
 
-        response = await analyze_coverage(
-            request=request,
-            current_user=mock_user,
-            analyzer=mock_analyzer
-        )
+        response = await analyze_coverage(request=request, current_user=mock_user, analyzer=mock_analyzer)
 
         assert response.overall_coverage == 85.5
         assert response.overall_branch_coverage == 78.2
@@ -662,16 +513,9 @@ class TestAnalyzeCoverageEndpoint:
         mock_analyzer.identify_coverage_gaps.return_value = []
         mock_analyzer.run_mutation_testing.return_value = [mock_mutation, mock_mutation]
 
-        request = CoverageRequest(
-            source_path="src/",
-            run_mutation_testing=True
-        )
+        request = CoverageRequest(source_path="src/", run_mutation_testing=True)
 
-        response = await analyze_coverage(
-            request=request,
-            current_user=mock_user,
-            analyzer=mock_analyzer
-        )
+        response = await analyze_coverage(request=request, current_user=mock_user, analyzer=mock_analyzer)
 
         assert response.mutation_score == 100.0
 
@@ -683,11 +527,7 @@ class TestAnalyzeCoverageEndpoint:
         request = CoverageRequest(source_path="src/")
 
         with pytest.raises(HTTPException) as exc_info:
-            await analyze_coverage(
-                request=request,
-                current_user=mock_user,
-                analyzer=mock_analyzer
-            )
+            await analyze_coverage(request=request, current_user=mock_user, analyzer=mock_analyzer)
 
         assert exc_info.value.status_code == 500
 
@@ -699,10 +539,7 @@ class TestGetTestHealthEndpoint:
     def mock_user(self):
         """Create mock user."""
         return User(
-            user_id="user-123",
-            username="testuser",
-            email="test@example.com",
-            permissions=["read", "write", "execute"]
+            user_id="user-123", username="testuser", email="test@example.com", permissions=["read", "write", "execute"]
         )
 
     @pytest.fixture
@@ -713,7 +550,7 @@ class TestGetTestHealthEndpoint:
             "summary": {"health_score": 85},
             "flaky_tests": [],
             "recent_bugs": [],
-            "recent_fixes": []
+            "recent_fixes": [],
         }
         return engine
 
@@ -736,10 +573,7 @@ class TestGetTestHealthEndpoint:
     async def test_get_test_health_success(self, mock_user, mock_engine, mock_analyzer, mock_runner):
         """Test successful health report."""
         response = await get_test_health(
-            current_user=mock_user,
-            engine=mock_engine,
-            analyzer=mock_analyzer,
-            runner=mock_runner
+            current_user=mock_user, engine=mock_engine, analyzer=mock_analyzer, runner=mock_runner
         )
 
         assert "summary" in response.model_dump()
@@ -752,10 +586,7 @@ class TestGetTestHealthEndpoint:
 
         with pytest.raises(HTTPException) as exc_info:
             await get_test_health(
-                current_user=mock_user,
-                engine=mock_engine,
-                analyzer=mock_analyzer,
-                runner=mock_runner
+                current_user=mock_user, engine=mock_engine, analyzer=mock_analyzer, runner=mock_runner
             )
 
         assert exc_info.value.status_code == 500
@@ -768,10 +599,7 @@ class TestFlakyTestsEndpoints:
     def mock_user(self):
         """Create mock user."""
         return User(
-            user_id="user-123",
-            username="testuser",
-            email="test@example.com",
-            permissions=["read", "write", "execute"]
+            user_id="user-123", username="testuser", email="test@example.com", permissions=["read", "write", "execute"]
         )
 
     @pytest.fixture
@@ -787,10 +615,7 @@ class TestFlakyTestsEndpoints:
         mock_flaky.to_dict.return_value = {"test_id": "test-1", "flake_rate": 0.3}
         mock_runner.get_flaky_tests.return_value = [mock_flaky]
 
-        response = await get_flaky_tests(
-            current_user=mock_user,
-            runner=mock_runner
-        )
+        response = await get_flaky_tests(current_user=mock_user, runner=mock_runner)
 
         assert response["count"] == 1
         assert len(response["flaky_tests"]) == 1
@@ -801,10 +626,7 @@ class TestFlakyTestsEndpoints:
         mock_runner.quarantine_test.return_value = True
 
         response = await quarantine_test(
-            test_id="test-123",
-            reason="Flaky test",
-            current_user=mock_user,
-            runner=mock_runner
+            test_id="test-123", reason="Flaky test", current_user=mock_user, runner=mock_runner
         )
 
         assert response["test_id"] == "test-123"
@@ -816,12 +638,7 @@ class TestFlakyTestsEndpoints:
         mock_runner.quarantine_test.return_value = False
 
         with pytest.raises(HTTPException) as exc_info:
-            await quarantine_test(
-                test_id="nonexistent",
-                reason="",
-                current_user=mock_user,
-                runner=mock_runner
-            )
+            await quarantine_test(test_id="nonexistent", reason="", current_user=mock_user, runner=mock_runner)
 
         assert exc_info.value.status_code == 404
 
@@ -830,11 +647,7 @@ class TestFlakyTestsEndpoints:
         """Test removing test from quarantine."""
         mock_runner.unquarantine_test.return_value = True
 
-        response = await unquarantine_test(
-            test_id="test-123",
-            current_user=mock_user,
-            runner=mock_runner
-        )
+        response = await unquarantine_test(test_id="test-123", current_user=mock_user, runner=mock_runner)
 
         assert response["test_id"] == "test-123"
         assert response["unquarantined"] is True
@@ -845,11 +658,7 @@ class TestFlakyTestsEndpoints:
         mock_runner.unquarantine_test.return_value = False
 
         with pytest.raises(HTTPException) as exc_info:
-            await unquarantine_test(
-                test_id="nonexistent",
-                current_user=mock_user,
-                runner=mock_runner
-            )
+            await unquarantine_test(test_id="nonexistent", current_user=mock_user, runner=mock_runner)
 
         assert exc_info.value.status_code == 404
 
@@ -861,10 +670,7 @@ class TestFrontendTestingEndpoints:
     def mock_user(self):
         """Create mock user."""
         return User(
-            user_id="user-123",
-            username="testuser",
-            email="test@example.com",
-            permissions=["read", "write", "execute"]
+            user_id="user-123", username="testuser", email="test@example.com", permissions=["read", "write", "execute"]
         )
 
     @pytest.fixture
@@ -890,7 +696,7 @@ class TestFrontendTestingEndpoints:
             user_flow=["click login", "enter credentials", "submit"],
             page_description="Login page",
             current_user=mock_user,
-            agent=mock_agent
+            agent=mock_agent,
         )
 
         assert response["page_path"] == "/login"
@@ -902,12 +708,7 @@ class TestFrontendTestingEndpoints:
         mock_agent.generate_e2e_tests_from_flow.side_effect = Exception("Generation failed")
 
         with pytest.raises(HTTPException) as exc_info:
-            await generate_e2e_tests(
-                page_path="/login",
-                user_flow=["click"],
-                current_user=mock_user,
-                agent=mock_agent
-            )
+            await generate_e2e_tests(page_path="/login", user_flow=["click"], current_user=mock_user, agent=mock_agent)
 
         assert exc_info.value.status_code == 500
 
@@ -924,7 +725,7 @@ class TestFrontendTestingEndpoints:
             viewports=[{"width": 1920, "height": 1080}],
             threshold=0.1,
             current_user=mock_user,
-            agent=mock_agent
+            agent=mock_agent,
         )
 
         assert response["page_path"] == "/home"
@@ -937,28 +738,16 @@ class TestFrontendTestingEndpoints:
         mock_agent.run_visual_regression_test.side_effect = Exception("Visual test failed")
 
         with pytest.raises(HTTPException) as exc_info:
-            await run_visual_regression(
-                page_path="/home",
-                current_user=mock_user,
-                agent=mock_agent
-            )
+            await run_visual_regression(page_path="/home", current_user=mock_user, agent=mock_agent)
 
         assert exc_info.value.status_code == 500
 
     @pytest.mark.asyncio
     async def test_run_accessibility_audit_success(self, mock_user, mock_agent):
         """Test accessibility audit."""
-        mock_agent.run_accessibility_audit.return_value = {
-            "violations": [],
-            "passes": 50,
-            "score": 95
-        }
+        mock_agent.run_accessibility_audit.return_value = {"violations": [], "passes": 50, "score": 95}
 
-        response = await run_accessibility_audit(
-            page_path="/home",
-            current_user=mock_user,
-            agent=mock_agent
-        )
+        response = await run_accessibility_audit(page_path="/home", current_user=mock_user, agent=mock_agent)
 
         assert response["score"] == 95
 
@@ -968,27 +757,17 @@ class TestFrontendTestingEndpoints:
         mock_agent.run_accessibility_audit.side_effect = Exception("Audit failed")
 
         with pytest.raises(HTTPException) as exc_info:
-            await run_accessibility_audit(
-                page_path="/home",
-                current_user=mock_user,
-                agent=mock_agent
-            )
+            await run_accessibility_audit(page_path="/home", current_user=mock_user, agent=mock_agent)
 
         assert exc_info.value.status_code == 500
 
     @pytest.mark.asyncio
     async def test_get_frontend_statistics(self, mock_user, mock_agent):
         """Test getting frontend statistics."""
-        mock_agent.get_test_statistics.return_value = {
-            "total_tests": 100,
-            "pass_rate": 0.95
-        }
+        mock_agent.get_test_statistics.return_value = {"total_tests": 100, "pass_rate": 0.95}
 
         # get_frontend_statistics is async but calls sync agent method
-        response = await get_frontend_statistics(
-            current_user=mock_user,
-            agent=mock_agent
-        )
+        response = await get_frontend_statistics(current_user=mock_user, agent=mock_agent)
 
         assert response["total_tests"] == 100
 
@@ -1000,10 +779,7 @@ class TestRunFullTestSuite:
     def mock_user(self):
         """Create mock user."""
         return User(
-            user_id="user-123",
-            username="testuser",
-            email="test@example.com",
-            permissions=["read", "write", "execute"]
+            user_id="user-123", username="testuser", email="test@example.com", permissions=["read", "write", "execute"]
         )
 
     @pytest.fixture
@@ -1019,9 +795,7 @@ class TestRunFullTestSuite:
         background_tasks = BackgroundTasks()
 
         response = await run_full_test_suite(
-            background_tasks=background_tasks,
-            current_user=mock_user,
-            engine=mock_engine
+            background_tasks=background_tasks, current_user=mock_user, engine=mock_engine
         )
 
         assert response["status"] == "started"
@@ -1036,9 +810,7 @@ class TestRunFullTestSuite:
         background_tasks = BackgroundTasks()
 
         response = await run_full_test_suite(
-            background_tasks=background_tasks,
-            current_user=mock_user,
-            engine=mock_engine
+            background_tasks=background_tasks, current_user=mock_user, engine=mock_engine
         )
 
         assert response["status"] == "started"

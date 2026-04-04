@@ -39,7 +39,7 @@ class VectorStore:
         texts: list[str],
         embeddings: list[list[float]],
         metadatas: list[dict[str, Any]] | None = None,
-        ids: list[str] | None = None
+        ids: list[str] | None = None,
     ) -> list[str]:
         """
         Add vectors to the store.
@@ -57,25 +57,14 @@ class VectorStore:
         metadatas = metadatas or [{} for _ in texts]
 
         for id_, text, embedding, metadata in zip(ids, texts, embeddings, metadatas, strict=False):
-            self._vectors[id_] = {
-                "text": text,
-                "embedding": embedding,
-                "metadata": metadata
-            }
+            self._vectors[id_] = {"text": text, "embedding": embedding, "metadata": metadata}
 
-        self._logger.info(
-            "Vectors added",
-            count=len(ids),
-            collection=self._collection_name
-        )
+        self._logger.info("Vectors added", count=len(ids), collection=self._collection_name)
 
         return ids
 
     async def search(
-        self,
-        query_embedding: list[float],
-        top_k: int = 5,
-        filter_metadata: dict[str, Any] | None = None
+        self, query_embedding: list[float], top_k: int = 5, filter_metadata: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
         """
         Search for similar vectors.
@@ -93,24 +82,13 @@ class VectorStore:
         for id_, data in self._vectors.items():
             # Apply metadata filter
             if filter_metadata:
-                if not all(
-                    data["metadata"].get(k) == v
-                    for k, v in filter_metadata.items()
-                ):
+                if not all(data["metadata"].get(k) == v for k, v in filter_metadata.items()):
                     continue
 
             # Calculate cosine similarity
-            similarity = self._cosine_similarity(
-                query_embedding,
-                data["embedding"]
-            )
+            similarity = self._cosine_similarity(query_embedding, data["embedding"])
 
-            results.append({
-                "id": id_,
-                "text": data["text"],
-                "metadata": data["metadata"],
-                "score": similarity
-            })
+            results.append({"id": id_, "text": data["text"], "metadata": data["metadata"], "score": similarity})
 
         # Sort by similarity and return top_k
         results.sort(key=lambda x: x["score"], reverse=True)
@@ -132,19 +110,11 @@ class VectorStore:
                 del self._vectors[id_]
                 deleted += 1
 
-        self._logger.info(
-            "Vectors deleted",
-            deleted=deleted,
-            collection=self._collection_name
-        )
+        self._logger.info("Vectors deleted", deleted=deleted, collection=self._collection_name)
 
         return deleted
 
-    def _cosine_similarity(
-        self,
-        a: list[float],
-        b: list[float]
-    ) -> float:
+    def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
         """Calculate cosine similarity between two vectors."""
         a_array = np.array(a)
         b_array = np.array(b)

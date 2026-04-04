@@ -54,11 +54,11 @@ class TestProjectRoutes:
             "name": "Test Project",
             "description": "A test project",
             "requirements": "Python, FastAPI",
-            "tech_stack": {"languages": ["Python", "FastAPI"]}
+            "tech_stack": {"languages": ["Python", "FastAPI"]},
         }
 
         # Mock the service method — patch where it is used, not where it is defined
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_project = AsyncMock()
             mock_project.id = "proj_123"
             mock_project.name = "Test Project"
@@ -81,7 +81,7 @@ class TestProjectRoutes:
     @pytest.mark.asyncio
     async def test_get_projects_list(self, client):
         """Test getting list of projects."""
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_project1 = MagicMock()
             mock_project1.id = "p1"
             mock_project1.name = "Project 1"
@@ -104,7 +104,7 @@ class TestProjectRoutes:
     @pytest.mark.asyncio
     async def test_get_project_by_id(self, client):
         """Test getting specific project."""
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_project = MagicMock()
             mock_project.id = "proj_123"
             mock_project.name = "Test Project"
@@ -128,7 +128,7 @@ class TestProjectRoutes:
     @pytest.mark.asyncio
     async def test_get_project_not_found(self, client):
         """Test getting non-existent project."""
-        with patch('backend.api.routes.projects.project_service') as mock_service:
+        with patch("backend.api.routes.projects.project_service") as mock_service:
             mock_service.get_project = AsyncMock(return_value=None)
 
             response = client.get("/api/v1/projects/nonexistent")
@@ -142,11 +142,7 @@ class TestAuthRoutes:
     @pytest.mark.asyncio
     async def test_register_user_success(self, client):
         """Test user registration."""
-        user_data = {
-            "username": "newuser",
-            "email": "new@example.com",
-            "password": "SecurePass123!"
-        }
+        user_data = {"username": "newuser", "email": "new@example.com", "password": "SecurePass123!"}
 
         mock_user = MagicMock()
         mock_user.id = "user_123"
@@ -160,8 +156,10 @@ class TestAuthRoutes:
             "token_type": "bearer",
         }
 
-        with patch('backend.services.auth_service.AuthService.create_user', new_callable=AsyncMock, return_value=mock_user):
-            with patch('backend.services.auth_service.AuthService.create_user_session', return_value=mock_tokens):
+        with patch(
+            "backend.services.auth_service.AuthService.create_user", new_callable=AsyncMock, return_value=mock_user
+        ):
+            with patch("backend.services.auth_service.AuthService.create_user_session", return_value=mock_tokens):
                 response = client.post("/api/v1/auth/register", json=user_data)
 
                 assert response.status_code == 201
@@ -171,10 +169,7 @@ class TestAuthRoutes:
     @pytest.mark.asyncio
     async def test_login_success(self, client):
         """Test successful login."""
-        login_data = {
-            "username": "testuser",
-            "password": "correct_password"
-        }
+        login_data = {"username": "testuser", "password": "correct_password"}
 
         mock_user_dict = {
             "user_id": "user_123",
@@ -188,8 +183,12 @@ class TestAuthRoutes:
             "token_type": "bearer",
         }
 
-        with patch('backend.services.auth_service.AuthService.authenticate_user', new_callable=AsyncMock, return_value=mock_user_dict):
-            with patch('backend.services.auth_service.AuthService.create_user_session', return_value=mock_tokens):
+        with patch(
+            "backend.services.auth_service.AuthService.authenticate_user",
+            new_callable=AsyncMock,
+            return_value=mock_user_dict,
+        ):
+            with patch("backend.services.auth_service.AuthService.create_user_session", return_value=mock_tokens):
                 response = client.post("/api/v1/auth/login", json=login_data)
 
                 assert response.status_code == 200
@@ -199,12 +198,11 @@ class TestAuthRoutes:
     @pytest.mark.asyncio
     async def test_login_failure_wrong_password(self, client):
         """Test login with wrong password."""
-        login_data = {
-            "username": "testuser",
-            "password": "wrong_password"
-        }
+        login_data = {"username": "testuser", "password": "wrong_password"}
 
-        with patch('backend.services.auth_service.AuthService.authenticate_user', new_callable=AsyncMock, return_value=None):
+        with patch(
+            "backend.services.auth_service.AuthService.authenticate_user", new_callable=AsyncMock, return_value=None
+        ):
             response = client.post("/api/v1/auth/login", json=login_data)
 
             assert response.status_code == 401
@@ -217,18 +215,10 @@ class TestWorkflowRoutes:
     @pytest.mark.asyncio
     async def test_create_workflow(self, client):
         """Test creating a workflow."""
-        workflow_data = {
-            "name": "CI/CD Pipeline",
-            "description": "Automated deployment",
-            "trigger": "manual"
-        }
+        workflow_data = {"name": "CI/CD Pipeline", "description": "Automated deployment", "trigger": "manual"}
 
-        with patch('backend.services.database_services.DatabaseWorkflowService.create_workflow') as mock_create:
-            mock_workflow = MagicMock(
-                id="wf_123",
-                name="CI/CD Pipeline",
-                status="pending"
-            )
+        with patch("backend.services.database_services.DatabaseWorkflowService.create_workflow") as mock_create:
+            mock_workflow = MagicMock(id="wf_123", name="CI/CD Pipeline", status="pending")
             mock_create.return_value = mock_workflow
 
             response = client.post("/api/v1/workflows", json=workflow_data)
@@ -238,7 +228,7 @@ class TestWorkflowRoutes:
     @pytest.mark.asyncio
     async def test_execute_workflow(self, client):
         """Test executing a workflow."""
-        with patch('backend.services.database_services.DatabaseWorkflowService.execute_workflow') as mock_execute:
+        with patch("backend.services.database_services.DatabaseWorkflowService.execute_workflow") as mock_execute:
             mock_execute.return_value = {"status": "started", "execution_id": "exec_123"}
 
             response = client.post("/api/v1/workflows/wf_123/execute")
@@ -253,10 +243,10 @@ class TestAgentRoutes:
     @pytest.mark.asyncio
     async def test_list_agents(self, client):
         """Test listing all agents."""
-        with patch('backend.services.agent_service.AgentService.list_agents') as mock_list:
+        with patch("backend.services.agent_service.AgentService.list_agents") as mock_list:
             mock_agents = [
                 MagicMock(id="agent_1", role="developer", status="idle"),
-                MagicMock(id="agent_2", role="reviewer", status="busy")
+                MagicMock(id="agent_2", role="reviewer", status="busy"),
             ]
             mock_list.return_value = mock_agents
 
@@ -269,12 +259,9 @@ class TestAgentRoutes:
     @pytest.mark.asyncio
     async def test_assign_task_to_agent(self, client):
         """Test assigning task to agent."""
-        assignment_data = {
-            "task_id": "task_123",
-            "priority": "high"
-        }
+        assignment_data = {"task_id": "task_123", "priority": "high"}
 
-        with patch('backend.services.agent_service.AgentService.assign_task') as mock_assign:
+        with patch("backend.services.agent_service.AgentService.assign_task") as mock_assign:
             mock_assign.return_value = True
 
             response = client.post("/api/v1/agents/agent_1/assign", json=assignment_data)
@@ -289,12 +276,8 @@ class TestAnalyticsRoutes:
     @pytest.mark.asyncio
     async def test_get_project_analytics(self, client):
         """Test getting project analytics."""
-        with patch('backend.services.analytics_engine.AnalyticsEngine.generate_report') as mock_report:
-            mock_report.return_value = {
-                "total_projects": 10,
-                "active_projects": 5,
-                "completion_rate": 0.75
-            }
+        with patch("backend.services.analytics_engine.AnalyticsEngine.generate_report") as mock_report:
+            mock_report.return_value = {"total_projects": 10, "active_projects": 5, "completion_rate": 0.75}
 
             response = client.get("/api/v1/analytics/projects")
 
@@ -305,11 +288,8 @@ class TestAnalyticsRoutes:
     @pytest.mark.asyncio
     async def test_get_performance_metrics(self, client):
         """Test getting performance metrics."""
-        with patch('backend.services.analytics_engine.AnalyticsEngine.execute_query') as mock_query:
-            mock_query.return_value = {
-                "avg_response_time": 150,
-                "requests_per_second": 100
-            }
+        with patch("backend.services.analytics_engine.AnalyticsEngine.execute_query") as mock_query:
+            mock_query.return_value = {"avg_response_time": 150, "requests_per_second": 100}
 
             response = client.get("/api/v1/analytics/performance")
 
@@ -341,11 +321,8 @@ class TestCustomizationRoutes:
     @pytest.mark.asyncio
     async def test_list_themes(self, client):
         """Test listing available themes."""
-        with patch('backend.services.customization_service.CustomizationService.list_themes') as mock_list:
-            mock_themes = [
-                MagicMock(id="theme1", name="Dark Mode"),
-                MagicMock(id="theme2", name="Light Mode")
-            ]
+        with patch("backend.services.customization_service.CustomizationService.list_themes") as mock_list:
+            mock_themes = [MagicMock(id="theme1", name="Dark Mode"), MagicMock(id="theme2", name="Light Mode")]
             mock_list.return_value = mock_themes
 
             response = client.get("/api/v1/customization/themes")
@@ -357,7 +334,7 @@ class TestCustomizationRoutes:
     @pytest.mark.asyncio
     async def test_apply_theme(self, client):
         """Test applying a theme."""
-        with patch('backend.services.customization_service.CustomizationService.apply_theme') as mock_apply:
+        with patch("backend.services.customization_service.CustomizationService.apply_theme") as mock_apply:
             mock_apply.return_value = True
 
             response = client.post("/api/v1/customization/themes/theme1/apply", json={"user_id": "user_123"})
@@ -372,13 +349,9 @@ class TestCollaborationRoutes:
     @pytest.mark.asyncio
     async def test_add_comment(self, client):
         """Test adding a comment."""
-        comment_data = {
-            "content": "Great work!",
-            "entity_type": "project",
-            "entity_id": "proj_123"
-        }
+        comment_data = {"content": "Great work!", "entity_type": "project", "entity_id": "proj_123"}
 
-        with patch('backend.services.collaboration_service.CollaborationService.create_comment') as mock_create:
+        with patch("backend.services.collaboration_service.CollaborationService.create_comment") as mock_create:
             mock_comment = MagicMock(id="comment_123", content="Great work!")
             mock_create.return_value = mock_comment
 
@@ -391,10 +364,10 @@ class TestCollaborationRoutes:
     @pytest.mark.asyncio
     async def test_get_notifications(self, client):
         """Test getting user notifications."""
-        with patch('backend.services.collaboration_service.CollaborationService.get_user_notifications') as mock_get:
+        with patch("backend.services.collaboration_service.CollaborationService.get_user_notifications") as mock_get:
             mock_notifications = [
                 MagicMock(id="notif_1", message="New comment"),
-                MagicMock(id="notif_2", message="Task assigned")
+                MagicMock(id="notif_2", message="Task assigned"),
             ]
             mock_get.return_value = mock_notifications
 
@@ -412,10 +385,10 @@ class TestPluginRoutes:
     @pytest.mark.asyncio
     async def test_list_plugins(self, client):
         """Test listing installed plugins."""
-        with patch('backend.services.plugin_service.PluginManager.list_plugins') as mock_list:
+        with patch("backend.services.plugin_service.PluginManager.list_plugins") as mock_list:
             mock_plugins = [
                 MagicMock(id="plugin1", name="Code Formatter", enabled=True),
-                MagicMock(id="plugin2", name="Linter", enabled=False)
+                MagicMock(id="plugin2", name="Linter", enabled=False),
             ]
             mock_list.return_value = mock_plugins
 
@@ -428,7 +401,7 @@ class TestPluginRoutes:
     @pytest.mark.asyncio
     async def test_enable_plugin(self, client):
         """Test enabling a plugin."""
-        with patch('backend.services.plugin_service.PluginManager.enable_plugin') as mock_enable:
+        with patch("backend.services.plugin_service.PluginManager.enable_plugin") as mock_enable:
             mock_enable.return_value = True
 
             response = client.post("/api/v1/plugins/plugin1/enable")
@@ -443,10 +416,10 @@ class TestSchemaRoutes:
     @pytest.mark.asyncio
     async def test_list_migrations(self, client):
         """Test listing migrations."""
-        with patch('backend.services.schema_management_service.SchemaManagementService.list_migrations') as mock_list:
+        with patch("backend.services.schema_management_service.SchemaManagementService.list_migrations") as mock_list:
             mock_migrations = [
                 MagicMock(id="mig_001", name="Initial schema", applied=True),
-                MagicMock(id="mig_002", name="Add users table", applied=False)
+                MagicMock(id="mig_002", name="Add users table", applied=False),
             ]
             mock_list.return_value = mock_migrations
 
@@ -459,7 +432,7 @@ class TestSchemaRoutes:
     @pytest.mark.asyncio
     async def test_apply_migration(self, client):
         """Test applying a migration."""
-        with patch('backend.services.schema_management_service.SchemaManagementService.apply_migration') as mock_apply:
+        with patch("backend.services.schema_management_service.SchemaManagementService.apply_migration") as mock_apply:
             mock_apply.return_value = True
 
             response = client.post("/api/v1/schema/migrations/mig_002/apply")
@@ -474,18 +447,10 @@ class TestDeploymentRoutes:
     @pytest.mark.asyncio
     async def test_create_deployment(self, client):
         """Test creating a deployment."""
-        deployment_data = {
-            "project_id": "proj_123",
-            "environment": "production",
-            "version": "1.0.0"
-        }
+        deployment_data = {"project_id": "proj_123", "environment": "production", "version": "1.0.0"}
 
-        with patch('backend.services.deployment_service.DeploymentService.create_deployment') as mock_create:
-            mock_deployment = MagicMock(
-                id="deploy_123",
-                status="pending",
-                environment="production"
-            )
+        with patch("backend.services.deployment_service.DeploymentService.create_deployment") as mock_create:
+            mock_deployment = MagicMock(id="deploy_123", status="pending", environment="production")
             mock_create.return_value = mock_deployment
 
             response = client.post("/api/v1/deployments", json=deployment_data)
@@ -506,15 +471,13 @@ class TestArchitectureRoutes:
             "name": "System Architecture",
             "diagram_type": "component",
             "nodes": [{"id": "n1", "label": "API"}],
-            "relationships": []
+            "relationships": [],
         }
 
-        with patch('backend.services.architecture_service.ArchitectureVisualizationService.create_diagram') as mock_create:
-            mock_diagram = MagicMock(
-                id="diag_123",
-                name="System Architecture",
-                diagram_type="component"
-            )
+        with patch(
+            "backend.services.architecture_service.ArchitectureVisualizationService.create_diagram"
+        ) as mock_create:
+            mock_diagram = MagicMock(id="diag_123", name="System Architecture", diagram_type="component")
             mock_create.return_value = mock_diagram
 
             response = client.post("/api/v1/architecture/diagrams", json=diagram_data)
@@ -531,16 +494,10 @@ class TestGitRoutes:
     @pytest.mark.asyncio
     async def test_clone_repository(self, client):
         """Test cloning a repository."""
-        clone_data = {
-            "repo_url": "https://github.com/user/repo.git",
-            "destination": "my-repo"
-        }
+        clone_data = {"repo_url": "https://github.com/user/repo.git", "destination": "my-repo"}
 
-        with patch('backend.services.git_service.GitService.clone_repository') as mock_clone:
-            mock_clone.return_value = {
-                "success": True,
-                "message": "Repository cloned"
-            }
+        with patch("backend.services.git_service.GitService.clone_repository") as mock_clone:
+            mock_clone.return_value = {"success": True, "message": "Repository cloned"}
 
             response = client.post("/api/v1/git/clone", json=clone_data)
 

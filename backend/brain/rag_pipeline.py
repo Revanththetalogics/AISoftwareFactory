@@ -25,10 +25,7 @@ class RAGPipeline:
     """
 
     def __init__(
-        self,
-        knowledge_base: KnowledgeBase,
-        context_manager: ContextManager | None = None,
-        llm_provider: str = "ollama"
+        self, knowledge_base: KnowledgeBase, context_manager: ContextManager | None = None, llm_provider: str = "ollama"
     ):
         """
         Initialize the RAG pipeline.
@@ -45,11 +42,7 @@ class RAGPipeline:
         self._logger = get_logger(__name__)
 
     async def query(
-        self,
-        query: str,
-        conversation_id: str | None = None,
-        top_k: int = 3,
-        system_prompt: str | None = None
+        self, query: str, conversation_id: str | None = None, top_k: int = 3, system_prompt: str | None = None
     ) -> dict[str, Any]:
         """
         Execute a RAG query.
@@ -74,62 +67,34 @@ class RAGPipeline:
         retrieved = await self._retrieval.retrieve(query, top_k=top_k)
 
         # Build context from retrieved documents
-        context_text = "\n\n".join([
-            f"[Document {i+1}]: {r.text}"
-            for i, r in enumerate(retrieved)
-        ])
+        context_text = "\n\n".join([f"[Document {i + 1}]: {r.text}" for i, r in enumerate(retrieved)])
 
         # Get conversation history
         history = self._context.get_context(conversation_id, max_messages=5)
 
         # Build prompt
-        prompt = self._build_prompt(
-            query=query,
-            context=context_text,
-            history=history,
-            system_prompt=system_prompt
-        )
+        prompt = self._build_prompt(query=query, context=context_text, history=history, system_prompt=system_prompt)
 
         # Generate response
         try:
             response = await self._llm.generate(prompt)
 
             # Add assistant message
-            self._context.add_message(
-                conversation_id,
-                "assistant",
-                response
-            )
+            self._context.add_message(conversation_id, "assistant", response)
 
             return {
                 "response": response,
                 "conversation_id": conversation_id,
-                "retrieved_documents": [
-                    {
-                        "text": r.text,
-                        "score": r.score,
-                        "source": r.source
-                    }
-                    for r in retrieved
-                ],
-                "success": True
+                "retrieved_documents": [{"text": r.text, "score": r.score, "source": r.source} for r in retrieved],
+                "success": True,
             }
 
         except Exception as e:
             self._logger.error("RAG query failed", error=str(e))
-            return {
-                "response": "",
-                "conversation_id": conversation_id,
-                "error": str(e),
-                "success": False
-            }
+            return {"response": "", "conversation_id": conversation_id, "error": str(e), "success": False}
 
     def _build_prompt(
-        self,
-        query: str,
-        context: str,
-        history: list[dict[str, Any]],
-        system_prompt: str | None = None
+        self, query: str, context: str, history: list[dict[str, Any]], system_prompt: str | None = None
     ) -> str:
         """Build the RAG prompt."""
         parts = []
