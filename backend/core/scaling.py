@@ -10,7 +10,7 @@ import hashlib
 import json
 import time
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from fastapi import Response
@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 settings = get_settings()
 
 
-class ScalingPolicy(str, Enum):
+class ScalingPolicy(StrEnum):
     """Scaling policy types."""
 
     LEADER_ELECTION = "leader_election"
@@ -33,7 +33,7 @@ class ScalingPolicy(str, Enum):
     WEIGHTED_ROUND_ROBIN = "weighted_round_robin"
 
 
-class NodeStatus(str, Enum):
+class NodeStatus(StrEnum):
     """Node status states."""
 
     HEALTHY = "healthy"

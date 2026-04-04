@@ -10,7 +10,6 @@ ignore = [
     "S105",   # hardcoded password — test secrets, env-var defaults
     "B008",   # function call in default arg — FastAPI Depends()
     "B904",   # raise-without-from-inside-except — 200+ legacy raise patterns
-    "UP042",  # replace-str-enum — StrEnum migration deferred
 ]
 
 [tool.ruff.lint.per-file-ignores]

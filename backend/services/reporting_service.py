@@ -11,7 +11,7 @@ import uuid
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from backend.core.logging import get_logger
@@ -19,7 +19,7 @@ from backend.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-class ReportType(str, Enum):
+class ReportType(StrEnum):
     """Types of reports available."""
 
     SYSTEM_HEALTH = "system_health"
@@ -31,7 +31,7 @@ class ReportType(str, Enum):
     CUSTOM = "custom"
 
 
-class ReportFormat(str, Enum):
+class ReportFormat(StrEnum):
     """Supported report formats."""
 
     PDF = "pdf"
@@ -41,7 +41,7 @@ class ReportFormat(str, Enum):
     EXCEL = "excel"
 
 
-class ReportFrequency(str, Enum):
+class ReportFrequency(StrEnum):
     """Report scheduling frequencies."""
 
     ONCE = "once"
@@ -52,7 +52,7 @@ class ReportFrequency(str, Enum):
     QUARTERLY = "quarterly"
 
 
-class ReportStatus(str, Enum):
+class ReportStatus(StrEnum):
     """Report generation statuses."""
 
     PENDING = "pending"

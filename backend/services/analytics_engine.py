@@ -9,7 +9,7 @@ import statistics
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from backend.core.logging import get_logger
@@ -17,7 +17,7 @@ from backend.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-class MetricType(str, Enum):
+class MetricType(StrEnum):
     """Types of analytics metrics."""
 
     COUNT = "count"
@@ -30,7 +30,7 @@ class MetricType(str, Enum):
     TREND = "trend"
 
 
-class TimeGranularity(str, Enum):
+class TimeGranularity(StrEnum):
     """Time granularities for analytics data."""
 
     MINUTE = "minute"
@@ -42,7 +42,7 @@ class TimeGranularity(str, Enum):
     YEAR = "year"
 
 
-class ReportType(str, Enum):
+class ReportType(StrEnum):
     """Types of analytical reports."""
 
     SUMMARY = "summary"

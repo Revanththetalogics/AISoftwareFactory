@@ -8,7 +8,7 @@ user management, configuration, monitoring, and maintenance operations.
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from backend.core.logging import get_logger
@@ -16,7 +16,7 @@ from backend.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-class UserRole(str, Enum):
+class UserRole(StrEnum):
     """User roles with administrative permissions."""
 
     SUPER_ADMIN = "super_admin"
@@ -26,7 +26,7 @@ class UserRole(str, Enum):
     GUEST = "guest"
 
 
-class SystemStatus(str, Enum):
+class SystemStatus(StrEnum):
     """Overall system status indicators."""
 
     HEALTHY = "healthy"
@@ -35,7 +35,7 @@ class SystemStatus(str, Enum):
     DOWN = "down"
 
 
-class MaintenanceMode(str, Enum):
+class MaintenanceMode(StrEnum):
     """Maintenance mode states."""
 
     OFF = "off"

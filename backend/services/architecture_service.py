@@ -8,7 +8,7 @@ and system topology visualizations for the ThetaAI platform.
 import json
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from backend.core.logging import get_logger
@@ -16,7 +16,7 @@ from backend.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-class NodeType(str, Enum):
+class NodeType(StrEnum):
     """Types of nodes in architecture diagrams."""
 
     SERVICE = "service"
@@ -30,7 +30,7 @@ class NodeType(str, Enum):
     EXTERNAL_SERVICE = "external_service"
 
 
-class RelationshipType(str, Enum):
+class RelationshipType(StrEnum):
     """Types of relationships between nodes."""
 
     DEPENDS_ON = "depends_on"
@@ -41,7 +41,7 @@ class RelationshipType(str, Enum):
     ROUTES_TO = "routes_to"
 
 
-class DiagramType(str, Enum):
+class DiagramType(StrEnum):
     """Types of architecture diagrams."""
 
     SYSTEM_OVERVIEW = "system_overview"

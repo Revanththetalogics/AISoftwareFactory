@@ -7,7 +7,7 @@ Provides backend services for managing database schemas, migrations, and schema 
 import json
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from backend.core.logging import get_logger
@@ -15,7 +15,7 @@ from backend.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-class ColumnType(str, Enum):
+class ColumnType(StrEnum):
     """Supported column types."""
 
     STRING = "string"
@@ -31,7 +31,7 @@ class ColumnType(str, Enum):
     BINARY = "binary"
 
 
-class ConstraintType(str, Enum):
+class ConstraintType(StrEnum):
     """Supported constraint types."""
 
     PRIMARY_KEY = "primary_key"
@@ -41,7 +41,7 @@ class ConstraintType(str, Enum):
     CHECK = "check"
 
 
-class IndexType(str, Enum):
+class IndexType(StrEnum):
     """Supported index types."""
 
     BTREE = "btree"

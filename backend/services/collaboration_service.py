@@ -8,7 +8,7 @@ notifications, and team workflow management.
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from backend.core.logging import get_logger
@@ -16,7 +16,7 @@ from backend.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-class EntityType(str, Enum):
+class EntityType(StrEnum):
     """Types of entities that can be commented on."""
 
     PROJECT = "project"
@@ -26,7 +26,7 @@ class EntityType(str, Enum):
     DESIGN = "design"
 
 
-class NotificationType(str, Enum):
+class NotificationType(StrEnum):
     """Types of notifications."""
 
     COMMENT = "comment"
@@ -36,7 +36,7 @@ class NotificationType(str, Enum):
     DEADLINE = "deadline"
 
 
-class UserRole(str, Enum):
+class UserRole(StrEnum):
     """User roles in collaboration context."""
 
     OWNER = "owner"

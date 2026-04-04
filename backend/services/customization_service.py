@@ -8,7 +8,7 @@ for the ThetaAI platform including dynamic themes, layouts, and user preferences
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from backend.core.logging import get_logger
@@ -16,7 +16,7 @@ from backend.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-class ThemeMode(str, Enum):
+class ThemeMode(StrEnum):
     """Available theme modes."""
 
     LIGHT = "light"
@@ -25,7 +25,7 @@ class ThemeMode(str, Enum):
     AUTO = "auto"
 
 
-class LayoutType(str, Enum):
+class LayoutType(StrEnum):
     """Available layout types."""
 
     DEFAULT = "default"
@@ -34,7 +34,7 @@ class LayoutType(str, Enum):
     CUSTOM = "custom"
 
 
-class ColorScheme(str, Enum):
+class ColorScheme(StrEnum):
     """Predefined color schemes."""
 
     BLUE = "blue"

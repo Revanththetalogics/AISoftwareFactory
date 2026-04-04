@@ -12,7 +12,7 @@ import uuid
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -21,7 +21,7 @@ from backend.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-class PluginType(str, Enum):
+class PluginType(StrEnum):
     """Types of plugins supported."""
 
     AUTHENTICATION = "authentication"
@@ -32,7 +32,7 @@ class PluginType(str, Enum):
     CUSTOM = "custom"
 
 
-class PluginStatus(str, Enum):
+class PluginStatus(StrEnum):
     """Plugin status states."""
 
     ACTIVE = "active"
@@ -41,7 +41,7 @@ class PluginStatus(str, Enum):
     LOADING = "loading"
 
 
-class HookType(str, Enum):
+class HookType(StrEnum):
     """Types of hooks plugins can register for."""
 
     ON_STARTUP = "on_startup"

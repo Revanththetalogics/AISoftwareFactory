@@ -10,7 +10,7 @@ import json
 import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 import psutil
@@ -22,7 +22,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 logger = get_logger(__name__)
 
 
-class MonitorEventType(str, Enum):
+class MonitorEventType(StrEnum):
     """Types of monitoring events."""
 
     METRIC_UPDATE = "metric_update"
